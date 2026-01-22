@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
-import SliderLayout from "./SliderLayout";
-import image from "../../../../assets/images/handshake.png"
+import { useEffect, useMemo, useState } from "react";
+import image from "../../assets/images/handshake.png"
+import CommunityGrowthLayout from "./CommunityGrowthLayout";
 
-export default function Slider() {
+export default function CommunityGrowth() {
 
     // all slider datas
     const slideDatas = useMemo(() => (
@@ -55,7 +55,7 @@ export default function Slider() {
                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
             >
                 {slideDatas.map((item, i) => (
-                    <SliderLayout
+                    <CommunityGrowthLayout
                         key={i}
                         title={item.title}
                         semititle={item.semititle}

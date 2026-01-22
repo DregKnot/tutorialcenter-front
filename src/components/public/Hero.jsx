@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import logo1 from "../../../../assets/images/TC 1.png";
-import student_image from "../../../../assets/images/childLearning.png";
-import hero_image from "../../../../assets/images/teacher-student.png";
-import dotted_box from "../../../../assets/svg/dots.svg";
+import logo1 from "../../assets/images/TC 1.png";
+import student_image from "../../assets/images/childLearning.png";
+import hero_image from "../../assets/images/teacher-student.png";
+import dotted_box from "../../assets/svg/dots.svg";
 
 export default function Hero() {
   return (

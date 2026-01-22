@@ -1,4 +1,4 @@
-import SectionHeading from "../Global/SectionHeading";
+import SectionHeading from "./SectionHeading";
 import { Link } from "react-router-dom";
 
 const ContactSection = () => {

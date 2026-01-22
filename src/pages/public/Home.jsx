@@ -1,13 +1,14 @@
-import Footer from "../../components/pageComponents/public/Global/Footer";
-import Navbar from "../../components/pageComponents/public/Global/Navbar";
-import StickyButtons from "../../components/pageComponents/public/Global/StickyButtons";
-import BenefitSection from "../../components/pageComponents/public/HomePage/BenefitSection";
-import ContactSection from "../../components/pageComponents/public/HomePage/ContactSection";
-import FaqSection from "../../components/pageComponents/public/HomePage/FaqSection";
-import Hero from "../../components/pageComponents/public/HomePage/Hero";
-import ProgramSection from "../../components/pageComponents/public/HomePage/ProgramSection";
-import Slider from "../../components/pageComponents/public/HomePage/Slider";
-import TestimonialSection from "../../components/pageComponents/public/HomePage/TestimonialSection";
+import BenefitSection from "../../components/public/BenefitSection";
+import CommunityGrowth from "../../components/public/CommunityGrowth";
+import ContactSection from "../../components/public/ContactSection";
+import FaqSection from "../../components/public/FaqSection";
+import Footer from "../../components/public/Footer";
+import Hero from "../../components/public/Hero";
+import Navbar from "../../components/public/Navbar";
+import ProgramSection from "../../components/public/ProgramSection";
+import StickyButtons from "../../components/public/StickyButtons";
+import TestimonialSection from "../../components/public/TestimonialSection";
+
 
 const Home = () => {
     return (
@@ -16,7 +17,7 @@ const Home = () => {
             <StickyButtons />
             <Hero />
             <BenefitSection />
-            <Slider />
+            <CommunityGrowth />
             <ProgramSection />
             <TestimonialSection />
             <FaqSection />

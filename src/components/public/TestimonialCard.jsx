@@ -1,4 +1,4 @@
-import icon from "../../../../assets/images/Frame.png";
+import icon from "../../assets/images/Frame.png";
 
 const TestimonialCard = ({ name, title, image, desc }) => {
     return (

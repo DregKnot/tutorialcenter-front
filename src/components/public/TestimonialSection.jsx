@@ -1,7 +1,6 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import TestimonialCard from "./TestimonialCard";
-import SectionHeading from "../Global/SectionHeading";
+import SectionHeading from "./SectionHeading";
 
 //Testimonial data
 const data = [

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import SectionHeading from "../Global/SectionHeading";
+import SectionHeading from "./SectionHeading";
 
 const FaqSection = () => {
 

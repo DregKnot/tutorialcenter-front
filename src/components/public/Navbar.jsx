@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import logo from "../../../../assets/images/tutorial_logo.png";
+import logo from "../../assets/images/tutorial_logo.png";
 import { Link, NavLink } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import useScrollVisibility from "../../../../hooks/useScrollVisibility";
 
 const navigation = [
   { path: "/", name: "Home" },
@@ -14,16 +13,11 @@ const navigation = [
 export default function Navbar() {
   
   const [visible, setVisible] = useState(false);
-  const scrollVisible = useScrollVisibility();
 
   return (
     <>
       <div
-        className={`${
-          scrollVisible
-            ? " bg-white shadow-custom-1 animate-header"
-            : "invisible"
-        } py-3.5 sticky top-0 z-[80]  w-full  h-[85px] flex items-center justify-center scroll`}
+        className={`bg-white shadow-custom-1 animate-header py-3.5 sticky top-0 z-[80]  w-full  h-[85px] flex items-center justify-center scroll`}
       >
         <div className="Container">
           <div className="flex items-center justify-between">
@@ -124,7 +118,7 @@ const MobileNavigation = ({ setVisible, visible }) => {
       className={`${
         visible
           ? "visible opacity-100"
-          : "invisible opacity-0 transition-all ease-in-out duration-1000"
+          : "opacity-0 transition-all ease-in-out duration-1000"
       } w-full h-full fixed  top-0 left-0 bg-black bg-opacity-50 z-[100] flex flex-col items-end justify-end p-2`}
     >
       <div

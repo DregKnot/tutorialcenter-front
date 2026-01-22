@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ProgramCard from "./ProgramCard";
-import SectionHeading from "../Global/SectionHeading";
-import jamb from "../../../../assets/images/jamb_logo.png";
-import waec from "../../../../assets/images/waec_logo.png";
+import SectionHeading from "./SectionHeading";
+import jamb from "../../assets/images/jamb_logo.png";
+import waec from "../../assets/images/waec_logo.png";
 
 const ProgramSection = () => {
 

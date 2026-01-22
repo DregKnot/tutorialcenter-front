@@ -1,4 +1,4 @@
-import icon from "../../../../assets/svg/tc_icon.svg";
+import icon from "../../assets/svg/tc_icon.svg";
 
 const SectionHeading = ({ title, position_right }) => {
 

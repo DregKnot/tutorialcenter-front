@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-export default function SliderLayout({
+export default function CommunityGrowthLayout({
   title,
   semititle,
   desc,

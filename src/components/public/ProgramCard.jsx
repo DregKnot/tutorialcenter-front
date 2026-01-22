@@ -1,5 +1,5 @@
-import PenIcon from "../../../../assets/images/Vector.png";
-import BookIcon from "../../../../assets/images/emojione_books.png";
+import PenIcon from "../../assets/images/Vector.png";
+import BookIcon from "../../assets/images/emojione_books.png";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
