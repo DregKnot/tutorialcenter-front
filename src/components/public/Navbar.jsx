@@ -118,7 +118,7 @@ const MobileNavigation = ({ setVisible, visible }) => {
       className={`${
         visible
           ? "visible opacity-100"
-          : "opacity-0 transition-all ease-in-out duration-1000"
+          : "invisible opacity-0 transition-all ease-in-out duration-1000"
       } w-full h-full fixed  top-0 left-0 bg-black bg-opacity-50 z-[100] flex flex-col items-end justify-end p-2`}
     >
       <div
