@@ -98,8 +98,8 @@ const OurTeam = () => {
 
     return (
         <>
-            <SectionHeading title="Meet the team" position_right={"right"} />
-            <div className="Container py-20">
+            <SectionHeading title="Meet the team" position_right={false} />
+            <div className="Container py-14 lg:py-16">
                 <div className="area-wrapper">
                     
                     {/* Team category tabs */}

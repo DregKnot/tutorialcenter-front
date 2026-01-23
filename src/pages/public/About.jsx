@@ -5,7 +5,9 @@ import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import OurTeam from "../../components/public/OurTeam";
 import handCup from "../../assets/images/handCup.jpg";
+import image from "../../assets/images/handshake.png";
 import conversation from "../../assets/images/conversations.jpg";
+import SectionHeading from "../../components/public/SectionHeading";
 import WhatWeProvideCard from "../../components/public/WhatWeProvideCard";
 import CommunityGrowthLayout from "../../components/public/CommunityGrowthLayout";
 
@@ -125,13 +127,14 @@ const About = () => {
         }
         Sdesc={"Be present for your future!"}
         btnTitle={"Apply Now"}
+        imgPath={image}
       />
 
       {/* What we Provide */}
-      <div className="Container my-20">
+      <SectionHeading title="We provide" position_right={true} />
+      <div className="Container py-14 lg:py-16">
         <div className="area-wrapper">
           <div className="text-center mb-8">
-            <h2 className="font-bold uppercase text-xl mb-4">We provide</h2>
             <p>
               Empowering students with the tools, resources, and guidance they
               need to excel. At Tutorial Center, we provide comprehensive
@@ -146,7 +149,7 @@ const About = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Our Team Section */}
       <OurTeam />
       <Footer />
