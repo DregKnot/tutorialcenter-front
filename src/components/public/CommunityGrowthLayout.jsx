@@ -1,14 +1,7 @@
 import { Link } from "react-router-dom";
 
-export default function CommunityGrowthLayout({
-  title,
-  semititle,
-  desc,
-  Sdesc,
-  btnTitle,
-  btnPath,
-  imgPath,
-}) {
+export default function CommunityGrowthLayout({ title, semititle, desc, Sdesc, btnTitle, btnPath, imgPath}) {
+    
     return (
         <>
             <div className="bg-[#09314F] flex  flex-col-reverse md:grid grid-cols-2 items-center justify-center min-w-full">
