@@ -1,11 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import signup_img from "../../../assets/images/Student_sign_up.jpg";
 import TC_logo from "../../../assets/images/tutorial_logo.png";
 import ReturnArrow from "../../../assets/svg/return arrow.svg";
 
-const StepOne = ({ userRole, setUserRole, handleStep1Submit, showError }) => {
+const StepOne = ({ userRole, setUserRole, setStep }) => {
   const navigate = useNavigate();
+  const [showError, setShowError] = useState(false);
+
+  const handleStep1Submit = () => {
+    // 1. The Check: Has a role been picked?
+    if (!userRole) {
+      // 2. The Penalty: Show error and trigger animation
+      setShowError(true);
+
+      // Remove the red text after 3 seconds to keep UI clean
+      setTimeout(() => setShowError(false), 3000);
+      return;
+    }
+
+    // 3. The Success: Move to next step
+    setStep(2);
+  };
 
   return (
     <div className="w-full min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">

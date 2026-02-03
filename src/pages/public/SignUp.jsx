@@ -487,7 +487,7 @@ const SignUp = () => {
     return decrypt(sessionStorage.getItem("_tc_role")) || null;
   });
 
-  const [showError, setShowError] = useState(false);
+
   const [errors, setErrors] = useState({});
 
   const [email, setEmail] = useState("");
@@ -717,21 +717,6 @@ const [selectedPayment, setSelectedPayment] = useState(null);
     const updated = [...students];
     updated[index] = { ...updated[index], [field]: value };
     setStudents(updated);
-  };
-
-  const handleStep1Submit = () => {
-    // 1. The Check: Has a role been picked?
-    if (!userRole) {
-      // 2. The Penalty: Show error and trigger animation
-      setShowError(true);
-
-      // Remove the red text after 3 seconds to keep UI clean
-      setTimeout(() => setShowError(false), 3000);
-      return;
-    }
-
-    // 3. The Success: Move to next step
-    setStep(2);
   };
 
   const handleOtpChange = (value, index) => {
@@ -1110,15 +1095,8 @@ const handleGuardianStep8Submit = (paymentMethod) => {
   //   setShowError(false);
   // };
 
-  function renderCurrentPage() {
-    if (step === 1) {
-      return (
-              <StepOne userRole={userRole} setUserRole={setUserRole} handleStep1Submit={handleStep1Submit} />
-      
-      );
-    }
-    return null;
-  }
+
+  // 5. STEP 3 RENDER OTP
 
 
 
@@ -2321,7 +2299,15 @@ const renderGuardianSuccessScreen = () => {
 
   if (showSplash) return <SplashScreen />;
 
-  if (step === 1) return renderCurrentPage();
+  if (step === 1) {
+    return (
+      <StepOne
+        userRole={userRole}
+        setUserRole={setUserRole}
+        setStep={setStep}
+      />
+    );
+  }
   if (step === 2) {
     return (
       <StepTwo
