@@ -1,628 +1,134 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import signup_img from "../../assets/images/student_sign_up.jpg";
+import TC_logo from "../../assets/images/tutorial_logo.png";
+import ReturnArrow from "../../assets/svg/return arrow.svg";
 
-import SplashScreen from "../../components/public/SplashScreen";
-import ComingSoon from "../../components/public/ComingSoon";
-import StepOne from "../../components/public/SignUpUsables/UserTypeSelection";
-import StepTwo from "../../components/public/SignUpUsables/UserSignUp";
-import StepThree from "../../components/public/SignUpUsables/Otp";
-import StepFour from "./StudentSignUp/StudentBiodata";
-import GuardianStepFour from "./GuardianSignUp/AddStudent";
-import StepFive from "./StudentSignUp/TrainingSelection";
-import GuardianStepFive from "./GuardianSignUp/AddedStudentBiodata";
-import StepSix from "./StudentSignUp/SubjectSelection";
-import GuardianStepSix from "./GuardianSignUp/AddedStudentTraining";
-import StepSeven from "./StudentSignUp/DurationSelection";
-import GuardianStepSeven from "./GuardianSignUp/StudentDuration";
-import StepEight from "./StudentSignUp/PaymentSelection";
-import GuardianStepEight from "./GuardianSignUp/PaymentSelection";
-import StepNine from "./StudentSignUp/PaymentSuccess";
-import GuardianStepNine from "./GuardianSignUp/PaymentSuccess";
-
-import { 
-  handleStudentStep4Submit, 
-  handleStudentStep5Submit, 
-  handleStudentStep6Submit, 
-  handleStudentStep7Submit, 
-  handleStudentStep8Submit 
-} from "../../components/public/handleSubmits/studentHandlers";
-import { 
-  handleGuardianStep4Submit, 
-  handleGuardianStep5Submit, 
-  handleGuardianStep6Submit, 
-  handleGuardianStep7Submit, 
-  handleGuardianStep8Submit 
-} from "../../components/public/handleSubmits/guardianHandlers";
-
-
-const SignUp = () => {
+export default function SignUp() {
   const navigate = useNavigate();
-  // mix the text with SESSION_SECRET so it's unique to this window
-  const SESSION_KEY = useMemo(() => "TC_SECURE_V1" + Math.random().toString(36).substring(7), []);
+  const [userRole, setUserRole] = useState("");
 
-  const encrypt = useCallback((data) => {
-    try {
-      const text = JSON.stringify(data);
-      return btoa(`${SESSION_KEY}|${text}`);
-    } catch (e) {
-      return null;
-    }
-  }, [SESSION_KEY]);
-
-  const decrypt = useCallback((data) => {
-    try {
-      if (!data) return null;
-      const decoded = atob(data);
-      const [key, json] = decoded.split("|");
-      if (key !== SESSION_KEY) return null;
-      return JSON.parse(json);
-    } catch (e) {
-      return null;
-    }
-  }, [SESSION_KEY]);
-
-  const [step, setStep] = useState(() => {
-    return decrypt(sessionStorage.getItem("_tc_step")) || 1;
-  });
-
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const [userRole, setUserRole] = useState(() => {
-    return decrypt(sessionStorage.getItem("_tc_role")) || null;
-  });
-
-
-
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-
-
-
-
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [dob, setDob] = useState("");
-  const [gender, setGender] = useState("");
-  const [department, setDepartment] = useState("");
-  const [location, setLocation] = useState("");
-  const [address, setAddress] = useState("");
-  const [displayPic, setDisplayPic] = useState(null);
-  const [biodataErrors, setBiodataErrors] = useState({});
-  const [guardianErrors, setGuardianErrors] = useState({});
-
-  // Validation function for biodata
-const validateBiodataField = (field, value) => {
-  switch (field) {
-    case 'firstName':
-    case 'lastName':
-      if (!value || !value.trim()) {
-        return `${field === 'firstName' ? 'First' : 'Last'} name is required`;
-      }
-      if (value.trim().length < 2) {
-        return `${field === 'firstName' ? 'First' : 'Last'} name must be at least 2 characters`;
-      }
-      return null;
-
-    case 'dob':
-      if (!value) {
-        return 'Date of birth is required';
-      }
-      const birthDate = new Date(value);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      if (age < 5 || age > 100) {
-        return 'Please enter a valid date of birth';
-      }
-      return null;
-
-    case 'gender':
-      if (!value) {
-        return 'Please select your gender';
-      }
-      return null;
-
-    case 'department':
-      if (!value) {
-        return 'Please select your department';
-      }
-      return null;
-
-    case 'location':
-      if (!value || !value.trim()) {
-        return 'Location is required';
-      }
-      return null;
-
-    default:
-      return null;
-  }
-};
-
-// Validate all biodata fields
-const validateAllBiodataFields = (studentData) => {
-  const errors = {};
-  const fields = ['firstName', 'lastName', 'dob', 'gender', 'department', 'location'];
-  
-  fields.forEach(field => {
-    const error = validateBiodataField(field, studentData[field]);
-    if (error) {
-      errors[field] = error;
-    }
-  });
-
-  return Object.keys(errors).length > 0 ? errors : null;
-};
-
-  // Step 4 (Guardian Add Student) State
-  const [students, setStudents] = useState([
-    { firstName: "", lastName: "", identity: "", trainings: ["", "", "", ""] },
-  ]);
-  const [activeTab, setActiveTab] = useState(0);
-  const [studentPassword, setStudentPassword] = useState("");
-  const [confirmStudentPassword, setConfirmStudentPassword] = useState("");
-  // show/hide toggles for guardian password fields
-  const [showStudentPassword, setShowStudentPassword] = useState(false);
-  const [showConfirmStudentPassword, setShowConfirmStudentPassword] = useState(false);
-
-
-
-  const [selectedExams, setSelectedExams] = useState(["JAMB"]);
-
-  const [examError, setExamError] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null); // Track which exam is open
-  const [selectedSubjects, setSelectedSubjects] = useState({});
-
-  const toggleSubject = (exam, subject) => {
-    const current = selectedSubjects[exam] || [];
-    const limit = exam === "JAMB" ? 4 : 9;
-
-    if (current.includes(subject)) {
-      setSelectedSubjects({
-        ...selectedSubjects,
-        [exam]: current.filter((s) => s !== subject),
-      });
-    } else if (current.length < limit) {
-      setSelectedSubjects({
-        ...selectedSubjects,
-        [exam]: [...current, subject],
-      });
-    }
-  };
-
-  const toggleExam = (exam) => {
-    setExamError(false);
-    if (selectedExams.includes(exam)) {
-      setSelectedExams(selectedExams.filter((item) => item !== exam));
-    } else {
-      setSelectedExams([...selectedExams, exam]);
-    }
-  };
-
-
-  const ALL_SUBJECTS = [
-    "Mathematics",
-    "English",
-    "Physics",
-    "Biology",
-    "Chemistry",
-    "Financial Accounting",
-    "Economics",
-    "French",
-    "Literature in English",
-    "Commerce",
-    "Geography",
-    "Government",
-    "Agricultural Science",
-    "CRS/IRS",
-    "Civic",
-    "Further Maths",
-    "ICT",
-    "Technical Drawing",
-    "Igbo",
-    "Hausa",
-    "Yoruba",
-  ];
-
-  const [selectedDurations, setSelectedDurations] = useState({});
-
-  const PRICES = {
-  JAMB: { Monthly: 3200, Quarterly: 9000, Biannually: 17000, Annually: 32000 },
-  WAEC: { Monthly: 4500, Quarterly: 12000, Biannually: 22000, Annually: 38500 },
-  NECO: { Monthly: 4000, Quarterly: 11000, Biannually: 20000, Annually: 35000 },
-  GCE: { Monthly: 4500, Quarterly: 12000, Biannually: 22000, Annually: 38500 }
-};
-
-const DURATIONS = ["Monthly", "Quarterly", "Biannually", "Annually"];
-
-  // Helper to calculate total for student
-  const calculateStudentTotal = () => {
-    return selectedExams.reduce((acc, exam) => {
-      const duration = selectedDurations[exam] || "Monthly";
-      return acc + (PRICES[exam]?.[duration] || 0);
-    }, 0).toLocaleString();
-  };
-
-const [selectedPayment, setSelectedPayment] = useState(null);
-  useEffect(() => {
-    
-    // Every time the brain changes, we lock the new data in the vault
-    sessionStorage.setItem("_tc_step", encrypt(step));
-    if (userRole) sessionStorage.setItem("_tc_role", encrypt(userRole));
-  }, [step, userRole, encrypt]);
-
-
-
-  const updateStudent = (index, field, value) => {
-    const updated = [...students];
-    updated[index] = { ...updated[index], [field]: value };
-    setStudents(updated);
-  };
-
-
-  const handleFieldChange = (field, value) => {
-    switch(field) {
-      case 'firstName': setFirstName(value); break;
-      case 'lastName': setLastName(value); break;
-      case 'dob': setDob(value); break;
-      case 'gender': setGender(value); break;
-      case 'department': setDepartment(value); break;
-      case 'location': setLocation(value); break;
-      case 'address': setAddress(value); break;
-      case 'displayPic': setDisplayPic(value); break;
-      default: break;
-    }
-    if (biodataErrors[field]) {
-      setBiodataErrors({ ...biodataErrors, [field]: null });
-    }
-  };
-
-  const addStudent = () => {
-    setStudents([...students, { firstName: "", lastName: "", identity: "" }]);
-    setActiveTab(students.length);
-  };
-
-
-  if (showSplash) return <SplashScreen />;
-
-  if (step === 1) {
-    return (
-      <StepOne
-        userRole={userRole}
-        setUserRole={setUserRole}
-        setStep={setStep}
-      />
-    );
-  }
-
-  // INTERCEPT GUARDIAN FLOW
-  if (userRole === "guardian") {
-    return <ComingSoon onBack={() => {
-      setStep(1);
-      setUserRole(null); 
-    }} />;
-  }
-
-  if (step === 2) {
-    return (
-      <StepTwo
-        userRole={userRole}
-        email={email}
-        setEmail={setEmail}
-        password={password}
-        setPassword={setPassword}
-        confirmPassword={confirmPassword}
-        setConfirmPassword={setConfirmPassword}
-        setStep={setStep}
-      />
-    );
-  }
-
-  if (step === 3) {
-    return (
-      <StepThree
-        email={email}
-        userRole={userRole}
-        setStep={setStep}
-      />
-    );
-  }
-
-  if (step === 4) {
+  const handleSubmit = () => {
+    console.log("Selected Role:", userRole); // Debugging line
     if (userRole === "student") {
-      const studentData = { firstName, lastName, dob, gender, department, location, address, displayPic };
-      return (
-        <StepFour
-          studentData={studentData}
-          handleFieldChange={handleFieldChange}
-          biodataErrors={biodataErrors}
-          activeDropdown={activeDropdown}
-          setActiveDropdown={setActiveDropdown}
-          handleStep4Submit={() => {
-            handleStudentStep4Submit({
-              userRole,
-              studentData: {
-                firstName, lastName, dob, gender, department, location, address, displayPic
-              },
-              validateAllBiodataFields,
-              setBiodataErrors,
-              setStep
-            });
-          }}
-          setStep={setStep}
-        />
-      );
-    } else {
-      return (
-        <GuardianStepFour
-          students={students}
-          setStudents={setStudents}
-          updateStudent={updateStudent}
-          addStudent={addStudent}
-          studentPassword={studentPassword}
-          setStudentPassword={setStudentPassword}
-          confirmStudentPassword={confirmStudentPassword}
-          setConfirmStudentPassword={setConfirmStudentPassword}
-          guardianErrors={guardianErrors}
-          handleStep4Submit={() => {
-            if (userRole === "student") {
-              handleStudentStep4Submit({
-                userRole,
-                studentData: {
-                  firstName, lastName, dob, gender, department, location, address, displayPic
-                },
-                validateAllBiodataFields,
-                setBiodataErrors,
-                setStep
-              });
-            } else {
-              handleGuardianStep4Submit({
-                students,
-                studentPassword,
-                confirmStudentPassword,
-                setGuardianErrors,
-                setStep
-              });
-            }
-          }}
-          setStep={setStep}
-          showStudentPassword={showStudentPassword}
-          setShowStudentPassword={setShowStudentPassword}
-          showConfirmStudentPassword={showConfirmStudentPassword}
-          setShowConfirmStudentPassword={setShowConfirmStudentPassword}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-        />
-      );
+      navigate("/register/student");
+    } else if (userRole === "guardian") {
+      navigate("/register/guardian");
     }
-  }
-  if (step === 5) {
-    return userRole === "student"
-      ? (
-        <StepFive
-          handleStep5Submit={() => {
-            handleStudentStep5Submit({ selectedExams, setExamError, setStep });
-          }}
-          setStep={setStep}
-          selectedExams={selectedExams}
-          toggleExam={toggleExam}
-          examError={examError}
-        />
-      )
-      : (
-        <GuardianStepFive
-          students={students}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          guardianErrors={guardianErrors}
-          updateStudent={updateStudent}
-          activeDropdown={activeDropdown}
-          setActiveDropdown={setActiveDropdown}
-          handleStep5Submit={() => {
-            if (userRole === "student") {
-              handleStudentStep5Submit({ selectedExams, setExamError, setStep });
-            } else {
-              handleGuardianStep5Submit({
-                students,
-                validateAllBiodataFields,
-                setGuardianErrors,
-                setStep
-              });
-            }
-          }}
-          setStep={setStep}
-        />
-      );
-  }
-  if (step === 6) {
-    return userRole === "student"
-      ? (
-        <StepSix
-          selectedExams={selectedExams}
-          selectedSubjects={selectedSubjects}
-          toggleSubject={toggleSubject}
-          activeDropdown={activeDropdown}
-          setActiveDropdown={setActiveDropdown}
-          setStep={setStep}
-          ALL_SUBJECTS={ALL_SUBJECTS}
-        />
-      )
-      : (
-        <GuardianStepSix
-          students={students}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          setStudents={setStudents}
-          handleStep6Submit={() => {
-            if (userRole === "student") {
-               handleStudentStep6Submit({
-                 selectedExams,
-                 selectedSubjects,
-                 setStep
-               });
-            } else {
-               handleGuardianStep6Submit({ setStep });
-            }
-          }}
-          setStep={setStep}
-        />
-      );
-  }
-  if (step === 7) {
-    // For Guardian calculation, I need to replicate logic or pass the helper.
-    // The previous inline function 'renderGuardianStepSeven' had a 'calculateTotal' function.
-    // I should probably hoist that logic or pass it.
-    // In SignUp.jsx, 'calculateStudentTotal' exists for student.
-    // I should create 'calculateGuardianTotal' in SignUp.jsx to pass down.
-    
-    // NOTE: I am referencing 'calculateGuardianTotal' below but it doesn't exist yet in the upper scope logic.
-    // I will add it as a separate edit or use an inline arrow function if it's simple enough.
-    // Actually, I can pass a lambda props.
-
-    const calculateGuardianTotal = () => {
-      let total = 0;
-      students.forEach(student => {
-        if (student.durations && student.trainings) {
-          student.trainings.filter(t => t !== "").forEach(exam => {
-            const duration = student.durations[exam];
-            if (duration && PRICES[exam] && PRICES[exam][duration]) {
-              total += PRICES[exam][duration];
-            }
-          });
+  };
+  return (
+    <>
+      <div className="w-full min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
+        <style>{`
+        @keyframes bluePulse {
+          0% { box-shadow: 0 0 0px rgba(59, 130, 246, 0); border-color: transparent; }
+          50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); border-color: #3b82f6; }
+          100% { box-shadow: 0 0 0px rgba(59, 130, 246, 0); border-color: transparent; }
         }
-      });
-      return total.toLocaleString();
-    };
+        .animate-glow { animation: bluePulse 0.8s ease-in-out 2; }
+      `}</style>
 
-    return userRole === "student"
-      ? (
-        <StepSeven
-          selectedExams={selectedExams}
-          selectedDurations={selectedDurations}
-          setSelectedDurations={setSelectedDurations}
-          activeDropdown={activeDropdown}
-          setActiveDropdown={setActiveDropdown}
-          PRICES={PRICES}
-          DURATIONS={DURATIONS}
-          handleStep7Submit={() => handleStudentStep7Submit({
-            selectedExams,
-            selectedDurations,
-            PRICES,
-            setStep
-          })}
-          calculateTotal={calculateStudentTotal}
-          setStep={setStep}
-        />
-      )
-      : (
-        <GuardianStepSeven
-          students={students}
-          setStudents={setStudents}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          activeDropdown={activeDropdown}
-          setActiveDropdown={setActiveDropdown}
-          PRICES={PRICES}
-          DURATIONS={DURATIONS}
-          handleStep7Submit={() => handleGuardianStep7Submit({
-            students,
-            PRICES,
-            setStep
-          })}
-          calculateTotal={calculateGuardianTotal}
-          setStep={setStep}
-        />
-      );
-  }
-  if (step === 8) {
-    // For Guardian Step 8, we need calculateTotal.
-    // Re-use logic or helper.
-    const calculateGuardianTotal = () => {
-      let total = 0;
-      students.forEach(student => {
-        if (student.durations && student.trainings) {
-          student.trainings.filter(t => t !== "").forEach(exam => {
-            const duration = student.durations[exam];
-            if (duration && PRICES[exam] && PRICES[exam][duration]) {
-              total += PRICES[exam][duration];
-            }
-          });
-        }
-      });
-      return total.toLocaleString();
-    };
+        {/* LEFT SIDE: Content Area */}
+        <div className="w-full md:w-1/2 h-full bg-[#F4F4F4] flex flex-col justify-center relative px-6 py-10 lg:px-[100px] lg:py-[60px] order-2 md:order-1 overflow-y-auto">
+          {/* 1. TOP NAV */}
+          <div className="relative w-full flex items-center justify-center mb-8 md:mb-10">
+            <button
+              onClick={() => navigate("/")}
+              className="absolute left-0 p-2 hover:bg-gray-200 rounded-full transition-all z-10"
+            >
+              <img
+                src={ReturnArrow}
+                alt="Back"
+                className="h-6 w-6 lg:h-5 lg:w-5"
+              />
+            </button>
+            <img
+              src={TC_logo}
+              alt="Logo"
+              className="h-[60px] md:h-[80px] w-auto object-contain"
+            />
+          </div>
 
-    return userRole === "student"
-      ? (
-        <StepEight
-          selectedPayment={selectedPayment}
-          setSelectedPayment={setSelectedPayment}
-          handlePaymentSubmit={(method) => handleStudentStep8Submit({
-            paymentMethod: method,
-            email,
-            firstName,
-            lastName,
-            dob,
-            gender,
-            department,
-            location,
-            address,
-            displayPic,
-            selectedExams,
-            selectedDurations,
-            selectedSubjects,
-            PRICES,
-            setStep
-          })}
-          calculateTotal={calculateStudentTotal} // Value: calculateStudentTotal()
-          setStep={setStep}
-        />
-      )
-      : (
-        <GuardianStepEight
-           selectedPayment={selectedPayment}
-           setSelectedPayment={setSelectedPayment}
-           handlePaymentSubmit={(method) => handleGuardianStep8Submit({
-             paymentMethod: method,
-             email,
-             students,
-             studentPassword,
-             PRICES,
-             setStep
-           })}
-           calculateTotal={calculateGuardianTotal}
-           setStep={setStep}
-        />
-      );
-  }
-  if (step === 9) {
-    return userRole === "student"
-      ? (
-        <StepNine
-          selectedExams={selectedExams}
-          selectedDurations={selectedDurations}
-          navigate={navigate}
-        />
-      )
-      : (
-        <GuardianStepNine
-          students={students}
-          navigate={navigate}
-        />
-      );
-  }
+          {/* 2. CENTER PIECE */}
+          <div className="flex flex-col items-center w-full">
+            <div className="text-center mb-4">
+              <h1 className="text-3xl font-bold text-[#09314F]">Sign Up</h1>
+              <p className="text-gray-500 italic text-sm">Select a user-type</p>
+            </div>
 
-  return null;
-};
+            <div
+              className="bg-white shadow-sm border border-gray-100 rounded-lg p-6 flex flex-col items-center w-full max-w-[369px] md:w-[369px] md:min-h-[309px]"
+            >
+              {/* Student Button */}
+              <button
+                onClick={() => setUserRole("student")}
+                className={`w-full h-[50px] mb-4 rounded-xl flex items-center justify-between px-6 font-semibold text-base transition-all border-2 ${!userRole ? "animate-glow" : ""}
+                  ${userRole === "student" ? "bg-[#76D287] text-white border-transparent" : "bg-[#FFF5F5] text-[#09314F] border-transparent"}`}
+              >
+                STUDENT
+                {userRole === "student" && <span>✓</span>}
+              </button>
 
+              {/* Guardian Button */}
+              <button
+                onClick={() => setUserRole("guardian")}
+                className={`w-full h-[50px] mb-4 rounded-xl flex items-center justify-between px-6 font-semibold text-base transition-all border-2 ${!userRole ? "animate-glow" : ""}
+                  ${userRole === "guardian" ? "bg-[#76D287] text-white border-transparent" : "bg-[#FFF5F5] text-[#09314F] border-transparent"}`}
+              >
+                GUARDIAN / PARENT
+                {userRole === "guardian" && <span>✓</span>}
+              </button>
 
-export default SignUp;
+              {/* Continue Button (Desktop - Inside Card) */}
+              <div className="hidden md:block w-full mt-auto">
+                <button
+                  onClick={handleSubmit}
+                  className="w-full h-[60px] text-white rounded-xl font-bold transition-all duration-500 shadow-md active:scale-95"
+                  style={{
+                    background: userRole
+                      ? "linear-gradient(90deg, #09314F 0%, #E33629 100%)"
+                      : "#5F5F5F",
+                  }}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Continue Button (Mobile - Fixed Bottom) */}
+          <div className="md:hidden fixed bottom-10 left-0 w-full px-6 z-20">
+            <button
+              onClick={handleSubmit}
+              className="w-full h-[60px] text-white rounded-xl font-bold transition-all duration-500 shadow-xl active:scale-[0.98]"
+              style={{
+                background: userRole
+                  ? "linear-gradient(90deg, #09314F 0%, #E33629 100%)"
+                  : "#5F5F5F",
+              }}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+
+        {/* RIGHT SIDE: The Visual Image */}
+        <div
+          className="w-full h-[192px] md:w-1/2 md:h-full bg-cover bg-center relative bg-gray-300 order-1 md:order-2"
+          style={{ backgroundImage: `url(${signup_img})` }}
+        >
+          {/* Login Button */}
+          <div className="hidden md:block absolute bottom-[60px] left-0">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-8 py-3 bg-white text-[#09314F] font-bold hover:bg-gray-100 transition-all shadow-md"
+              style={{ borderRadius: "0px 20px 20px 0px" }}
+            >
+              Login
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
