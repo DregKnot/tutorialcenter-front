@@ -1,15 +1,16 @@
 import React from 'react';
-import AuthLayout from "../../../components/public/SignUp_Usables/AuthLayout";
-import select_student from "../../../assets/images/add_student.png";
+import AuthLayout from "../../../components/public/SignUpUsables/AuthLayout";
+import otp_img_student from "../../../assets/images/otpStudentpic.jpg";
 
-const GuardianStepNine = ({
-  students,
+const StepNine = ({
+  selectedExams,
+  selectedDurations,
   navigate
 }) => {
   return (
     <AuthLayout
       title="Payment Successful!"
-      image={select_student}
+      image={otp_img_student}
     >
       <div className="w-full max-w-[400px] mx-auto my-auto text-center transition-all">
         {/* Success Icon */}
@@ -20,17 +21,12 @@ const GuardianStepNine = ({
         </div>
 
         {/* Access Info */}
-        <p className="text-gray-500 text-sm mb-4">You now have access for</p>
-        <div className="mb-8 space-y-2">
-          {students.map((student, idx) => (
-            <div key={idx} className="text-left bg-[#F9F4F3] p-3 rounded-lg">
-              <p className="text-[#09314F] font-bold text-xs uppercase">Student {idx + 1}</p>
-              {student.trainings && student.trainings.filter(t => t !== "").map((exam, examIdx) => (
-                <p key={examIdx} className="text-gray-600 text-xs">
-                  {exam} - {student.durations?.[exam] || 'Monthly'}
-                </p>
-              ))}
-            </div>
+        <p className="text-gray-500 text-sm mb-2">You now have access for</p>
+        <div className="mb-8">
+          {selectedExams.map((exam, idx) => (
+            <p key={idx} className="text-[#09314F] font-semibold text-sm">
+              {exam} - {selectedDurations[exam] || 'Monthly'}
+            </p>
           ))}
         </div>
 
@@ -49,4 +45,4 @@ const GuardianStepNine = ({
   );
 };
 
-export default GuardianStepNine;
+export default StepNine;

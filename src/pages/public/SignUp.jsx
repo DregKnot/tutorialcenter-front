@@ -3,21 +3,21 @@ import { useNavigate } from "react-router-dom";
 
 import SplashScreen from "../../components/public/SplashScreen";
 import ComingSoon from "../../components/public/ComingSoon";
-import StepOne from "./Student _Sign_up/StepOne";
-import StepTwo from "./Student _Sign_up/StepTwo";
-import StepThree from "./Student _Sign_up/StepThree";
-import StepFour from "./Student _Sign_up/StepFour";
-import GuardianStepFour from "./Guardian_SignUp/GuardianStepFour";
-import StepFive from "./Student _Sign_up/StepFive";
-import GuardianStepFive from "./Guardian_SignUp/GuardianStepFive";
-import StepSix from "./Student _Sign_up/StepSix";
-import GuardianStepSix from "./Guardian_SignUp/GuardianStepSix";
-import StepSeven from "./Student _Sign_up/StepSeven";
-import GuardianStepSeven from "./Guardian_SignUp/GuardianStepSeven";
-import StepEight from "./Student _Sign_up/StepEight";
-import GuardianStepEight from "./Guardian_SignUp/GuardianStepEight";
-import StepNine from "./Student _Sign_up/StepNine";
-import GuardianStepNine from "./Guardian_SignUp/GuardianStepNine";
+import StepOne from "../../components/public/SignUpUsables/UserTypeSelection";
+import StepTwo from "../../components/public/SignUpUsables/UserSignUp";
+import StepThree from "../../components/public/SignUpUsables/Otp";
+import StepFour from "./StudentSignUp/StudentBiodata";
+import GuardianStepFour from "./GuardianSignUp/AddStudent";
+import StepFive from "./StudentSignUp/TrainingSelection";
+import GuardianStepFive from "./GuardianSignUp/AddedStudentBiodata";
+import StepSix from "./StudentSignUp/SubjectSelection";
+import GuardianStepSix from "./GuardianSignUp/AddedStudentTraining";
+import StepSeven from "./StudentSignUp/DurationSelection";
+import GuardianStepSeven from "./GuardianSignUp/StudentDuration";
+import StepEight from "./StudentSignUp/PaymentSelection";
+import GuardianStepEight from "./GuardianSignUp/PaymentSelection";
+import StepNine from "./StudentSignUp/PaymentSuccess";
+import GuardianStepNine from "./GuardianSignUp/PaymentSuccess";
 
 import { 
   handleStudentStep4Submit, 
@@ -25,14 +25,14 @@ import {
   handleStudentStep6Submit, 
   handleStudentStep7Submit, 
   handleStudentStep8Submit 
-} from "../../components/public/handle_submits/studentHandlers";
+} from "../../components/public/handleSubmits/studentHandlers";
 import { 
   handleGuardianStep4Submit, 
   handleGuardianStep5Submit, 
   handleGuardianStep6Submit, 
   handleGuardianStep7Submit, 
   handleGuardianStep8Submit 
-} from "../../components/public/handle_submits/guardianHandlers";
+} from "../../components/public/handleSubmits/guardianHandlers";
 
 
 const SignUp = () => {

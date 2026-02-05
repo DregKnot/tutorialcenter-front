@@ -1,6 +1,6 @@
 import React from 'react';
-import AuthLayout from "../../../components/public/SignUp_Usables/AuthLayout";
-import CustomDropdown from "../../../components/public/SignUp_Usables/CustomDropdown";
+import AuthLayout from "../../../components/public/SignUpUsables/AuthLayout";
+import CustomDropdown from "../../../components/public/SignUpUsables/CustomDropdown";
 import signup_img from "../../../assets/images/Student_sign_up.jpg";
 
 const StepSeven = ({

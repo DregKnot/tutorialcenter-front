@@ -1,12 +1,12 @@
 import React from 'react';
-import AuthLayout from "../../../components/public/SignUp_Usables/AuthLayout";
-import otp_img_student from "../../../assets/images/otpStudentpic.jpg";
+import AuthLayout from "../../../components/public/SignUpUsables/AuthLayout";
+import select_student from "../../../assets/images/add_student.png";
 
-const StepEight = ({
+const GuardianStepEight = ({
   selectedPayment,
   setSelectedPayment,
   handlePaymentSubmit,
-  calculateTotal, // Function or Value
+  calculateTotal,
   setStep
 }) => {
   const paymentMethods = [
@@ -21,7 +21,7 @@ const StepEight = ({
     <AuthLayout
       title="Payment Method"
       subtitle="Select a preferred method of payment"
-      image={otp_img_student}
+      image={select_student}
       onBack={() => setStep(7)}
     >
       <div className="w-full max-w-[448px] mx-auto my-auto text-center">
@@ -54,4 +54,4 @@ const StepEight = ({
   );
 };
 
-export default StepEight;
+export default GuardianStepEight;

@@ -1,7 +1,7 @@
 import React from "react";
 import ReturnArrow from "../../../assets/svg/return arrow.svg";
 import otp_img_student from "../../../assets/images/otpStudentpic.jpg";
-import StudentBiodataFields from "../../../components/public/SignUp_Usables/StudentBiodataFields";
+import StudentBiodataFields from "../../../components/public/SignUpUsables/StudentBiodataFields";
 
 const StepFour = ({
   studentData,

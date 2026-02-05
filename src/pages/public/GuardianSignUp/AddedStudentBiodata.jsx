@@ -1,7 +1,7 @@
 import React from "react";
 import ReturnArrow from "../../../assets/svg/return arrow.svg";
 import select_student from "../../../assets/images/add_student.png";
-import StudentBiodataFields from "../../../components/public/SignUp_Usables/StudentBiodataFields";
+import StudentBiodataFields from "../../../components/public/SignUpUsables/StudentBiodataFields";
 
 const GuardianStepFive = ({
   students,

@@ -1,5 +1,5 @@
 import React from 'react';
-import AuthLayout from "../../../components/public/SignUp_Usables/AuthLayout";
+import AuthLayout from "../../../components/public/SignUpUsables/AuthLayout";
 // import CustomDropdown from "../../../components/public/CustomDropdown";
 import signup_img from "../../../assets/images/Student_sign_up.jpg"; // Or generic image
 
