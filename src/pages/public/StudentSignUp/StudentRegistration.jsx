@@ -9,10 +9,9 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 export default function StudentRegistration() {
   const navigate = useNavigate(); // Initializing navigation
   const [msg, setMsg] = useState("");
-  const [tel, setTel] = useState(null);
   const [toast, setToast] = useState(null);
-  const [email, setEmail] = useState(null);
-  const [errors, setErrors] = useState(""); // Initializing errors
+  const [errors, setErrors] = useState({}); // Initializing errors
+  const [msgType, setMsgType] = useState(""); // "success" | "error"
   const [loading, setLoading] = useState(false); // loading for button press
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -55,43 +54,40 @@ export default function StudentRegistration() {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validateForm()) return;
-    console.log(formData);
-    // Regex for basic email validation
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    // Determine if the entry is an email or a phone number
-    if (formData.entry.match(emailRegex)) {
-      setEmail(formData.entry);
-      setTel(null); // Clear tel if email is valid
-    } else {
-      setTel(formData.entry);
-      setEmail(null); // Clear email if tel is valid
-    }
-    console.log(email, tel);
+    // derive values locally (NO state)
+    const isEmail = emailRegex.test(formData.entry);
+
+    const payload = {
+      email: isEmail ? formData.entry : null,
+      tel: isEmail ? null : formData.entry,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+    };
 
     setLoading(true);
+
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/students/register`,
-        {
-          tel: tel,
-          email: email,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword,
-        },
+        payload,
       );
-      console.log(response.response);
+
       if (response.status === 201) {
         setToast({ type: "success", message: response.data.message });
-        if (email === null) {
+        setMsgType("success");
+        if (payload.tel) {
           setMsg(
             "Registration successful! Please check your phone for the OTP.",
           );
-          setInterval(() => {
-            navigate(`/register/student/phone/verify?tel=${tel}`);
+          setTimeout(() => {
+            navigate(`/register/student/phone/verify?tel=${payload.tel}`);
           }, 3000);
-        } else if (tel === null) {
+        } else {
           setMsg(
             "Registration successful! Please check your email for the verification.",
           );
@@ -102,12 +98,14 @@ export default function StudentRegistration() {
         type: "error",
         message: error?.response?.data?.message || "Registration failed.",
       });
-      setErrors(error?.response?.data?.errors);
+      setMsgType("error");
+      setMsg(error?.response?.data?.message || "Registration failed.");
+      setErrors(error?.response?.data?.errors || {});
     } finally {
       setLoading(false);
-      console.log(msg);
     }
   };
+
   return (
     <>
       <div className="w-full min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
@@ -141,14 +139,24 @@ export default function StudentRegistration() {
               <p className="text-gray-500 italic text-sm">
                 Register With E-Mail Address Or Phone Number
               </p>
-              <h3
-                className="text-lg font-bold text-green-500"
-              >
-                {msg}
-              </h3>
+              {/* <h3 className="text-lg font-bold text-green-500">{msg}</h3> */}
+              {msg && (
+                <h3
+                  className={`text-lg font-bold ${
+                    msgType === "success"
+                      ? "text-green-500"
+                      : msgType === "error"
+                        ? "text-red-500"
+                        : ""
+                  }`}
+                >
+                  {msg}
+                </h3>
+              )}
             </div>
 
             <div className="bg-white shadow-sm border border-gray-100 rounded-lg p-6 flex flex-col items-center w-full">
+              {/* Toast */}
               <p>
                 {toast && (
                   <div
@@ -183,9 +191,9 @@ export default function StudentRegistration() {
                         errors.entry ? "border-red-500" : "border-gray-300"
                       } focus:ring-2 focus:ring-blue-900 focus:border-transparent`}
                     />
-                    {errors.entry && (
+                    {(errors.entry || errors.tel || errors.email) && (
                       <p className="mt-1 text-sm text-red-500">
-                        {errors.entry}
+                        {errors.entry || errors.tel || errors.email}
                       </p>
                     )}
                   </div>
