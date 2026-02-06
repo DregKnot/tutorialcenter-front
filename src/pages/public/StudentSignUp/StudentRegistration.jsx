@@ -88,10 +88,12 @@ export default function StudentRegistration() {
           setMsg(
             "<span className='text-green-500'>Registration successful! Please check your phone for the OTP.</span>",
           );
+          localStorage.setItem('tel', tel);
           setInterval(() => {
             navigate(`/register/student/phone/verify?tel=${tel}`);
-          }, 3000);
+          }, 5000);
         } else if (tel === null) {
+          localStorage.setItem('email', email);
           setMsg(
             "<span className='text-green-500'>Registration successful! Please check your email for the OTP.</span>",
           );

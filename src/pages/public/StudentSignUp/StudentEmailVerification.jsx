@@ -1,39 +1,22 @@
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import TC_logo from "../../../assets/images/tutorial_logo.png";
 import ReturnArrow from "../../../assets/svg/return arrow.svg";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import signup_img from "../../../assets/images/student_sign_up.jpg";
 
-export default function StudentPhoneVerification() {
+export default function StudentEmailVerification() {
   const navigate = useNavigate(); // Initializing navigation
   const [msg, setMsg] = useState("");
   const [count, setCount] = useState(60);
   const [searchParams] = useSearchParams();
-  const tel = searchParams.get("tel");
+  const token = searchParams.get("token");
   const [toast, setToast] = useState(null);
-  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    num1: "",
-    num2: "",
-    num3: "",
-    num4: "",
-    num5: "",
-    num6: "",
-  });
+  const email = localStorage.getItem("email");
 
-  const API_BASE_URL =
-    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
-  const inputRefs = {
-    num1: useRef(null),
-    num2: useRef(null),
-    num3: useRef(null),
-    num4: useRef(null),
-    num5: useRef(null),
-    num6: useRef(null),
-  };
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
   useEffect(() => {
     // 1. Only start timer if count is greater than 0
@@ -47,67 +30,21 @@ export default function StudentPhoneVerification() {
     }
   }, [count]);
 
-  useEffect(() => {
-    inputRefs.num1.current.focus(); // autofocus on first load
-  }, [inputRefs.num1]);
+  
 
-  // Handle input changes and auto-focus to next field
-  const handleChange = (e) => {
-    const { name, value } = e.target;
 
-    if (value.length > 1) return; // prevent more than 1 character
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Move to next input
-    if (value) {
-      const nextInput = {
-        num1: "num2",
-        num2: "num3",
-        num3: "num4",
-        num4: "num5",
-        num5: "num6",
-      }[name];
-
-      if (nextInput && inputRefs[nextInput]) {
-        inputRefs[nextInput].current.focus();
-      }
-    }
-  };
-
-  // Basic validation to ensure all fields are filled
-  const validateForm = () => {
-    const newErrors = {};
-    Object.keys(formData).forEach((key) => {
-      if (!formData[key].trim()) newErrors[key] = `${key} is required`;
-    });
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   // Handle form submission and OTP verification
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
 
     setLoading(true);
-    const otp =
-      formData.num1 +
-      formData.num2 +
-      formData.num3 +
-      formData.num4 +
-      formData.num5 +
-      formData.num6;
 
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/api/students/verify-phone`,
+        `${API_BASE_URL}/api/students/verify-email`,
         {
-          tel: tel,
-          otp: otp,
+          token: token,
         },
       );
 
@@ -136,8 +73,8 @@ export default function StudentPhoneVerification() {
   const handleResend = async () => {
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/api/students/resend-phone-otp`,
-        { tel: tel },
+        `${API_BASE_URL}/api/students/resend-email-verification`,
+        { email: email },
       );
       setToast({ type: "success", message: response.data.message });
       setMsg(<span className="text-green-500">{response.data.message}</span>);
@@ -182,10 +119,10 @@ export default function StudentPhoneVerification() {
           <div className="flex flex-col items-center w-full">
             <div className="text-center mb-4">
               <h1 className="text-3xl font-bold text-[#09314F]">
-                Student Phone Number Verification
+                Student Email Verification
               </h1>
               <p className="text-gray-500 italic text-sm">
-                Verify Your Phone Number
+                Verify Your Email Address
               </p>
             </div>
 
@@ -209,17 +146,11 @@ export default function StudentPhoneVerification() {
                 >
                   <div className="description-text text-center">
                     <p className="text-sm text-gray-500 mt-2">
-                      We've sent an OTP to{" "}
+                      We've sent an a link to{" "}
                       <span className="text-black font-semibold">
-                        Student {tel}
+                        student email {localStorage.getItem("email")}
                       </span>
                     </p>
-                    {/* <p className="text-sm text-gray-400 mt-2">
-                      Please check your phone and enter the 6-digit code below
-                    </p> */}
-                    <h2 className="text-sm text-gray-500 mt-1">
-                      (Hint: The code is 123456 for testing)
-                    </h2>
                     <p className="text-center text-sm text-red-500">{msg}</p>
                     <p className="text-sm text-gray-500 mt-2">
                       Didn't receive the code?{" "}
@@ -238,26 +169,7 @@ export default function StudentPhoneVerification() {
                       )}
                     </p>
                   </div>
-
-                  <div className="verification-otp my-5 w-full flex items-center justify-evenly gap-2">
-                    {["num1", "num2", "num3", "num4", "num5", "num6"].map(
-                      (field) => (
-                        <input
-                          key={field}
-                          ref={inputRefs[field]}
-                          name={field}
-                          type="text"
-                          value={formData[field]}
-                          onChange={handleChange}
-                          maxLength="1"
-                          placeholder="0"
-                          className={`p-2 ring-1 rounded-sm ring-gray-300 text-center text-sm text-blue-900 w-10 h-10 border ${
-                            errors[field] ? "border-red-500" : "border-gray-300"
-                          } focus:ring-2 focus:ring-blue-900`}
-                        />
-                      ),
-                    )}
-                  </div>
+                  
 
                   <button
                     type="submit"
@@ -268,7 +180,7 @@ export default function StudentPhoneVerification() {
                         : "bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90"
                     } text-white transition`}
                   >
-                    {loading ? "Verifying..." : "Verify Phone Number"}
+                    {loading ? "Verifying..." : "Verify Email Address"}
                   </button>
                 </form>
               </div>
