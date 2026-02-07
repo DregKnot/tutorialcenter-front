@@ -8,6 +8,8 @@ import StudentPhoneVerification from "./pages/public/StudentSignUp/StudentPhoneV
 import StudentEmailVerification from "./pages/public/StudentSignUp/StudentEmailVerification.jsx";
 import StudentBiodata from "./pages/public/StudentSignUp/StudentBiodata.jsx";
 import StudentTrainingSelection from "./pages/public/StudentSignUp/StudentTrainingSelection.jsx";
+import StudentTrainingDuration from "./pages/public/StudentSignUp/StudentTrainingDuration.jsx";
+import StudentPaymentSelection from "./pages/public/StudentSignUp/StudentPaymentSelection.jsx";
 import { StudentSubjectSelection } from "./pages/public/StudentSignUp/StudentSubjectSelection.jsx";
 
 
@@ -28,6 +30,8 @@ function App() {
         <Route path="/register/student/email/verify" element={<StudentEmailVerification />} />
         <Route path = "/register/student/training/selection" element={<StudentTrainingSelection />} />
         <Route path = "/register/student/subject/selection" element={<StudentSubjectSelection />} />
+        <Route path = "/register/student/training/duration" element={<StudentTrainingDuration />} />
+        <Route path = "/register/student/payment/selection" element={<StudentPaymentSelection />} />
       </Routes>
     </>
   );
