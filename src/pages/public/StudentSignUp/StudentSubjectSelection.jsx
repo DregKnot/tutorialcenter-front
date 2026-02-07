@@ -1,116 +1,108 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import TC_logo from "../../../assets/images/tutorial_logo.png";
 import ReturnArrow from "../../../assets/svg/return arrow.svg";
-import otp_img_student from "../../../assets/images/otpStudentpic.jpg";
+import signup_img from "../../../assets/images/student_sign_up.jpg";
 
 export const StudentSubjectSelection = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const [loading, setLoading] = useState(false);
-    const [selectedTrainings, setSelectedTrainings] = useState([]);
-    const [trainingSubjects, setTrainingSubjects] = useState({});
-    const [openDropdown, setOpenDropdown] = useState(null);
-    const [error, setError] = useState(false);
+  const API_BASE_URL =
+    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
-    const ALL_SUBJECTS = [
-      "Mathematics",
-      "English",
-      "Physics",
-      "Biology",
-      "Chemistry",
-      "Financial Accounting",
-      "Economics",
-      "French",
-      "Literature in English",
-      "Commerce",
-      "Geography",
-      "Government",
-      "Agricultural Science",
-      "CRS/IRS",
-      "Civic",
-      "Further Maths",
-      "ICT",
-      "Technical Drawing",
-      "Igbo",
-      "Hausa",
-      "Yoruba",
-    ];
+  const [selectedCourses, setSelectedCourses] = useState([]);
+  const [subjectsByCourse, setSubjectsByCourse] = useState({});
+  const [selectedSubjects, setSelectedSubjects] = useState({});
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  /* ================= LOAD TRAININGS FROM PREVIOUS PAGE ================= */
+  /* ================= HELPERS ================= */
+  const getSubjectLimit = (courseTitle) =>
+    courseTitle.toLowerCase().includes("jamb") ? 4 : 9;
+
+  /* ================= INIT ================= */
   useEffect(() => {
-    const storedCourseDetails = localStorage.getItem('selectedCourseDetails');
-    
-    if (!storedCourseDetails) {
-      navigate("/register/student/training/selection");
-      return;
-    }
+    const init = async () => {
+      try {
+        const storedTraining = JSON.parse(
+          localStorage.getItem("selectedTraining"),
+        );
+        const studentData = JSON.parse(localStorage.getItem("studentdata"));
 
-    const trainings = JSON.parse(storedCourseDetails);
-    setSelectedTrainings(trainings);
+        if (!storedTraining?.length || !studentData?.department) {
+          navigate("/register/student/training/selection");
+          return;
+        }
 
-    // Initialize empty subject arrays for each training
-    const initialSubjects = {};
-    trainings.forEach(training => {
-      initialSubjects[training.id] = [];
-    });
-    setTrainingSubjects(initialSubjects);
-  }, [navigate]);
+        const department = studentData.department;
 
-  /* ================= GET SUBJECT LIMIT FOR TRAINING ================= */
-  const getSubjectLimit = (trainingTitle) => {
-    const isJamb = trainingTitle.toLowerCase().includes('jamb');
-    return isJamb ? 4 : 9;
-  };
+        /* Fetch all courses */
+        const courseRes = await axios.get(`${API_BASE_URL}/api/courses`);
+        const allCourses = courseRes.data.courses || [];
 
-  /* ================= TOGGLE SUBJECT FOR SPECIFIC TRAINING ================= */
-  const toggleSubject = (trainingId, subject) => {
-    setTrainingSubjects(prev => {
-      const currentSubjects = prev[trainingId] || [];
-      
-      // If already selected, deselect it
-      if (currentSubjects.includes(subject)) {
+        const activeCourses = allCourses.filter((c) =>
+          storedTraining.includes(c.id),
+        );
+
+        setSelectedCourses(activeCourses);
+
+        /* Fetch subjects per course */
+        const subjectMap = {};
+        const selectionMap = {};
+
+        for (const course of activeCourses) {
+          const res = await axios.get(
+            `${API_BASE_URL}/api/courses/${course.id}/subjects/${department}`,
+          );
+
+          subjectMap[course.id] = res.data.subjects || [];
+          selectionMap[course.id] = [];
+        }
+
+        setSubjectsByCourse(subjectMap);
+        setSelectedSubjects(selectionMap);
+      } catch (err) {
+        console.error("Initialization failed:", err);
+      }
+    };
+
+    init();
+  }, [navigate, API_BASE_URL]);
+
+  /* ================= SUBJECT TOGGLE ================= */
+  const toggleSubject = (courseId, subject) => {
+    setSelectedSubjects((prev) => {
+      const current = prev[courseId] || [];
+      const course = selectedCourses.find((c) => c.id === courseId);
+      const limit = getSubjectLimit(course.title);
+
+      const exists = current.some((s) => s.id === subject.id);
+
+      if (exists) {
         return {
           ...prev,
-          [trainingId]: currentSubjects.filter(s => s !== subject)
+          [courseId]: current.filter((s) => s.id !== subject.id),
         };
       }
-      
-      // Check limit
-      const training = selectedTrainings.find(t => t.id === trainingId);
-      const limit = getSubjectLimit(training.title);
-      
-      if (currentSubjects.length >= limit) {
-        return prev; // Don't add, limit reached
-      }
-      
-      // Add subject
+
+      if (current.length >= limit) return prev;
+
       return {
         ...prev,
-        [trainingId]: [...currentSubjects, subject]
+        [courseId]: [...current, subject],
       };
     });
   };
 
-  /* ================= TOGGLE DROPDOWN ================= */
-  const toggleDropdown = (trainingId) => {
-    setOpenDropdown(openDropdown === trainingId ? null : trainingId);
-  };
-
-  /* ================= GET SELECTED COUNT ================= */
-  const getSelectedCount = (trainingId, trainingTitle) => {
-    const selected = trainingSubjects[trainingId]?.length || 0;
-    const limit = getSubjectLimit(trainingTitle);
-    return `${selected} / ${limit}`;
-  };
-
   /* ================= CONTINUE ================= */
   const handleContinue = () => {
-    // Validate: Check if all trainings have at least one subject
-    const allHaveSubjects = selectedTrainings.every(training => 
-      trainingSubjects[training.id]?.length > 0
+    const valid = selectedCourses.every(
+      (course) => selectedSubjects[course.id]?.length > 0,
     );
 
-    if (!allHaveSubjects) {
+    if (!valid) {
       setError(true);
       return;
     }
@@ -118,176 +110,149 @@ export const StudentSubjectSelection = () => {
     setError(false);
     setLoading(true);
 
-    // Save to localStorage
-    localStorage.setItem('trainingSubjects', JSON.stringify(trainingSubjects));
+    localStorage.setItem("trainingSubjects", JSON.stringify(selectedSubjects));
 
-    console.log("Training subjects:", trainingSubjects);
-    
-    // Navigate to next page
     navigate("/training-duration");
-
-    setLoading(false);
   };
 
   return (
-    <div className="w-full min-h-screen md:h-screen flex flex-col md:flex-row bg-[#F4F4F4] font-sans overflow-x-hidden">
-
-      {/* IMAGE SECTION */}
-      <div className="w-full h-[250px] md:w-1/2 md:h-full relative order-1 md:order-2">
-        <div
-          className="w-full h-full bg-cover bg-center"
-          style={{ backgroundImage: `url(${otp_img_student})` }}
-        />
-      </div>
-
-      {/* FORM SECTION */}
-      <div className="w-full md:w-1/2 h-full flex flex-col px-6 py-10 lg:px-[100px] lg:py-[60px] order-2 md:order-1 overflow-y-auto">
-        <div className="w-full max-w-[500px] mx-auto my-auto flex flex-col">
-
-          {/* HEADER */}
-          <div className="relative w-full flex items-center justify-center mb-6 mt-4">
+    <>
+      <div className="w-full min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
+        {/* LEFT SIDE: Content Area */}
+        <div className="w-full md:w-1/2 h-full bg-[#F4F4F4] flex flex-col justify-center relative px-6 py-10 lg:px-[100px] lg:py-[60px] order-2 md:order-1 overflow-y-auto">
+          {/* 1. TOP NAV */}
+          <div className="relative w-full flex items-center justify-center mb-8 md:mb-10">
             <button
-              onClick={() => navigate(-1)}
-              className="absolute left-0 p-2 hover:bg-gray-200 rounded-full"
+              onClick={() => navigate("/register/student")}
+              className="absolute left-0 p-2 hover:bg-gray-200 rounded-full transition-all z-10"
             >
-              <img className="w-5 h-5" src={ReturnArrow} alt="Back" />
+              <img
+                src={ReturnArrow}
+                alt="Back"
+                className="h-6 w-6 lg:h-5 lg:w-5"
+              />
             </button>
-            <h1 className="text-2xl md:text-3xl font-bold text-[#09314F]">
-              Subject Selection
-            </h1>
+            <img
+              src={TC_logo}
+              alt="Logo"
+              className="h-[60px] md:h-[80px] w-auto object-contain"
+            />
           </div>
 
-          {/* CARD */}
-          <div className="bg-white p-6 md:p-10 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-
-            <p className="text-gray-500 text-xs md:text-sm mb-6 text-center">
-              Select your preferred subjects for your examination.
-            </p>
-
-            {/* TABLE HEADER */}
-            <div className="grid grid-cols-3 gap-4 mb-4 px-2">
-              <div className="text-white bg-[#09314F] py-2 px-3 rounded-tl-lg font-bold text-sm">
-                Examination
-              </div>
-              <div className="text-white bg-[#09314F] py-2 px-3 font-bold text-sm">
-                Subjects
-              </div>
-              <div className="text-white bg-[#09314F] py-2 px-3 rounded-tr-lg font-bold text-sm text-right">
-                Number
-              </div>
+          {/* 2. CENTER PIECE */}
+          <div className="flex flex-col items-center w-full">
+            <div className="text-center mb-4">
+              <h1 className="text-2xl font-bold text-[#09314F]">
+                Subject Selection
+              </h1>
             </div>
+          </div>
 
-            {/* TRAINING ROWS */}
-            <div className="space-y-4 mb-6">
-              {selectedTrainings.map((training) => {
-                const selectedSubjects = trainingSubjects[training.id] || [];
-                const isOpen = openDropdown === training.id;
-                const limit = getSubjectLimit(training.title);
+          <div className="grid grid-cols-3 bg-[#09314F] text-white text-sm font-bold rounded-t-lg">
+            <div className="p-2">Examination</div>
+            <div className="p-2">Subjects</div>
+            <div className="p-2 text-right">Number</div>
+          </div>
 
-                return (
-                  <div key={training.id} className="border-b border-gray-200 pb-4">
-                    
-                    {/* Row with Exam name, Dropdown, Count */}
-                    <div className="grid grid-cols-3 gap-4 items-center mb-2">
-                      
-                      {/* Examination Name */}
-                      <div className="text-sm font-semibold text-[#09314F]">
-                        {training.title}
-                      </div>
+          {selectedCourses.map((course) => {
+            const selected = selectedSubjects[course.id] || [];
+            const limit = getSubjectLimit(course.title);
+            const isOpen = openDropdown === course.id;
 
-                      {/* Dropdown Button */}
-                      <div className="relative">
-                        <button
-                          onClick={() => toggleDropdown(training.id)}
-                          className="w-full py-2 px-3 bg-[#D1D5DB] text-[#4B5563] rounded-lg text-xs font-medium text-left flex items-center justify-between hover:bg-gray-400 transition-all"
-                        >
-                          <span>
-                            {selectedSubjects.length === 0 
-                              ? "Add Subjects" 
-                              : `${selectedSubjects.slice(0, 2).join(", ")}${selectedSubjects.length > 2 ? '...' : ''}`
-                            }
-                          </span>
-                          <span className="ml-2">{isOpen ? "▲" : "▼"}</span>
-                        </button>
+            return (
+              <div key={course.id} className="border-b py-4">
+                <div className="grid grid-cols-3 gap-4 items-center">
+                  <div className="font-semibold text-[#09314F]">
+                    {course.title}
+                  </div>
 
-                        {/* Dropdown Menu */}
-                        {isOpen && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                            {ALL_SUBJECTS.map(subject => {
-                              const isSelected = selectedSubjects.includes(subject);
-                              const isDisabled = !isSelected && selectedSubjects.length >= limit;
+                  <div className="relative">
+                    <button
+                      onClick={() => setOpenDropdown(isOpen ? null : course.id)}
+                      className="w-full bg-gray-300 px-3 py-2 rounded text-xs flex justify-between"
+                    >
+                      {selected.length
+                        ? selected
+                            .map((s) => s.name)
+                            .slice(0, 2)
+                            .join(", ") + (selected.length > 2 ? "..." : "")
+                        : "Select subjects"}
+                      <span>{isOpen ? "▲" : "▼"}</span>
+                    </button>
 
-                              return (
-                                <button
-                                  key={subject}
-                                  onClick={() => toggleSubject(training.id, subject)}
-                                  disabled={isDisabled}
-                                  className={`w-full text-left px-4 py-2 text-sm transition-all
-                                    ${isSelected 
-                                      ? "bg-[#76D287] text-white font-semibold" 
-                                      : isDisabled
-                                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                      : "hover:bg-gray-100 text-gray-700"
-                                    }`}
-                                >
-                                  {subject}
-                                  {isSelected && <span className="ml-2">✓</span>}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
+                    {isOpen && (
+                      <div className="absolute z-10 w-full bg-white border rounded shadow max-h-60 overflow-y-auto">
+                        {subjectsByCourse[course.id]?.map((subject) => {
+                          const isSelected = selected.some(
+                            (s) => s.id === subject.id,
+                          );
+                          const disabled =
+                            !isSelected && selected.length >= limit;
 
-                      {/* Count */}
-                      <div className="text-sm font-semibold text-[#09314F] text-right">
-                        {getSelectedCount(training.id, training.title)}
-                      </div>
-                    </div>
-
-                    {/* Selected Subjects Display (like in the image) */}
-                    {selectedSubjects.length > 0 && (
-                      <div className="grid grid-cols-3 gap-4 mt-2">
-                        <div></div>
-                        <div className="col-span-2 flex flex-wrap gap-2">
-                          {selectedSubjects.map(subject => (
-                            <span 
-                              key={subject}
-                              className="px-3 py-1 bg-[#76D287] text-white text-xs rounded-lg font-medium"
+                          return (
+                            <button
+                              key={subject.id}
+                              disabled={disabled}
+                              onClick={() => toggleSubject(course.id, subject)}
+                              className={`w-full px-4 py-2 text-left text-sm
+                                ${
+                                  isSelected
+                                    ? "bg-green-500 text-white"
+                                    : disabled
+                                      ? "bg-gray-200 text-gray-400"
+                                      : "hover:bg-gray-100"
+                                }`}
                             >
-                              {subject}
-                            </span>
-                          ))}
-                        </div>
+                              {subject.name}
+                              {isSelected && " ✓"}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
 
-            {/* ERROR */}
-            {error && (
-              <p className="text-red-500 text-xs font-bold mb-4 text-center">
-                Please select at least one subject for each examination
-              </p>
-            )}
+                  <div className="text-right font-semibold">
+                    {selected.length} / {limit}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
 
-            {/* CONTINUE */}
+          {error && (
+            <p className="text-red-500 text-xs text-center mt-4">
+              Please select at least one subject for each examination
+            </p>
+          )}
+
+          <button
+            onClick={handleContinue}
+            disabled={loading}
+            className="mt-6 w-full py-3 rounded bg-gradient-to-r from-[#09314F] to-[#E83831] text-white"
+          >
+            {loading ? "Loading..." : "Continue"}
+          </button>
+        </div>
+      
+
+        {/* RIGHT SIDE: The Visual Image */}
+        <div
+          className="w-full h-[192px] md:w-1/2 md:h-full bg-cover bg-center relative bg-gray-300 order-1 md:order-2"
+          style={{ backgroundImage: `url(${signup_img})` }}
+        >
+          {/* Login Button */}
+          <div className="hidden md:block absolute bottom-[60px] left-0">
             <button
-              onClick={handleContinue}
-              disabled={loading}
-              className={`w-full py-3 px-4 rounded-lg font-medium ${
-                loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-[#09314F] to-[#E83831]"
-              } text-white`}
+              onClick={() => navigate("/login")}
+              className="px-8 py-3 bg-white text-[#09314F] font-bold hover:bg-gray-100 transition-all shadow-md"
+              style={{ borderRadius: "0px 20px 20px 0px" }}
             >
-              {loading ? "Loading..." : "Continue"}
+              Login
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
-}
+};
