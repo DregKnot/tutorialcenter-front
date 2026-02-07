@@ -83,6 +83,7 @@ export default function StudentBiodata() {
 
     if (!validateForm()) return;
 
+    // Assigning email and tel
     if (email) {
       formData.email = email;
     } else if (tel) {
@@ -118,9 +119,11 @@ export default function StudentBiodata() {
           text: "Biodata submitted successfully",
           type: "success",
         });
-
-        // optional redirect
-        // navigate("/student/dashboard");
+        console.log(response?.data?.student);
+        localStorage.setItem('studentdata', JSON.stringify(response?.data?.student));
+        setTimeout(()=>{
+          navigate('/register/student/training/selection');
+        },2000)
       }
     } catch (error) {
       setToast({

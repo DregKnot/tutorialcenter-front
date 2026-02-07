@@ -25,8 +25,7 @@ function App() {
         <Route path="/register/student/biodata" element={<StudentBiodata/>} />
         <Route path="/register/student/phone/verify" element={<StudentPhoneVerification />} />
         <Route path="/register/student/email/verify" element={<StudentEmailVerification />} />
-
-        <Route path = "/register/student/training-selection" element={<StudentTrainingSelection />} />
+        <Route path = "/register/student/training/selection" element={<StudentTrainingSelection />} />
       </Routes>
     </>
   );

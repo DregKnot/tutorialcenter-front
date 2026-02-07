@@ -2,13 +2,12 @@ import React, {useState} from "react";
 import { useNavigate } from "react-router-dom";
 import ReturnArrow from "../../../assets/svg/return arrow.svg";
 import otp_img_student from "../../../assets/images/otpStudentpic.jpg";
-// import { useState } from "react";
 
 export default function StudentTrainingSelection() {
     const navigate = useNavigate();
     const [examError, setExamError] = useState(false);
     const [selectedTraining, setSelectedTraining] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading] = useState(false);
 
     const examOptions = ["JAMB", "WACE", "NECO", "GCE"];
     
