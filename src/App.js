@@ -7,8 +7,9 @@ import StudentRegistration from "./pages/public/StudentSignUp/StudentRegistratio
 import StudentPhoneVerification from "./pages/public/StudentSignUp/StudentPhoneVerification.jsx";
 import StudentEmailVerification from "./pages/public/StudentSignUp/StudentEmailVerification.jsx";
 import StudentBiodata from "./pages/public/StudentSignUp/StudentBiodata.jsx";
-
 import StudentTrainingSelection from "./pages/public/StudentSignUp/StudentTrainingSelection.jsx";
+import { StudentSubjectSelection } from "./pages/public/StudentSignUp/StudentSubjectSelection.jsx";
+
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/register/student/phone/verify" element={<StudentPhoneVerification />} />
         <Route path="/register/student/email/verify" element={<StudentEmailVerification />} />
         <Route path = "/register/student/training/selection" element={<StudentTrainingSelection />} />
+        <Route path = "/register/student/subject/selection" element={<StudentSubjectSelection />} />
       </Routes>
     </>
   );
