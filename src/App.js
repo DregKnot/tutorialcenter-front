@@ -10,6 +10,7 @@ import StudentBiodata from "./pages/public/StudentSignUp/StudentBiodata.jsx";
 import StudentTrainingSelection from "./pages/public/StudentSignUp/StudentTrainingSelection.jsx";
 import { StudentSubjectSelection } from "./pages/public/StudentSignUp/StudentSubjectSelection.jsx";
 import { StudentTrainingDuration } from "./pages/public/StudentSignUp/StudentTrainingDuration.jsx";
+import { StudentTrainingPayment } from "./pages/public/StudentSignUp/StudentTrainingPayment.jsx";
 
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
         <Route path = "/register/student/training/selection" element={<StudentTrainingSelection />} />
         <Route path = "/register/student/subject/selection" element={<StudentSubjectSelection />} />
         <Route path = "/register/student/training/duration" element={<StudentTrainingDuration />} />
+        <Route path = "/register/student/training/payment" element={<StudentTrainingPayment />} />
       </Routes>
     </>
   );
