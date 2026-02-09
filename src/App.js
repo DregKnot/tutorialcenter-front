@@ -1,6 +1,6 @@
 import About from "./pages/public/About";
 import Home from "./pages/public/Home.jsx";
-// import Login from "./pages/public/Login.jsx";
+import Login from "./pages/public/Login.jsx";
 import SignUp from "./pages/public/SignUp.jsx";
 import { Route, Routes } from "react-router-dom";
 import StudentRegistration from "./pages/public/StudentSignUp/StudentRegistration.jsx";
@@ -11,6 +11,7 @@ import StudentTrainingSelection from "./pages/public/StudentSignUp/StudentTraini
 import { StudentSubjectSelection } from "./pages/public/StudentSignUp/StudentSubjectSelection.jsx";
 import { StudentTrainingDuration } from "./pages/public/StudentSignUp/StudentTrainingDuration.jsx";
 import { StudentTrainingPayment } from "./pages/public/StudentSignUp/StudentTrainingPayment.jsx";
+import StudentLogin from "./pages/public/StudentLogin.jsx";
 
 
 function App() {
@@ -19,11 +20,12 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
-        {/* <Route path="/login" element={<Login />} /> */}
+        <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
         <Route path="/register" element={<SignUp />} />
 
         {/* Student Public Registration Routes */}
+        <Route path="/student/login" element={<StudentLogin/>} />
         <Route path="/register/student" element={<StudentRegistration />} />
         <Route path="/register/student/biodata" element={<StudentBiodata/>} />
         <Route path="/register/student/phone/verify" element={<StudentPhoneVerification />} />

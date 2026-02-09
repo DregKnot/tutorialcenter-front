@@ -25,6 +25,9 @@ const Login = () => {
       setErrors({ userRole: true });
       return;
     }
+    if (userRole === 'student') {
+      navigate('/student/login');
+    }
     setErrors({});
     // Navigate to next login step (credentials)
     // For now, it might just move to a similar step as SignUp's Step 2
