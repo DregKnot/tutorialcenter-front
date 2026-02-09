@@ -50,26 +50,18 @@ export default function StudentLogin() {
 
     if (!validateForm()) return;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    // derive values locally (NO state)
-    const isEmail = emailRegex.test(formData.entry);
-
-    const payload = {
-      email: isEmail ? formData.entry : null,
-      tel: isEmail ? null : formData.entry,
-      password: formData.password,
-    };
 
     setLoading(true);
 
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/students/login`,
-        payload,
+        formData,
       );
 
-      if (response.status === 201) {
+      if (response.status === 200) {
+        localStorage.setItem('student_info', JSON.stringify(response?.data?.student))
+        localStorage.setItem('student_token', response?.data?.token);
         setToast({ type: "success", message: response.data.message });
         setMsg({
           text: "Login successful!",
@@ -87,7 +79,7 @@ export default function StudentLogin() {
       });
 
       setMsg({
-        text: error?.response?.data?.message || "Login failed.",
+        text: error?.response?.data?.errors || "Login failed.",
         type: "error",
       });
 
@@ -162,7 +154,7 @@ export default function StudentLogin() {
               <div>
                 {toast && (
                   <div
-                    className={`fixed top-5 right-5 z-50 px-4 py-3 rounded shadow-lg text-white transition-all duration-300 ${
+                    className={`fixed top-5 left-5 z-50 px-4 py-3 rounded shadow-lg text-white transition-all duration-300 ${
                       toast.type === "success" ? "bg-green-600" : "bg-red-600"
                     }`}
                   >
