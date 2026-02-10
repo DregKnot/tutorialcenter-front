@@ -6,7 +6,9 @@ export default function StudentDashboard() {
     <DashboardLayout>
       <h1 className="text-xl font-semibold mb-6 dark:text-white">Dashboard</h1>
 
-      <div className="grid grid-cols-2 gap-6">
+      {/* <div className="grid grid-cols-2 gap-6"> */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+
         <ProgressCard
           title="JAMB"
           subjects={["English", "Mathematics", "Chemistry", "Physics"]}
