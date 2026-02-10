@@ -13,6 +13,8 @@ import StudentPaymentSelection from "./pages/public/StudentSignUp/StudentPayment
 import { StudentSubjectSelection } from "./pages/public/StudentSignUp/StudentSubjectSelection.jsx";
 import { StudentTrainingDuration } from "./pages/public/StudentSignUp/StudentTrainingDuration.jsx";
 import { StudentTrainingPayment } from "./pages/public/StudentSignUp/StudentTrainingPayment.jsx";
+import { GuardianRegistration } from "./pages/public/GuardianSignup/GuardianRegistration.jsx";
+import {GuardianPhoneVerification} from "./pages/public/GuardianSignup/GuardianPhoneVerification.jsx";
 
 
 function App() {
@@ -34,6 +36,12 @@ function App() {
         <Route path = "/register/student/subject/selection" element={<StudentSubjectSelection />} />
         <Route path = "/register/student/training/duration" element={<StudentTrainingDuration />} />
         <Route path = "/register/student/training/payment" element={<StudentTrainingPayment />} />
+
+
+        {/* Guardian Public Registration Routes */}
+        <Route path="/register/guardian" element={<GuardianRegistration />} />
+        <Route path="/register/guardian/phone/verify" element={<GuardianPhoneVerification />} />
+        
       </Routes>
     </>
   );
