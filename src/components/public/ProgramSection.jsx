@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import ProgramCard from "./ProgramCard";
-import SectionHeading from "./SectionHeading";
+import ProgramCard from "./ProgramCard.jsx";
+import SectionHeading from "./SectionHeading.jsx";
 import jamb from "../../assets/images/jamb_logo.png";
 import waec from "../../assets/images/waec_logo.png";
 

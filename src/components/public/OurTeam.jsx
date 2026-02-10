@@ -1,4 +1,4 @@
-import TeamCard from "./TeamCard";
+import TeamCard from "./TeamCard.jsx";
 import { AllTeams } from "../../data/data.js";
 import SectionHeading from "./SectionHeading.jsx";
 import { Icon } from "@iconify/react/dist/iconify.js";

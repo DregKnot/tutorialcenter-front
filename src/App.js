@@ -1,4 +1,4 @@
-import About from "./pages/public/About";
+import About from "./pages/public/About.jsx";
 import Home from "./pages/public/Home.jsx";
 import Login from "./pages/public/login.jsx";
 import SignUp from "./pages/public/SignUp.jsx";

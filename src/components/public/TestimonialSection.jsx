@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import TestimonialCard from "./TestimonialCard";
-import SectionHeading from "./SectionHeading";
+import TestimonialCard from "./TestimonialCard.jsx";
+import SectionHeading from "./SectionHeading.jsx";
 
 //Testimonial data
 const data = [

@@ -15,6 +15,7 @@ import {
   MoonIcon,
   PuzzlePieceIcon,
 } from "@heroicons/react/24/outline";
+import { useAuth } from "../../context/AuthContext";
 
 import { useTheme } from "../../context/ThemeContext";
 import logo from "../../assets/images/tutorial_logo.png";
@@ -35,6 +36,9 @@ const menuItems = [
 
 export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
   const { theme, setTheme } = useTheme();
+  
+
+  const {student} = useAuth();
 
   return (
     <>
@@ -95,7 +99,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
         </div>
 
         {/* Avatar */}
-        <div className="flex px-3 space-y-2 flex-wrap justify-between items-center">
+        <div className="flex px-3 space-y-2 flex-wrap gap-3 items-center">
           <img
             src={collapselogo}
             alt="Avatar"
@@ -103,7 +107,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
           />
           <div className={` ${collapsed ? "hidden" : ""}`}>
             <h6 className="text-yellow-400">Hello Student</h6>
-            <h3 className="font-bold dark:text-gray-50">Caleb Samuel Thomas</h3>
+            <h3 className="font-bold dark:text-gray-50">{student?.firstname + " " + student?.surname || 'Caleb Samuel Thomas'}</h3>
           </div>
         </div>
         {/* Menu */}

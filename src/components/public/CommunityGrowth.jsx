@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import image from "../../assets/images/handshake.png"
-import CommunityGrowthLayout from "./CommunityGrowthLayout";
+import CommunityGrowthLayout from "./CommunityGrowthLayout.jsx";
 
 export default function CommunityGrowth() {
 
