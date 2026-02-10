@@ -73,13 +73,13 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       </div>
 
       {/* Avatar */}
-      <div className="flex px-3 space-y-1 flex-wrap justify-between items-center">
+      <div className="flex px-3 space-y-2 flex-wrap justify-between items-center">
         <img
           src={collapselogo}
           alt="Avatar"
           className="rounded-full shadow-lg h-10 w-10 object-fit-contain border border-6 border-yellow-400"
         />
-        <div>
+        <div className={` ${collapsed ? 'hidden': '' }`}>
           <h6 className="text-yellow-400">Hello Student</h6>
           <h3 className="font-bold dark:text-gray-50">Caleb Samuel Thomas</h3>
         </div>
