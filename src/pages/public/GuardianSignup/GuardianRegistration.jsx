@@ -5,7 +5,7 @@ import TC_logo from "../../../assets/images/tutorial_logo.png";
 import ReturnArrow from "../../../assets/svg/return arrow.svg";
 import signup_img from "../../../assets/images/student_sign_up.jpg";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { type } from "@testing-library/user-event/dist/type";
+// import { type } from "@testing-library/user-event/dist/type";
 
 
 export const GuardianRegistration = () => {
@@ -22,7 +22,7 @@ export const GuardianRegistration = () => {
         confirmPassword: "",
       });
       const API_BASE_URL =
-      process.env.REACT_APP_API_URL || "http://tutorcenter-back.test";
+      process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
       //capture user entries
       const handleChange = (e) => {
@@ -65,7 +65,7 @@ export const GuardianRegistration = () => {
       email: isEmail ? formData.entry : null,
       tel: isEmail ? null : formData.entry,
       password: formData.password,
-      confirmPassword: formData.confirmPassword,
+      password_confirmation: formData.confirmPassword,
     };
 
     setLoading(true);
@@ -85,8 +85,7 @@ export const GuardianRegistration = () => {
                 });
 
                 setTimeout(() => {
-                    navigate(``)
-
+                    navigate(`/register/guardian/phone/verify?tel=${payload.tel}`);
             }, 3000);
             } else {
                 setMsg({ 
@@ -143,7 +142,7 @@ export const GuardianRegistration = () => {
           <div className="flex flex-col items-center w-full">
             <div className="text-center mb-4">
               <h1 className="text-3xl font-bold text-[#09314F]">
-                Student Registration
+                Guardian Registration 
               </h1>
               <p className="text-gray-500 italic text-sm">
                 Register With E-Mail Address Or Phone Number
