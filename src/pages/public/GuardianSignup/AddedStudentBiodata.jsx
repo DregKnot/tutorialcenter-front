@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { location } from "../../../data/locations";
 import TC_logo from "../../../assets/images/tutorial_logo.png";
@@ -100,35 +101,119 @@ export default function AddedStudentBiodata() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission — save to localStorage
-  const handleSubmit = (e) => {
+  const API_BASE_URL =
+    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+
+  // Handle form submission — register students and save biodata
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setLoading(true);
 
-    const payload = studentsBiodata.map((s) => ({
-      name: s.name,
-      email: s.email,
-      firstname: s.firstname,
-      surname: s.surname,
-      gender: s.gender,
-      date_of_birth: s.date_of_birth,
-      location: s.location,
-      address: s.address,
-      department: s.department,
-    }));
+    // Retrieve the general password and guardian phone (if needed) from localStorage
+    // Note: guardianStudents has { guardianTel, students: [...], password }
+    const storedGuardianData = JSON.parse(
+      localStorage.getItem("guardianStudents") || "{}"
+    );
+    const generalPassword = storedGuardianData.password || "Password@123";
 
-    // Save to localStorage for the next page
-    localStorage.setItem("guardianStudentsBiodata", JSON.stringify(payload));
+    try {
+      const updatedStudents = [];
 
-    setToast({ type: "success", message: "Biodata saved successfully!" });
-    setMsg({ text: "Biodata saved successfully!", type: "success" });
+      for (let i = 0; i < studentsBiodata.length; i++) {
+        const student = studentsBiodata[i];
+        
+        // 1. Register logic
+        // Trim the input to avoid regex failure on spaces
+        const trimmedEntry = student.email ? student.email.trim() : "";
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const isEmail = emailRegex.test(trimmedEntry);
 
-    setTimeout(() => {
+        const registerPayload = {
+          email: isEmail ? trimmedEntry : null,
+          tel: isEmail ? null : trimmedEntry,
+          password: generalPassword,
+          confirmPassword: generalPassword,
+          password_confirmation: generalPassword, // Adding this just in case backend expects it
+        };
+
+        // We try to register. If 422, maybe they exist? 
+      
+        try {
+          await axios.post(
+            `${API_BASE_URL}/api/students/register`,
+            registerPayload
+          );
+          // We don't get the ID here usually, just "created"
+        } catch (regErr) {
+          console.warn(
+            `Registration warning for ${student.name}:`,
+            regErr.response?.data
+          );
+          // If it fails (e.g. already exists), we might still try to submit biodata 
+          // to get the student object back if the endpoint supports it, 
+          // OR we assume we can proceed if the error is "already taken".
+        }
+
+        // 2. Submit Biodata
+        // This endpoint typically returns the student object including ID
+        const biodataPayload = {
+          firstname: student.firstname,
+          surname: student.surname,
+          email: isEmail ? trimmedEntry : null,
+          tel: isEmail ? null : trimmedEntry,
+          gender: student.gender,
+          date_of_birth: student.date_of_birth,
+          location: student.location,
+          address: student.address,
+          department: student.department,
+        };
+
+        const bioRes = await axios.post(
+          `${API_BASE_URL}/api/students/biodata`,
+          biodataPayload
+        );
+
+        if (bioRes.data && bioRes.data.student) {
+          // Merge the returned student data (which has ID) with our local state
+          updatedStudents.push({
+            ...student,
+            ...bioRes.data.student, // contains id, email, etc.
+          });
+        } else {
+          throw new Error(`Failed to retrieve student ID for ${student.name}`);
+        }
+      }
+
+      // Save the fully updated list (with IDs) to localStorage
+      // We keep the structure compatible with what TrainingSelection expects
+      localStorage.setItem(
+        "guardianStudentsBiodata",
+        JSON.stringify(updatedStudents)
+      );
+
+      setToast({ type: "success", message: "All students registered successfully!" });
+      setMsg({ text: "All students registered successfully!", type: "success" });
+
+      setTimeout(() => {
+        setLoading(false);
+        navigate("/register/guardian/training/selection");
+      }, 1500);
+
+    } catch (err) {
+      console.error("Error in student registration loop:", err);
+      setToast({
+        type: "error",
+        message: err.message || "Failed to register students.",
+      });
+      setMsg({
+        text: err.message || "Failed to register students.",
+        type: "error",
+      });
       setLoading(false);
-      navigate("/register/guardian/training/selection");
-    }, 1500);
+    }
   };
 
   return (

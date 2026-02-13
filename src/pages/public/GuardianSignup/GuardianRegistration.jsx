@@ -83,10 +83,14 @@ export const GuardianRegistration = () => {
                     text: "Registration successful! Please check your SMS for the OTP",
                     type:"success",
                 });
-
                 setTimeout(() => {
                     navigate(`/register/guardian/phone/verify?tel=${payload.tel}`);
-            }, 3000);
+                }, 3000);
+            } else {
+                setMsg({ 
+                    text: "Registration successful! Please check your email for the OTP",
+                    type:"success",
+                });
                 setTimeout(() => {
                     navigate(`/register/guardian/email/verify?email=${encodeURIComponent(payload.email)}`);
                 }, 3000);

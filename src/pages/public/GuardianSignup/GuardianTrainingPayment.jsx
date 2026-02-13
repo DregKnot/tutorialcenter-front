@@ -78,6 +78,13 @@ export default function GuardianTrainingPayment() {
       // Loop through each guardian's student
       for (const student of guardianData) {
         const selectedSubjects = student.selectedSubjects;
+        const studentId = student.id; 
+
+        if (!studentId) {
+          console.error(`No student ID found for ${student.firstname}`);
+          alert(`Missing ID for ${student.firstname}. Skipping enrollment.`);
+          continue;
+        }
 
         // Loop through courses for this student
         for (const [courseId, duration] of Object.entries(
@@ -86,7 +93,7 @@ export default function GuardianTrainingPayment() {
           if (!duration) continue;
 
           console.log(
-            `Starting enrollment for ${student.firstname} - course ${courseId}...`
+            `Starting enrollment for ${student.firstname} (ID: ${studentId}) - course ${courseId}...`
           );
 
           // 1️⃣ COURSE ENROLLMENT
@@ -95,8 +102,7 @@ export default function GuardianTrainingPayment() {
             const courseRes = await axios.post(
               `${API_BASE_URL}/api/course/enrollment`,
               {
-                guardian_email: student.email,
-                student_name: `${student.firstname} ${student.surname}`,
+                student_id: studentId,
                 course_id: Number(courseId),
                 billing_cycle: duration.duration,
               }
@@ -125,6 +131,7 @@ export default function GuardianTrainingPayment() {
           for (const subjectId of subjects) {
             try {
               await axios.post(`${API_BASE_URL}/api/subject/enrollment`, {
+                student_id: studentId,
                 course_enrollment_id: courseEnrollmentId,
                 subject_id: subjectId,
               });
@@ -141,6 +148,7 @@ export default function GuardianTrainingPayment() {
           // 3️⃣ PAYMENT RECORD
           try {
             await axios.post(`${API_BASE_URL}/api/payments`, {
+              student_id: studentId,
               course_enrollment_id: courseEnrollmentId,
               amount: duration.price,
               billing_cycle: duration.duration,
