@@ -31,6 +31,7 @@ import ComingSoon from "./pages/public/ComingSoon.jsx";
 import Unauthorized from "./pages/public/Unauthorized.jsx";
 import NotFound from "./pages/public/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import StaffLogin from "./pages/public/StaffLogin.jsx";
 
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/register" element={<SignUp />} />
         <Route path="/comingsoon" element={<ComingSoon />} />
+        <Route path="/staff/login" element={<StaffLogin />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Guardian Registration Routes */}
