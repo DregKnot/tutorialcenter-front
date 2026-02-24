@@ -7,7 +7,8 @@ import {
   EyeIcon, 
   EyeSlashIcon, 
   EnvelopeIcon,
-  ChevronLeftIcon 
+  ChevronLeftIcon,
+  CheckIcon
 } from "@heroicons/react/24/outline";
 
 export const GuardianRegistration = () => {
@@ -220,15 +221,20 @@ export const GuardianRegistration = () => {
 
             {/* Remember Me */}
             <div className="flex items-center space-x-2 px-1 py-1">
-              <input
-                id="rememberMe"
-                name="rememberMe"
-                type="checkbox"
-                checked={formData.rememberMe}
-                onChange={handleChange}
-                className="w-4 h-4 rounded border-gray-300 text-[#09314F] shadow-sm focus:ring-[#09314F] cursor-pointer accent-[#09314F]"
-              />
-              <label htmlFor="rememberMe" className="text-sm font-bold text-[#555555] cursor-pointer select-none">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, rememberMe: !formData.rememberMe })}
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                  formData.rememberMe
+                    ? "bg-white border-[#09314F]"
+                    : "border-gray-300 hover:border-[#09314F]"
+                } cursor-pointer`}
+              >
+                {formData.rememberMe && (
+                  <CheckIcon className="h-4 w-4 text-[#09314F]" />
+                )}
+              </button>
+              <label className="text-sm font-bold text-[#555555] cursor-pointer select-none">
                 Remember me
               </label>
             </div>

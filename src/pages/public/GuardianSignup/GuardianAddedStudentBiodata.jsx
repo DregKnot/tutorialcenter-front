@@ -22,12 +22,26 @@ export default function GuardianAddedStudentBiodata() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null); // format: "index_fieldName"
+  const [isDraggingIndex, setIsDraggingIndex] = useState(null);
   const fileInputRef = useRef(null);
   const [activeFileIndex, setActiveFileIndex] = useState(null);
 
   const [studentsBiodata, setStudentsBiodata] = useState([]);
 
   useEffect(() => {
+    // First, try to load previously saved biodata
+    const savedBiodata = localStorage.getItem("guardianStudentsBiodata");
+    if (savedBiodata) {
+      try {
+        const parsed = JSON.parse(savedBiodata);
+        setStudentsBiodata(parsed);
+        return;
+      } catch (err) {
+        console.error("Failed to load saved biodata:", err);
+      }
+    }
+
+    // Otherwise, load from guardianStudents
     const stored = localStorage.getItem("guardianStudents");
     if (stored) {
       const parsed = JSON.parse(stored);
@@ -49,6 +63,13 @@ export default function GuardianAddedStudentBiodata() {
       navigate("/register/guardian/addstudent");
     }
   }, [navigate]);
+
+  // Auto-save biodata to localStorage whenever studentsBiodata changes
+  useEffect(() => {
+    if (studentsBiodata.length > 0) {
+      localStorage.setItem("guardianStudentsBiodata", JSON.stringify(studentsBiodata));
+    }
+  }, [studentsBiodata]);
 
   const toggleStudent = (index) => {
     setStudentsBiodata((prev) =>
@@ -74,6 +95,28 @@ export default function GuardianAddedStudentBiodata() {
         handleChange(index, "display_picture", reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingIndex(null);
+  };
+
+  const handleDrop = (index, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingIndex(null);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileChange(index, { target: { files } });
     }
   };
 
@@ -223,9 +266,19 @@ export default function GuardianAddedStudentBiodata() {
                           setActiveFileIndex(index);
                           fileInputRef.current.click();
                         }}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(index, e)}
+                        onMouseEnter={() => setIsDraggingIndex(null)}
                         className="relative cursor-pointer group"
                       >
-                        <div className="w-24 h-24 rounded-full border-4 border-[#FDF2F2] overflow-hidden bg-[#F7EFEF] flex items-center justify-center transition-all group-hover:scale-105">
+                        <div className={`w-24 h-24 rounded-full border-4 transition-all group-hover:scale-105 overflow-hidden flex items-center justify-center ${
+                          isDraggingIndex === index
+                            ? "border-[#09314F] bg-blue-50 scale-105"
+                            : "border-[#FDF2F2] bg-[#F7EFEF]"
+                        }`} style={{
+                          boxShadow: isDraggingIndex === index ? "0 0 25px rgba(9, 49, 79, 0.6), 0 0 50px rgba(59, 130, 246, 0.4)" : "none"
+                        }}>
                           {student.display_picture ? (
                             <img src={student.display_picture} alt="Preview" className="w-full h-full object-cover" />
                           ) : (

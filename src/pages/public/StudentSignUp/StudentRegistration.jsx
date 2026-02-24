@@ -6,7 +6,8 @@ import signup_img from "../../../assets/images/student_sign_up.jpg";
 import { 
   EyeIcon, 
   EyeSlashIcon, 
-  ChevronLeftIcon 
+  ChevronLeftIcon,
+  CheckIcon
 } from "@heroicons/react/24/outline";
 
 export default function StudentRegistration() {
@@ -141,7 +142,7 @@ export default function StudentRegistration() {
             
             {/* Email/Phone Input */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-[#444444] px-1 text-left block">
+              <label className="text-sm font-montserrat text-[#444444] px-1 text-left block">
                 Email Address Or Phone Number
               </label>
               <div className={`flex items-center bg-[#F7EFEF] rounded-2xl px-5 py-4 border-2 transition-all ${errors.entry ? "border-red-400" : "border-transparent focus-within:border-[#09314F]"}`}>
@@ -154,12 +155,12 @@ export default function StudentRegistration() {
                   className="bg-transparent w-full outline-none text-[#333333] font-semibold placeholder:text-gray-400"
                 />
               </div>
-              {errors.entry && <p className="text-xs text-red-500 font-bold px-1">{errors.entry}</p>}
+              {errors.entry && <p className="text-xs text-red-500 font-montserrat px-1">{errors.entry}</p>}
             </div>
 
             {/* Password */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-[#444444] px-1 text-left block">
+              <label className="text-sm font-montserrat text-[#444444] px-1 text-left block">
                 Password
               </label>
               <div className={`flex items-center bg-[#F7EFEF] rounded-2xl px-5 py-4 border-2 transition-all ${errors.password ? "border-red-400" : "border-transparent focus-within:border-[#09314F]"}`}>
@@ -210,24 +211,29 @@ export default function StudentRegistration() {
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="bg-transparent w-full outline-none text-[#333333] font-semibold"
+                    className="bg-transparent w-full outline-none text-[#333333] font-sans"
                   />
                 </div>
               </div>
-              {errors.confirmPassword && <p className="text-xs text-red-500 font-bold px-1">{errors.confirmPassword}</p>}
+              {errors.confirmPassword && <p className="text-xs text-red-500 font-montserrat px-1">{errors.confirmPassword}</p>}
             </div>
 
             {/* Remember Me */}
             <div className="flex items-center space-x-2 px-1 py-1">
-              <input
-                id="rememberMe"
-                name="rememberMe"
-                type="checkbox"
-                checked={formData.rememberMe}
-                onChange={handleChange}
-                className="w-4 h-4 rounded border-gray-300 text-[#09314F] shadow-sm focus:ring-[#09314F] cursor-pointer accent-[#09314F]"
-              />
-              <label htmlFor="rememberMe" className="text-sm font-bold text-[#555555] cursor-pointer select-none">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, rememberMe: !formData.rememberMe })}
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                  formData.rememberMe
+                    ? "bg-white border-[#09314F]"
+                    : "border-gray-300 hover:border-[#09314F]"
+                } cursor-pointer`}
+              >
+                {formData.rememberMe && (
+                  <CheckIcon className="h-4 w-6 text-[#09314F]" />
+                )}
+              </button>
+              <label className="text-sm font-bold text-[#555555] cursor-pointer select-none">
                 Remember me
               </label>
             </div>
