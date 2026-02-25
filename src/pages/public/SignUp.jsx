@@ -79,8 +79,8 @@ export default function SignUp() {
                 {userRole === "guardian" && <span>✓</span>}
               </button>
 
-              {/* Continue Button (Desktop - Inside Card) */}
-              <div className="hidden md:block w-full mt-auto">
+              {/* Continue Button (Inside Card for All Screens) */}
+              <div className="w-full mt-6 md:mt-auto">
                 <button
                   onClick={handleSubmit}
                   className="w-full h-[60px] text-white rounded-xl font-bold transition-all duration-500 shadow-md active:scale-95"
@@ -94,21 +94,6 @@ export default function SignUp() {
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Continue Button (Mobile - Fixed Bottom) */}
-          <div className="md:hidden fixed bottom-10 left-0 w-full px-6 z-20">
-            <button
-              onClick={handleSubmit}
-              className="w-full h-[60px] text-white rounded-xl font-bold transition-all duration-500 shadow-xl active:scale-[0.98]"
-              style={{
-                background: userRole
-                  ? "linear-gradient(90deg, #09314F 0%, #E33629 100%)"
-                  : "#5F5F5F",
-              }}
-            >
-              Continue
-            </button>
           </div>
         </div>
 

@@ -13,7 +13,7 @@ export const dropdownTheme = {
   // Text styling based on whether it has a value
   getValueStyle: (hasValue) => `
     bg-transparent w-full outline-none transition-all duration-300
-    ${hasValue ? "text-[#09314F] font-bold font-black" : "text-gray-400 font-medium"}
+    ${hasValue ? "text-[#09314F]" : "text-gray-400 font-medium"}
   `,
 
   // Standard icon colors

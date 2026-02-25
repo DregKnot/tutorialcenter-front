@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { location } from "../../../data/locations";
 import TC_logo from "../../../assets/images/tutorial_logo.png";
@@ -22,6 +22,7 @@ export default function StudentBiodata() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -38,6 +39,24 @@ export default function StudentBiodata() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
   const email = localStorage.getItem("studentEmail");
   const tel = localStorage.getItem("studentTel");
+
+  // Load saved biodata on component mount
+  useEffect(() => {
+    const savedBiodata = localStorage.getItem("studentBiodata");
+    if (savedBiodata) {
+      try {
+        const parsed = JSON.parse(savedBiodata);
+        setFormData(parsed);
+      } catch (err) {
+        console.error("Failed to load saved biodata:", err);
+      }
+    }
+  }, []);
+
+  // Auto-save biodata to localStorage whenever formData changes
+  useEffect(() => {
+    localStorage.setItem("studentBiodata", JSON.stringify(formData));
+  }, [formData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,6 +75,29 @@ export default function StudentBiodata() {
         setFormData((prev) => ({ ...prev, display_picture: reader.result }));
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileChange({ target: { files } });
     }
   };
 
@@ -163,9 +205,18 @@ export default function StudentBiodata() {
           <div className="flex flex-col items-center mb-10 w-full">
             <div 
               onClick={() => fileInputRef.current.click()}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               className="relative cursor-pointer group"
             >
-              <div className="w-28 h-28 rounded-full border-4 border-[#FDF2F2] overflow-hidden bg-[#F7EFEF] flex items-center justify-center transition-all group-hover:scale-105" title="Click to upload photo">
+              <div className={`w-28 h-28 rounded-full border-4 transition-all group-hover:scale-105 overflow-hidden flex items-center justify-center ${
+                isDragging 
+                  ? "border-[#09314F] bg-blue-50 scale-105" 
+                  : "border-[#FDF2F2] bg-[#F7EFEF]"
+              }`} style={{
+                boxShadow: isDragging ? "0 0 30px rgba(9, 49, 79, 0.6), 0 0 60px rgba(59, 130, 246, 0.4)" : "none"
+              }} title="Click to upload photo or drag and drop">
                 {formData.display_picture ? (
                   <img src={formData.display_picture} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
@@ -209,6 +260,7 @@ export default function StudentBiodata() {
                     className={getInputStyles("firstname").input}
                   />
                 </div>
+                {errors.firstname && <p className="text-xs text-red-500 font-bold px-1">{errors.firstname}</p>}
               </div>
 
               {/* Last Name */}
@@ -227,6 +279,7 @@ export default function StudentBiodata() {
                     className={getInputStyles("surname").input}
                   />
                 </div>
+                {errors.surname && <p className="text-xs text-red-500 font-bold px-1">{errors.surname}</p>}
               </div>
 
               {/* Date of Birth */}
@@ -244,6 +297,7 @@ export default function StudentBiodata() {
                     className={getInputStyles("date_of_birth").input}
                   />
                 </div>
+                {errors.date_of_birth && <p className="text-xs text-red-500 font-bold px-1">{errors.date_of_birth}</p>}
               </div>
 
               {/* Gender */}
@@ -266,6 +320,7 @@ export default function StudentBiodata() {
                   </select>
                   <ChevronLeftIcon className={dropdownTheme.chevron} />
                 </div>
+                {errors.gender && <p className="text-xs text-red-500 font-bold px-1">{errors.gender}</p>}
               </div>
 
               {/* Department */}
@@ -288,6 +343,7 @@ export default function StudentBiodata() {
                   </select>
                   <ChevronLeftIcon className={dropdownTheme.chevron} />
                 </div>
+                {errors.department && <p className="text-xs text-red-500 font-bold px-1">{errors.department}</p>}
               </div>
 
               {/* Location */}
@@ -312,6 +368,7 @@ export default function StudentBiodata() {
                     ))}
                   </datalist>
                 </div>
+                {errors.location && <p className="text-xs text-red-500 font-bold px-1">{errors.location}</p>}
               </div>
             </div>
 
