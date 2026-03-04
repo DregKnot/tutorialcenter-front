@@ -33,6 +33,7 @@ import Unauthorized from "./pages/public/Unauthorized.jsx";
 import NotFound from "./pages/public/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import StaffLogin from "./pages/public/StaffLogin.jsx";
+import StudentCalendar from "./pages/students/StudentCalendar.jsx";
 
 
 function App() {
@@ -40,8 +41,8 @@ function App() {
     <>
       <Routes>
         {/* Public Routes */}
-        <Route path="*" element={<NotFound />} />
         <Route path="/" element={<Home />} />
+        <Route path="*" element={<NotFound />} />
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
         <Route path="/register" element={<SignUp />} />
@@ -77,6 +78,7 @@ function App() {
         {/* Student Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/student/dashboard" element={<StudentDashboard />} />
+          <Route path="/student/calendar" element={<StudentCalendar />} />
         </Route>
       </Routes>
     </>
