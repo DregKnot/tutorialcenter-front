@@ -1,5 +1,6 @@
 import About from "./pages/public/About.jsx";
 import Home from "./pages/public/Home.jsx";
+import Career from "./pages/public/Career.jsx"
 import Login from "./pages/public/Login.jsx";
 import SignUp from "./pages/public/SignUp.jsx";
 import { Route, Routes } from "react-router-dom";
@@ -11,6 +12,7 @@ import StudentTrainingSelection from "./pages/public/StudentSignUp/StudentTraini
 // import StudentTrainingDuration from "./pages/public/StudentSignUp/StudentTrainingDuration.jsx";
 // import StudentPaymentSelection from "./pages/public/StudentSignUp/StudentPaymentSelection.jsx";
 import { StudentSubjectSelection } from "./pages/public/StudentSignUp/StudentSubjectSelection.jsx";
+import { StudentPaymentSuccessScreen } from "./pages/public/StudentSignUp/StudentPaymentSuccessScreen.jsx";
 
 import { GuardianRegistration } from "./pages/public/GuardianSignup/GuardianRegistration.jsx";
 import GuardianPhoneVerification from "./pages/public/GuardianSignup/GuardianPhoneVerification.jsx";
@@ -44,6 +46,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
+        <Route path="/career" element={<Career/>} />
         <Route path="/register" element={<SignUp />} />
         <Route path="/comingsoon" element={<ComingSoon />} />
         <Route path="/staff/login" element={<StaffLogin />} />
@@ -72,6 +75,7 @@ function App() {
         <Route path="/register/student/subject/selection" element={<StudentSubjectSelection />} />
         <Route path="/register/student/training/duration" element={<StudentTrainingDuration />} />
         <Route path="/register/student/training/payment" element={<StudentTrainingPayment />} />
+        <Route path="/register/student/training/payment/success" element={<StudentPaymentSuccessScreen />} />
 
         {/* Student Protected Routes */}
         <Route element={<ProtectedRoute />}>

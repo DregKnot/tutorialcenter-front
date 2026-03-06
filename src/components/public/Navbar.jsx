@@ -6,9 +6,10 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 const navigation = [
   { path: "/", name: "Home" },
   { path: "/training", name: "Training / Tuition" },
-  { path: "/about", name: "About Us" },
+  { path: "/career", name: "Career"},
+  { path: "/blog", name: "Blog" },
   { path: "/contact", name: "Contact Us" },
-  { path: "/blog", name: "News / Blog" },
+  { path: "/about", name: "About Us" },
 ];
 export default function Navbar() {
   
@@ -37,12 +38,17 @@ export default function Navbar() {
             </div>
             {/* Apply button */}
             <div className="hidden lg:block">
-              <Link to="/login" className="mr-7 font-bold">
+              <Link to="/login" 
+              className="mr-7 font-bold px-6 py-2 rounded-[12px] 
+             bg-white text-[#09314F]
+             shadow-[1px_1px_4px_0px_#00000026] 
+             active:shadow-[inset_2px_2px_4px_0px_#00000040] 
+             transition-all duration-200">
                 Login
               </Link>
               <Link
                 to="/register"
-                className="bg-primary text-white px-4 py-2 rounded-full"
+                className="bg-primary text-white px-4 py-2 rounded-[12px]"
               >
                 Apply Now
               </Link>
@@ -93,7 +99,7 @@ const MobileNavigation = ({ setVisible, visible }) => {
       icon: "grommet-icons:contact",
     },
     {
-      name: "News / Blog",
+      name: "Blog",
       path: "/",
       icon: "streamline-logos:bloglovin-logo-solid",
     },
