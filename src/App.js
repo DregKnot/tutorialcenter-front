@@ -1,5 +1,6 @@
 import About from "./pages/public/About.jsx";
 import Home from "./pages/public/Home.jsx";
+import Career from "./pages/public/Career.jsx"
 import Login from "./pages/public/Login.jsx";
 import SignUp from "./pages/public/SignUp.jsx";
 import { Route, Routes } from "react-router-dom";
@@ -45,6 +46,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
+        <Route path="/career" element={<Career/>} />
         <Route path="/register" element={<SignUp />} />
         <Route path="/comingsoon" element={<ComingSoon />} />
         <Route path="/staff/login" element={<StaffLogin />} />
