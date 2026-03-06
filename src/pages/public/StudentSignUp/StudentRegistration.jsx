@@ -69,14 +69,14 @@ export default function StudentRegistration() {
       const response = await axios.post(`${API_BASE_URL}/api/students/register`, payload);
 
       if (response.status === 201) {
-        setToast({ type: "success", message: "Registration successful!" });
+        setToast({ type: "success", message: response?.data?.message || "Registration Successful" });
         
         setTimeout(() => {
           if (payload.tel) {
             navigate(`/register/student/phone/verify?tel=${payload.tel}`);
           } else {
             // For now, assuming standard flow — update if email verification is needed
-             setToast({ type: "success", message: "Registration successful! Proceeding..." });
+             setToast({ type: "success", message: response?.data?.message || "Check email for verification" });
           }
         }, 2000);
       }
