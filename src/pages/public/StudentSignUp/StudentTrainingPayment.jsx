@@ -19,7 +19,6 @@ export const StudentTrainingPayment = () => {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
     
-
   /* ================= INIT ================= */
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("studentdata"));
