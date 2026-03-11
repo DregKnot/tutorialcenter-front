@@ -32,7 +32,7 @@ export default function StudentBiodata() {
   // Refs for click outside
   const genderRef = useRef(null);
   const departmentRef = useRef(null);
-  const locationRef = useRef(null);
+  // const locationRef = useRef(null);
 
   // Click outside handler for dropdowns
   useEffect(() => {
@@ -475,7 +475,7 @@ export default function StudentBiodata() {
                 <div className="w-3 h-3 rounded-full border-2 border-[#0091FF] flex items-center justify-center">
                   <div className="w-1 h-1 bg-[#0091FF] rounded-full" />
                 </div>
-                Use current location on map.
+                {/* Use current location on map. */}
               </button>
             </div>
 

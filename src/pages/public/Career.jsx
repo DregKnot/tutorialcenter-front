@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/public/Navbar';
 import Footer from '../../components/public/Footer';
 import Career_img from '../../assets/images/Career.jpg';
@@ -8,6 +9,8 @@ import handCup from "../../assets/images/handCup.jpg";
 import tcLogo from "../../assets/images/Group 1000001500.png";
 
 const Career = () => {
+  const navigate = useNavigate();
+
   return (
    <>
    <Navbar />
@@ -89,15 +92,24 @@ const Career = () => {
         </h4>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <button className="w-full bg-[#09314F] text-white font-bold py-4 rounded-xl shadow-[1px_1px_4px_0px_rgba(0,0,0,0.25)] hover:opacity-90 transition-all">
+          <button 
+            onClick={() => navigate('/staff/login')}
+            className="w-full bg-[#09314F] text-white font-bold py-4 rounded-xl shadow-[1px_1px_4px_0px_rgba(0,0,0,0.25)] hover:opacity-90 transition-all"
+          >
             Apply as Tutor
           </button>
           
-          <button className="w-full bg-white text-[#09314F] border border-[#09314F] font-bold py-4 rounded-xl shadow-[1px_1px_4px_0px_rgba(0,0,0,0.25)] hover:bg-gray-50 transition-all">
+          <button 
+            onClick={() => navigate('/staff/login')}
+            className="w-full bg-white text-[#09314F] border border-[#09314F] font-bold py-4 rounded-xl shadow-[1px_1px_4px_0px_rgba(0,0,0,0.25)] hover:bg-gray-50 transition-all"
+          >
             Apply as Course Advisor
           </button>
           
-          <button className="w-full bg-gradient-to-r from-[#09314F] to-[#C23A3A] text-white font-bold py-4 rounded-xl shadow-[1px_1px_4px_0px_rgba(0,0,0,0.25)] hover:brightness-110 transition-all">
+          <button 
+            onClick={() => navigate('/staff/login')}
+            className="w-full bg-gradient-to-r from-[#09314F] to-[#C23A3A] text-white font-bold py-4 rounded-xl shadow-[1px_1px_4px_0px_rgba(0,0,0,0.25)] hover:brightness-110 transition-all"
+          >
             Apply as Administrator
           </button>
         </div>
@@ -166,6 +178,7 @@ const Career = () => {
 
       {/* Apply Button */}
       <button 
+        onClick={() => navigate('/staff/login')}
         className="px-14 py-4 text-white font-bold text-lg rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
         style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
       >
@@ -250,6 +263,7 @@ const Career = () => {
 
       {/* Apply Button */}
       <button 
+        onClick={() => navigate('/staff/login')}
         className="px-14 py-4 text-white font-bold text-lg rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
         style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
       >
@@ -319,6 +333,7 @@ const Career = () => {
         </div>
 
         <button 
+          onClick={() => navigate('/staff/login')}
           className="px-14 py-4 text-white font-bold text-lg rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
           style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
         >
