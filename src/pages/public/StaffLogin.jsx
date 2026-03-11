@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import login_img from "../../assets/images/login_img.jpg";
 import TC_logo from "../../assets/images/tutorial_logo.png";
@@ -9,31 +9,54 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 export default function StaffLogin() {
   const navigate = useNavigate();
   const [toast, setToast] = useState(null);
+  const [countdown, setCountdown] = useState(null);
+  const [rateLimitCountdown, setRateLimitCountdown] = useState(null); 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    login: "",      // ✅ Changed from 'entry' to 'login'
+    login: "",
     password: "",
   });
 
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
-  // Auto-dismiss toast after 4 seconds
+  // ✅ Auto-dismiss error toasts (except rate limit)
   useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 4000);
+    if (toast && toast.type === "error" && !toast.isRateLimit) {
+      const timer = setTimeout(() => setToast(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  // ✅ Success countdown (redirect to dashboard)
+  useEffect(() => {
+    if (countdown !== null && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (countdown === 0) {
+      navigate("/staff/dashboard");
+    }
+  }, [countdown, navigate]);
+
+  // ✅ Rate limit countdown
+  useEffect(() => {
+    if (rateLimitCountdown !== null && rateLimitCountdown > 0) {
+      const timer = setTimeout(() => setRateLimitCountdown(rateLimitCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (rateLimitCountdown === 0) {
+      // Clear toast when countdown finishes
+      setToast(null);
+      setRateLimitCountdown(null);
+    }
+  }, [rateLimitCountdown]);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Clear errors on input change
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: null });
     }
@@ -69,21 +92,17 @@ export default function StaffLogin() {
       );
 
       if (response.status === 200) {
-        // ✅ Store staff info, token, and role
         localStorage.setItem("staff_info", JSON.stringify(response.data.staff));
         localStorage.setItem("staff_token", response.data.token);
-        localStorage.setItem("staff_role", response.data.role); // ✅ Store role
+        localStorage.setItem("staff_role", response.data.role);
         
-        // ✅ Show backend success message
         setToast({ 
           type: "success", 
-          message: response.data.message || "Login successful!"
+          message: response.data.message || "Login successful!",
+          showCountdown: true
         });
 
-        // Navigate to dashboard
-        setTimeout(() => {
-          navigate("/staff/dashboard");
-        }, 2000);
+        setCountdown(3);
       }
 
     } catch (error) {
@@ -93,21 +112,27 @@ export default function StaffLogin() {
       const message = error.response?.data?.message;
       const backendErrors = error.response?.data?.errors;
 
-      // ✅ Handle rate limiting (429 - Too Many Requests)
+      // ✅ Handle rate limiting (429) with countdown
       if (status === 429) {
+        // Extract seconds from message: "Too many login attempts. Please try again in 57 seconds."
+        const match = message?.match(/(\d+)\s*seconds?/i);
+        const seconds = match ? parseInt(match[1]) : 60;  // Default to 60 if can't parse
+        
         setToast({
           type: "error",
-          message: message || "Too many login attempts. Please try again in 60 seconds."
+          message: "Too many login attempts.",
+          isRateLimit: true,
+          baseMessage: message
         });
+        
+        setRateLimitCountdown(seconds);  // ✅ Start countdown
       }
-      // ✅ Handle verification required (403 - Forbidden)
       else if (status === 403) {
         setToast({
           type: "error",
-          message: message || "Your account requires verification. Please verify your email and phone."
+          message: message || "Your account requires verification."
         });
       }
-      // ✅ Handle validation errors (422)
       else if (status === 422 && backendErrors) {
         const firstError = Object.values(backendErrors)[0][0];
         setToast({
@@ -116,21 +141,18 @@ export default function StaffLogin() {
         });
         setErrors(backendErrors);
       }
-      // ✅ Handle unauthorized (401)
       else if (status === 401) {
         setToast({
           type: "error",
-          message: message || "Invalid email/staff ID or password."
+          message: message || "Invalid credentials."
         });
       }
-      // ✅ Handle network errors
       else if (!error.response) {
         setToast({
           type: "error",
           message: "Network error. Please check your connection."
         });
       }
-      // ✅ Handle other errors
       else {
         setToast({
           type: "error",
@@ -146,18 +168,34 @@ export default function StaffLogin() {
   return (
     <div className="w-full min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
       
-      {/* Toast Notification */}
+      {/* Toast Notification with Countdown */}
       {toast && (
         <div 
           className={`fixed top-5 right-5 z-50 px-6 py-4 rounded-2xl shadow-2xl text-white transition-all duration-500 ${
             toast.type === "success" ? "bg-[#76D287]" : "bg-[#E83831]"
           } animate-in fade-in slide-in-from-top-4`}
         >
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-3">
             <div className="p-1 bg-white/20 rounded-full">
               {toast.type === "success" ? "✓" : "✕"}
             </div>
-            <p className="font-bold">{toast.message}</p>
+            <div>
+              <p className="font-bold text-sm">{toast.message}</p>
+              
+              {/* ✅ Success countdown */}
+              {toast.showCountdown && countdown !== null && (
+                <p className="text-xs mt-1 opacity-90">
+                  Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
+                </p>
+              )}
+              
+              {/* ✅ Rate limit countdown */}
+              {toast.isRateLimit && rateLimitCountdown !== null && (
+                <p className="text-xs mt-1 opacity-90">
+                  Please try again in {rateLimitCountdown} second{rateLimitCountdown !== 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -167,7 +205,6 @@ export default function StaffLogin() {
         className="w-full h-[250px] md:w-1/2 md:h-full bg-cover bg-center relative bg-gray-300 order-1"
         style={{ backgroundImage: `url(${login_img})` }}
       >
-        {/* Sign Up Button (Desktop Only) */}
         <div className="hidden md:block absolute bottom-[70px] right-0 translate-x-9">
           <button
             onClick={() => navigate("/careers")}
@@ -184,7 +221,7 @@ export default function StaffLogin() {
         {/* TOP NAV */}
         <div className="relative w-full flex items-center justify-center mb-8 md:mb-10">
           <button
-            onClick={() => navigate("/staff/login")}
+            onClick={() => navigate("/")}
             className="absolute left-0 p-2 hover:bg-gray-200 rounded-full transition-all z-10"
           >
             <img
@@ -207,7 +244,7 @@ export default function StaffLogin() {
               Staff Login
             </h1>
             <p className="text-gray-500 text-sm">
-              Login with Email Address or Staff ID
+              Login with Email or Staff ID
             </p>
           </div>
 
@@ -217,13 +254,13 @@ export default function StaffLogin() {
               onSubmit={handleSubmit}
               className="space-y-5"
             >
-              {/* Email/Staff ID Input */}
+              {/* Login Input */}
               <div>
                 <label className="block text-sm font-bold text-[#09314F] mb-2 uppercase tracking-wide">
                   Email or Staff ID
                 </label>
                 <input
-                  name="login"  
+                  name="login"
                   type="text"
                   value={formData.login}
                   onChange={handleChange}
@@ -278,17 +315,17 @@ export default function StaffLogin() {
                 )}
               </div>
 
-              {/* Login Button */}
+              {/* Login Button - Disable during rate limit */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || rateLimitCountdown > 0}  // ✅ Disable during rate limit
                 className={`w-full py-4 px-4 rounded-xl font-bold text-lg text-white shadow-lg transition-all ${
-                  loading
+                  loading || rateLimitCountdown > 0
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-[#09314F] to-[#E83831] hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
                 }`}
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? "Logging in..." : rateLimitCountdown > 0 ? `Wait ${rateLimitCountdown}s` : "Login"}
               </button>
 
               {/* Forgot Password Link */}
