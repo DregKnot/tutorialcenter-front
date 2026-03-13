@@ -22,7 +22,7 @@ export default function StaffLogin() {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
-  // ✅ Auto-dismiss error toasts (except rate limit)
+  
   useEffect(() => {
     if (toast && toast.type === "error" && !toast.isRateLimit) {
       const timer = setTimeout(() => setToast(null), 5000);
@@ -30,7 +30,7 @@ export default function StaffLogin() {
     }
   }, [toast]);
 
-  // ✅ Success countdown (redirect to dashboard)
+  
   useEffect(() => {
     if (countdown !== null && countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -182,14 +182,14 @@ export default function StaffLogin() {
             <div>
               <p className="font-bold text-sm">{toast.message}</p>
               
-              {/* ✅ Success countdown */}
+        
               {toast.showCountdown && countdown !== null && (
                 <p className="text-xs mt-1 opacity-90">
                   Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
                 </p>
               )}
               
-              {/* ✅ Rate limit countdown */}
+             
               {toast.isRateLimit && rateLimitCountdown !== null && (
                 <p className="text-xs mt-1 opacity-90">
                   Please try again in {rateLimitCountdown} second{rateLimitCountdown !== 1 ? 's' : ''}

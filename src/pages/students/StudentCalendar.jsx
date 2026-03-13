@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import DashboardLayout from "../../components/private/DashboardLayout";
+import DashboardLayout from "../../components/private/Student/DashboardLayout";
 import axios from "axios";
 
 const daysOfWeek = [

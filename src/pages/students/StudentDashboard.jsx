@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import ProgressCard from "../../components/private/ProgressCard";
-import DashboardLayout from "../../components/private/DashboardLayout";
+import ProgressCard from "../../components/private/Student/ProgressCard";
+import DashboardLayout from "../../components/private/Student/DashboardLayout";
 import axios from "axios";
 
 export default function StudentDashboard() {

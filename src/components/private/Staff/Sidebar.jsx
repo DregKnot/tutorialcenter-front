@@ -1,50 +1,47 @@
 import {
   HomeIcon,
-  BookOpenIcon,
+  UsersIcon,
+  UserGroupIcon,
   AcademicCapIcon,
-  ClipboardDocumentCheckIcon,
   CalendarDaysIcon,
-  ChartBarIcon,
-  CreditCardIcon,
+  BookOpenIcon,
+  ClipboardDocumentCheckIcon,
   Cog6ToothIcon,
-  QuestionMarkCircleIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
+  ChartBarIcon,
+  ShieldCheckIcon,
   ArrowRightOnRectangleIcon,
   SunIcon,
   MoonIcon,
-  PuzzlePieceIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
-
 import { NavLink } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
-import logo from "../../assets/images/tutorial_logo.png";
-import collapselogo from "../../assets/images/TC 1.png";
+import { useTheme } from "../../../context/ThemeContext";
+import logo from "../../../assets/images/TC 1.png";
+import collapselogo from "../../../assets/images/TC 1.png";
 
 const menuItems = [
-  { label: "Dashboard", icon: HomeIcon, destination: "/student/dashboard" },
+  { label: "Dashboard", icon: HomeIcon, destination: "/staff/dashboard" },
+  { label: "Manage Staffs", icon: UsersIcon, destination: "/staff/manage-staffs" },
+  { label: "Manage Students", icon: UserGroupIcon },
+  { label: "Manage Guardian", icon: ShieldCheckIcon },
+  { label: "Master Class", icon: AcademicCapIcon, destination: "/staff/master-class" },
+  { label: "Calendar", icon: CalendarDaysIcon },
   { label: "Courses", icon: BookOpenIcon },
-  { label: "Master Class", icon: AcademicCapIcon },
-  { label: "Exam Practice", icon: ClipboardDocumentCheckIcon },
-  { label: "Calendar", icon: CalendarDaysIcon, destination: "/student/calendar" },
-  { label: "Assessment", icon: ChartBarIcon },
-  { label: "Payment", icon: CreditCardIcon },
-  { label: "Games", icon: PuzzlePieceIcon },
+  { label: "Exams", icon: ClipboardDocumentCheckIcon },
+  { label: "Audit Log", icon: ChartBarIcon },
   { label: "Settings", icon: Cog6ToothIcon },
-  { label: "Help", icon: QuestionMarkCircleIcon },
 ];
 
-export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
+export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose }) {
   const { theme, setTheme } = useTheme();
-  const { student, logout } = useAuth();
-  const API_BASE_URL =
-    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
+  const storedStaff = localStorage.getItem("staff_info");
+  const staff = storedStaff ? JSON.parse(storedStaff) : null;
   const fullName =
-    student?.firstname && student?.surname
-      ? `${student.firstname} ${student.surname}`
-      : "Caleb Samuel Thomas";
+    staff?.firstname && staff?.surname
+      ? `${staff.firstname} ${staff.surname}`
+      : "Staff Member";
 
   return (
     <>
@@ -101,14 +98,12 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
 
         {/* Avatar */}
         <div className="flex px-3 space-y-2 flex-wrap gap-3 items-center">
-          <img
-            src={student?.profile_picture !== null ? `${API_BASE_URL}/storage/${student?.profile_picture}` : collapselogo}
-            alt="Avatar"
-            className="rounded-full shadow-lg h-10 w-10 object-cover border-2 border-yellow-400"
-          />
+          <div className="rounded-full shadow-lg h-10 w-10 flex items-center justify-center bg-blue-900 text-white font-bold">
+            {fullName?.[0] || "S"}
+          </div>
           {!collapsed && (
             <div>
-              <h6 className="text-yellow-400 text-sm">Hello Student</h6>
+              <h6 className="text-yellow-400 text-sm">Welcome Staff</h6>
               <h3 className="font-bold dark:text-gray-50 text-sm">
                 {fullName}
               </h3>
@@ -193,7 +188,11 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
 
           {/* Logout */}
           <button
-            onClick={logout}
+            onClick={() => {
+              localStorage.removeItem("staff_token");
+              localStorage.removeItem("staff_info");
+              window.location.href = "/staff/login";
+            }}
             className="flex items-center justify-center gap-2 text-red-500 hover:text-red-600"
           >
             <ArrowRightOnRectangleIcon className="w-5 h-5" />
@@ -204,3 +203,4 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
     </>
   );
 }
+
