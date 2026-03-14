@@ -17,7 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
-import logo from "../../../assets/images/TC 1.png";
+import logo from "../../../assets/images/tutorial_logo.png";
 import collapselogo from "../../../assets/images/TC 1.png";
 
 const menuItems = [

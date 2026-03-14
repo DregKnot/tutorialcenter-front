@@ -8,15 +8,21 @@ import {
   LinkIcon, 
   UserCircleIcon, 
   ChatBubbleBottomCenterTextIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  XMarkIcon
 } from "@heroicons/react/24/outline";
 
 export default function CreateMasterClassModal({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [staffList, setStaffList] = useState([]);
   
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedSubject, setSelectedSubject] = useState(null);
+  
   const [formData, setFormData] = useState({
+    // course_id: "",
     subject_id: "",
     title: "",
     start_date: "",
@@ -47,36 +53,111 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     { label: "Sa", value: "saturday" }
   ];
 
- useEffect(() => {
-    const fetchSubjects = async () => {
+  // ✅ Fetch staff (WITH auth header)
+  const fetchStaff = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/staffs`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      console.log("Staff response:", response.data);
+      
+      const fetchedStaff = response.data.staffs || response.data.data || [];
+      setStaffList(Array.isArray(fetchedStaff) ? fetchedStaff : []);
+    } catch (error) {
+      console.error("Failed to fetch staff:", error);
+      
+      // Fallback to current user
+      const currentStaff = JSON.parse(localStorage.getItem("staff_info"));
+      if (currentStaff) {
+        setStaffList([currentStaff]);
+      } else {
+        setStaffList([]);
+      }
+    }
+  };
+
+
+  // ✅ Fetch courses on mount (NO auth header)
+  useEffect(() => {
+    const fetchCourses = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/admin/subjects/all`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const fetchedSubjects = response.data.subjects || response.data.data;
-        setSubjects(Array.isArray(fetchedSubjects) ? fetchedSubjects : []);
+        const response = await axios.get(`${API_BASE_URL}/api/courses`);
+        console.log("Courses raw response.data:", response?.data);
+        
+        const fetched = response?.data?.courses || response?.data?.data || [];
+        
+        if (fetched.length === 0) {
+          console.warn("No courses resolved — check that response.data.courses exists and is non-empty.");
+        }
+        
+        setCourses(fetched);
+        console.table(fetched);
       } catch (error) {
-        console.warn("Subjects endpoint failed or missing. Defaulting to empty.");
+        console.error("Failed to fetch courses", error);
+      }
+    };
+
+    fetchCourses();
+    fetchStaff();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ✅ Fetch subjects when course_id changes
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      if (!formData.course_id) {
+        setSubjects([]);
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/courses/${formData.course_id}/subjects`);
+        console.log("Subjects response:", response.data);
+        const fetchedSubjects = response.data.subjects || response.data.data || [];
+        setSubjects(fetchedSubjects);
+      } catch (error) {
+        console.error("Failed to fetch subjects:", error);
         setSubjects([]);
       }
     };
 
-    const fetchStaff = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/admin/staffs`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const fetchedStaff = response.data.staffs || response.data.data;
-        setStaffList(Array.isArray(fetchedStaff) ? fetchedStaff : []);
-      } catch (error) {
-        console.warn("Staff endpoint failed or missing (404). Defaulting to empty.");
-        setStaffList([]); 
-      }
-    };
-
     fetchSubjects();
-    fetchStaff();
-  }, [API_BASE_URL, token]);
+  }, [formData.course_id, API_BASE_URL]);
+
+  // ✅ Handle course change
+  const handleCourseChange = (e) => {
+    const courseId = e.target.value;
+    const course = courses.find(c => c.id === parseInt(courseId));
+    
+    setSelectedCourse(course);
+    setFormData({
+      ...formData,
+      course_id: courseId,
+      subject_id: "",  // Reset subject when course changes
+      title: ""  // Reset title
+    });
+    setSelectedSubject(null);
+  };
+
+  // ✅ Handle subject change and auto-generate title
+  const handleSubjectChange = (e) => {
+    const subjectId = e.target.value;
+    const subject = subjects.find(s => s.id === parseInt(subjectId));
+    
+    setSelectedSubject(subject);
+    
+    // ✅ Auto-generate title: "JAMB-Mathematics"
+    const courseName = selectedCourse?.title || selectedCourse?.name || "";
+    const subjectName = subject?.name || "";
+    const autoTitle = courseName && subjectName ? `${courseName}-${subjectName}` : "";
+    
+    setFormData({
+      ...formData,
+      subject_id: subjectId,
+      title: autoTitle
+    });
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -105,9 +186,9 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
   const validateForm = () => {
     const newErrors = {};
 
+    if (!formData.course_id) newErrors.course_id = "Course is required";
     if (!formData.subject_id) newErrors.subject_id = "Subject is required";
     if (!formData.title?.trim()) newErrors.title = "Title is required";
-    if (!formData.description?.trim()) newErrors.description = "Description is required";
     if (!formData.start_date) newErrors.start_date = "Start date is required";
     if (!formData.end_date) newErrors.end_date = "End date is required";
     
@@ -154,25 +235,32 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
         duration_minutes: duration
       }));
 
-      // 🛡️ THE FIX: Safely parse subject_id so we don't send NaN to the backend
       const payload = {
-        subject_id: formData.subject_id ? parseInt(formData.subject_id) : "",
+        subject_id: parseInt(formData.subject_id),
         title: formData.title,
-        description: formData.description,
+        description: formData.description || "No description provided",
         status: formData.status,
         start_date: formData.start_date,
         end_date: formData.end_date,
         staffs: staffs,
-        schedules: schedules,
-        link: formData.link 
+        schedules: schedules
       };
 
-      const response = await axios.post(`${API_BASE_URL}/api/admin/classes/create`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+      console.log("Submitting payload:", payload);
+
+      // ✅ WITH auth header for creating class
+      const response = await axios.post(
+        `${API_BASE_URL}/api/admin/classes/create`, 
+        payload, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
         }
-      });
+      );
+
+      console.log("Create class response:", response.data);
 
       if (response.status === 201 || response.status === 200) {
         onSuccess();
@@ -180,7 +268,6 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     } catch (error) {
       console.error("Failed to create class:", error.response?.data);
       
-      // 🛡️ THE FIX: Convert Laravel's array of errors into clean strings for the UI state
       if (error.response?.data?.errors) {
         const laravelErrors = error.response.data.errors;
         const formattedErrors = {};
@@ -199,178 +286,293 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
-        <div className="px-8 py-6">
-          <h2 className="text-xl font-bold text-[#1F2937]">Schedule Master Class</h2>
+        {/* Header */}
+        <div className="px-8 py-6 flex items-center justify-between border-b border-gray-100">
+          <h2 className="text-2xl font-bold text-[#1F2937]">Schedule Master Class</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-all"
+          >
+            <XMarkIcon className="w-6 h-6 text-gray-600" />
+          </button>
         </div>
 
-        {/* Global API Error Banner (No Icons) */}
+        {/* Global API Error Banner */}
         {apiError && (
-          <div className="mx-8 mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium">
+          <div className="mx-8 mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
             {apiError}
           </div>
         )}
 
-        <div className="px-8 overflow-y-auto custom-scrollbar flex-1 pb-4">
-          <form id="masterClassForm" onSubmit={handleSubmit} className="space-y-4">
+        {/* Form Content */}
+        <div className="px-8 py-6 overflow-y-auto flex-1">
+          <form id="masterClassForm" onSubmit={handleSubmit} className="space-y-6">
             
-            {/* Session Duration */}
+            {/* Session Duration Card */}
             <div>
-              <div className={`bg-[#F1F3F5] rounded-xl p-3 flex justify-between items-center text-sm ${errors.start_date || errors.end_date ? "border border-red-500" : ""}`}>
-                <div className="w-1/3">
-                  <span className="block text-[10px] text-gray-500 uppercase tracking-wide font-semibold mb-1">Period</span>
-                  <span className="font-medium text-gray-700">Session Duration</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div>
-                    <span className="block text-[10px] text-gray-500 uppercase tracking-wide font-semibold mb-1">Start</span>
-                    <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} className="bg-transparent border-none p-0 text-sm text-gray-700 focus:ring-0 cursor-pointer outline-none" />
-                  </div>
-                  <span className="text-gray-400 mt-4">-</span>
-                  <div>
-                    <span className="block text-[10px] text-gray-500 uppercase tracking-wide font-semibold mb-1">End</span>
-                    <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} className="bg-transparent border-none p-0 text-sm text-gray-700 focus:ring-0 cursor-pointer outline-none" />
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Period
+              </label>
+              <div className={`bg-gray-50 rounded-xl p-4 ${errors.start_date || errors.end_date ? "border-2 border-red-500" : "border border-gray-200"}`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Session Duration</span>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div>
+                      <span className="block text-xs text-gray-500 mb-1">Start</span>
+                      <input 
+                        type="date" 
+                        name="start_date" 
+                        value={formData.start_date} 
+                        onChange={handleChange} 
+                        className="bg-transparent border-none p-0 text-gray-900 font-medium focus:ring-0 cursor-pointer" 
+                      />
+                    </div>
+                    <span className="text-gray-400 mt-4">-</span>
+                    <div>
+                      <span className="block text-xs text-gray-500 mb-1">End</span>
+                      <input 
+                        type="date" 
+                        name="end_date" 
+                        value={formData.end_date} 
+                        onChange={handleChange} 
+                        className="bg-transparent border-none p-0 text-gray-900 font-medium focus:ring-0 cursor-pointer" 
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
               {(errors.start_date || errors.end_date) && (
-                <p className="text-red-500 text-xs mt-1 ml-1">{errors.start_date || errors.end_date}</p>
+                <p className="text-red-500 text-xs mt-2">{errors.start_date || errors.end_date}</p>
               )}
             </div>
 
-            {/* Subject */}
+            {/* Course Dropdown (JAMB, WAEC, etc) */}
             <div>
-              <div className={`flex items-center gap-3 bg-[#F1F3F5] rounded-xl relative ${errors.subject_id ? "border border-red-500" : ""}`}>
-                <BookOpenIcon className="w-6 h-6 text-gray-800 shrink-0 ml-3" />
-                <select name="subject_id" value={formData.subject_id} onChange={handleChange} className="w-full bg-transparent appearance-none px-4 py-3 text-sm font-medium text-gray-800 outline-none cursor-pointer">
-                  <option value="" disabled>Select Category (e.g., JAMB)</option>
-                  {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              <div className={`flex items-center gap-4 bg-gray-50 rounded-xl p-4 ${errors.course_id ? "border-2 border-red-500" : "border border-gray-200"}`}>
+                <BookOpenIcon className="w-6 h-6 text-gray-700" />
+                <select 
+                  name="course_id" 
+                  value={formData.course_id} 
+                  onChange={handleCourseChange} 
+                  className="flex-1 bg-transparent text-gray-900 font-medium outline-none cursor-pointer"
+                >
+                  <option value="">Select Course (e.g., JAMB, WAEC)</option>
+                  {courses.map(course => (
+                    <option key={course.id} value={course.id}>
+                      {course.title || course.name}
+                    </option>
+                  ))}
                 </select>
-                <ChevronDownIcon className="w-4 h-4 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDownIcon className="w-5 h-5 text-gray-400" />
               </div>
-              {errors.subject_id && <p className="text-red-500 text-xs mt-1 ml-11">{errors.subject_id}</p>}
+              {errors.course_id && <p className="text-red-500 text-xs mt-2">{errors.course_id}</p>}
             </div>
 
-            {/* Title */}
+            {/* Subject Dropdown (English, Mathematics, etc) */}
             <div>
-              <div className={`flex items-center gap-3 bg-[#F1F3F5] rounded-xl ${errors.title ? "border border-red-500" : ""}`}>
-                <div className="w-6 shrink-0 ml-3" /> 
-                <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Class Name (e.g. English Master Class)" className="w-full bg-transparent px-4 py-3 text-sm font-medium text-gray-800 outline-none placeholder-gray-500" />
+              <div className={`flex items-center gap-4 bg-gray-50 rounded-xl p-4 ${errors.subject_id ? "border-2 border-red-500" : "border border-gray-200"}`}>
+                <BookOpenIcon className="w-6 h-6 text-gray-700" />
+                <select 
+                  name="subject_id" 
+                  value={formData.subject_id} 
+                  onChange={handleSubjectChange}
+                  disabled={!formData.course_id}
+                  className="flex-1 bg-transparent text-gray-900 font-medium outline-none cursor-pointer disabled:text-gray-400 disabled:cursor-not-allowed"
+                >
+                  <option value="">Select Subject (e.g., English, Mathematics)</option>
+                  {subjects.map(subject => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon className="w-5 h-5 text-gray-400" />
               </div>
-              {errors.title && <p className="text-red-500 text-xs mt-1 ml-11">{errors.title}</p>}
+              {errors.subject_id && <p className="text-red-500 text-xs mt-2">{errors.subject_id}</p>}
             </div>
 
-            {/* Days */}
+            {/* Auto-Generated Title (Read-only display) */}
             <div>
-              <div className="flex items-center gap-3">
-                <ClockIcon className="w-6 h-6 text-gray-800 shrink-0" />
-                <div className="flex-1 flex gap-1 justify-between">
+              <div className={`flex items-center gap-4 bg-gray-100 rounded-xl p-4 border border-gray-200`}>
+                <div className="w-6" />
+                <div className="flex-1">
+                  <span className="block text-xs text-gray-500 mb-1">Generated Class Title</span>
+                  <p className="text-gray-900 font-bold">
+                    {formData.title || "Select course and subject to generate title"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Days of Week */}
+            <div>
+              <div className="flex items-center gap-4">
+                <ClockIcon className="w-6 h-6 text-gray-700" />
+                <div className="flex-1 flex gap-2">
                   {weekDays.map(day => (
                     <button
                       key={day.value}
                       type="button"
                       onClick={() => toggleDay(day.value)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                        selectedDays.includes(day.value) ? "bg-[#93C5FD] text-[#1E3A8A]" : "bg-[#F1F3F5] text-gray-500 hover:bg-gray-200"
-                      } ${errors.days ? "border border-red-500" : ""}`}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                        selectedDays.includes(day.value) 
+                          ? "bg-blue-300 text-blue-900" 
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
                     >
                       {day.label}
                     </button>
                   ))}
                 </div>
               </div>
-              {errors.days && <p className="text-red-500 text-xs mt-1 ml-11">{errors.days}</p>}
+              {errors.days && <p className="text-red-500 text-xs mt-2 ml-10">{errors.days}</p>}
             </div>
 
-            {/* Time Block */}
+            {/* Time Card */}
             <div>
-              <div className="flex items-center gap-3">
-                <div className="w-6 shrink-0" />
-                <div className={`flex-1 bg-[#F1F3F5] rounded-xl p-3 flex justify-between items-center text-sm ${errors.start_time ? "border border-red-500" : ""}`}>
-                  <div className="w-1/3">
-                    <span className="block text-[10px] text-gray-500 uppercase tracking-wide font-semibold mb-1">Day</span>
-                    <span className="font-medium text-gray-700 capitalize">
-                      {selectedDays.length > 0 ? selectedDays[0] : "Select a day"}
-                      {selectedDays.length > 1 && "..."}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
+                <div className="w-6" />
+                <div className={`flex-1 bg-gray-50 rounded-xl p-4 ${errors.start_time ? "border-2 border-red-500" : "border border-gray-200"}`}>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <span className="block text-[10px] text-gray-500 uppercase tracking-wide font-semibold mb-1">Start</span>
-                      <input type="time" name="start_time" value={formData.start_time} onChange={handleChange} className="bg-transparent border-none p-0 text-sm text-gray-700 focus:ring-0 cursor-pointer outline-none w-20" />
+                      <span className="block text-xs text-gray-500 mb-1">Day</span>
+                      <span className="text-sm font-medium text-gray-900 capitalize">
+                        {selectedDays.length > 0 ? selectedDays[0] : "Select a day"}
+                        {selectedDays.length > 1 && ` +${selectedDays.length - 1}`}
+                      </span>
                     </div>
-                    <span className="text-gray-400 mt-4">-</span>
-                    <div>
-                      <span className="block text-[10px] text-gray-500 uppercase tracking-wide font-semibold mb-1">End</span>
-                      <input type="time" name="end_time" value={formData.end_time} onChange={handleChange} className="bg-transparent border-none p-0 text-sm text-gray-700 focus:ring-0 cursor-pointer outline-none w-20" />
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <span className="block text-xs text-gray-500 mb-1">Start</span>
+                        <input 
+                          type="time" 
+                          name="start_time" 
+                          value={formData.start_time} 
+                          onChange={handleChange} 
+                          className="bg-transparent border-none p-0 text-sm text-gray-900 font-medium focus:ring-0 cursor-pointer" 
+                        />
+                      </div>
+                      <span className="text-gray-400 mt-4">-</span>
+                      <div>
+                        <span className="block text-xs text-gray-500 mb-1">End</span>
+                        <input 
+                          type="time" 
+                          name="end_time" 
+                          value={formData.end_time} 
+                          onChange={handleChange} 
+                          className="bg-transparent border-none p-0 text-sm text-gray-900 font-medium focus:ring-0 cursor-pointer" 
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-              {errors.start_time && <p className="text-red-500 text-xs mt-1 ml-11">{errors.start_time}</p>}
+              {errors.start_time && <p className="text-red-500 text-xs mt-2 ml-10">{errors.start_time}</p>}
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
-              <GlobeAltIcon className="w-6 h-6 text-gray-800 shrink-0" />
-              <span className="text-sm text-gray-600 font-medium">West Africa Standard Time</span>
+            {/* Timezone */}
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <GlobeAltIcon className="w-6 h-6 text-gray-700" />
+              <span>West Africa Standard Time</span>
             </div>
 
             {/* Tutor */}
             <div>
-              <div className={`flex items-center gap-3 mt-4 bg-[#F1F3F5] rounded-xl relative ${errors.tutor_id ? "border border-red-500" : ""}`}>
-                <UserGroupIcon className="w-6 h-6 text-gray-800 shrink-0 ml-3" />
-                <select name="tutor_id" value={formData.tutor_id} onChange={handleChange} className="w-full bg-transparent appearance-none px-4 py-3 text-sm font-medium text-gray-500 outline-none cursor-pointer">
+              <div className={`flex items-center gap-4 bg-gray-50 rounded-xl p-4 ${errors.tutor_id ? "border-2 border-red-500" : "border border-gray-200"}`}>
+                <UserGroupIcon className="w-6 h-6 text-gray-700" />
+                <select 
+                  name="tutor_id" 
+                  value={formData.tutor_id} 
+                  onChange={handleChange} 
+                  className="flex-1 bg-transparent text-gray-500 outline-none cursor-pointer"
+                >
                   <option value="">Select tutor</option>
-                  {staffList.map(s => <option key={s.id} value={s.id}>{s.name || `${s.firstname} ${s.surname}`}</option>)}
+                  {staffList.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.name || `${s.firstname} ${s.surname}`}
+                    </option>
+                  ))}
                 </select>
+                <ChevronDownIcon className="w-5 h-5 text-gray-400" />
               </div>
-              {errors.tutor_id && <p className="text-red-500 text-xs mt-1 ml-11">{errors.tutor_id}</p>}
+              {errors.tutor_id && <p className="text-red-500 text-xs mt-2">{errors.tutor_id}</p>}
             </div>
 
             {/* Assistant */}
-            <div className="flex items-center gap-3 bg-[#F1F3F5] rounded-xl relative">
-              <UserGroupIcon className="w-6 h-6 text-gray-800 shrink-0 ml-3" />
-              <select name="assistant_id" value={formData.assistant_id} onChange={handleChange} className="w-full bg-transparent appearance-none px-4 py-3 text-sm font-medium text-gray-500 outline-none cursor-pointer">
+            <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <UserGroupIcon className="w-6 h-6 text-gray-700" />
+              <select 
+                name="assistant_id" 
+                value={formData.assistant_id} 
+                onChange={handleChange} 
+                className="flex-1 bg-transparent text-gray-500 outline-none cursor-pointer"
+              >
                 <option value="">Select assistant (optional)</option>
-                {staffList.map(s => <option key={s.id} value={s.id}>{s.name || `${s.firstname} ${s.surname}`}</option>)}
+                {staffList.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.name || `${s.firstname} ${s.surname}`}
+                  </option>
+                ))}
               </select>
+              <ChevronDownIcon className="w-5 h-5 text-gray-400" />
             </div>
 
             {/* Link */}
-            <div className="flex items-center gap-3 bg-[#F1F3F5] rounded-xl">
-              <LinkIcon className="w-6 h-6 text-gray-800 shrink-0 ml-3" />
-              <input type="url" name="link" value={formData.link} onChange={handleChange} placeholder="Add Link" className="w-full bg-transparent px-4 py-3 text-sm font-medium text-gray-800 outline-none placeholder-gray-400" />
+            <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <LinkIcon className="w-6 h-6 text-gray-700" />
+              <input 
+                type="url" 
+                name="link" 
+                value={formData.link} 
+                onChange={handleChange} 
+                placeholder="Add Link (optional)" 
+                className="flex-1 bg-transparent text-gray-900 outline-none placeholder-gray-400" 
+              />
             </div>
 
             {/* Status */}
-            <div className="flex items-center gap-3 bg-[#F1F3F5] rounded-xl relative">
-              <UserCircleIcon className="w-6 h-6 text-gray-800 shrink-0 ml-3" />
-              <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-transparent appearance-none px-4 py-3 text-sm font-medium text-gray-500 outline-none cursor-pointer">
+            <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <UserCircleIcon className="w-6 h-6 text-gray-700" />
+              <select 
+                name="status" 
+                value={formData.status} 
+                onChange={handleChange} 
+                className="flex-1 bg-transparent text-gray-500 outline-none cursor-pointer"
+              >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
-              <ChevronDownIcon className="w-4 h-4 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDownIcon className="w-5 h-5 text-gray-400" />
             </div>
 
             {/* Description */}
             <div>
-              <div className={`flex items-start gap-3 bg-[#F1F3F5] rounded-xl ${errors.description ? "border border-red-500" : ""}`}>
-                <ChatBubbleBottomCenterTextIcon className="w-6 h-6 text-gray-800 shrink-0 mt-3 ml-3" />
-                <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" rows="3" className="w-full bg-transparent px-4 py-3 text-sm font-medium text-gray-800 outline-none placeholder-gray-400 resize-none"></textarea>
+              <div className="flex items-start gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <ChatBubbleBottomCenterTextIcon className="w-6 h-6 text-gray-700 mt-1" />
+                <textarea 
+                  name="description" 
+                  value={formData.description} 
+                  onChange={handleChange} 
+                  placeholder="Description (optional)" 
+                  rows="3" 
+                  className="flex-1 bg-transparent text-gray-900 outline-none placeholder-gray-400 resize-none"
+                />
               </div>
-              {errors.description && <p className="text-red-500 text-xs mt-1 ml-11">{errors.description}</p>}
             </div>
 
           </form>
         </div>
 
-        <div className="p-6 bg-white flex items-center gap-4 border-t border-gray-100">
+        {/* Footer Buttons */}
+        <div className="px-8 py-6 bg-white flex items-center gap-4 border-t border-gray-100">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 bg-[#EF4444] hover:bg-red-600 text-white text-sm font-bold rounded-xl transition-colors"
+            disabled={loading}
+            className="flex-1 py-3.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-all disabled:opacity-50"
           >
             Cancel
           </button>
@@ -378,7 +580,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
             type="submit"
             form="masterClassForm"
             disabled={loading}
-            className="flex-1 py-3 bg-[#0F2843] hover:bg-[#0a1b2d] text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+            className="flex-1 py-3.5 bg-[#0F2843] hover:bg-[#0a1b2d] text-white font-bold rounded-xl transition-all disabled:opacity-50"
           >
             {loading ? "Saving..." : "Save"}
           </button>
