@@ -27,8 +27,6 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     title: "",
     start_date: "",
     end_date: "",
-    start_time: "",
-    end_time: "",
     tutor_id: "",
     assistant_id: "",
     link: "",
@@ -36,9 +34,18 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     description: "",
   });
 
-  const [selectedDays, setSelectedDays] = useState(["monday"]);
+  const [daySchedules, setDaySchedules] = useState([
+    { day: "monday", start_time: "12:00", end_time: "12:30" }
+  ]);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState(null);
+
+  // Search states for datalists
+  const [courseSearch, setCourseSearch] = useState("");
+  const [subjectSearch, setSubjectSearch] = useState("");
+  const [tutorSearch, setTutorSearch] = useState("");
+  const [assistantSearch, setAssistantSearch] = useState("");
+  const [statusSearch, setStatusSearch] = useState("active");
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
   const token = localStorage.getItem("staff_token");
@@ -125,38 +132,69 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     fetchSubjects();
   }, [formData.course_id, API_BASE_URL]);
 
-  // ✅ Handle course change
+  // ✅ Handle course change (datalist version)
   const handleCourseChange = (e) => {
-    const courseId = e.target.value;
-    const course = courses.find(c => c.id === parseInt(courseId));
+    const value = e.target.value;
+    setCourseSearch(value);
     
-    setSelectedCourse(course);
-    setFormData({
-      ...formData,
-      course_id: courseId,
-      subject_id: "",  // Reset subject when course changes
-      title: ""  // Reset title
-    });
-    setSelectedSubject(null);
+    const course = courses.find(c => (c.title || c.name) === value);
+    if (course) {
+      setSelectedCourse(course);
+      setFormData({
+        ...formData,
+        course_id: course.id,
+        subject_id: "",
+        title: ""
+      });
+      setSelectedSubject(null);
+      setSubjectSearch("");
+    } else {
+      setFormData({ ...formData, course_id: "" });
+    }
   };
 
-  // ✅ Handle subject change and auto-generate title
+  // ✅ Handle subject change (datalist version)
   const handleSubjectChange = (e) => {
-    const subjectId = e.target.value;
-    const subject = subjects.find(s => s.id === parseInt(subjectId));
+    const value = e.target.value;
+    setSubjectSearch(value);
     
-    setSelectedSubject(subject);
+    const subject = subjects.find(s => s.name === value);
+    if (subject) {
+      setSelectedSubject(subject);
+      
+      const courseName = selectedCourse?.title || selectedCourse?.name || "";
+      const subjectName = subject?.name || "";
+      const autoTitle = courseName && subjectName ? `${courseName}-${subjectName}` : "";
+      
+      setFormData({
+        ...formData,
+        subject_id: subject.id,
+        title: autoTitle
+      });
+    } else {
+      setFormData({ ...formData, subject_id: "" });
+    }
+  };
+
+  const handleStaffChange = (e, field) => {
+    const value = e.target.value;
+    if (field === "tutor_id") setTutorSearch(value);
+    else setAssistantSearch(value);
     
-    // ✅ Auto-generate title: "JAMB-Mathematics"
-    const courseName = selectedCourse?.title || selectedCourse?.name || "";
-    const subjectName = subject?.name || "";
-    const autoTitle = courseName && subjectName ? `${courseName}-${subjectName}` : "";
-    
-    setFormData({
-      ...formData,
-      subject_id: subjectId,
-      title: autoTitle
-    });
+    const staff = staffList.find(s => (s.name || `${s.firstname} ${s.surname}`) === value);
+    if (staff) {
+      setFormData({ ...formData, [field]: staff.id });
+    } else {
+      setFormData({ ...formData, [field]: "" });
+    }
+  };
+
+  const handleStatusChange = (e) => {
+    const value = e.target.value;
+    setStatusSearch(value);
+    if (["active", "inactive"].includes(value)) {
+      setFormData({ ...formData, status: value });
+    }
   };
 
   const handleChange = (e) => {
@@ -167,12 +205,24 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
   };
 
   const toggleDay = (dayValue) => {
-    if (selectedDays.includes(dayValue)) {
-      setSelectedDays(selectedDays.filter(d => d !== dayValue));
+    const existingIndex = daySchedules.findIndex(s => s.day === dayValue);
+    if (existingIndex !== -1) {
+      setDaySchedules(daySchedules.filter(s => s.day !== dayValue));
     } else {
-      setSelectedDays([...selectedDays, dayValue]);
+      setDaySchedules([...daySchedules, { 
+        day: dayValue, 
+        start_time: "12:00", 
+        end_time: "12:30" 
+      }]);
     }
     if (errors.days) setErrors({ ...errors, days: null });
+  };
+
+  const handleTimeChange = (day, field, value) => {
+    setDaySchedules(prev => prev.map(s => 
+      s.day === day ? { ...s, [field]: value } : s
+    ));
+    if (errors.start_time) setErrors({ ...errors, start_time: null });
   };
 
   const calculateDuration = (start, end) => {
@@ -202,11 +252,14 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
       newErrors.tutor_id = "At least one staff member is required";
     }
 
-    if (selectedDays.length === 0) {
+    if (daySchedules.length === 0) {
       newErrors.days = "At least one schedule day is required";
-    }
-    if (!formData.start_time) {
-      newErrors.start_time = "Start time is required";
+    } else {
+      daySchedules.forEach(s => {
+        if (!s.start_time || !s.end_time) {
+          newErrors.start_time = "Start and end times are required for all selected days";
+        }
+      });
     }
 
     setErrors(newErrors);
@@ -228,11 +281,10 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
       if (formData.tutor_id) staffs.push({ staff_id: parseInt(formData.tutor_id), role: "lead" });
       if (formData.assistant_id) staffs.push({ staff_id: parseInt(formData.assistant_id), role: "assistant" });
 
-      const duration = calculateDuration(formData.start_time, formData.end_time);
-      const schedules = selectedDays.map(day => ({
-        day_of_week: day,
-        start_time: formData.start_time,
-        duration_minutes: duration
+      const schedules = daySchedules.map(schedule => ({
+        day_of_week: schedule.day,
+        start_time: schedule.start_time,
+        duration_minutes: calculateDuration(schedule.start_time, schedule.end_time)
       }));
 
       const payload = {
@@ -353,19 +405,19 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
             <div>
               <div className={`flex items-center gap-4 bg-gray-50 rounded-xl p-4 ${errors.course_id ? "border-2 border-red-500" : "border border-gray-200"}`}>
                 <BookOpenIcon className="w-6 h-6 text-gray-700" />
-                <select 
+                <input 
+                  list="course-list"
                   name="course_id" 
-                  value={formData.course_id} 
+                  value={courseSearch} 
                   onChange={handleCourseChange} 
+                  placeholder="Select Course (e.g., JAMB, WAEC)"
                   className="flex-1 bg-transparent text-gray-900 font-medium outline-none cursor-pointer"
-                >
-                  <option value="">Select Course (e.g., JAMB, WAEC)</option>
+                />
+                <datalist id="course-list">
                   {courses.map(course => (
-                    <option key={course.id} value={course.id}>
-                      {course.title || course.name}
-                    </option>
+                    <option key={course.id} value={course.title || course.name} />
                   ))}
-                </select>
+                </datalist>
                 <ChevronDownIcon className="w-5 h-5 text-gray-400" />
               </div>
               {errors.course_id && <p className="text-red-500 text-xs mt-2">{errors.course_id}</p>}
@@ -375,20 +427,20 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
             <div>
               <div className={`flex items-center gap-4 bg-gray-50 rounded-xl p-4 ${errors.subject_id ? "border-2 border-red-500" : "border border-gray-200"}`}>
                 <BookOpenIcon className="w-6 h-6 text-gray-700" />
-                <select 
+                <input 
+                  list="subject-list"
                   name="subject_id" 
-                  value={formData.subject_id} 
+                  value={subjectSearch} 
                   onChange={handleSubjectChange}
                   disabled={!formData.course_id}
+                  placeholder="Select Subject (e.g., English, Mathematics)"
                   className="flex-1 bg-transparent text-gray-900 font-medium outline-none cursor-pointer disabled:text-gray-400 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select Subject (e.g., English, Mathematics)</option>
+                />
+                <datalist id="subject-list">
                   {subjects.map(subject => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.name}
-                    </option>
+                    <option key={subject.id} value={subject.name} />
                   ))}
-                </select>
+                </datalist>
                 <ChevronDownIcon className="w-5 h-5 text-gray-400" />
               </div>
               {errors.subject_id && <p className="text-red-500 text-xs mt-2">{errors.subject_id}</p>}
@@ -407,7 +459,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
               </div>
             </div>
 
-            {/* Days of Week */}
+            {/* Days of Week Selectors */}
             <div>
               <div className="flex items-center gap-4">
                 <ClockIcon className="w-6 h-6 text-gray-700" />
@@ -418,7 +470,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
                       type="button"
                       onClick={() => toggleDay(day.value)}
                       className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                        selectedDays.includes(day.value) 
+                        daySchedules.some(s => s.day === day.value) 
                           ? "bg-blue-300 text-blue-900" 
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
@@ -431,45 +483,46 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
               {errors.days && <p className="text-red-500 text-xs mt-2 ml-10">{errors.days}</p>}
             </div>
 
-            {/* Time Card */}
-            <div>
-              <div className="flex items-center gap-4">
-                <div className="w-6" />
-                <div className={`flex-1 bg-gray-50 rounded-xl p-4 ${errors.start_time ? "border-2 border-red-500" : "border border-gray-200"}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="block text-xs text-gray-500 mb-1">Day</span>
-                      <span className="text-sm font-medium text-gray-900 capitalize">
-                        {selectedDays.length > 0 ? selectedDays[0] : "Select a day"}
-                        {selectedDays.length > 1 && ` +${selectedDays.length - 1}`}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <span className="block text-xs text-gray-500 mb-1">Start</span>
-                        <input 
-                          type="time" 
-                          name="start_time" 
-                          value={formData.start_time} 
-                          onChange={handleChange} 
-                          className="bg-transparent border-none p-0 text-sm text-gray-900 font-medium focus:ring-0 cursor-pointer" 
-                        />
-                      </div>
-                      <span className="text-gray-400 mt-4">-</span>
-                      <div>
-                        <span className="block text-xs text-gray-500 mb-1">End</span>
-                        <input 
-                          type="time" 
-                          name="end_time" 
-                          value={formData.end_time} 
-                          onChange={handleChange} 
-                          className="bg-transparent border-none p-0 text-sm text-gray-900 font-medium focus:ring-0 cursor-pointer" 
-                        />
+            {/* Individual Day Schedule Cards */}
+            <div className="space-y-4">
+              {daySchedules.map((schedule) => (
+                <div key={schedule.day}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-6" />
+                    <div className={`flex-1 bg-gray-50 rounded-xl p-4 ${errors.start_time ? "border-2 border-red-500" : "border border-gray-200"}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="block text-xs text-gray-500 mb-1">Day</span>
+                          <span className="text-sm font-medium text-gray-900 capitalize">
+                            {schedule.day}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-6">
+                          <div>
+                            <span className="block text-xs text-gray-500 mb-1 text-right">Start</span>
+                            <input 
+                              type="time" 
+                              value={schedule.start_time} 
+                              onChange={(e) => handleTimeChange(schedule.day, "start_time", e.target.value)} 
+                              className="bg-transparent border-none p-0 text-sm text-gray-900 font-medium focus:ring-0 cursor-pointer" 
+                            />
+                          </div>
+                          <span className="text-gray-400 mt-4">-</span>
+                          <div>
+                            <span className="block text-xs text-gray-500 mb-1 text-right">End</span>
+                            <input 
+                              type="time" 
+                              value={schedule.end_time} 
+                              onChange={(e) => handleTimeChange(schedule.day, "end_time", e.target.value)} 
+                              className="bg-transparent border-none p-0 text-sm text-gray-900 font-medium focus:ring-0 cursor-pointer" 
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ))}
               {errors.start_time && <p className="text-red-500 text-xs mt-2 ml-10">{errors.start_time}</p>}
             </div>
 
@@ -483,19 +536,19 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
             <div>
               <div className={`flex items-center gap-4 bg-gray-50 rounded-xl p-4 ${errors.tutor_id ? "border-2 border-red-500" : "border border-gray-200"}`}>
                 <UserGroupIcon className="w-6 h-6 text-gray-700" />
-                <select 
+                <input 
+                  list="tutor-list"
                   name="tutor_id" 
-                  value={formData.tutor_id} 
-                  onChange={handleChange} 
+                  value={tutorSearch} 
+                  onChange={(e) => handleStaffChange(e, "tutor_id")} 
+                  placeholder="Select tutor"
                   className="flex-1 bg-transparent text-gray-500 outline-none cursor-pointer"
-                >
-                  <option value="">Select tutor</option>
+                />
+                <datalist id="tutor-list">
                   {staffList.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name || `${s.firstname} ${s.surname}`}
-                    </option>
+                    <option key={s.id} value={s.name || `${s.firstname} ${s.surname}`} />
                   ))}
-                </select>
+                </datalist>
                 <ChevronDownIcon className="w-5 h-5 text-gray-400" />
               </div>
               {errors.tutor_id && <p className="text-red-500 text-xs mt-2">{errors.tutor_id}</p>}
@@ -504,19 +557,19 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
             {/* Assistant */}
             <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
               <UserGroupIcon className="w-6 h-6 text-gray-700" />
-              <select 
+              <input 
+                list="assistant-list"
                 name="assistant_id" 
-                value={formData.assistant_id} 
-                onChange={handleChange} 
+                value={assistantSearch} 
+                onChange={(e) => handleStaffChange(e, "assistant_id")} 
+                placeholder="Select assistant (optional)"
                 className="flex-1 bg-transparent text-gray-500 outline-none cursor-pointer"
-              >
-                <option value="">Select assistant (optional)</option>
+              />
+              <datalist id="assistant-list">
                 {staffList.map(s => (
-                  <option key={s.id} value={s.id}>
-                    {s.name || `${s.firstname} ${s.surname}`}
-                  </option>
+                  <option key={s.id} value={s.name || `${s.firstname} ${s.surname}`} />
                 ))}
-              </select>
+              </datalist>
               <ChevronDownIcon className="w-5 h-5 text-gray-400" />
             </div>
 
@@ -528,7 +581,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
                 name="link" 
                 value={formData.link} 
                 onChange={handleChange} 
-                placeholder="Add Link (optional)" 
+                placeholder="Add Link" 
                 className="flex-1 bg-transparent text-gray-900 outline-none placeholder-gray-400" 
               />
             </div>
@@ -536,15 +589,18 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
             {/* Status */}
             <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
               <UserCircleIcon className="w-6 h-6 text-gray-700" />
-              <select 
+              <input 
+                list="status-list"
                 name="status" 
-                value={formData.status} 
-                onChange={handleChange} 
+                value={statusSearch} 
+                onChange={handleStatusChange} 
+                placeholder="Select status"
                 className="flex-1 bg-transparent text-gray-500 outline-none cursor-pointer"
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+              />
+              <datalist id="status-list">
+                <option value="active" />
+                <option value="inactive" />
+              </datalist>
               <ChevronDownIcon className="w-5 h-5 text-gray-400" />
             </div>
 
