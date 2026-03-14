@@ -34,7 +34,7 @@ export default function MasterClassList() {
     setLoading(true);
     try {
       // 🛡️ THE FIX: Removed /create. GET requests usually go to the base /classes endpoint to list them.
-      const response = await axios.get(`${API_BASE_URL}/api/admin/classes`, {
+      const response = await axios.post(`${API_BASE_URL}/api/admin/classes/create`, {
         headers: { 
           "Authorization": `Bearer ${token}`,
           "Accept": "application/json"
