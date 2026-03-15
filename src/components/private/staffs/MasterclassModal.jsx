@@ -90,7 +90,6 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     }
   };
 
-
   const fetchSubjects = async (courseId) => {
     try {
       const res = await axios.get(
@@ -98,7 +97,9 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
       );
       const fetched = res.data?.subjects || res.data?.data || [];
       setSubjects(fetched);
-      console.log(`Fetched ${fetched.length} subjects for course ID ${courseId}`);
+      console.log(
+        `Fetched ${fetched.length} subjects for course ID ${courseId}`,
+      );
       console.log("Subjects:", fetched);
     } catch (error) {
       console.error("Failed to fetch subjects", error);
@@ -211,8 +212,10 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
     if (staff) {
       const idsKey = field;
-      const selectedKey = field === "tutor_ids" ? selectedTutors : selectedAssistants;
-      const setSelected = field === "tutor_ids" ? setSelectedTutors : setSelectedAssistants;
+      const selectedKey =
+        field === "tutor_ids" ? selectedTutors : selectedAssistants;
+      const setSelected =
+        field === "tutor_ids" ? setSelectedTutors : setSelectedAssistants;
 
       // Avoid duplicates
       if (!formData[idsKey].includes(staff.id)) {
@@ -231,7 +234,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
   const removeStaff = (id, field) => {
     const idsKey = field;
-    const setSelected = field === "tutor_ids" ? setSelectedTutors : setSelectedAssistants;
+    const setSelected =
+      field === "tutor_ids" ? setSelectedTutors : setSelectedAssistants;
 
     setFormData((prev) => ({
       ...prev,
@@ -324,7 +328,10 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
     if (!formData.end_date) newErrors.end_date = "End date required";
 
-    if (formData.tutor_ids.length === 0) newErrors.tutor_ids = "At least one tutor is required";
+    if (!formData.link) newErrors.link = "End date required";
+
+    if (formData.tutor_ids.length === 0)
+      newErrors.tutor_ids = "At least one tutor is required";
 
     if (daySchedules.length === 0) newErrors.days = "Select schedule days";
 
@@ -336,47 +343,71 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
   /* =============================
      SUBMIT
   ============================= */
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
     setLoading(true);
+    setApiError(null);
 
     try {
-      const staffs = [];
+      /* =============================
+       BUILD STAFF ARRAY
+    ============================= */
 
-      formData.tutor_ids.forEach((id) => {
-        staffs.push({
-          staff_id: parseInt(id),
+      const staffs = [
+        ...formData.tutor_ids.map((id) => ({
+          staff_id: Number(id),
           role: "lead",
-        });
-      });
-
-      formData.assistant_ids.forEach((id) => {
-        staffs.push({
-          staff_id: parseInt(id),
+        })),
+        ...formData.assistant_ids.map((id) => ({
+          staff_id: Number(id),
           role: "assistant",
-        });
-      });
+        })),
+      ];
 
-      const schedules = daySchedules.map((s) => ({
-        day_of_week: s.day,
-        start_time: s.start_time,
-        duration_minutes: calculateDuration(s.start_time, s.end_time),
-      }));
+      if (staffs.length === 0) {
+        setApiError("Please assign at least one staff member.");
+        setLoading(false);
+        return;
+      }
 
+      /* =============================
+       BUILD SCHEDULE ARRAY
+    ============================= */
+
+      const schedules = daySchedules
+        .filter((s) => s.day && s.start_time && s.end_time)
+        .map((s) => ({
+          day_of_week: s.day.toLowerCase(),
+          start_time: s.start_time,
+          duration_minutes: Number(calculateDuration(s.start_time, s.end_time)),
+        }));
+
+      if (schedules.length === 0) {
+        setApiError("Please add at least one schedule.");
+        setLoading(false);
+        return;
+      }
+
+      /* =============================
+       BUILD FINAL PAYLOAD
+    ============================= */
       const payload = {
-        subject_id: parseInt(formData.subject_id),
-        title: formData.title,
+        subject_id: Number(formData.subject_id),
+        title: formData.title.trim(),
         description: formData.description || "No description",
         status: formData.status,
+        class_link: formData.link, // ✅ ADD THIS
         start_date: formData.start_date,
         end_date: formData.end_date,
         staffs,
         schedules,
       };
+      /* =============================
+       API REQUEST
+    ============================= */
 
       const res = await axios.post(
         `${API_BASE_URL}/api/admin/classes/create`,
@@ -389,11 +420,15 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
         },
       );
 
-      if (res.status === 200 || res.status === 201) {
-        onSuccess();
+      if (res.status === 201 || res.status === 200) {
+        onSuccess(res.data);
       }
     } catch (error) {
+      console.log("FULL ERROR RESPONSE:", error.response);
+
       if (error.response?.data?.errors) {
+        console.log("VALIDATION ERRORS:", error.response.data.errors);
+
         const formatted = {};
 
         Object.entries(error.response.data.errors).forEach(([k, v]) => {
@@ -408,7 +443,6 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
       setLoading(false);
     }
   };
-
   /* =============================
      UI
   ============================= */
@@ -687,17 +721,17 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
                   ))}
                 </datalist>
               </div>
-              
+
               {/* Selected Tutors Tags */}
               {selectedTutors.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3 px-1">
                   {selectedTutors.map((s) => (
-                    <span 
-                      key={s.id} 
+                    <span
+                      key={s.id}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0F2843] text-white text-xs font-bold rounded-lg shadow-sm"
                     >
                       {s.name || `${s.firstname} ${s.surname}`}
-                      <button 
+                      <button
                         type="button"
                         onClick={() => removeStaff(s.id, "tutor_ids")}
                         className="p-0.5 hover:bg-white/20 rounded-full transition-colors"
@@ -710,7 +744,9 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
               )}
 
               {errors.tutor_ids && (
-                <p className="text-red-500 text-xs mt-2 px-1">{errors.tutor_ids}</p>
+                <p className="text-red-500 text-xs mt-2 px-1">
+                  {errors.tutor_ids}
+                </p>
               )}
             </div>
 
@@ -740,12 +776,12 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
               {selectedAssistants.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3 px-1">
                   {selectedAssistants.map((s) => (
-                    <span 
-                      key={s.id} 
+                    <span
+                      key={s.id}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 text-[#0F2843] text-xs font-bold rounded-lg shadow-sm border border-gray-300"
                     >
                       {s.name || `${s.firstname} ${s.surname}`}
-                      <button 
+                      <button
                         type="button"
                         onClick={() => removeStaff(s.id, "assistant_ids")}
                         className="p-0.5 hover:bg-black/10 rounded-full transition-colors"

@@ -27,23 +27,24 @@ export default function MasterClassList() {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
   const token = localStorage.getItem("staff_token");
-  console.log("EXACT TOKEN:", token);
+  // console.log("EXACT TOKEN:", token);
 
   // --- FETCHING LOGIC ---
   const fetchClasses = useCallback(async () => {
     setLoading(true);
     try {
       // 🛡️ THE FIX: Removed /create. GET requests usually go to the base /classes endpoint to list them.
-      const response = await axios.post(`${API_BASE_URL}/api/admin/classes/create`, {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/classes/all`, {
         headers: { 
           "Authorization": `Bearer ${token}`,
           "Accept": "application/json"
         }
       });
       
-      console.log("SUCCESS API Response:", response.data); 
+      // console.log("SUCCESS API Response:", response?.data); 
+      console.table(response?.data?.classes); 
       
-      const fetchedClasses = response.data.data || response.data.classes;
+      const fetchedClasses = response?.data?.classes;
       
       if (Array.isArray(fetchedClasses)) {
         setClasses(fetchedClasses);
