@@ -36,7 +36,7 @@ export default function StaffLogin() {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (countdown === 0) {
-      navigate("/staffs/dashboard");
+      navigate("/staffs/manage-staffs");
     }
   }, [countdown, navigate]);
 
