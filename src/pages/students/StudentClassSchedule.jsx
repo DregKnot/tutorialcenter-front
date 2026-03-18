@@ -4,9 +4,9 @@ import DashboardLayout from "../../components/private/students/DashboardLayout";
 import { 
   BellIcon, 
   MagnifyingGlassIcon, 
-  AdjustmentsHorizontalIcon,
-  CalendarIcon,
-  VideoCameraIcon,
+  // AdjustmentsHorizontalIcon,
+  // CalendarIcon,
+  // VideoCameraIcon,
   ClockIcon,
   UserIcon,
   ChevronDownIcon,
@@ -374,4 +374,4 @@ export default function StudentClassSchedule() {
       </div>
     </DashboardLayout>
   );
-}
+}

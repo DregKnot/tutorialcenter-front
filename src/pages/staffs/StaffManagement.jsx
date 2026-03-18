@@ -82,18 +82,26 @@ export default function StaffManagement() {
         }
       };
 
-      const staffRes = await axios.get(`${API_BASE_URL}/api/admin/staffs/all`, config);
+      // Fetch all staffs AND active staffs concurrently
+      const [staffRes, activeRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/admin/staffs/all`, config),
+        axios.post(`${API_BASE_URL}/api/admin/staffs/active`, {}, config).catch(() => ({ data: [] }))
+      ]);
 
       console.group("Staff Management Data Fetching");
       console.log("Staff Response Payload:");
       console.table(staffRes?.data?.staffs || staffRes?.data?.data);
+      console.log("Active Staff Response Payload:", activeRes?.data);
       console.groupEnd();
 
       const fetchedStaffs = staffRes.data?.staffs || staffRes.data?.data;
       const staffsArray = Array.isArray(fetchedStaffs) ? fetchedStaffs : [];
+      
+      // The active staffs endpoint returns an array of staff in the 'staffs' property
+      const activeStaffsData = Array.isArray(activeRes.data) ? activeRes.data : (activeRes.data?.staffs || activeRes.data?.data || []);
 
       setStaffs(staffsArray);
-      calculateStats(staffsArray);
+      calculateStats(staffsArray, activeStaffsData);
     } catch (error) {
       console.error("Endpoint failed:", error.response?.status, error.response?.data);
       setStaffs([]);
@@ -102,7 +110,7 @@ export default function StaffManagement() {
     }
   }, [API_BASE_URL, token]);
 
-  const calculateStats = (allStaffs) => {
+  const calculateStats = (allStaffs, activeStaffsData) => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -114,18 +122,25 @@ export default function StaffManagement() {
       return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
     });
 
-    // Suspended logic based on user's clarification: "soft delete will have its own data value different from standard id"
-    const suspendedStaffs = allStaffs.filter(s => !s.id); 
+    // Suspended logic based on new rules: deleted_at is not null
+    const suspendedStaffs = allStaffs.filter(s => s.deleted_at !== null); 
     const suspendedThisMonth = suspendedStaffs.filter(s => {
-      if (!s.updated_at) return false;
-      const date = new Date(s.updated_at);
+      if (!s.deleted_at) return false;
+      const date = new Date(s.deleted_at);
       return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
     });
 
+    // Active Staffs: Determined by the length of the new active API response
+    const activeCount = activeStaffsData.length;
+
+    // Inactive Staffs: Total Staffs minus Active Staffs
+    // Ensure it doesn't drop below 0 just in case of weird data
+    const inactiveCount = Math.max(0, allStaffs.length - activeCount);
+
     setStats(prev => [
       { ...prev[0], value: allStaffs.length, subLabel: `+${newStaffsThisMonth.length} new` },
-      { ...prev[1], value: allStaffs.filter(s => s.status === 'active' || (s.id && s.is_online)).length }, 
-      { ...prev[2], value: allStaffs.filter(s => s.status === 'inactive' || !s.is_online).length },
+      { ...prev[1], value: activeCount }, 
+      { ...prev[2], value: inactiveCount },
       { ...prev[3], value: suspendedStaffs.length, subLabel: `+${suspendedThisMonth.length} staffs` },
     ]);
   };
