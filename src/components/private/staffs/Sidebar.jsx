@@ -15,14 +15,14 @@ import {
   MoonIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
-// import {dashboard} from "iconify-icons/mdi"
 import { NavLink } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
 import logo from "../../../assets/images/tutorial_logo.png";
 import collapselogo from "../../../assets/images/TC 1.png";
 
-const menuItems = [
+const adminMenuItems = [
   { label: "Dashboard", icon: HomeIcon },
   { label: "Manage Staffs", icon: UsersIcon, destination: "/staffs/manage-staffs" },
   { label: "Manage Students", icon: UserGroupIcon },
@@ -32,6 +32,17 @@ const menuItems = [
   { label: "Courses", icon: BookOpenIcon },
   { label: "Exams", icon: ClipboardDocumentCheckIcon },
   { label: "Audit Log", icon: ChartBarIcon },
+  { label: "Settings", icon: Cog6ToothIcon },
+];
+
+const tutorMenuItems = [
+  { label: "Dashboard", icon: HomeIcon, destination: "/staffs/tutor/dashboard" },
+  { label: "Students", icon: UserGroupIcon, destination: "/staffs/tutor/students" },
+  { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/tutor/master-class" },
+  { label: "Calendar", icon: CalendarDaysIcon },
+  { label: "Courses", icon: BookOpenIcon },
+  { label: "Assessment", icon: ClipboardDocumentListIcon },
+  { label: "Exams", icon: ClipboardDocumentCheckIcon },
   { label: "Settings", icon: Cog6ToothIcon },
 ];
 
@@ -172,7 +183,7 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
 
         {/* Menu */}
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-4">
-          {menuItems.map(({ label, icon: Icon, destination }) => {
+          {(staffRole.toLowerCase() === "tutor" ? tutorMenuItems : adminMenuItems).map(({ label, icon: Icon, destination }) => {
             if (!destination) {
               return (
                 <div

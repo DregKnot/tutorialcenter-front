@@ -26,13 +26,32 @@ export function AuthProvider({ children }) {
     setStudent(studentData);
   };
 
-  const logout = () => {
-    localStorage.removeItem("student_token");
-    localStorage.removeItem("student_info");
-    localStorage.removeItem("studentBiodata");
+  const logout = async () => {
+    try {
+      if (token) {
+        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+        await fetch(`${API_BASE_URL}/api/students/logout`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Accept": "application/json"
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      // Clear all student-related local storage data
+      localStorage.removeItem("student_token");
+      localStorage.removeItem("student_info");
+      localStorage.removeItem("studentBiodata");
+      localStorage.removeItem("studentdata");
+      localStorage.removeItem("studentEmail");
+      localStorage.removeItem("studentTel");
 
-    setToken(null);
-    setStudent(null);
+      setToken(null);
+      setStudent(null);
+    }
   };
 
   return (

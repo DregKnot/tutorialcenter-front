@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import StaffDashboardLayout from "../../components/private/staffs/DashboardLayout.jsx";
+import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -168,7 +168,7 @@ export default function StaffRegistration() {
 
   return (
     <StaffDashboardLayout>
-      <div className="max-w-4xl mx-auto p-4 lg:p-6 relative">
+      <div className="max-w-4xl mx-auto p-4 lg:p-2 relative">
         
         {/* Toast Notification */}
         {toast && (

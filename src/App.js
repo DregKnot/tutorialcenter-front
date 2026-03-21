@@ -36,10 +36,13 @@ import NotFound from "./pages/public/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import StaffLogin from "./pages/public/StaffLogin.jsx";
 import StudentCalendar from "./pages/students/StudentCalendar.jsx";
-import StaffDashboard from "./pages/staffs/StaffDashboard.jsx";
-import StaffRegistration from "./pages/staffs/StaffRegistration.jsx"
-import StaffManagement from "./pages/staffs/StaffManagement.jsx";
-import StaffMasterClassList from "./pages/staffs/StaffMasterClassList.jsx";
+import StaffDashboard from "./pages/staffs/admin/StaffDashboard.jsx";
+import StaffRegistration from "./pages/staffs/admin/StaffRegistration.jsx"
+import StaffManagement from "./pages/staffs/admin/StaffManagement.jsx";
+import TutorDashboard from "./pages/staffs/tutor/TutorDashboard.jsx";
+import TutorStudentManagement from "./pages/staffs/tutor/TutorStudentManagement.jsx";
+import TutorMasterClass from "./pages/staffs/tutor/TutorMasterClass.jsx";
+import StaffMasterClassList from "./pages/staffs/admin/StaffMasterClassList.jsx";
 import StudentPaymentHistory from "./pages/students/StudentPaymentDisplay.jsx"
 
 
@@ -92,6 +95,9 @@ function App() {
 
           {/* Staff Routes */}
           <Route path="/staffs/dashboard" element={<StaffDashboard />} />
+          <Route path="/staffs/tutor/dashboard" element={<TutorDashboard />} />
+          <Route path="/staffs/tutor/students" element={<TutorStudentManagement />} />
+          <Route path="/staffs/tutor/master-class" element={<TutorMasterClass />} />
           <Route path="/staffs/staff-registration" element={<StaffRegistration />} />
           <Route path="/staffs/manage-staffs" element={<StaffManagement />} />
           <Route path="/staffs/master-class" element={<StaffMasterClassList />} />

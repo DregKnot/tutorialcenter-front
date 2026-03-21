@@ -19,6 +19,7 @@ export default function StudentRegistration() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [isEmailEntry, setIsEmailEntry] = useState(true);
   const [formData, setFormData] = useState({
     entry: "",
     password: "",
@@ -70,6 +71,7 @@ export default function StudentRegistration() {
       const response = await axios.post(`${API_BASE_URL}/api/students/register`, payload);
 
       if (response.status === 201) {
+        setIsEmailEntry(isEmail);
         setToast({ type: "success", message: response?.data?.message || "Registration Successful" });
         // Instead of redirecting immediately, show the success modal.
         setShowModal(true);
@@ -281,22 +283,34 @@ export default function StudentRegistration() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-[90%] shadow-2xl animate-in zoom-in-95 duration-200">
             <h2 className="text-2xl font-black text-[#09314F] mb-4 text-center">Registration Successful!</h2>
-            <p className="text-center text-[#555555] font-medium mb-6">
-              Your account has been created successfully.
-              <br />
-              <span className="block mt-3 text-sm font-medium text-gray-700">
-                Please check your email for further instructions.
-              </span>
-            </p>
-            <div className="flex justify-center w-full">
-              <button
-                type="button"
-                onClick={confirmRegistration}
-                className="w-full py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#09314F] to-[#E83831] hover:shadow-lg active:scale-95 transition-all"
-              >
-                Continue
-              </button>
-            </div>
+            {isEmailEntry ? (
+              <p className="text-center text-[#555555] font-medium mb-6">
+                Your account has been created successfully.
+                <br />
+                <span className="block mt-3 text-sm font-medium text-gray-700">
+                  Please check your email for further instructions.
+                </span>
+              </p>
+            ) : (
+              <p className="text-center text-[#555555] font-medium mb-6">
+                An OTP has been sent to your phone.
+                <br />
+                <span className="block mt-3 text-sm font-medium text-gray-700">
+                  Please fill your OTP in the next page.
+                </span>
+              </p>
+            )}
+            {isEmailEntry && (
+              <div className="flex justify-center w-full">
+                <button
+                  type="button"
+                  onClick={confirmRegistration}
+                  className="w-full py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#09314F] to-[#E83831] hover:shadow-lg active:scale-95 transition-all"
+                >
+                  Continue
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

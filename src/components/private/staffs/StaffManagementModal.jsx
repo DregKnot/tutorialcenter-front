@@ -22,6 +22,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState(null);
+  const [staffClasses, setStaffClasses] = useState([]);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
   const token = localStorage.getItem("staff_token");
@@ -29,18 +30,32 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
   const [imagePreview, setImagePreview] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Fetch full staff details
+  // Fetch full staff details & classes
   const fetchStaffDetails = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/admin/staffs/${staffId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const [res, classesRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/admin/staffs/${staffId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_BASE_URL}/api/admin/classes/all`, {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+        }).catch(err => ({ data: { classes: [] } }))
+      ]);
+
       const data = res.data?.staff || res.data?.data || res.data;
       setStaff(data);
       if (data.profile_picture) {
         setImagePreview(`${API_BASE_URL}/storage/${data.profile_picture}`);
       }
+
+      // Filter classes to find only the ones associated with this staff ID
+      const allFetchedClasses = classesRes.data?.classes || classesRes.data?.data || [];
+      const staffsClasses = allFetchedClasses.filter(cls => 
+        cls.staffs?.some(s => String(s.id) === String(data.id) || String(s.staff_id) === String(data.staff_id))
+      );
+      
+      setStaffClasses(staffsClasses);
     } catch (error) {
       console.error("Failed to fetch staff details", error);
       setToast({ type: "error", message: "Failed to load staff details" });
@@ -376,6 +391,30 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
               </div>
             </div>
           </form>
+
+          {/* Assigned Classes */}
+          {staffClasses && staffClasses.length > 0 && (
+            <div className="mt-8 animate-in fade-in duration-500 pb-4">
+              <h3 className="text-xs font-black text-[#BB9E7F] uppercase tracking-[0.2em] mb-3 border-b border-gray-100 pb-2">Assigned Classes</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                {staffClasses.map((cls, index) => (
+                  <div key={cls.id || index} className="flex flex-col justify-center min-h-[54px] px-4 py-2.5 bg-gray-50 rounded-xl border border-gray-100/80 hover:shadow-sm hover:border-gray-200 hover:bg-white transition-all relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-[#BB9E7F] group-hover:w-1.5 transition-all"></div>
+                    <div className="flex items-center justify-between gap-2 pl-2">
+                       <p className="text-[13px] font-bold text-[#0F2843] line-clamp-1 leading-tight flex-1" title={cls.title || "Class"}>
+                         {cls.title || "Class"}
+                       </p>
+                       {cls.status === 'active' && (
+                         <span className="px-1.5 py-0.5 bg-[#76D287]/20 text-[#239561] rounded-md text-[9px] font-black uppercase tracking-wider shrink-0">
+                           Active
+                         </span>
+                       )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer Actions */}

@@ -1,9 +1,9 @@
 
 import { useState, useEffect, useCallback } from "react";
-import StaffDashboardLayout from "../../components/private/staffs/DashboardLayout.jsx";
+import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import StaffManagementModal from "../../components/private/staffs/StaffManagementModal.jsx";
+import StaffManagementModal from "../../../components/private/staffs/StaffManagementModal.jsx";
 import { 
   UsersIcon, 
   UserPlusIcon, 

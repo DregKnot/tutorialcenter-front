@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 // import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import StaffDashboardLayout from "../../components/private/staffs/DashboardLayout.jsx";
-import CreateMasterClassModal from "../../components/private/staffs/MasterclassModal.jsx";
+import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
+import CreateMasterClassModal from "../../../components/private/staffs/AdminMasterclassModal.jsx";
 import { 
   PlusIcon, 
   MagnifyingGlassIcon,
@@ -134,6 +134,16 @@ export default function MasterClassList() {
     const schedule = cls.schedules?.[0];
     const startTime = schedule ? formatTime(schedule.start_time) : "—";
     
+    let link = cls.class_link;
+    if (!link && cls.schedules && cls.schedules.length > 0) {
+       for (let sched of cls.schedules) {
+          if (sched.sessions && sched.sessions.length > 0) {
+             const found = sched.sessions.find(s => s.class_link);
+             if (found) { link = found.class_link; break; }
+          }
+       }
+    }
+
     return (
       <div className="flex items-center gap-6 py-5 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-all px-4 rounded-xl group">
         
@@ -146,53 +156,49 @@ export default function MasterClassList() {
         </div>
 
         {/* Info Columns */}
-        <div className="flex-1 grid grid-cols-12 items-center gap-4">
-          {/* Title */}
-          <div className="col-span-3">
-             <span className="text-[15px] font-bold text-[#1F2937] truncate block">
+        <div className="flex-1 flex flex-row items-center justify-between gap-3 overflow-hidden">
+          {/* Title - Takes priority space */}
+          <div className="flex-[2] min-w-0">
+             <span className="text-[15px] font-bold text-[#1F2937] truncate block" title={cls.title}>
                 {cls.title}
              </span>
           </div>
 
-          {/* Instructor */}
-          <div className="col-span-3">
-             <span className="text-sm font-medium text-gray-500 truncate block">
+          {/* Instructor - Flexible but secondary */}
+          <div className="flex-[1.5] min-w-0 hidden sm:block">
+             <span className="text-sm font-medium text-gray-400 truncate block" title={getStaffName(cls)}>
                 {getStaffName(cls)}
              </span>
           </div>
 
-          {/* Date */}
-          <div className="col-span-2">
-             <span className="text-sm font-bold text-gray-600 block">
-                {formatDate(cls.start_date)}
-             </span>
+          {/* Date & Time - Compact group */}
+          <div className="flex-shrink-0 flex items-center gap-4 text-center">
+            <span className="text-sm font-bold text-gray-600 whitespace-nowrap hidden md:block">
+              {formatDate(cls.start_date)}
+            </span>
+            <span className="text-sm font-bold text-[#0F2843] whitespace-nowrap min-w-[65px]">
+              {startTime}
+            </span>
           </div>
 
-          {/* Time */}
-          <div className="col-span-1 text-center">
-             <span className="text-sm font-bold text-gray-600 block">
-                {startTime}
-             </span>
-          </div>
-
-          {/* Link */}
-          <div className="col-span-3 text-right">
-             {cls.class_link ? (
-               <div className="flex items-center justify-end gap-2">
+          {/* Link - Right aligned and compact */}
+          <div className="flex-shrink-0 min-w-0 flex justify-end">
+             {link ? (
+               <div className="flex items-center gap-2">
                  <a
-                   href={cls.class_link}
+                   href={link}
                    target="_blank"
                    rel="noreferrer"
-                   className="text-sm text-blue-500 font-bold hover:underline truncate max-w-[120px]"
+                   className="text-sm text-blue-500 font-bold hover:underline truncate max-w-[100px] lg:max-w-[150px]"
                  >
-                   {cls.class_link.replace(/^https?:\/\//, '')}
+                   {link.replace(/^https?:\/\//, '')}
                  </a>
                  <button 
                    onClick={(e) => {
                      e.stopPropagation();
-                     copyToClipboard(cls.class_link, cls.id);
+                     copyToClipboard(link, cls.id);
                    }}
-                   className="p-1.5 hover:bg-blue-50 rounded-lg transition-colors"
+                   className="p-1.5 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
                  >
                    <Icon icon={isLinkCopied ? "mdi:check" : "mdi:content-copy"} className={`w-3.5 h-3.5 ${isLinkCopied ? "text-green-500" : "text-blue-400"}`} />
                  </button>
