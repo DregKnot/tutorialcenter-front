@@ -20,9 +20,11 @@ export default function StudentClassSchedule() {
 
   // --- STATE ---
   const [scheduleData, setScheduleData] = useState({
+    next_class: null,
     today_classes: [],
-    week_schedule: [],
-    upcoming_sessions: []
+    week_schedule: {},
+    upcoming_sessions: [],
+    older_sessions: []
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -53,9 +55,11 @@ export default function StudentClassSchedule() {
 
       const data = res.data?.data || res.data;
       setScheduleData({
+        next_class: data.next_class || null,
         today_classes: Array.isArray(data.today_classes) ? data.today_classes : [],
-        week_schedule: Array.isArray(data.week_schedule) ? data.week_schedule : [],
-        upcoming_sessions: Array.isArray(data.upcoming_sessions) ? data.upcoming_sessions : []
+        week_schedule: data.week_schedule || {},
+        upcoming_sessions: Array.isArray(data.upcoming_sessions) ? data.upcoming_sessions : [],
+        older_sessions: Array.isArray(data.older_sessions) ? data.older_sessions : []
       });
       console.log("Fetched Data:", data);
       console.groupEnd();
@@ -71,52 +75,21 @@ export default function StudentClassSchedule() {
     fetchStudentSchedule();
   }, [fetchStudentSchedule]);
 
-  /* =============================
-     DATA RE-GROUPING LOGIC
-  ============================= */
   const groupedSessions = useMemo(() => {
-    const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
-    
-    // Combine all sessions from API
-    const combined = [
-      ...scheduleData.today_classes,
-      ...scheduleData.week_schedule,
-      ...scheduleData.upcoming_sessions
-    ];
-
-    // Remove duplicates by session ID
-    const uniqueMap = new Map();
-    combined.forEach(s => {
-      if (!uniqueMap.has(s.id)) uniqueMap.set(s.id, s);
-    });
-    const all = Array.from(uniqueMap.values());
+    // Flatten week_schedule object into an array if it has date keys
+    const weeklyArray = Object.values(scheduleData.week_schedule).flat();
 
     const groups = {
-      today: [],
-      weekly: [],
-      older: []
+      today: scheduleData.today_classes,
+      weekly: weeklyArray.length > 0 ? weeklyArray : scheduleData.upcoming_sessions,
+      older: scheduleData.older_sessions
     };
 
-    all.forEach(session => {
-      const sessionDate = session.session_date.split('T')[0];
-      const sDate = new Date(session.session_date);
-      
-      // Categorize
-      if (sessionDate === todayStr) {
-        groups.today.push(session);
-      } else if (sDate > now && (sDate.getTime() - now.getTime()) < (7 * 24 * 60 * 60 * 1000)) {
-        groups.weekly.push(session);
-      } else if (sDate < now && sessionDate !== todayStr) {
-        groups.older.push(session);
-      }
-    });
-
     // Sort sections by date/time
-    const sortByTime = (a, b) => a.starts_at.localeCompare(b.starts_at);
+    const sortByTime = (a, b) => (a.starts_at || "").localeCompare(b.starts_at || "");
     groups.today.sort(sortByTime);
-    groups.weekly.sort((a,b) => a.session_date.localeCompare(b.session_date) || sortByTime(a,b));
-    groups.older.sort((a,b) => b.session_date.localeCompare(a.session_date)); // Newest older first
+    groups.weekly.sort((a,b) => (a.session_date || "").localeCompare(b.session_date || "") || sortByTime(a,b));
+    groups.older.sort((a,b) => (b.session_date || "").localeCompare(a.session_date || "")); // Newest older first
 
     return groups;
   }, [scheduleData]);
@@ -258,6 +231,73 @@ export default function StudentClassSchedule() {
             </div>
           </div>
         </div>
+
+        {/* ========= Featured Next Class ========= */}
+        {scheduleData.next_class && (
+          <div className="mb-12">
+            <div className="flex items-center gap-4 mb-6">
+              <h2 className="text-[12px] font-black text-[#E83831] uppercase tracking-[0.3em] pl-2 flex items-center gap-2">
+                <span className="w-2 h-2 bg-[#E83831] rounded-full animate-pulse"></span> NEXT UP
+              </h2>
+              <div className="h-[1px] flex-1 bg-red-100"></div>
+            </div>
+            
+            <div className="bg-[#0F2843] rounded-[40px] p-8 md:p-10 text-white relative overflow-hidden shadow-2xl group transition-all hover:translate-y-[-4px]">
+              {/* Background Accents */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-white/10 to-transparent rounded-full -mr-20 -mt-20 blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#BB9E7F]/10 rounded-full -ml-20 -mb-20 blur-2xl"></div>
+
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+                  <div className="w-24 h-24 rounded-3xl overflow-hidden bg-white/10 border border-white/20 p-1 backdrop-blur-md">
+                    <div className="w-full h-full rounded-2xl overflow-hidden bg-gray-100">
+                      {scheduleData.next_class.class?.staffs?.[0]?.profile_picture ? (
+                        <img 
+                          src={`${API_BASE_URL}/storage/${scheduleData.next_class.class.staffs[0].profile_picture}`}
+                          className="w-full h-full object-cover"
+                          alt="Instructor"
+                        />
+                      ) : (
+                        <UserIcon className="w-10 h-10 text-gray-300 m-auto mt-6" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <span className="px-3 py-1 bg-[#E83831] text-white rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 inline-block">Recommended Session</span>
+                    <h3 className="text-3xl font-black italic uppercase tracking-tighter mb-2 leading-tight">
+                      {scheduleData.next_class.class?.title || "Master Class Session"}
+                    </h3>
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-white/60 font-bold text-sm">
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="w-4 h-4 text-[#BB9E7F]" />
+                        <span>{scheduleData.next_class.class?.staffs?.[0] ? `${scheduleData.next_class.class.staffs[0].firstname} ${scheduleData.next_class.class.staffs[0].surname}` : "Expert Tutor"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ClockIcon className="w-4 h-4 text-[#BB9E7F]" />
+                        <span>{formatTime(scheduleData.next_class.starts_at)} - {formatTime(scheduleData.next_class.ends_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center md:items-end gap-4 min-w-[200px]">
+                   <div className="text-right flex flex-col items-center md:items-end">
+                      <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">Live Meeting ID</span>
+                      <span className="text-sm font-mono font-bold text-[#BB9E7F]">{scheduleData.next_class.class_link?.split('/').pop() || "Awaiting..."}</span>
+                   </div>
+                   <a 
+                     href={scheduleData.next_class.class_link} 
+                     target="_blank" 
+                     rel="noopener noreferrer"
+                     className="px-10 py-5 bg-[#BB9E7F] text-[#0F2843] font-black rounded-2xl hover:bg-white transition-all shadow-xl shadow-black/20 group-hover:px-12 active:scale-95 uppercase tracking-widest text-xs"
+                   >
+                     Join Session
+                   </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ========= Controls Bar ========= */}
         <div className="flex flex-col md:flex-row items-center gap-4 mb-10">
