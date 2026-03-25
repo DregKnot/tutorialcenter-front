@@ -97,7 +97,11 @@ export default function StudentRegistration() {
 
   const confirmRegistration = () => {
     setShowModal(false);
-    window.location.reload();
+    if (isEmailEntry) {
+      window.location.reload();
+    } else {
+      navigate(`/register/student/phone/verify?tel=${formData.entry}`);
+    }
   };
 
   return (
@@ -300,17 +304,15 @@ export default function StudentRegistration() {
                 </span>
               </p>
             )}
-            {isEmailEntry && (
-              <div className="flex justify-center w-full">
-                <button
-                  type="button"
-                  onClick={confirmRegistration}
-                  className="w-full py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#09314F] to-[#E83831] hover:shadow-lg active:scale-95 transition-all"
-                >
-                  Continue
-                </button>
-              </div>
-            )}
+            <div className="flex justify-center w-full">
+              <button
+                type="button"
+                onClick={confirmRegistration}
+                className="w-full py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#09314F] to-[#E83831] hover:shadow-lg active:scale-95 transition-all"
+              >
+                Continue
+              </button>
+            </div>
           </div>
         </div>
       )}
