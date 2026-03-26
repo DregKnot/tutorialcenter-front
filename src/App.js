@@ -1,7 +1,7 @@
 import About from "./pages/public/About.jsx";
 import Home from "./pages/public/Home.jsx";
 import Career from "./pages/public/Career.jsx"
-import Login from "./pages/public/Login.jsx";
+import Login from "./pages/public/Login";
 import SignUp from "./pages/public/SignUp.jsx";
 import { Route, Routes } from "react-router-dom";
 import StudentRegistration from "./pages/public/StudentSignUp/StudentRegistration.jsx";
