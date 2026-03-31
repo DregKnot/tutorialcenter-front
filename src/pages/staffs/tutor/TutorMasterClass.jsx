@@ -143,8 +143,8 @@ export default function TutorMasterClass() {
         {getInitials(session.class?.title)}
       </div>
       
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 items-center gap-2 md:gap-4">
-        <div className="flex items-center gap-2">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 items-center gap-2 md:gap-4 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
            {isNext && <span className="text-[10px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded leading-none">NEXT</span>}
            <span className="text-[14px] font-bold text-[#374151] truncate" title={session.class?.title}>
              {session.class?.title || "Master Class"}
@@ -198,7 +198,7 @@ export default function TutorMasterClass() {
         </div>
       )}
 
-      <div className="p-6 max-w-5xl mx-auto w-full min-h-screen">
+      <div className="p-6 max-w-[1600px] xl:px-10 mx-auto w-full min-h-screen">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[32px] font-black text-[#0F2843] tracking-tighter uppercase">Master Class</h1>
           <button className="relative p-2.5 bg-white rounded-[20px] shadow-sm border border-gray-100 hover:shadow-md transition-all">

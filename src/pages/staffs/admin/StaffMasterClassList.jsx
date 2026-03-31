@@ -160,8 +160,7 @@ export default function MasterClassList() {
         </div>
 
         {/* Info Columns */}
-        <div className="flex-1 flex flex-row items-center justify-between gap-3 overflow-hidden">
-          {/* Title - Takes priority space */}
+        <div className="flex-1 flex flex-row items-center justify-between gap-3 overflow-hidden min-w-0">
           <div className="flex-[2] min-w-0">
              <span className="text-[15px] font-bold text-[#1F2937] truncate block" title={cls.title}>
                 {cls.title}
@@ -254,7 +253,7 @@ export default function MasterClassList() {
         />
       )}
 
-      <div className="p-6 max-w-5xl mx-auto w-full">
+      <div className="p-6 max-w-[1600px] xl:px-10 mx-auto w-full">
         {/* ========= Header Section ========= */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-black text-[#0F2843] tracking-tighter">MASTER CLASS</h1>

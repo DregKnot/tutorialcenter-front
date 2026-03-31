@@ -28,6 +28,19 @@ export default function StudentClassSchedule() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   
+  // State
+  const [expandedSessionId, setExpandedSessionId] = useState(null);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // Responsive Breakpoint (Ultra-wide/High-res)
+  const isHighRes = windowWidth >= 1800;
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
   // Collapse States
   const [isWeeklyOpen, setIsWeeklyOpen] = useState(true);
   const [isOlderOpen, setIsOlderOpen] = useState(false);
@@ -126,6 +139,25 @@ export default function StudentClassSchedule() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  const abbreviateTitle = (title) => {
+    if (!title || !title.includes(" - ")) return title;
+    const parts = title.split(" - ");
+    const prefix = parts[0]; // JAMB, WAEC, etc.
+    const subject = parts[1];
+    
+    // Split subject into words
+    const words = subject.trim().split(/\s+/);
+    
+    if (words.length === 1) {
+      // Single word -> first three letters
+      return `${prefix} - ${words[0].substring(0, 3)}`;
+    } else {
+      // Multiple words -> acronym (first letter of each)
+      const acronym = words.map(w => w[0]).join("");
+      return `${prefix} - ${acronym}`;
+    }
+  };
+
   /* =============================
      UI COMPONENTS
   ============================= */
@@ -136,126 +168,211 @@ export default function StudentClassSchedule() {
   };
 
   const ClassRow = ({ session, isToday }) => {
+    const isExpanded = expandedSessionId === session.id;
     const status = isToday ? getSessionStatus(session) : null;
-    const titleParts = (session.class?.title || "Master Class").split(' - ');
     const tutor = getTutor(session.class?.staffs);
     
     return (
-      <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 items-center gap-y-6 lg:gap-3 xl:gap-4 bg-white px-8 py-6 rounded-[40px] border border-gray-50 shadow-sm hover:shadow-xl hover:translate-y-[-2px] transition-all cursor-pointer group mb-10 lg:mb-6">
-        {/* FLOATING AVATAR (Visible ONLY at exactly 1024px-1279px / lg) */}
-        <div className="hidden lg:flex xl:hidden absolute -top-5 -left-5 w-16 h-16 bg-white rounded-2xl shadow-lg border border-gray-50 items-center justify-center z-20 transition-all group-hover:scale-110 group-hover:-rotate-3">
-           <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all">
-              {tutor?.profile_picture ? (
-                <img 
-                  src={`${API_BASE_URL}/storage/${tutor.profile_picture}`}
-                  className="w-full h-full object-cover"
-                  alt="Tutor"
-                  onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=" + (tutor?.firstname || "T"); }}
-                />
-              ) : (
-                <UserIcon className="w-8 h-8 text-gray-300 m-auto mt-2" />
-              )}
-           </div>
-        </div>
-
-        {/* Title Column (Responsive: Aligned to avatar edge at lg) */}
-        <div className="flex items-center gap-4 col-span-1 lg:pl-3 xl:pl-0">
-          {/* INTERNAL AVATAR (Visible on mobile and XL/Desktop) */}
-          <div className="relative shrink-0 lg:hidden xl:flex">
-            <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-50 border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all flex items-center justify-center">
-              {tutor?.profile_picture ? (
-                <img 
-                  src={`${API_BASE_URL}/storage/${tutor.profile_picture}`}
-                  className="w-full h-full object-cover"
-                  alt="Tutor"
-                  onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=" + (tutor?.firstname || "T"); }}
-                />
-              ) : (
-                <UserIcon className="w-8 h-8 text-gray-300" />
-              )}
-            </div>
-            {status === 'live' && <span className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 bg-[#22C55E] border-2 border-white rounded-full shadow-sm animate-pulse"></span>}
+      <div 
+        onClick={() => {
+          if (isHighRes) return; // No expansion needed on high-res
+          setExpandedSessionId(isExpanded ? null : session.id);
+        }}
+        className={`relative flex flex-col bg-white rounded-[40px] border border-gray-50 shadow-sm transition-all cursor-pointer group mb-6 select-none ${
+          isHighRes 
+            ? "hover:translate-y-[-1px] hover:shadow-md" 
+            : isExpanded 
+              ? "ring-2 ring-[#BB9E7F]/20 scale-[1.01] -translate-y-1 py-2 hover:shadow-xl" 
+              : "hover:translate-y-[-2px] hover:shadow-xl"
+        }`}
+      >
+        {/* COMPACT VIEW (Normal Row) */}
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 items-center gap-y-6 lg:gap-3 xl:gap-4 px-8 py-6 transition-all ${!isHighRes && isExpanded ? "opacity-30 grayscale blur-[1px]" : ""}`}>
+          {/* FLOATING AVATAR (Visible ONLY at exactly 1024px-1279px / lg) */}
+          <div className="hidden lg:flex xl:hidden absolute -top-5 -left-5 w-16 h-16 bg-white rounded-2xl shadow-lg border border-gray-50 items-center justify-center z-20 transition-all group-hover:scale-110 group-hover:-rotate-3">
+             <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all">
+                {tutor?.profile_picture ? (
+                  <img 
+                    src={`${API_BASE_URL}/storage/${tutor.profile_picture}`}
+                    className="w-full h-full object-cover"
+                    alt="Tutor"
+                    onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=" + (tutor?.firstname || "T"); }}
+                  />
+                ) : (
+                  <UserIcon className="w-8 h-8 text-gray-300 m-auto mt-2" />
+                )}
+             </div>
           </div>
-          <div className="flex flex-col min-w-0">
-            {/* Multi-line Title at lg breakpoint, single line otherwise and on XL */}
-            <div className="lg:hidden xl:block">
-              <span className="text-[15px] font-black text-[#0F2843] leading-tight uppercase truncate">
-                {session.class?.title || "Master Class"}
-              </span>
-            </div>
-            <div className="hidden lg:block xl:hidden">
-              <div className="flex flex-col">
-                <span className="text-[14px] font-black text-[#0F2843] leading-none uppercase">{titleParts[0]}</span>
-                {titleParts[1] && (
-                  <span className="text-[12px] font-bold text-[#BB9E7F]/80 mt-1 uppercase whitespace-nowrap italic underline underline-offset-2 decoration-dotted decoration-[#BB9E7F]/30">{titleParts[1]}</span>
+
+          {/* Title Column */}
+          <div className="flex items-center gap-4 col-span-1 lg:pl-3 xl:pl-0 min-w-0">
+            <div className="relative shrink-0 lg:hidden xl:flex">
+              <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-50 border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all flex items-center justify-center">
+                {tutor?.profile_picture ? (
+                  <img 
+                    src={`${API_BASE_URL}/storage/${tutor.profile_picture}`}
+                    className="w-full h-full object-cover"
+                    alt="Tutor"
+                    onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=" + (tutor?.firstname || "T"); }}
+                  />
+                ) : (
+                  <UserIcon className="w-8 h-8 text-gray-300" />
                 )}
               </div>
+              {status === 'live' && <span className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 bg-[#22C55E] border-2 border-white rounded-full shadow-sm animate-pulse"></span>}
             </div>
-            
-            {isToday && (
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {status === 'live' ? (
-                  <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100 italic">
-                    <SignalIcon className="w-3.5 h-3.5 animate-pulse" /> LIVE
-                  </span>
-                ) : status === 'upcoming' ? (
-                  <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100 italic">
-                    UPCOMING
-                  </span>
-                ) : null}
-              </div>
-            )}
+            <div className="flex flex-col min-w-0">
+              <span className={`font-black text-[#0F2843] leading-tight uppercase truncate ${isHighRes ? "text-[16px]" : "text-[15px]"}`}>
+                {isHighRes 
+                  ? (session.class?.title || "Master Class")
+                  : abbreviateTitle(session.class?.title || "Master Class")
+                }
+              </span>
+              {isToday && status !== 'completed' && (
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {status === 'live' ? (
+                    <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100 italic">
+                      <SignalIcon className="w-3.5 h-3.5 animate-pulse" /> LIVE
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100 italic">
+                      UPCOMING
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Instructor Column */}
+          <div className="text-left sm:text-center min-w-0">
+            <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1">Tutor</span>
+            <span className="text-[13px] font-black text-[#0F2843] truncate block">
+              {tutor ? `${tutor.firstname} ${tutor.surname}` : "Expert Tutor"}
+            </span>
+          </div>
+
+          {/* Link Column */}
+          <div className="text-left lg:text-center min-w-0">
+            <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1">Session</span>
+            <span 
+              className="text-[#3A5ECC] text-[13px] font-bold underline decoration-dotted underline-offset-4 truncate block"
+              onClick={(e) => e.stopPropagation()} // Prevent toggling the card when clicking the link
+            >
+              {session.recording_link || session.class_link || "Awaiting"}
+            </span>
+          </div>
+
+          {/* Time Column */}
+          <div className="text-left sm:text-center min-w-0">
+            <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1">Time</span>
+            <div className="flex items-center sm:justify-center gap-1.5 text-[#0F2843] font-black text-[14px]">
+              <ClockIcon className="w-4 h-4 text-[#BB9E7F]" />
+              <span>{formatTime(session.starts_at)}</span>
+            </div>
+          </div>
+
+          {/* Date Column */}
+          <div className="text-left sm:text-center min-w-0">
+            <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1 text-center">Date</span>
+            <div className="flex items-center sm:justify-center gap-1.5 text-gray-600 font-black text-[14px]">
+              <CalendarIcon className="w-4 h-4 text-[#BB9E7F]" />
+              <span>{new Date(session.session_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
+            </div>
           </div>
         </div>
-        
-        {/* Instructor Column */}
-        <div className="text-left sm:text-center">
-          <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1">
-            <span className="lg:hidden xl:inline">Instructor</span>
-            <span className="hidden lg:inline xl:hidden">Tutor</span>
-          </span>
-          <span className="text-[13px] font-black text-[#0F2843]">
-            {tutor ? `${tutor.firstname} ${tutor.surname}` : "Expert Tutor"}
-          </span>
-        </div>
 
-        {/* Link Column */}
-        <div className="text-left lg:text-center">
-          <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1">{session.recording_link ? 'Recording' : 'Session Link'}</span>
-          <a 
-            href={session.recording_link || session.class_link} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-[#3A5ECC] text-[13px] font-bold underline decoration-dotted underline-offset-4 hover:text-[#0F2843] transition-colors truncate block max-w-full lg:max-w-[150px] xl:max-w-[180px] mx-auto"
-          >
-            {session.recording_link || session.class_link || "Link Awaiting"}
-          </a>
-        </div>
+        {/* EXPANDED VIEW (Info Card) */}
+        {!isHighRes && isExpanded && (
+          <div className="w-full bg-white p-8 md:p-10 flex flex-col justify-between animate-in fade-in zoom-in-95 duration-300 border-t border-gray-50 mt-2">
+             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+               <div className="flex items-center gap-8">
+                 <div className="w-20 h-20 rounded-3xl overflow-hidden bg-gray-50 border-2 border-[#BB9E7F]/30 p-1 shadow-lg">
+                    {tutor?.profile_picture ? (
+                      <img 
+                        src={`${API_BASE_URL}/storage/${tutor.profile_picture}`}
+                        className="w-full h-full object-cover rounded-2xl"
+                        alt="Tutor"
+                      />
+                    ) : (
+                      <UserIcon className="w-10 h-10 text-gray-300 m-auto mt-4" />
+                    )}
+                 </div>
+                 <div className="flex flex-col">
+                   <span className="px-3 py-1 bg-[#BB9E7F] text-white rounded-full text-[10px] font-black uppercase tracking-widest mb-3 self-start shadow-sm">Full Session Details</span>
+                   <h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-[#0F2843] leading-none mb-2">
+                     {session.class?.title || "Master Class Session"}
+                   </h3>
+                   <div className="flex flex-wrap items-center gap-4 text-gray-400 font-bold text-sm">
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="w-4 h-4 text-[#BB9E7F]" />
+                        <span>{tutor ? `${tutor.firstname} ${tutor.surname}` : "Expert Tutor"}</span>
+                      </div>
+                      <div className="hidden md:block w-1.5 h-1.5 bg-gray-200 rounded-full"></div>
+                      <div className="flex items-center gap-2">
+                        <ClockIcon className="w-4 h-4 text-[#BB9E7F]" />
+                        <span>{formatTime(session.starts_at)} - {formatTime(session.ends_at)}</span>
+                      </div>
+                   </div>
+                 </div>
+               </div>
 
-        {/* Time Column */}
-        <div className="text-left sm:text-center">
-          <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1">Schedule Time</span>
-          <div className="flex items-center sm:justify-center gap-1.5 text-[#0F2843] font-black text-[14px]">
-            <ClockIcon className="w-4 h-4 text-[#BB9E7F]" />
-            <span>{formatTime(session.starts_at)} - {formatTime(session.ends_at)}</span>
+               <div className="flex flex-col items-start md:items-end gap-3 min-w-[200px] w-full md:w-auto">
+                 <div className="text-left md:text-right w-full">
+                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1 block">Live Meeting Link</span>
+                    <a 
+                      href={session.recording_link || session.class_link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm font-bold text-[#3A5ECC] underline decoration-dotted underline-offset-4 break-all block"
+                      onClick={(e) => e.stopPropagation()} // Prevent toggling the card when clicking the link
+                    >
+                      {session.recording_link || session.class_link || "Link Awaiting Deployment..."}
+                    </a>
+                 </div>
+                 <div className="flex items-center gap-2 text-gray-400 font-black text-[12px] uppercase tracking-widest mt-2">
+                    <CalendarIcon className="w-4 h-4 text-[#BB9E7F]" />
+                    <span>{formatSessionDate(session.session_date)}</span>
+                 </div>
+               </div>
+             </div>
+
+             <div className="mt-8 pt-8 border-t border-gray-50 flex items-center justify-between">
+                <p className="hidden md:block text-[11px] font-black text-gray-300 uppercase tracking-[0.3em]">
+                  Click anywhere to close full view
+                </p>
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                  <a 
+                    href={session.recording_link || session.class_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex-1 md:flex-none px-10 py-5 bg-[#0F2843] text-white font-black rounded-2xl hover:bg-black transition-all shadow-xl active:scale-95 uppercase tracking-widest text-[11px] text-center"
+                    onClick={(e) => e.stopPropagation()} // Prevent toggling the card when clicking the link
+                  >
+                    Join Now
+                  </a>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setExpandedSessionId(null); }}
+                    className="md:hidden flex-1 px-8 py-5 bg-gray-100 text-[#0F2843] font-black rounded-2xl uppercase tracking-widest text-[11px]"
+                  >
+                    Close
+                  </button>
+                </div>
+             </div>
+             
+             {/* Bottom tag as requested */}
+             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-20 group-hover:opacity-100 transition-opacity">
+                <span className="text-[9px] font-black text-[#0F2843] uppercase tracking-[0.5em] whitespace-nowrap">Click To Close</span>
+             </div>
           </div>
-        </div>
-
-        {/* Date Column */}
-        <div className="text-left sm:text-center">
-          <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-1 text-center">Date</span>
-          <div className="flex items-center sm:justify-center gap-1.5 text-gray-600 font-black text-[14px]">
-            <CalendarIcon className="w-4 h-4 text-[#BB9E7F]" />
-            <span>{formatSessionDate(session.session_date)}</span>
-          </div>
-        </div>
+        )}
       </div>
     );
   };
 
   return (
     <DashboardLayout pagetitle="Class Schedule" hideHeader={true}>
-      <div className="p-6 max-w-5xl mx-auto w-full min-h-screen">
+      <div className="p-6 max-w-[1600px] xl:px-10 mx-auto w-full min-h-screen">
         
         {/* ========= Header Section ========= */}
         <div className="flex items-center justify-between mb-10">
@@ -303,9 +420,9 @@ export default function StudentClassSchedule() {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <span className="px-3 py-1 bg-[#E83831] text-white rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 inline-block">Recommended Session</span>
+                    <span className="px-3 py-1 bg-[#E83831] text-white rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 inline-block shadow-sm">Recommended Session</span>
                     <h3 className="text-3xl font-black italic uppercase tracking-tighter mb-2 leading-tight">
-                      {scheduleData.next_class.class?.title || "Master Class Session"}
+                      {abbreviateTitle(scheduleData.next_class.class?.title) || "Master Class Session"}
                     </h3>
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-white/60 font-bold text-sm">
                       <div className="flex items-center gap-2">
@@ -363,7 +480,7 @@ export default function StudentClassSchedule() {
                 {/* Center: Class Info + Right: Button under Date */}
                 <div className="flex-1 flex flex-col gap-3">
                   <h3 className="text-2xl font-black italic uppercase tracking-tighter leading-tight">
-                    {scheduleData.next_class.class?.title || "Master Class Session"}
+                    {abbreviateTitle(scheduleData.next_class.class?.title) || "Master Class Session"}
                   </h3>
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-white/60 font-bold text-sm">
                     <div className="flex items-center gap-2">
@@ -415,7 +532,10 @@ export default function StudentClassSchedule() {
           {/* Today Section (Non-collapsable) */}
           <div>
             <div className="flex items-center gap-4 mb-6">
-              <h2 className="text-[12px] font-black text-[#BB9E7F] uppercase tracking-[0.3em] pl-2">TODAY'S CLASSES</h2>
+              <h2 className="text-[12px] font-black text-[#BB9E7F] uppercase tracking-[0.3em] pl-2 whitespace-nowrap">TODAY'S CLASSES</h2>
+              {!isHighRes && (
+                <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic hidden md:inline">— Click any session for more details</span>
+              )}
               <div className="h-[1px] flex-1 bg-gray-100"></div>
             </div>
             
@@ -438,7 +558,10 @@ export default function StudentClassSchedule() {
               className="flex items-center gap-4 mb-6 cursor-pointer group/header"
               onClick={() => setIsWeeklyOpen(!isWeeklyOpen)}
             >
-              <h2 className="text-[12px] font-black text-[#BB9E7F] uppercase tracking-[0.3em] pl-2">WEEKLY SCHEDULE</h2>
+              <h2 className="text-[12px] font-black text-[#BB9E7F] uppercase tracking-[0.3em] pl-2 whitespace-nowrap">WEEKLY SCHEDULE</h2>
+              {!isHighRes && (
+                <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic hidden md:inline">— Click any session for more details</span>
+              )}
               <div className="h-[1px] flex-1 bg-gray-100 group-hover/header:bg-[#BB9E7F]/30 transition-all"></div>
               {isWeeklyOpen ? <ChevronUpIcon className="w-4 h-4 text-gray-400" /> : <ChevronDownIcon className="w-4 h-4 text-gray-400" />}
             </div>

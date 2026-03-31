@@ -148,7 +148,7 @@ export default function StudentEmailVerification() {
 
   const handleResend = async () => {
     try {
-      const response = await axios.post(
+      await axios.post(
         `${API_BASE_URL}/api/students/resend-email`,
         { email: email },
       );
