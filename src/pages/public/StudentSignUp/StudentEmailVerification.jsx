@@ -175,7 +175,7 @@ export default function StudentEmailVerification() {
   const handleResend = async () => {
     try {
       await axios.post(
-        `${API_BASE_URL}/api/students/resend-email`,
+        `${API_BASE_URL}/api/students/resend-email-verification`,
         { email: email },
       );
       setToast({ type: "success", message: "OTP resent successfully." });
