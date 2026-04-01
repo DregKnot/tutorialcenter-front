@@ -422,7 +422,10 @@ export default function StudentClassSchedule() {
                   <div className="flex-1">
                     <span className="px-3 py-1 bg-[#E83831] text-white rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 inline-block shadow-sm">Recommended Session</span>
                     <h3 className="text-3xl font-black italic uppercase tracking-tighter mb-2 leading-tight">
-                      {abbreviateTitle(scheduleData.next_class.class?.title) || "Master Class Session"}
+                      {isHighRes 
+                        ? (scheduleData.next_class.class?.title || "Master Class Session")
+                        : abbreviateTitle(scheduleData.next_class.class?.title) || "Master Class Session"
+                      }
                     </h3>
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-white/60 font-bold text-sm">
                       <div className="flex items-center gap-2">
@@ -480,7 +483,10 @@ export default function StudentClassSchedule() {
                 {/* Center: Class Info + Right: Button under Date */}
                 <div className="flex-1 flex flex-col gap-3">
                   <h3 className="text-2xl font-black italic uppercase tracking-tighter leading-tight">
-                    {abbreviateTitle(scheduleData.next_class.class?.title) || "Master Class Session"}
+                    {isHighRes 
+                      ? (scheduleData.next_class.class?.title || "Master Class Session")
+                      : abbreviateTitle(scheduleData.next_class.class?.title) || "Master Class Session"
+                    }
                   </h3>
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-white/60 font-bold text-sm">
                     <div className="flex items-center gap-2">

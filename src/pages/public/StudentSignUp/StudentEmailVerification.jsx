@@ -8,7 +8,7 @@ import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 export default function StudentEmailVerification() {
   const navigate = useNavigate();
   const [msg, setMsg] = useState("");
-  const [count, setCount] = useState(1800); // 30 minutes
+  const [count, setCount] = useState(60); // 60 seconds
   const [searchParams] = useSearchParams();
   const email = searchParams.get("email");
   const [toast, setToast] = useState(null);
@@ -93,6 +93,32 @@ export default function StudentEmailVerification() {
     }
   };
 
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData("text").trim();
+    if (!pasteData) return;
+
+    // Take the first 6 characters to match our fields
+    const digits = pasteData.slice(0, 6).split("");
+    
+    const newFormData = { ...formData };
+    digits.forEach((digit, index) => {
+      const fieldName = `num${index + 1}`;
+      if (index < 6) {
+        newFormData[fieldName] = digit;
+      }
+    });
+
+    setFormData(newFormData);
+
+    // Focus the last filled input or the 6th input if all filled
+    const lastIndex = Math.min(digits.length, 6);
+    const lastField = `num${lastIndex}`;
+    if (inputRefs[lastField]) {
+      inputRefs[lastField].current.focus();
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
     Object.keys(formData).forEach((key) => {
@@ -153,7 +179,7 @@ export default function StudentEmailVerification() {
         { email: email },
       );
       setToast({ type: "success", message: "OTP resent successfully." });
-      setCount(1800);
+      setCount(60);
     } catch (error) {
       setToast({ type: "error", message: "Failed to resend OTP." });
     }
@@ -214,6 +240,7 @@ export default function StudentEmailVerification() {
                   value={formData[field]}
                   onChange={handleChange}
                   onKeyDown={(e) => handleKeyDown(e, field)}
+                  onPaste={handlePaste}
                   maxLength="1"
                   placeholder="-"
                   className={`w-full h-16 md:h-20 text-3xl font-black text-center rounded-[20px] border-2 transition-all outline-none 
