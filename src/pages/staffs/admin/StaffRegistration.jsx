@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -16,6 +16,7 @@ import {
 
 export default function StaffRegistration() {
   const navigate = useNavigate();
+  const dateInputRef = useRef(null);
 
   /* =============================
      CONSTANTS
@@ -188,7 +189,7 @@ export default function StaffRegistration() {
         <div className="mb-6 flex items-center text-sm">
           <button
              onClick={() => navigate("/staffs/manage-staffs")}
-          className="text-gray-500 hover:text-gray-700 transition-colors">
+          className="text-gray-500 hover: transition-colors">
             &lt; Back /
           </button>
           <h2 className="ml-1 font-bold text-gray-900 dark:text-white">
@@ -246,7 +247,7 @@ export default function StaffRegistration() {
                       value={formData.firstname}
                       onChange={handleChange}
                       placeholder="first name" 
-                      className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
                         errors.firstname ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
                       }`} 
                     />
@@ -267,7 +268,7 @@ export default function StaffRegistration() {
                       value={formData.middlename}
                       onChange={handleChange}
                       placeholder="middle name" 
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
                     />
                   </div>
                 </div>
@@ -283,7 +284,7 @@ export default function StaffRegistration() {
                       value={formData.surname}
                       onChange={handleChange}
                       placeholder="surname" 
-                      className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
                         errors.surname ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
                       }`} 
                     />
@@ -302,7 +303,7 @@ export default function StaffRegistration() {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="you@example.com" 
-                      className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
                         errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
                       }`} 
                     />
@@ -321,7 +322,7 @@ export default function StaffRegistration() {
                       value={formData.tel}
                       onChange={handleChange}
                       placeholder="8012345678" 
-                      className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-14 pr-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-14 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
                         errors.tel ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
                       }`} 
                     />
@@ -342,7 +343,7 @@ export default function StaffRegistration() {
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
-                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-8 text-sm focus:outline-none focus:ring-2 appearance-none transition-all ${
+                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-8 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 appearance-none transition-all ${
                       errors.gender ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
                     }`}
                   >
@@ -360,14 +361,18 @@ export default function StaffRegistration() {
               <div>
                 <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1 uppercase tracking-wide">Date of Birth</label>
                 <div className="relative">
-                  <CalendarIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <CalendarIcon 
+                    className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer z-10" 
+                    onClick={() => dateInputRef.current?.showPicker()}
+                  />
                   <input 
                     type="date" 
+                    ref={dateInputRef}
                     name="date_of_birth"
                     value={formData.date_of_birth}
                     onChange={handleChange}
-                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 transition-all ${
-                      errors.date_of_birth ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500 text-gray-700"
+                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-all [&::-webkit-calendar-picker-indicator]:hidden ${
+                      errors.date_of_birth ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500 "
                     }`} 
                   />
                 </div>
@@ -383,7 +388,7 @@ export default function StaffRegistration() {
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
-                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-8 text-sm focus:outline-none focus:ring-2 appearance-none transition-all ${
+                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-8 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 appearance-none transition-all ${
                       errors.role ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
                     }`}
                   >
@@ -406,7 +411,7 @@ export default function StaffRegistration() {
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-8 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none transition-all"
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -426,7 +431,7 @@ export default function StaffRegistration() {
                     value={formData.location}
                     onChange={handleChange}
                     placeholder="e.g. Lagos, Ikeja" 
-                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
                       errors.location ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
                     }`} 
                   />
@@ -445,7 +450,7 @@ export default function StaffRegistration() {
                     value={formData.address}
                     onChange={handleChange}
                     placeholder="enter home address" 
-                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
                       errors.address ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
                     }`} 
                   />
@@ -466,7 +471,7 @@ export default function StaffRegistration() {
                     onChange={handleChange}
                     rows="3" 
                     placeholder="brief biography or additional notes" 
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all"
                   ></textarea>
                 </div>
               </div>

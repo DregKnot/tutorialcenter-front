@@ -484,10 +484,10 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
           </label>
           
           {/* Session Duration */}
-          <div className={`bg-gray-50 dark:bg-gray-800 rounded-2xl p-5 border ${
+          <div className={`bg-gray-50 dark:bg-blue-600/10 rounded-2xl p-5 border ${
             errors.start_date || errors.end_date 
               ? "border-red-300" 
-              : "border-gray-200 dark:border-gray-700"
+              : "border-gray-200 dark:border-blue-500/30"
           }`}>
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -502,7 +502,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
                   name="start_date"
                   value={formData.start_date}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <span className="text-gray-400 mt-6">-</span>
@@ -513,7 +513,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
                   name="end_date"
                   value={formData.end_date}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -525,8 +525,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
         {/* Course Selection */}
         <div>
-          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl px-5 py-4 border ${
-            errors.course_id ? "border-red-300" : "border-gray-200 dark:border-gray-700"
+          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border ${
+            errors.course_id ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
           }`}>
             <BookOpenIcon className="w-5 h-5 text-gray-400" />
             <input
@@ -548,8 +548,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
         {/* Subject Selection */}
         <div>
-          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl px-5 py-4 border ${
-            errors.subject_id ? "border-red-300" : "border-gray-200 dark:border-gray-700"
+          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border ${
+            errors.subject_id ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
           } ${!formData.course_id && 'opacity-50'}`}>
             <BookOpenIcon className="w-5 h-5 text-gray-400" />
             <input
@@ -572,7 +572,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
         </div>
 
         {/* Generated Class Title */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-5 border border-gray-200 dark:border-gray-700">
+        <div className="bg-gray-50 dark:bg-blue-600/10 rounded-2xl p-5 border border-gray-200 dark:border-blue-500/30">
           <span className="block text-xs text-gray-500 mb-2">Generated Class Title</span>
           <p className="text-base font-semibold text-gray-900 dark:text-white">
             {selectedSubject 
@@ -603,7 +603,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
                   className={`py-3 rounded-xl text-xs font-medium transition-all ${
                     isActive
                       ? "bg-blue-400 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                      : "bg-gray-100 dark:bg-blue-600/20 text-gray-600 dark:text-gray-300 border-none"
                   }`}
                 >
                   {day.label}
@@ -614,7 +614,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
           {/* Time Slots Table */}
           {daySchedules.length > 0 && (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 border border-gray-200 dark:border-gray-700">
+            <div className="bg-gray-50 dark:bg-blue-600/10 rounded-2xl p-4 border border-gray-200 dark:border-blue-500/30">
               <div className="grid grid-cols-3 gap-4 mb-3 text-xs font-medium text-gray-500">
                 <span>Day</span>
                 <span className="text-center">Start</span>
@@ -632,13 +632,13 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
                     type="time"
                     value={schedule.start_time}
                     onChange={(e) => handleTimeChange(schedule.day, "start_time", e.target.value)}
-                    className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <input
                     type="time"
                     value={schedule.end_time}
                     onChange={(e) => handleTimeChange(schedule.day, "end_time", e.target.value)}
-                    className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               ))}
@@ -649,8 +649,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
         {/* Tutors */}
         <div>
-          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl px-5 py-4 border ${
-            errors.tutor_ids ? "border-red-300" : "border-gray-200 dark:border-gray-700"
+          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border ${
+            errors.tutor_ids ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
           }`}>
             <UserGroupIcon className="w-5 h-5 text-gray-400" />
             <input
@@ -658,7 +658,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
               value={tutorSearch}
               onChange={(e) => handleStaffChange(e, "tutor_ids")}
               placeholder="Search and select tutors"
-              className="flex-1 bg-transparent text-sm text-gray-500 italic outline-none placeholder:text-gray-400"
+              className="flex-1 bg-transparent text-sm text-gray-500 dark:text-white italic outline-none placeholder:text-gray-400"
             />
             <datalist id="tutor-list">
               {tutors.map((s) => (
@@ -681,14 +681,14 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
         {/* Assistants */}
         <div>
-          <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl px-5 py-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border border-gray-200 dark:border-blue-500/30">
             <UserGroupIcon className="w-5 h-5 text-gray-400" />
             <input
               list="assistant-list"
               value={assistantSearch}
               onChange={(e) => handleStaffChange(e, "assistant_ids")}
               placeholder="Search and select assistants (optional)"
-              className="flex-1 bg-transparent text-sm text-gray-500 italic outline-none placeholder:text-gray-400"
+              className="flex-1 bg-transparent text-sm text-gray-500 dark:text-white italic outline-none placeholder:text-gray-400"
             />
             <datalist id="assistant-list">
               {assistants.map((s) => (
@@ -710,8 +710,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
         {/* Meeting Link */}
         <div>
-          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl px-5 py-4 border ${
-            errors.link ? "border-red-300" : "border-gray-200 dark:border-gray-700"
+          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border ${
+            errors.link ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
           }`}>
             <LinkIcon className="w-5 h-5 text-gray-400" />
             <input
@@ -720,7 +720,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
               value={formData.link}
               onChange={handleChange}
               placeholder="https://meet.google.com/ans-baxj-eyc"
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
+              className="flex-1 bg-transparent text-sm dark:text-white outline-none placeholder:text-gray-400"
             />
           </div>
           {errors.link && <p className="text-red-500 text-xs mt-2">{errors.link}</p>}
@@ -728,23 +728,23 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
         {/* Status */}
         <div>
-          <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl px-5 py-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border border-gray-200 dark:border-blue-500/30">
             <UserCircleIcon className="w-5 h-5 text-gray-400" />
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="flex-1 bg-transparent text-sm outline-none cursor-pointer border-none focus:ring-0"
+              className="flex-1 bg-transparent text-sm dark:text-white outline-none cursor-pointer border-none focus:ring-0"
             >
-              <option value="active">active</option>
-              <option value="inactive">inactive</option>
+              <option value="active" className="dark:bg-[#0a1d3a]">active</option>
+              <option value="inactive" className="dark:bg-[#0a1d3a]">inactive</option>
             </select>
           </div>
         </div>
 
         {/* Description */}
         <div>
-          <div className="flex items-start gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl px-5 py-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-start gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border border-gray-200 dark:border-blue-500/30">
             <ChatBubbleBottomCenterTextIcon className="w-5 h-5 text-gray-400 mt-1" />
             <textarea
               name="description"
@@ -752,7 +752,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
               onChange={handleChange}
               placeholder="Description (optional)"
               rows="3"
-              className="flex-1 bg-transparent text-sm text-gray-500 italic outline-none placeholder:text-gray-400 resize-none"
+              className="flex-1 bg-transparent text-sm text-gray-500 dark:text-white italic outline-none placeholder:text-gray-400 resize-none"
             />
           </div>
         </div>

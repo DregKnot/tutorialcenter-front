@@ -38,6 +38,7 @@ export default function StudentRegistration() {
   
   const fileInputRef = useRef(null);
   const dateInputRef = useRef(null);
+  const dateContainerRef = useRef(null);
   const genderRef = useRef(null);
   const departmentRef = useRef(null);
 
@@ -68,6 +69,9 @@ export default function StudentRegistration() {
       }
       if (departmentRef.current && !departmentRef.current.contains(event.target)) {
         setIsDepartmentOpen(false);
+      }
+      if (dateContainerRef.current && !dateContainerRef.current.contains(event.target)) {
+        dateInputRef.current?.blur();
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -423,9 +427,9 @@ export default function StudentRegistration() {
               {/* Date of Birth */}
               <div className="space-y-2">
                 <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Date of Birth</label>
-                <div className={getInputStyles("date_of_birth").container}>
+                <div ref={dateContainerRef} className={getInputStyles("date_of_birth").container}>
                   <CalendarIcon 
-                    className={`${getInputStyles("date_of_birth").icon} cursor-pointer hover:text-[#09314F] transition-colors`} 
+                    className={`${getInputStyles("date_of_birth").icon} cursor-pointer hover:text-[#09314F] transition-colors relative z-10`} 
                     onClick={() => dateInputRef.current?.showPicker?.()}
                   />
                   <input
@@ -434,9 +438,10 @@ export default function StudentRegistration() {
                     type="date"
                     value={formData.date_of_birth}
                     onChange={handleChange}
+                    onClick={() => dateInputRef.current?.showPicker?.()}
                     onFocus={() => setFocusedField("date_of_birth")}
                     onBlur={() => setFocusedField(null)}
-                    className={getInputStyles("date_of_birth").input}
+                    className={`${getInputStyles("date_of_birth").input} cursor-pointer`}
                   />
                 </div>
                 {errors.date_of_birth && <p className="text-xs text-red-500 font-bold px-1">{errors.date_of_birth}</p>}
@@ -642,8 +647,8 @@ export default function StudentRegistration() {
 
       <style>{`
         input[type="date"]::-webkit-calendar-picker-indicator {
-          opacity: 0;
-          pointer-events: none;
+          display: none;
+          -webkit-appearance: none;
         }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

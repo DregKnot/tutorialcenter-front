@@ -24,6 +24,8 @@ export default function StudentBiodata() {
   const [focusedField, setFocusedField] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+  const dateInputRef = useRef(null);
+  const dateContainerRef = useRef(null);
 
   // Custom dropdown states
   const [isGenderOpen, setIsGenderOpen] = useState(false);
@@ -42,6 +44,9 @@ export default function StudentBiodata() {
       }
       if (departmentRef.current && !departmentRef.current.contains(event.target)) {
         setIsDepartmentOpen(false);
+      }
+      if (dateContainerRef.current && !dateContainerRef.current.contains(event.target)) {
+        dateInputRef.current?.blur();
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -332,16 +337,21 @@ export default function StudentBiodata() {
               {/* Date of Birth */}
               <div className="space-y-2">
                 <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Date of Birth</label>
-                <div className={`${getInputStyles("date_of_birth").container} relative`}>
-                  <CalendarIcon className={getInputStyles("date_of_birth").icon} />
+                <div ref={dateContainerRef} className={`${getInputStyles("date_of_birth").container} relative`}>
+                  <CalendarIcon 
+                    className={`${getInputStyles("date_of_birth").icon} cursor-pointer hover:text-[#09314F] transition-colors relative z-10`} 
+                    onClick={() => dateInputRef.current?.showPicker?.()}
+                  />
                   <input
+                    ref={dateInputRef}
                     name="date_of_birth"
                     type="date"
                     value={formData.date_of_birth}
                     onChange={handleChange}
+                    onClick={() => dateInputRef.current?.showPicker?.()}
                     onFocus={() => setFocusedField("date_of_birth")}
                     onBlur={() => setFocusedField(null)}
-                    className={getInputStyles("date_of_birth").input}
+                    className={`${getInputStyles("date_of_birth").input} cursor-pointer`}
                   />
                 </div>
                 {errors.date_of_birth && <p className="text-xs text-red-500 font-bold px-1">{errors.date_of_birth}</p>}
@@ -527,19 +537,9 @@ export default function StudentBiodata() {
           -moz-appearance: none;
           appearance: none;
         }
-        input[type="date"] {
-          position: relative;
-        }
         input[type="date"]::-webkit-calendar-picker-indicator {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 100%;
-          margin: 0;
-          padding: 0;
-          cursor: pointer;
-          opacity: 0;
+          display: none;
+          -webkit-appearance: none;
         }
       `}</style>
     </div>
