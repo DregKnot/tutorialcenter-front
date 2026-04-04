@@ -340,7 +340,13 @@ export default function StudentBiodata() {
                 <div ref={dateContainerRef} className={`${getInputStyles("date_of_birth").container} relative`}>
                   <CalendarIcon 
                     className={`${getInputStyles("date_of_birth").icon} cursor-pointer hover:text-[#09314F] transition-colors relative z-10`} 
-                    onClick={() => dateInputRef.current?.showPicker?.()}
+                    onClick={() => {
+                      if (dateInputRef.current?.showPicker) {
+                        dateInputRef.current.showPicker();
+                      } else {
+                        dateInputRef.current?.focus();
+                      }
+                    }}
                   />
                   <input
                     ref={dateInputRef}
@@ -348,7 +354,13 @@ export default function StudentBiodata() {
                     type="date"
                     value={formData.date_of_birth}
                     onChange={handleChange}
-                    onClick={() => dateInputRef.current?.showPicker?.()}
+                    onClick={() => {
+                      if (dateInputRef.current?.showPicker) {
+                        dateInputRef.current.showPicker();
+                      } else {
+                        dateInputRef.current?.focus();
+                      }
+                    }}
                     onFocus={() => setFocusedField("date_of_birth")}
                     onBlur={() => setFocusedField(null)}
                     className={`${getInputStyles("date_of_birth").input} cursor-pointer`}

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import {
   BookOpenIcon,
-  // CalendarIcon,
+  CalendarIcon,
   ClockIcon,
   ChevronDownIcon,
   // GlobeAltIcon,
@@ -55,6 +55,9 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
   const [selectedTutors, setSelectedTutors] = useState([]);
   const [selectedAssistants, setSelectedAssistants] = useState([]);
+  const startDateRef = useRef(null);
+  const endDateRef = useRef(null);
+  const dateContainerRef = useRef(null);
 
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState(null);
@@ -129,6 +132,15 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
   useEffect(() => {
     fetchCourses();
     fetchStaff();
+
+    const handleClickOutside = (event) => {
+      if (dateContainerRef.current && !dateContainerRef.current.contains(event.target)) {
+        startDateRef.current?.blur();
+        endDateRef.current?.blur();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [fetchCourses, fetchStaff]);
 
   useEffect(() => {
@@ -494,27 +506,53 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
                 Session Duration
               </span>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
+            <div ref={dateContainerRef} className="flex items-center gap-4">
+              <div className="flex-1 relative">
                 <span className="block text-xs text-gray-500 mb-1">Start</span>
-                <input
-                  type="date"
-                  name="start_date"
-                  value={formData.start_date}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    ref={startDateRef}
+                    type="date"
+                    name="start_date"
+                    value={formData.start_date}
+                    onChange={handleChange}
+                    onClick={() => {
+                      if (startDateRef.current?.showPicker) {
+                        startDateRef.current.showPicker();
+                      } else {
+                        startDateRef.current?.focus();
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden"
+                  />
+                  <CalendarIcon 
+                    className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                </div>
               </div>
               <span className="text-gray-400 mt-6">-</span>
-              <div className="flex-1">
+              <div className="flex-1 relative">
                 <span className="block text-xs text-gray-500 mb-1">End</span>
-                <input
-                  type="date"
-                  name="end_date"
-                  value={formData.end_date}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    ref={endDateRef}
+                    type="date"
+                    name="end_date"
+                    value={formData.end_date}
+                    onChange={handleChange}
+                    onClick={() => {
+                      if (endDateRef.current?.showPicker) {
+                        endDateRef.current.showPicker();
+                      } else {
+                        endDateRef.current?.focus();
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden"
+                  />
+                  <CalendarIcon 
+                    className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -363,7 +363,13 @@ export default function StaffRegistration() {
                 <div className="relative">
                   <CalendarIcon 
                     className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer z-10" 
-                    onClick={() => dateInputRef.current?.showPicker()}
+                    onClick={() => {
+                      if (dateInputRef.current?.showPicker) {
+                        dateInputRef.current.showPicker();
+                      } else {
+                        dateInputRef.current?.focus();
+                      }
+                    }}
                   />
                   <input 
                     type="date" 
@@ -371,10 +377,16 @@ export default function StaffRegistration() {
                     name="date_of_birth"
                     value={formData.date_of_birth}
                     onChange={handleChange}
-                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-all [&::-webkit-calendar-picker-indicator]:hidden ${
+                    onClick={() => {
+                      if (dateInputRef.current?.showPicker) {
+                        dateInputRef.current.showPicker();
+                      } else {
+                        dateInputRef.current?.focus();
+                      }
+                    }}
+                    className={`w-full rounded-lg border bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden ${
                       errors.date_of_birth ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-blue-500 "
-                    }`} 
-                  />
+                    }`}                  />
                 </div>
                 {errors.date_of_birth && <p className="text-[10px] text-red-500 mt-1 font-semibold">{errors.date_of_birth}</p>}
               </div>

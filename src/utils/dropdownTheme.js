@@ -34,7 +34,7 @@ export const dropdownTheme = {
   /* --- Specialized Table Overlay Dropdown Styles --- */
   overlay: {
     // The floating card
-    container: "absolute top-full left-0 w-full z-[100] mt-2 bg-[#F9E7E6] rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-black/5 p-4 animate-fadeIn max-h-[300px] overflow-y-auto",
+    container: "absolute top-full left-0 w-full md:min-w-[240px] z-[100] mt-2 bg-[#F9E7E6] rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-black/5 p-4 animate-fadeIn max-h-[300px] overflow-y-auto",
     header: "text-[10px] font-black text-[#888888] uppercase tracking-widest mb-3 px-2",
     // Individual items within the overlay
     item: (isSelected, isLimitReached) => `
