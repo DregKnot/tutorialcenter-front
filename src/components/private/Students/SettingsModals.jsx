@@ -59,9 +59,9 @@ export function ContactInputModal({ isOpen, onClose, type, onSubmit, loading }) 
 
 // --- OTP Modal ---
 export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onResend }) {
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(59);
-  const inputRefs = [useRef(), useRef(), useRef(), useRef()];
+  const inputRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
 
   // Countdown timer
   useEffect(() => {
@@ -75,7 +75,7 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
   // Reset state when opened
   useEffect(() => {
     if (isOpen) {
-      setOtp(["", "", "", ""]);
+      setOtp(["", "", "", "", "", ""]);
       setTimeLeft(59);
       if (inputRefs[0].current) inputRefs[0].current.focus();
     }
@@ -88,12 +88,12 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
     const newOtp = [...otp];
     // Handle paste of multiple digits
     if (value.length > 1) {
-       const digits = value.slice(0, 4).split('');
+       const digits = value.slice(0, 6).split('');
        digits.forEach((d, i) => {
-         if (index + i < 4) newOtp[index + i] = d;
+         if (index + i < 6) newOtp[index + i] = d;
        });
        setOtp(newOtp);
-       const nextIndex = Math.min(index + digits.length, 3);
+       const nextIndex = Math.min(index + digits.length, 5);
        inputRefs[nextIndex].current?.focus();
        return;
     }
@@ -102,7 +102,7 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
     setOtp(newOtp);
 
     // Auto-focus next input
-    if (value && index < 3) {
+    if (value && index < 5) {
       inputRefs[index + 1].current?.focus();
     }
   };
@@ -115,7 +115,7 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
 
   const handleVerify = () => {
     const code = otp.join("");
-    if (code.length === 4) onVerify(code);
+    if (code.length === 6) onVerify(code);
   };
 
   if (!isOpen) return null;
@@ -138,11 +138,11 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
             key={index}
             ref={inputRefs[index]}
             type="text"
-            maxLength="4"
+            maxLength="6"
             value={digit}
             onChange={(e) => handleChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyDown(index, e)}
-            className="w-14 h-16 text-center text-2xl font-bold bg-[#F4F5F7] dark:bg-gray-700 text-[#09314F] dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-[#09314F] border border-transparent focus:border-[#09314F]"
+            className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold bg-[#F4F5F7] dark:bg-gray-700 text-[#09314F] dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-[#09314F] border border-transparent focus:border-[#09314F] transition-all"
           />
         ))}
       </div>
@@ -271,6 +271,48 @@ export function SuccessModal({ isOpen, onClose, title, message }) {
       >
         Done
       </button>
+    </ModalWrapper>
+  );
+}
+
+// --- Forgot Password Input Modal ---
+export function ForgotInputModal({ isOpen, onClose, onSubmit, loading }) {
+  const [value, setValue] = useState("");
+
+  if (!isOpen) return null;
+
+  return (
+    <ModalWrapper isOpen={isOpen} onClose={onClose}>
+      <h2 className="text-xl font-bold text-[#09314F] dark:text-white mb-2">
+        Reset Password
+      </h2>
+      <p className="text-sm text-gray-500 mb-6">
+        Please enter the email address or phone number associated with your account to receive a reset code.
+      </p>
+      
+      <input
+        type="text"
+        placeholder="Email or Phone Number"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#09314F] transition-all mb-6"
+      />
+
+      <div className="flex gap-3">
+        <button
+          onClick={onClose}
+          className="flex-1 py-3 rounded-xl font-bold text-[#09314F] dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => onSubmit(value)}
+          disabled={!value || loading}
+          className="flex-1 py-3 rounded-xl font-bold text-white bg-[#09314F] hover:bg-[#072439] disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          {loading ? "Sending..." : "Continue"}
+        </button>
+      </div>
     </ModalWrapper>
   );
 }

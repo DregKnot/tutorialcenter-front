@@ -128,14 +128,15 @@ export default function StudentSettings() {
       try {
         const isPassword = context === "password";
         const endpoint = isPassword
-            ? `${API_BASE_URL}/api/students/password/otp-request`
+            ? `${API_BASE_URL}/api/students/forget-password`
             : `${API_BASE_URL}/api/students/contact/change/request`;
             
         // Construct dynamic payload.
-        const payloadKey = context === "phone" ? "tel" : context;
+        // For password endpoints, backend expects "email". For contact changes, backend expects "type": "phone".
+        const passwordKey = context === "phone" ? "tel" : context;
         const payload = isPassword 
-            ? { [payloadKey]: target } 
-            : { type: payloadKey, value: target };
+            ? { [passwordKey]: target } 
+            : { type: context, value: target };
 
         await axios.post(endpoint, payload, {
             headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
@@ -161,10 +162,9 @@ export default function StudentSettings() {
             setModalType("password");
          } else {
             // Confirm the email/phone change directly
-            const payloadKey = flowContext === "phone" ? "tel" : flowContext;
             await axios.post(`${API_BASE_URL}/api/students/contact/change/confirm`, {
                 otp: code,
-                type: payloadKey,
+                type: flowContext,
                 value: flowTarget
             }, {
                 headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
@@ -283,18 +283,6 @@ function SettingsMenu({ initiateFlow, setActiveView }) {
            </div>
         </button>
 
-        {/* Password Card */}
-        <button 
-           onClick={() => initiateFlow("password")}
-           className="w-full flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group"
-        >
-           <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-blue-50 text-[#09314F] dark:bg-gray-700 dark:text-blue-400 group-hover:bg-[#09314F] group-hover:text-white transition-colors">
-                 <LockClosedIcon className="w-6 h-6" />
-              </div>
-              <span className="font-bold text-gray-800 dark:text-white text-lg">Edit Password</span>
-           </div>
-        </button>
 
         {/* Email Card */}
         <button 
