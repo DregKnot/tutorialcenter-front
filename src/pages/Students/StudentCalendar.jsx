@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useLayoutEffect, useState, useMemo, useCallback, useRef } from "react";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import axios from "axios";
 import { BellIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
@@ -17,6 +17,8 @@ export default function StudentCalendar() {
   const [viewMode, setViewMode] = useState("week"); // "week" or "day"
   const [dateOffset, setDateOffset] = useState(0); // number of days from today
   const [selectedSession, setSelectedSession] = useState(null);
+  
+  const calendarRef = useRef(null);
 
   // Focused date based on offset
   const focusedDate = useMemo(() => {
@@ -68,6 +70,30 @@ export default function StudentCalendar() {
   useEffect(() => {
     fetchSchedule();
   }, [fetchSchedule]);
+
+  // Instant scroll placement before the browser paints the grid onto the user's screen
+  useLayoutEffect(() => {
+    if (loading || dateOffset !== 0) return;
+
+    const currentHour = new Date().getHours();
+    
+    // We request the browser to calculate layout immediately after DOM mutation
+    // ensuring offset metrics are physically correct before rendering visually.
+    requestAnimationFrame(() => {
+      const container = calendarRef.current;
+      const rowElement = document.getElementById(`hour-row-${currentHour}`);
+
+      if (container && rowElement) {
+        // Subtract ~50px to ensure the time label isn't hidden under the sticky header
+        const scrollTarget = rowElement.offsetTop - 50;
+        
+        // Use instant scrollTop assignment to completely bypass animation
+        // so the user perceives the calendar as loading at this exact position natively.
+        container.scrollTop = Math.max(0, scrollTarget);
+      }
+    });
+
+  }, [loading, viewMode, dateOffset]);
 
   // Map sessions to the grid
   const getSessionsForCell = useCallback((dayDate, hour) => {
@@ -157,9 +183,9 @@ export default function StudentCalendar() {
         </div>
 
         {/* ====== Calendar Grid ====== */}
-        <div className="bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md rounded-2xl md:rounded-3xl shadow-sm md:shadow-lg border border-gray-100 dark:border-[#09314F] overflow-hidden">
+        <div ref={calendarRef} className="max-h-[85vh] overflow-y-auto relative bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md rounded-2xl md:rounded-3xl shadow-sm md:shadow-lg border border-gray-100 dark:border-[#09314F] overflow-hidden">
           {/* View Navigation + Day Headers */}
-          <div className={`grid ${viewMode === "day" ? "grid-cols-[100px_1fr]" : "grid-cols-8"} bg-[#C5A97A] text-white`}>
+          <div className={`sticky top-0 z-20 grid ${viewMode === "day" ? "grid-cols-[100px_1fr]" : "grid-cols-8"} bg-[#C5A97A] text-white shadow-sm`}>
             {/* Time column header with nav */}
             <div className="p-3 flex flex-col items-center justify-center gap-1 border-r border-[#BB9E7F]/30">
               <div className="flex items-center gap-2">
@@ -211,9 +237,9 @@ export default function StudentCalendar() {
               <p className="mt-4 text-gray-400 dark:text-gray-300 font-bold text-sm">Loading schedule...</p>
             </div>
           ) : (
-            <div className="max-h-[85vh] overflow-y-auto">
+            <div className="relative">
               {HOURS.map((hour) => (
-                <div key={hour} className={`grid ${viewMode === "day" ? "grid-cols-[100px_1fr]" : "grid-cols-8"} border-b border-gray-100 dark:border-white/10 last:border-0`}>
+                <div key={hour} id={`hour-row-${hour}`} className={`grid ${viewMode === "day" ? "grid-cols-[100px_1fr]" : "grid-cols-8"} border-b border-gray-100 dark:border-white/10 last:border-0`}>
                   {/* Time Label */}
                   <div className="p-2 md:p-3 text-[11px] md:text-xs font-bold text-gray-400 dark:text-blue-300 uppercase flex items-start justify-center pt-3 border-r border-gray-100 dark:border-white/10">
                     {formatHour(hour)}
