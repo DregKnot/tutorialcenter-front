@@ -13,6 +13,46 @@ export default function StudentDashboard() {
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [studentData, setStudentData] = useState(null);
+
+  // Get student data from localStorage
+  useEffect(() => {
+    const storedInfo = localStorage.getItem("student_info");
+    const storedData = localStorage.getItem("studentdata");
+    
+    const data = storedInfo ? JSON.parse(storedInfo) : (storedData ? JSON.parse(storedData)?.data : null);
+    setStudentData(data);
+  }, []);
+
+  // Determine if profile alert should show
+  const shouldShowProfileAlert = () => {
+    if (!studentData) return false;
+    
+    const hasEmail = studentData.email && studentData.email.trim();
+    const hasPhone = studentData.tel && studentData.tel.trim();
+    const emailVerified = studentData.email_verified_at;
+    const phoneVerified = studentData.tel_verified_at;
+    
+    // Show alert if either contact method is missing or unverified
+    return (!hasEmail || !emailVerified) || (!hasPhone || !phoneVerified);
+  };
+
+  // Get alert message
+  const getAlertMessage = () => {
+    if (!studentData) return "";
+    
+    const hasEmail = studentData.email && studentData.email.trim();
+    const hasPhone = studentData.tel && studentData.tel.trim();
+    const emailVerified = studentData.email_verified_at;
+    const phoneVerified = studentData.tel_verified_at;
+    
+    const missingItems = [];
+    
+    if (!hasEmail || !emailVerified) missingItems.push("update your email");
+    if (!hasPhone || !phoneVerified) missingItems.push("update your phone number");
+    
+    return missingItems.join(" and ");
+  };
 
   useEffect(() => {
     const fetchActiveCourses = async () => {
@@ -59,17 +99,19 @@ export default function StudentDashboard() {
           </div> */}
 
           {/* Profile Alert Banner */}
-          <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex items-center gap-3">
-            <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
-              <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
+          {shouldShowProfileAlert() && (
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex items-center gap-3">
+              <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
+              </div>
+              <p className="text-[13px] font-bold text-[#09314F] dark:text-gray-200">
+                Please complete your profile! Click the link to{" "}
+                <a href="/student/settings" className="text-blue-500 hover:underline">
+                  {getAlertMessage()}
+                </a>
+              </p>
             </div>
-            <p className="text-[13px] font-bold text-[#09314F] dark:text-gray-200">
-              Please complete your profile! Click the link to{" "}
-              <a href="/student/settings" className="text-blue-500 hover:underline">
-                update profile
-              </a>
-            </p>
-          </div>
+          )}
 
           {/* Assessment Notification */}
           <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-xl p-2 border border-[#C5A97A]/40 shadow-[0_8px_30px_rgb(0,0,0,0.03)]">

@@ -441,6 +441,21 @@ export default function StudentRegistration() {
                       }
                     }}
                   />
+                  {/* Custom date display for iPhone showing full date with year */}
+                  {isIOS() && formData.date_of_birth && (
+                    <span className={`${getInputStyles("date_of_birth").input} pointer-events-none`}>
+                      {new Date(formData.date_of_birth + 'T00:00:00').toLocaleDateString('en-GB', { 
+                        day: '2-digit', 
+                        month: 'short', 
+                        year: 'numeric' 
+                      })}
+                    </span>
+                  )}
+                  {isIOS() && !formData.date_of_birth && (
+                    <span className={`${getInputStyles("date_of_birth").input} text-gray-400 pointer-events-none`}>
+                      select date
+                    </span>
+                  )}
                   <input
                     ref={dateInputRef}
                     name="date_of_birth"
