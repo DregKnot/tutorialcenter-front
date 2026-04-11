@@ -53,10 +53,14 @@ export default function StudentMeetWrapper() {
   }
 
   return (
-    <GoogleMeetSessions 
-      class_link={sessionDetails.class_link}
-      class_schedule_id={sessionDetails.class_schedule_id}
-      studentId={sessionDetails.studentId}
-    />
+    <div className="dashboard-grid">
+    <div className="sidebar">...</div>
+    <div className="main-content">
+        <div className="video-session-area">
+             {/* This div is now our 'embedded' meet area */}
+             <GoogleMeetSessions /> 
+        </div>
+    </div>
+</div>
   );
 }

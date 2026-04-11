@@ -89,18 +89,17 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
 
       <aside
         className={`
-          fixed top-2 left-2 z-50 h-[calc(100vh-22px)]
+          fixed top-0 lg:top-2 left-0 lg:left-2 z-50 
+          h-screen lg:h-[calc(100vh-22px)]
           bg-white dark:bg-gray-900
-          rounded-xl shadow-2xl
-          flex flex-col
           transition-all duration-300
           ${collapsed ? "w-20" : "w-64"}
-          ${isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"}
-          lg:translate-x-0 lg:opacity-100
+          ${isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0 lg:translate-x-0 lg:opacity-100"}
+          lg:rounded-xl lg:shadow-2xl flex flex-col
         `}
       >
         {/* Logo */}
-        <div className="relative flex items-center justify-center p-2 md:p-3 lg:p-6 mt-0 md:mt-1 mb-0 md:mb-1 overflow-visible flex-shrink-0">
+        <div className="relative flex items-center justify-center p-3 lg:p-6 mt-1 mb-1 overflow-visible flex-shrink-0">
           <img
             src={collapsed ? collapselogo : logo}
             alt="TC Logo"
@@ -119,7 +118,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
             }}
             className="
    absolute -right-0 top-[70%] -translate-y-1/2
-  bg-[#09314F] text-white
+              bg-[#09314F] text-white
   w-5 h-9
   rounded-l-xl
   flex items-center justify-center
@@ -128,16 +127,16 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
             "
           >
             {collapsed ? (
-              <ChevronRightIcon className="w-5 h-5" />
+              <ChevronRightIcon className="w-5 h-5 ml-1" />
             ) : (
-              <ChevronLeftIcon className="w-5 h-5" />
+              <ChevronLeftIcon className="w-5 h-5 mr-1" />
             )}
           </button>
         </div>
 
         {/* Avatar & Name */}
-        <div className="flex-1 overflow-y-auto min-h-0 px-2 md:px-3 lg:px-4">
-          <div className="flex px-1 md:px-1 lg:px-2 py-1 md:py-2 items-center gap-2 md:gap-3">
+        <div className={`flex flex-col min-h-0 px-2 md:px-3 lg:px-4 ${collapsed ? "items-center" : ""}`}>
+          <div className={`flex py-1 md:py-2 items-center ${collapsed ? "justify-center" : "gap-2 md:gap-3"}`}>
             {studentLoaded ? (
               <img
                 src={
@@ -177,7 +176,9 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
                 return (
                   <div
                     key={label}
-                    className="w-full flex items-center gap-3 px-2 md:px-3 py-1.5 md:py-2 lg:py-2.5 rounded-lg text-xs md:text-sm font-medium text-gray-400 cursor-not-allowed"
+                    className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 cursor-not-allowed ${
+                      collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 py-1.5 md:py-2 lg:py-2.5"
+                    }`}
                   >
                     <Icon icon={icon} className="w-5 h-5 flex-shrink-0" />
                     {!collapsed && <span>{label}</span>}
@@ -190,8 +191,9 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
                   key={label}
                   to={destination}
                   className={({ isActive }) => `
-                  w-full flex items-center gap-3 px-2 md:px-3 lg:px-3 py-1.5 md:py-2 lg:py-2.5 rounded-lg
+                    w-full flex items-center rounded-lg
                     text-xs md:text-sm font-medium transition duration-200
+                    ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 lg:px-3 py-1.5 md:py-2 lg:py-2.5"}
                     ${
                       isActive
                         ? "bg-[#09314F] text-white shadow-md"
@@ -200,7 +202,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
                   `}
                 >
                   <Icon icon={icon} className="w-5 h-5 flex-shrink-0" />
-                  {!collapsed && <span>{label}</span>}
+                  {!collapsed && <span className="truncate">{label}</span>}
                 </NavLink>
               );
             })}
