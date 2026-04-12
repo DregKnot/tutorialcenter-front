@@ -117,13 +117,13 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
               setCollapsed(!collapsed);
             }}
             className="
-   absolute -right-0 top-[70%] -translate-y-1/2
-              bg-[#09314F] text-white
-  w-5 h-9
-  rounded-l-xl
-  flex items-center justify-center
-  hover:bg-[#09314F]/80 z-10
-  transition-all duration-300 ease-in-out
+              absolute -right-0 top-[70%] -translate-y-1/2
+                          bg-[#09314F] text-white
+              w-5 h-9
+              rounded-l-xl
+              flex items-center justify-center
+              hover:bg-[#09314F]/80 z-10
+              transition-all duration-300 ease-in-out
             "
           >
             {collapsed ? (
