@@ -48,7 +48,7 @@ const menuItems = [
   {
     label: "Games & Fun",
     icon: "mdi:controller-classic",
-    // destination: "/student/games",
+    destination: "/student/games",
   },
   {
     label: "Payment",

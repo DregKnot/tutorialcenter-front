@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { OTPModal, PasswordChangeModal, SuccessModal, ContactInputModal } from "../../components/private/Students/SettingsModals.jsx";
 
 export default function StudentSettings() {
-  const { student, token, updateStudent, refreshStudent } = useAuth();
+  const { student, token, updateStudent } = useAuth();
   const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
@@ -33,13 +33,21 @@ export default function StudentSettings() {
   const [previewImage, setPreviewImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [successMsg, setSuccessMsg] = useState("");
+  const [toast, setToast] = useState(null);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   useEffect(() => {
     if (student) {
       setFormData({
         firstname: student.firstname || "", surname: student.surname || "",
-        gender: student.gender || "", date_of_birth: student.date_of_birth || "", location: student.location || "",
+        gender: student.gender || "", date_of_birth: student.date_of_birth ? student.date_of_birth.split("T")[0] : "", location: student.location || "",
         address: student.address || "",
       });
       if (student.profile_picture) {
@@ -65,7 +73,8 @@ export default function StudentSettings() {
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); setErrors({}); setSuccessMsg("");
+    e.preventDefault();
+    setLoading(true); setErrors({});
 
     const data = new FormData();
     Object.keys(formData).forEach((key) => {
@@ -79,13 +88,16 @@ export default function StudentSettings() {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data", Accept: "application/json" },
       });
       if (response.status === 200) {
-        setSuccessMsg(response.data.message || "Profile updated successfully.");
-        await refreshStudent();
+        console.log("Backend Reply for Profile Update:", response.data);
+        setToast({ type: "success", message: response.data.message || "Profile updated successfully." });
+        // Optimistically update the context with the new text fields.
+        // If the backend returns the updated student object, use that entirely.
+        updateStudent(response.data?.student || { ...formData });
         setProfilePicture(null);
       }
     } catch (error) {
       if (error.response?.status === 422) setErrors(error.response.data.errors || {});
-      else setErrors({ general: "An unexpected error occurred. Please try again." });
+      else setToast({ type: "error", message: "An unexpected error occurred. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -176,7 +188,10 @@ export default function StudentSettings() {
             setModalType("success");
             
             // Sync the whole student object immediately
-            await refreshStudent();
+            // Manually pulse update the student context to instantly remove any generic warnings
+            const key = flowContext === 'email' ? 'email' : 'tel';
+            const verifiedKey = flowContext === 'email' ? 'email_verified_at' : 'phone_verified_at';
+            updateStudent({ [key]: flowTarget, [verifiedKey]: new Date().toISOString() });
          }
       } catch (err) {
          alert("Invalid verification code. Please try again.");
@@ -208,7 +223,7 @@ export default function StudentSettings() {
          setModalType("success");
 
          // Final sync
-         await refreshStudent();
+         // Password changes don't require an explicit state sync on the frontend.
       } catch (error) {
          const msg = error.response?.data?.message || "Failed to change password. Ensure OTP is correct.";
          alert(msg);
@@ -224,6 +239,13 @@ export default function StudentSettings() {
       pagetitle="Settings" 
       RightPanelComponent={SettingsSidebar}
     >
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[120] px-6 py-4 rounded-2xl shadow-2xl text-white ${toast.type === "success" ? "bg-[#76D287]" : "bg-[#E83831] transition-all"}`}>
+          <p className="font-bold text-sm">{toast.message}</p>
+        </div>
+      )}
+
       {/* Modals placed outside main container */}
       <ContactInputModal isOpen={modalType === "input"} onClose={closeModals} type={flowContext} onSubmit={handleContactInputSubmit} loading={modalLoading} />
       <OTPModal isOpen={modalType === "otp"} onClose={closeModals} contactType={flowContext === 'password' ? 'registered address' : (flowContext === 'email' ? 'email' : 'phone number')} onVerify={handleVerifyOTP} loading={modalLoading} onResend={() => requestOTP(flowContext, flowTarget)} />
@@ -234,7 +256,7 @@ export default function StudentSettings() {
          {activeView === "menu" ? (
             <SettingsMenu initiateFlow={initiateFlow} setActiveView={setActiveView} navigate={navigate} />
          ) : (
-            <SettingsContent formData={formData} handleInputChange={handleInputChange} handleFileChange={handleFileChange} handleSubmit={handleProfileSubmit} loading={loading} errors={errors} successMsg={successMsg} previewImage={previewImage} InputField={InputField} setActiveView={setActiveView} />
+            <SettingsContent formData={formData} handleInputChange={handleInputChange} handleFileChange={handleFileChange} handleSubmit={handleProfileSubmit} loading={loading} errors={errors} previewImage={previewImage} InputField={InputField} setActiveView={setActiveView} />
          )}
       </div>
     </DashboardLayout>
@@ -292,7 +314,7 @@ function SettingsMenu({ initiateFlow, setActiveView }) {
   );
 }
 
-function SettingsContent({ formData, handleInputChange, handleFileChange, handleSubmit, loading, errors, successMsg, previewImage, setActiveView }) {
+function SettingsContent({ formData, handleInputChange, handleFileChange, handleSubmit, loading, errors, previewImage, setActiveView }) {
   return (
     <>
       <button 
@@ -302,9 +324,6 @@ function SettingsContent({ formData, handleInputChange, handleFileChange, handle
         <ChevronLeftIcon className="w-4 h-4" />
         Back / <span className="text-[#09314F] dark:text-white font-bold">Edit Profile</span>
       </button>
-
-      {successMsg && <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-md">{successMsg}</div>}
-      {errors.general && <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md">{errors.general}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
          <div className="flex flex-col mb-4">

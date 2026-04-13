@@ -1,6 +1,7 @@
 import About from "./pages/public/About.jsx";
 import Home from "./pages/public/Home.jsx";
-import Career from "./pages/public/Career.jsx"
+import Career from "./pages/public/Career.jsx";
+import Blog from "./pages/public/Blog.jsx";
 import Login from "./pages/public/StudentLogin.jsx";
 import SignUp from "./pages/public/SignUp.jsx";
 import { Route, Routes } from "react-router-dom";
@@ -46,6 +47,7 @@ import StudentPaymentHistory from "./pages/Students/StudentPaymentDisplay.jsx";
 import StudentMeetWrapper from "./pages/Students/StudentMeetWrapper.jsx";
 import StudentSettings from "./pages/Students/StudentSettings.jsx";
 import RecordedClasses from "./pages/Students/RecordedClasses.jsx";
+import StudentGames from "./pages/Students/StudentGames.jsx";
 import StaffEmailVerification from "./pages/public/StaffSignUp/StaffEmailVerification.jsx";
 
 
@@ -59,6 +61,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
         <Route path="/career" element={<Career/>} />
+        <Route path="/blog" element={<Blog />} />
         <Route path="/register" element={<SignUp />} />
         <Route path="/comingsoon" element={<ComingSoon />} />
         <Route path="/staff/login" element={<StaffLogin />} />
@@ -99,6 +102,7 @@ function App() {
           <Route path="/student/meet" element={<StudentMeetWrapper />} />
           <Route path="/student/settings" element={<StudentSettings />} />
           <Route path="/student/recorded-classes" element={<RecordedClasses />} />
+          <Route path="/student/games" element={<StudentGames />} />
 
           {/* Staff Routes */}
           <Route path="/staffs/dashboard" element={<StaffDashboard />} />
