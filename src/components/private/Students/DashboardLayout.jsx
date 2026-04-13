@@ -3,7 +3,10 @@ import Sidebar from "./Sidebar.jsx";
 import RightPanel from "./RightPanel.jsx";
 import MobileHeader from "./MobileHeader.jsx";
 import MobileBottomNav from "./MobileBottomNav.jsx";
-import { BellIcon } from "@heroicons/react/24/outline";
+import { BellIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import InactivityModal from "./InactivityModal";
+import VerificationModal from "./VerificationModal";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function DashboardLayout({ 
   children, 
@@ -15,6 +18,12 @@ export default function DashboardLayout({
 }) {
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+  const { 
+    shouldShowProfileAlert, 
+    alertMessage, 
+    openVerificationModal,
+    student
+  } = useAuth();
 
   // Default to the standard RightPanel if no custom one is provided
   const RightPanelToRender = CustomRightPanel || RightPanel;
@@ -29,7 +38,25 @@ export default function DashboardLayout({
           hideBell={hideMobileBell}
         />
 
-        <main className="pt-16 pb-20 px-4">{children}</main>
+        <main className="pt-16 pb-20 px-4">
+          {shouldShowProfileAlert && (
+            <div className="mb-6 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex items-center gap-3">
+              <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
+                <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
+              </div>
+              <p className="text-[12px] font-bold text-[#09314F] dark:text-gray-200">
+                Please complete your profile!{" "}
+                <button 
+                  onClick={() => openVerificationModal(student?.tel && !student?.tel_verified_at ? 'phone' : 'email')}
+                  className="text-blue-500 hover:underline"
+                >
+                  {alertMessage}
+                </button>
+              </p>
+            </div>
+          )}
+          {children}
+        </main>
 
         <MobileBottomNav />
       </div>
@@ -64,9 +91,34 @@ export default function DashboardLayout({
               </div>
             </div>
           )}
+
+          {shouldShowProfileAlert && (
+            <div className="mb-8 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="bg-red-50 dark:bg-red-900/20 p-2.5 rounded-xl">
+                <ExclamationTriangleIcon className="w-6 h-6 text-red-500" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[14px] font-bold text-[#09314F] dark:text-gray-200">
+                  Account Verification Required
+                </p>
+                <p className="text-[12px] font-medium text-gray-500 dark:text-gray-400">
+                  To secure your account and track attendance, please{" "}
+                  <button 
+                    onClick={() => openVerificationModal(student?.tel && !student?.tel_verified_at ? 'phone' : 'email')}
+                    className="text-[#E83831] hover:underline font-black"
+                  >
+                    {alertMessage}
+                  </button>
+                </p>
+              </div>
+            </div>
+          )}
+
           {children}
         </main>
       </div>
+      <InactivityModal />
+      <VerificationModal />
     </div>
   );
 }

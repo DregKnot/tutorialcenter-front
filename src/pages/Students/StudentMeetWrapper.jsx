@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import GoogleMeetSessions from '../../components/private/Students/GoogleMeetSessions';
+import DashboardLayout from '../../components/private/Students/DashboardLayout';  
 
 export default function StudentMeetWrapper() {
   const location = useLocation();
@@ -40,7 +41,8 @@ export default function StudentMeetWrapper() {
     setSessionDetails({
       class_link: state.class_link,
       class_schedule_id: state.class_schedule_id,
-      studentId: studentId
+      studentId: studentId,
+      alreadyOpened: state.alreadyOpened || false
     });
   }, [location, navigate, student, loading]);
 
@@ -53,10 +55,15 @@ export default function StudentMeetWrapper() {
   }
 
   return (
-    <GoogleMeetSessions 
-      class_link={sessionDetails.class_link}
-      class_schedule_id={sessionDetails.class_schedule_id}
-      studentId={sessionDetails.studentId}
-    />
+    <DashboardLayout pagetitle="Live Class Session">
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <GoogleMeetSessions 
+          class_link={sessionDetails.class_link}
+          class_schedule_id={sessionDetails.class_schedule_id}
+          studentId={sessionDetails.studentId}
+          alreadyOpened={sessionDetails.alreadyOpened}
+        />
+      </div>
+    </DashboardLayout>
   );
 }

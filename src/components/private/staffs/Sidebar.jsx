@@ -37,7 +37,7 @@ const adminMenuItems = [
 
 const tutorMenuItems = [
   { label: "Dashboard", icon: HomeIcon, destination: "/staffs/tutor/dashboard" },
-  { label: "Students", icon: UserGroupIcon, destination: "/staffs/tutor/students" },
+  // { label: "Students", icon: UserGroupIcon, destination: "/staffs/tutor/students" },
   { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/tutor/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon },
   { label: "Courses", icon: BookOpenIcon },

@@ -77,7 +77,9 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
     if (isOpen) {
       setOtp(["", "", "", "", "", ""]);
       setTimeLeft(59);
-      if (inputRefs[0].current) inputRefs[0].current.focus();
+      setTimeout(() => {
+        if (inputRefs.current[0]) inputRefs.current[0].focus();
+      }, 100);
     }
   }, [isOpen]);
 
@@ -94,7 +96,7 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
        });
        setOtp(newOtp);
        const nextIndex = Math.min(index + digits.length, 5);
-       inputRefs[nextIndex].current?.focus();
+       inputRefs.current[nextIndex]?.focus();
        return;
     }
 
@@ -103,13 +105,13 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
 
     // Auto-focus next input
     if (value && index < 5) {
-      inputRefs[index + 1].current?.focus();
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
   const handleKeyDown = (index, e) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs[index - 1].current?.focus();
+      inputRefs.current[index - 1]?.focus();
     }
   };
 

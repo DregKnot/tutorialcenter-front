@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import axios from "axios";
 import DashboardLayout from "../../components/private/Students/DashboardLayout";
+import { useAuth } from "../../context/AuthContext";
 import { 
   BellIcon, 
   MagnifyingGlassIcon, 
@@ -14,8 +15,8 @@ import {
 import { useNavigate } from "react-router-dom";
 
 export default function StudentClassSchedule() {
+  const { token: authToken } = useAuth();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
-  const authToken = localStorage.getItem("student_token");
   const navigate = useNavigate();
 
   // --- STATE ---
@@ -171,10 +172,15 @@ export default function StudentClassSchedule() {
     const link = sessionObj?.recording_link || sessionObj?.class_link;
     if (!link) return;
     
+    // Open the window DIRECTLY in the click handler to bypass popup blockers
+    // We store it globally so the MeetWrapper can "adopt" it for tracking.
+    window.activeClassPopup = window.open(link, '_blank');
+
     navigate('/student/meet', {
         state: {
             class_link: link,
-            class_schedule_id: sessionObj.id
+            class_schedule_id: sessionObj.id,
+            alreadyOpened: true
         }
     });
   };

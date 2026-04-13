@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import ProgressCard from "../../components/private/Students/ProgressCard";
+import { useAuth } from "../../context/AuthContext";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import axios from "axios";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 export default function StudentDashboard() {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
-  const authToken = localStorage.getItem("student_token");
+  const { token: authToken } = useAuth();
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     const fetchActiveCourses = async () => {
@@ -58,18 +59,6 @@ export default function StudentDashboard() {
             </button>
           </div> */}
 
-          {/* Profile Alert Banner */}
-          <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex items-center gap-3">
-            <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
-              <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
-            </div>
-            <p className="text-[13px] font-bold text-[#09314F] dark:text-gray-200">
-              Please complete your profile! Click the link to{" "}
-              <a href="/student/settings" className="text-blue-500 hover:underline">
-                update profile
-              </a>
-            </p>
-          </div>
 
           {/* Assessment Notification */}
           <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-xl p-2 border border-[#C5A97A]/40 shadow-[0_8px_30px_rgb(0,0,0,0.03)]">

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useAuth } from "../../context/AuthContext";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import axios from "axios";
 import { BellIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
@@ -9,8 +10,8 @@ const HOUR_END = 23;  // 11 PM
 const HOURS = Array.from({ length: HOUR_END - HOUR_START + 1 }, (_, i) => HOUR_START + i);
 
 export default function StudentCalendar() {
+  const { token } = useAuth();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
-  const token = localStorage.getItem("student_token");
 
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);

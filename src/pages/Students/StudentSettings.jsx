@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { OTPModal, PasswordChangeModal, SuccessModal, ContactInputModal } from "../../components/private/Students/SettingsModals.jsx";
 
 export default function StudentSettings() {
-  const { student, token, updateStudent } = useAuth();
+  const { student, token, updateStudent, refreshStudent } = useAuth();
   const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
@@ -80,7 +80,7 @@ export default function StudentSettings() {
       });
       if (response.status === 200) {
         setSuccessMsg(response.data.message || "Profile updated successfully.");
-        updateStudent(response.data.student);
+        await refreshStudent();
         setProfilePicture(null);
       }
     } catch (error) {
@@ -118,6 +118,7 @@ export default function StudentSettings() {
   };
 
   const requestOTP = async (context, target) => {
+      if (modalLoading) return;
       setModalLoading(true);
       try {
         const isPassword = context === "password";
@@ -134,12 +135,16 @@ export default function StudentSettings() {
 
         await axios.post(endpoint, payload, {
             headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
-        }).catch(err => console.error("OTP Request warning (API might not exist yet)", err));
+        });
 
         // Advance directly to OTP modal
         setModalType("otp");
       } catch (err) {
-        alert("Failed to request verification code. Please try again later.");
+        if (err.response?.status === 429) {
+          alert("Too many requests. Please wait a moment before trying again.");
+        } else {
+          alert("Failed to request verification code. Please try again later.");
+        }
         closeModals();
       } finally {
         setModalLoading(false);
@@ -147,6 +152,7 @@ export default function StudentSettings() {
   };
 
   const handleVerifyOTP = async (code) => {
+      if (modalLoading) return;
       setModalLoading(true);
       setOtpToken(code);
       
@@ -168,8 +174,9 @@ export default function StudentSettings() {
             setModalTitle(`${flowContext === 'email' ? 'Email' : 'Phone'} Verification`);
             setModalMessage(`${flowContext === 'email' ? 'Email' : 'Phone Number'} successfully verified`);
             setModalType("success");
-            // Optionally update the context here:
-            updateStudent({ [flowContext]: flowTarget });
+            
+            // Sync the whole student object immediately
+            await refreshStudent();
          }
       } catch (err) {
          alert("Invalid verification code. Please try again.");
@@ -179,6 +186,7 @@ export default function StudentSettings() {
   };
 
   const handleSavePassword = async ({ password, confirmPassword }) => {
+      if (modalLoading) return;
       setModalLoading(true);
       try {
          const payload = {
@@ -198,6 +206,9 @@ export default function StudentSettings() {
          setModalTitle("Password Update");
          setModalMessage("Password successfully changed");
          setModalType("success");
+
+         // Final sync
+         await refreshStudent();
       } catch (error) {
          const msg = error.response?.data?.message || "Failed to change password. Ensure OTP is correct.";
          alert(msg);

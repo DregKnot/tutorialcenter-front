@@ -10,7 +10,7 @@ import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext.jsx";
 
 export default function StudentPaymentDisplay() {
-  const { student } = useAuth();
+  const { student, token } = useAuth();
   const [payments, setPayments] = useState([]); // Payment history
   const [activeCourses, setActiveCourses] = useState([]); // For "On-going Training"
   const [loading, setLoading] = useState(true);
@@ -56,7 +56,6 @@ export default function StudentPaymentDisplay() {
   };
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
-  const token = localStorage.getItem("student_token");
 
 
 
