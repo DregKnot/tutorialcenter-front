@@ -1,19 +1,32 @@
 import { useEffect, useState } from "react";
 import logo from "../../assets/images/tutorial_logo.png";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
 const navigation = [
   { path: "/", name: "Home" },
-  { path: "/training", name: "Training / Tuition" },
+  { path: "/", name: "Training / Tuition", scrollTo: "programs" },
   { path: "/career", name: "Career"},
   { path: "/blog", name: "Blog" },
   { path: "/contact", name: "Contact Us" },
   { path: "/about", name: "About Us" },
 ];
 export default function Navbar() {
-  
   const [visible, setVisible] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleScrollLink = (scrollTo) => {
+    if (location.pathname === "/") {
+      document.getElementById(scrollTo)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate("/");
+      // Wait for Home to mount then scroll
+      setTimeout(() => {
+        document.getElementById(scrollTo)?.scrollIntoView({ behavior: "smooth" });
+      }, 400);
+    }
+  };
 
   return (
     <>
@@ -26,15 +39,25 @@ export default function Navbar() {
             <img src={logo} alt="" className="max-w-[120px]" />
             {/* navigation Links */}
             <div className="hidden lg:block">
-              {navigation.map((item, index) => (
-                <NavLink
-                  to={item.path}
-                  key={index}
-                  className="text-xs  font-semibold text-mainGrey mx-3 [&.active]:text-mainBlack"
-                >
-                  {item.name}
-                </NavLink>
-              ))}
+              {navigation.map((item, index) =>
+                item.scrollTo ? (
+                  <button
+                    key={index}
+                    onClick={() => handleScrollLink(item.scrollTo)}
+                    className="text-xs font-semibold text-mainGrey mx-3 hover:text-mainBlack transition-colors"
+                  >
+                    {item.name}
+                  </button>
+                ) : (
+                  <NavLink
+                    to={item.path}
+                    key={index}
+                    className="text-xs font-semibold text-mainGrey mx-3 [&.active]:text-mainBlack"
+                  >
+                    {item.name}
+                  </NavLink>
+                )
+              )}
             </div>
             {/* Apply button */}
             <div className="hidden lg:block">
@@ -85,7 +108,7 @@ const MobileNavigation = ({ setVisible, visible }) => {
     },
     {
       name: "Training",
-      path: "/training",
+      scrollTo: "programs",
       icon: "heroicons:academic-cap",
     },
     {
@@ -153,21 +176,45 @@ const MobileNavigation = ({ setVisible, visible }) => {
         </button>
 
         <div className="flex flex-col gap-1 mt-12 overflow-y-auto">
-          {navLinks.map((items, i) => (
-            <Link 
-              key={i} 
-              to={items.path} 
-              onClick={() => setVisible(false)} 
-              className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800/50 group transition-all duration-200"
-            >
-              <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center group-hover:bg-[#09314F] group-hover:text-white transition-all duration-300">
-                <Icon icon={items.icon} width="20" height="20" />
-              </div>
-              <span className="text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-[#09314F] dark:group-hover:text-white transition-colors">
-                {items.name}
-              </span>
-            </Link>
-          ))}
+          {navLinks.map((items, i) =>
+            items.scrollTo ? (
+              <button
+                key={i}
+                onClick={() => {
+                  setVisible(false);
+                  setTimeout(() => {
+                    if (window.location.pathname === "/") {
+                      document.getElementById(items.scrollTo)?.scrollIntoView({ behavior: "smooth" });
+                    } else {
+                      window.location.href = "/";
+                    }
+                  }, 300);
+                }}
+                className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800/50 group transition-all duration-200 w-full text-left"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center group-hover:bg-[#09314F] group-hover:text-white transition-all duration-300">
+                  <Icon icon={items.icon} width="20" height="20" />
+                </div>
+                <span className="text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-[#09314F] dark:group-hover:text-white transition-colors">
+                  {items.name}
+                </span>
+              </button>
+            ) : (
+              <Link
+                key={i}
+                to={items.path}
+                onClick={() => setVisible(false)}
+                className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800/50 group transition-all duration-200"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center group-hover:bg-[#09314F] group-hover:text-white transition-all duration-300">
+                  <Icon icon={items.icon} width="20" height="20" />
+                </div>
+                <span className="text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-[#09314F] dark:group-hover:text-white transition-colors">
+                  {items.name}
+                </span>
+              </Link>
+            )
+          )}
         </div>
 
         <div className="mt-auto pt-8 border-t border-gray-100 dark:border-gray-800">

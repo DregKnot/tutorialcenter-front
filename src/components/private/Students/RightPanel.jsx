@@ -76,12 +76,13 @@ export default function RightPanel({ collapsed, setCollapsed }) {
     calendarData.year === today.getFullYear();
 
   return (
+    <>
     <aside
       className={`
         fixed top-2 right-2 h-screen z-[40]
         rounded-xl
         w-80 transition-all duration-300 ease-in-out
-        ${collapsed ? "translate-x-[298px]" : "translate-x-0"}
+        ${collapsed ? "translate-x-[328px]" : "translate-x-0"}
         bg-white dark:bg-gray-900 shadow-2xl
         flex flex-col border-l border-gray-200 dark:border-gray-800
       `}
@@ -244,6 +245,18 @@ export default function RightPanel({ collapsed, setCollapsed }) {
         </div>
 
       </div>
+
     </aside>
+
+    {/* ================= Sentinel Trigger (Visible only when collapsed) ================= */}
+    {collapsed && (
+      <button
+        onClick={() => setCollapsed(false)}
+        className="fixed right-0 top-[60%] -translate-y-1/2 bg-[#09314F] text-white w-5 h-9 rounded-l-xl flex items-center justify-center hover:bg-[#09314F]/80 z-[50] shadow-[-4px_0_15px_rgba(0,0,0,0.1)] transition-all animate-in fade-in slide-in-from-right-4 duration-500"
+      >
+        <ChevronLeftIcon className="w-4 h-4 text-white stroke-[3]" />
+      </button>
+    )}
+    </>
   );
 }

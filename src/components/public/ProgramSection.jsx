@@ -122,7 +122,7 @@ const ProgramSection = () => {
     };
 
     return (
-        <>
+        <div id="programs">
             <SectionHeading title={"Our program"} position_right={false} fullWidth={true} />
             <div className="relative w-full">
                 <div className="programs Container !overflow-visible">
@@ -216,7 +216,7 @@ const ProgramSection = () => {
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }
  

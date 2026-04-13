@@ -74,7 +74,7 @@ export default function DashboardLayout({
           className={`
             transition-all duration-300 p-6 pt-2
             ${leftCollapsed ? "ml-20" : "ml-64"}
-            ${rightCollapsed ? "mr-8" : "mr-80"}
+            ${rightCollapsed ? "mr-0" : "mr-80"}
           `}
         >
           {/* Header Row */}
