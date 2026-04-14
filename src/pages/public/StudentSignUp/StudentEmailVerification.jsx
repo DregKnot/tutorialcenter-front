@@ -213,7 +213,16 @@ export default function StudentEmailVerification() {
           >
             <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
           </button>
-          <img src={TC_logo} alt="Logo" className="h-[60px] md:h-[70px]" />
+          <img 
+            src={TC_logo} 
+            alt="Logo" 
+            className="h-[60px] md:h-[70px] cursor-pointer transition-transform hover:scale-105 active:scale-95" 
+            onClick={() => {
+              if (window.confirm("Are you sure you want to return to the home page? Any unsaved progress will be lost.")) {
+                navigate("/");
+              }
+            }}
+          />
         </div>
 
         <div className="w-full max-w-[480px] mx-auto my-auto text-center">

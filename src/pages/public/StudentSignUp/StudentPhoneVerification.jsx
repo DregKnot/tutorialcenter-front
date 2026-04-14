@@ -221,7 +221,12 @@ export default function StudentPhoneVerification() {
           <img 
             src={TC_logo} 
             alt="Tutorial Center Logo" 
-            className="h-[60px] md:h-[70px] drop-shadow-sm" 
+            className="h-[60px] md:h-[70px] drop-shadow-sm cursor-pointer transition-transform hover:scale-105 active:scale-95 pointer-events-auto z-50 relative" 
+            onClick={() => {
+              if (window.confirm("Are you sure you want to return to the home page? Any unsaved progress will be lost.")) {
+                navigate("/");
+              }
+            }}
           />
         </div>
 

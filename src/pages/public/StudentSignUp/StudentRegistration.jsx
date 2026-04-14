@@ -267,7 +267,16 @@ export default function StudentRegistration() {
 
         {/* Logo and Headings */}
         <div className="flex flex-col items-center mb-8">
-          <img src={TC_logo} alt="Logo" className="h-20 w-auto mb-6 object-contain" />
+          <img 
+            src={TC_logo} 
+            alt="Logo" 
+            className="h-20 w-auto mb-6 object-contain cursor-pointer transition-transform hover:scale-105 active:scale-95" 
+            onClick={() => {
+              if (window.confirm("Are you sure you want to return to the home page? Any unsaved progress will be lost.")) {
+                navigate("/");
+              }
+            }}
+          />
           <h1 className="text-3xl font-extrabold text-[#09314F] mb-2">Sign Up</h1>
           <p className="text-[#888888] font-medium mb-1 italic text-sm text-center">Fill in your student registration & biodata.</p>
         </div>

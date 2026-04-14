@@ -114,9 +114,9 @@ export const StudentTrainingDuration = () => {
   };
 
   return (
-    <div className="w-full min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
+    <div className="w-full min-h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
       {/* LEFT */}
-      <div className="w-full md:w-1/2 bg-[#F8F9FA] flex flex-col items-center py-8 px-6 lg:px-8 xl:px-[100px] overflow-y-auto pb-32 order-2 md:order-1">
+      <div className="w-full md:w-1/2 bg-[#F8F9FA] flex flex-col items-center py-8 px-6 lg:px-8 xl:px-[100px] pb-32 order-2 md:order-1">
         
         {/* NAV & HEADER */}
         <div className="w-full max-w-[500px] mb-10 text-center">
@@ -212,7 +212,7 @@ export const StudentTrainingDuration = () => {
 
       {/* RIGHT SIDE: Visual Image */}
       <div
-        className="w-full h-[250px] md:w-1/2 md:h-full bg-cover bg-center relative bg-gray-300 order-1 md:order-2"
+        className="w-full h-[250px] md:w-1/2 md:h-auto md:min-h-screen md:sticky md:top-0 bg-cover bg-center bg-gray-300 order-1 md:order-2"
         style={{ backgroundImage: `url(${signup_img})` }}
       />
     </div>

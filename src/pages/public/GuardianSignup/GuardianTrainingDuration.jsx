@@ -163,9 +163,9 @@ export default function GuardianTrainingDuration() {
   };
 
   return (
-    <div className="w-full min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
+    <div className="w-full min-h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
       {/* LEFT */}
-      <div className="w-full md:w-1/2 bg-[#F4F4F4] px-6 py-10 lg:px-[100px] lg:py-[60px] order-2 md:order-1 overflow-y-auto">
+      <div className="w-full md:w-1/2 bg-[#F4F4F4] px-6 py-10 lg:px-[100px] lg:py-[60px] order-2 md:order-1">
         {/* Toast */}
         {toast && (
           <div
@@ -330,7 +330,7 @@ export default function GuardianTrainingDuration() {
 
       {/* RIGHT */}
       <div
-        className="w-full h-[192px] md:w-1/2 md:h-full bg-cover bg-center relative order-1 md:order-2"
+        className="w-full h-[192px] md:w-1/2 md:h-auto md:min-h-screen md:sticky md:top-0 bg-cover bg-center order-1 md:order-2"
         style={{ backgroundImage: `url(${signup_img})` }}
       >
         <div className="hidden md:block absolute bottom-[60px] left-0">
