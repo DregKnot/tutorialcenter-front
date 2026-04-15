@@ -48,7 +48,7 @@ const courseAdvisorMenuItems = [
   { label: "Dashboard", icon: HomeIcon, destination: "/staffs/course-advisor/dashboard" },
   { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/course-advisor/students" },
   { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/course-advisor/guardians" },
-  { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
+  { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/course-advisor/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/calendar" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/course-advisor/exams" },
   { label: "Settings", icon: Cog6ToothIcon, destination: "/staffs/course-advisor/settings" },
