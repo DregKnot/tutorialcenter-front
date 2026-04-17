@@ -25,7 +25,7 @@ import collapselogo from "../../../assets/images/TC 1.png";
 const adminMenuItems = [
   { label: "Dashboard", icon: HomeIcon },
   { label: "Manage Staffs", icon: UsersIcon, destination: "/staffs/manage-staffs" },
-  { label: "Manage Students", icon: UserGroupIcon },
+  { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
   { label: "Manage Guardian", icon: ShieldCheckIcon },
   { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon },
