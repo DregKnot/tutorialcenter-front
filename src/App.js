@@ -57,6 +57,7 @@ import RecordedClasses from "./pages/Students/RecordedClasses.jsx";
 import StudentGames from "./pages/Students/StudentGames.jsx";
 import StaffEmailVerification from "./pages/public/StaffSignUp/StaffEmailVerification.jsx";
 import AdminStudentManagement from "./pages/staffs/admin/AdminStudentManagement.jsx";
+import Training from "./pages/public/Training.jsx";
 
 function App() {
   return (
@@ -70,6 +71,7 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/career" element={<Career/>} />
         <Route path="/career" element={<Career />} />
+        <Route path="/training" element={<Training />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/register" element={<SignUp />} />
         <Route path="/comingsoon" element={<ComingSoon />} />
