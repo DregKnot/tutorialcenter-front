@@ -25,6 +25,7 @@ export default function AdminStudentViewModal({ studentId, onClose }) {
       const res = await axios.get(`${API_BASE_URL}/api/admin/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log("[AdminStudentViewModal] Fetch results for ID", studentId, ":", res.data);
 
       const data = res.data?.student || res.data?.data || res.data;
       setStudent(data);
@@ -50,8 +51,8 @@ export default function AdminStudentViewModal({ studentId, onClose }) {
   );
 
   const isSuspended = student?.banned === 1 || student?.account_status === "suspended";
-  const displayName = student?.surname 
-    ? `${student.guardian?.firstname || ''} ${student.surname}`.trim() 
+  const displayName = (student?.firstname && student?.surname)
+    ? `${student.firstname} ${student.surname}`.trim() 
     : student?.username || "Unknown Student";
 
   return (
@@ -135,11 +136,7 @@ export default function AdminStudentViewModal({ studentId, onClose }) {
             <div className="space-y-6">
               <h3 className="text-xs font-black text-[#BB9E7F] uppercase tracking-[0.2em] mb-4 border-b border-gray-100 pb-2">Student Information</h3>
               
-              <div className="grid grid-cols-2 gap-4 text-center">
-                 <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Student ID</p>
-                    <p className="text-sm font-black text-[#0F2843]">{student?.student_id || student?.id || "N/A"}</p>
-                 </div>
+              <div className="grid grid-cols-1 gap-4 text-center">
                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
                     <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Registered On</p>
                     <p className="text-sm font-black text-[#0F2843]">
@@ -183,6 +180,17 @@ export default function AdminStudentViewModal({ studentId, onClose }) {
                      <div className="flex-1">
                        <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Gender</p>
                        <p className="text-sm font-bold capitalize">{student.gender}</p>
+                     </div>
+                  </div>
+                )}
+                {(student?.department || student?.biodata?.department) && (
+                  <div className="flex items-center gap-4 text-gray-600">
+                     <UserGroupOutline className="w-5 h-5 text-[#BB9E7F]" />
+                     <div className="flex-1">
+                       <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Department</p>
+                       <p className="text-sm font-bold capitalize">
+                         {student.department || student.biodata?.department}
+                       </p>
                      </div>
                   </div>
                 )}

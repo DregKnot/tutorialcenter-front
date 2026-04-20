@@ -42,6 +42,7 @@ export default function AdminStudentManagement() {
       };
 
       const res = await axios.get(`${API_BASE_URL}/api/admin/students/all`, config);
+      console.log("[AdminStudentManagement] Fetch results:", res.data);
       const fetchedStudents = res.data?.students || res.data?.data || [];
       const studentsArray = Array.isArray(fetchedStudents) ? fetchedStudents : [];
       
@@ -94,10 +95,9 @@ export default function AdminStudentManagement() {
 
   // Filter students
   const filteredStudents = students.filter(student => {
-    const fullName = `${student.guardian?.firstname || ''} ${student.surname || ''}`.toLowerCase();
-    const studentIdStr = String(student.student_id || student.id || '').toLowerCase();
+    const fullName = `${student.firstname || ''} ${student.surname || ''}`.toLowerCase();
     const query = searchQuery.toLowerCase();
-    return fullName.includes(query) || studentIdStr.includes(query) || (student.email && student.email.toLowerCase().includes(query));
+    return fullName.includes(query) || (student.email && student.email.toLowerCase().includes(query));
   });
 
   // Pagination
@@ -173,7 +173,6 @@ export default function AdminStudentManagement() {
               <thead>
                 <tr className="bg-[#B99E7F] text-white">
                   <th className="px-6 py-4 text-xs font-black uppercase tracking-widest whitespace-nowrap">Name</th>
-                  <th className="px-4 py-4 text-xs font-black uppercase tracking-widest text-center whitespace-nowrap">Student ID</th>
                   <th className="px-4 py-4 text-xs font-black uppercase tracking-widest text-center whitespace-nowrap">Status</th>
                   <th className="px-4 py-4 text-xs font-black uppercase tracking-widest whitespace-nowrap">Email</th>
                   <th className="px-4 py-4 text-xs font-black uppercase tracking-widest whitespace-nowrap">Phone number</th>
@@ -192,8 +191,8 @@ export default function AdminStudentManagement() {
                 ) : currentStudents.length > 0 ? (
                   currentStudents.map((student) => {
                     const statusColors = getStatusColor(student.account_status, student.banned);
-                    const displayName = student.surname 
-                      ? `${student.guardian?.firstname || ''} ${student.surname}`.trim() 
+                    const displayName = (student.firstname && student.surname)
+                      ? `${student.firstname} ${student.surname}`.trim() 
                       : student.username || "Unknown Student";
                     
                     return (
@@ -209,11 +208,6 @@ export default function AdminStudentManagement() {
                             )}
                             <span className="text-sm font-bold text-[#0F2843] truncate block">{displayName}</span>
                           </div>
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          <span className="text-sm font-black text-gray-500">
-                            {student.student_id || student.id}
-                          </span>
                         </td>
                         <td className="px-4 py-4 text-center">
                           <span className={`text-[10px] font-black px-2.5 py-1 uppercase tracking-widest rounded-lg ${statusColors.bg} ${statusColors.text}`}>

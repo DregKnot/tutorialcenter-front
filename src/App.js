@@ -58,6 +58,7 @@ import StudentGames from "./pages/Students/StudentGames.jsx";
 import StaffEmailVerification from "./pages/public/StaffSignUp/StaffEmailVerification.jsx";
 import AdminStudentManagement from "./pages/staffs/admin/AdminStudentManagement.jsx";
 import Training from "./pages/public/Training.jsx";
+// import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
 
 function App() {
   return (
