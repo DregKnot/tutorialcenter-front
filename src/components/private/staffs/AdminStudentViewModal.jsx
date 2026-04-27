@@ -10,7 +10,7 @@ import {
   CalendarIcon
 } from "@heroicons/react/24/outline";
 
-export default function AdminStudentViewModal({ studentId, onClose }) {
+export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
@@ -57,11 +57,13 @@ export default function AdminStudentViewModal({ studentId, onClose }) {
   const handleSuspend = async () => {
     if (!window.confirm("Are you sure you want to suspend this student?")) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/admin/students/destroy/${studentId}`, {
+      const targetId = info?.id || studentId;
+      await axios.delete(`${API_BASE_URL}/api/admin/students/destroy/${targetId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setToast({ type: "success", message: "Student suspended successfully" });
       fetchStudentDetails();
+      if (onUpdate) onUpdate();
     } catch (error) {
       setToast({ type: "error", message: "Failed to suspend student" });
     }
@@ -70,11 +72,13 @@ export default function AdminStudentViewModal({ studentId, onClose }) {
   const handleRestore = async () => {
     if (!window.confirm("Are you sure you want to restore this student?")) return;
     try {
-      await axios.post(`${API_BASE_URL}/api/admin/students/restore/${studentId}`, {}, {
+      const targetId = info?.id || studentId;
+      await axios.post(`${API_BASE_URL}/api/admin/students/restore/${targetId}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setToast({ type: "success", message: "Student restored successfully" });
       fetchStudentDetails();
+      if (onUpdate) onUpdate();
     } catch (error) {
       setToast({ type: "error", message: "Failed to restore student" });
     }
@@ -102,7 +106,7 @@ export default function AdminStudentViewModal({ studentId, onClose }) {
   // Parse nested information
   const info = Array.isArray(student?.information) ? student.information[0] : (student?.information || student || {});
   
-  const isSuspended = student?.banned === 1 || student?.account_status === "suspended";
+  const isSuspended = info?.deleted_at != null || student?.deleted_at != null;
   const displayName = (info?.firstname && info?.surname)
     ? `${info.firstname} ${info.surname}`.trim() 
     : info?.username || "Unknown Student";

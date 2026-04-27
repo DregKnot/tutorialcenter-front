@@ -69,7 +69,13 @@ export default function AdminStudentManagement() {
 
     const activeCount = allStudents.filter(s => s.account_status === "active").length;
     const inactiveCount = allStudents.filter(s => s.account_status === "inactive").length;
-    const suspendedCount = allStudents.filter(s => s.banned === 1 || s.account_status === "suspended").length;
+    const suspendedCount = allStudents.filter(s => 
+      s.banned === 1 || 
+      s.account_status === "suspended" || 
+      s.deleted_at != null || 
+      s.information?.deleted_at != null || 
+      (Array.isArray(s.information) && s.information[0]?.deleted_at != null)
+    ).length;
 
     setStats(prev => [
       { ...prev[0], value: allStudents.length, badge: `+${newStudentsThisMonth.length} New` },
@@ -104,8 +110,8 @@ export default function AdminStudentManagement() {
   const itemsPerPage = 10;
   const currentStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const getStatusColor = (status, banned) => {
-    if (banned === 1) return { bg: "bg-red-50", text: "text-red-600" };
+  const getStatusColor = (status, isSuspended) => {
+    if (isSuspended) return { bg: "bg-red-50", text: "text-red-600" };
     if (status === "active") return { bg: "bg-green-50", text: "text-green-600" };
     if (status === "inactive") return { bg: "bg-orange-50", text: "text-orange-600" };
     return { bg: "bg-gray-50", text: "text-gray-600" };
@@ -190,13 +196,19 @@ export default function AdminStudentManagement() {
                   </tr>
                 ) : currentStudents.length > 0 ? (
                   currentStudents.map((student) => {
-                    const statusColors = getStatusColor(student.account_status, student.banned);
+                    const isSuspended = student.banned === 1 || 
+                                        student.account_status === "suspended" || 
+                                        student.deleted_at != null || 
+                                        student.information?.deleted_at != null || 
+                                        (Array.isArray(student.information) && student.information[0]?.deleted_at != null);
+
+                    const statusColors = getStatusColor(student.account_status, isSuspended);
                     const displayName = (student.firstname && student.surname)
                       ? `${student.firstname} ${student.surname}`.trim() 
                       : student.username || "Unknown Student";
                     
                     return (
-                      <tr key={student.id} className="hover:bg-gray-50/50 transition-all group">
+                      <tr key={student.id} className={`hover:bg-gray-50/50 transition-all group ${isSuspended ? "opacity-50 grayscale-[0.6]" : ""}`}>
                         <td className="px-6 py-4 min-w-[200px]">
                           <div className="flex items-center gap-3">
                             {student.profile_picture ? (
@@ -211,7 +223,7 @@ export default function AdminStudentManagement() {
                         </td>
                         <td className="px-4 py-4 text-center">
                           <span className={`text-[10px] font-black px-2.5 py-1 uppercase tracking-widest rounded-lg ${statusColors.bg} ${statusColors.text}`}>
-                            {student.banned === 1 ? "Suspended" : (student.account_status || "Active")}
+                            {isSuspended ? "Suspended" : (student.account_status || "Active")}
                           </span>
                         </td>
                         <td className="px-4 py-4">
@@ -306,11 +318,11 @@ export default function AdminStudentManagement() {
         </div>
       </div>
       
-      {/* Student View Modal */}
       {isModalOpen && selectedStudentId && (
         <AdminStudentViewModal 
           studentId={selectedStudentId}
           onClose={handleCloseModal}
+          onUpdate={fetchData}
         />
       )}
     </StaffDashboardLayout>
