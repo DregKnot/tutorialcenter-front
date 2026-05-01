@@ -5,6 +5,7 @@ import Career from "./pages/public/Career.jsx";
 import Blog from "./pages/public/Blog.jsx";
 import Login from "./pages/public/StudentLogin.jsx";
 import SignUp from "./pages/public/SignUp.jsx";
+import StickyButtons from "./components/public/StickyButtons.jsx";
 import { Route, Routes } from "react-router-dom";
 import StudentRegistration from "./pages/public/StudentSignUp/StudentRegistration.jsx";
 import StudentPhoneVerification from "./pages/public/StudentSignUp/StudentPhoneVerification.jsx";
@@ -64,6 +65,9 @@ import Training from "./pages/public/Training.jsx";
 function App() {
   return (
     <>
+
+      <StickyButtons />
+      
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
@@ -71,7 +75,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/career" element={<Career/>} />
+        <Route path="/career" element={<Career />} />
         <Route path="/career" element={<Career />} />
         <Route path="/training" element={<Training />} />
         <Route path="/blog" element={<Blog />} />
@@ -106,9 +110,10 @@ function App() {
         <Route path="/register/student/training/payment/success" element={<StudentPaymentSuccessScreen />} />
 
         {/* Protected Routes */}
+        <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route element={<ProtectedRoute />}>
           {/* Student Routes */}
-          <Route path="/student/dashboard" element={<StudentDashboard />} />
+          
           <Route path="/student/notifications" element={<StudentNotifications />} />
           <Route path="/student/payments" element={<StudentPaymentDisplay />} />
           <Route path="/student/payment-history" element={<StudentPaymentHistory />} />
