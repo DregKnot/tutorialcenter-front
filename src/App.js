@@ -110,10 +110,9 @@ function App() {
         <Route path="/register/student/training/payment/success" element={<StudentPaymentSuccessScreen />} />
 
         {/* Protected Routes */}
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route element={<ProtectedRoute />}>
           {/* Student Routes */}
-          
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/student/notifications" element={<StudentNotifications />} />
           <Route path="/student/payments" element={<StudentPaymentDisplay />} />
           <Route path="/student/payment-history" element={<StudentPaymentHistory />} />
