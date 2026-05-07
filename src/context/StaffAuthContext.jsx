@@ -40,7 +40,7 @@ export function StaffAuthProvider({ children }) {
     try {
       const currentToken = localStorage.getItem("staff_token");
       if (currentToken) {
-        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
         await fetch(`${API_BASE_URL}/api/staffs/logout`, {
           method: "POST",
           headers: {

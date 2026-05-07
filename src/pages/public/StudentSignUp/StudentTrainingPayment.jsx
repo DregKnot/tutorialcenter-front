@@ -17,10 +17,10 @@ export const StudentTrainingPayment = () => {
   const [processing, setProcessing] = useState(false);
 
   // Base URL for API, using environment variable with fallback
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
     
   // Base URL for Affiliate API
-  const AFFILIATE_API_URL = process.env.REACT_APP_AFFILIATE_URL || "http://tutorialcenter-affiliate.test";
+  const AFFILIATE_API_URL = process.env.REACT_APP_AFFILIATE_URL || "http://tutorialcenter-affiliate.test" || "http://localhost:8000";
     
   /* ================= INIT ================= */
   useEffect(() => {

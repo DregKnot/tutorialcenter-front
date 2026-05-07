@@ -19,7 +19,7 @@ import CourseDetailModal from "../../../components/private/staffs/CourseDetailMo
 import SubjectCreate from "../../../components/private/staffs/SubjectCreate.jsx";
 import SubjectDetailModal from "../../../components/private/staffs/SubjectDetailModal.jsx";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
 export default function CoursesManagement() {
   const [activeTab, setActiveTab] = useState("courses"); // "courses" | "subjects"

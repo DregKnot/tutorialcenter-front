@@ -12,12 +12,12 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function SubjectCreate({ isOpen, onClose, onSuccess, courses }) {
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
   const [subjectName, setSubjectName] = useState("");
   const [description, setDescription] = useState("");
-  const [departments, setDepartments] = useState("");
+  const [departments, setDepartments] = useState([]);
   const [selectedCourses, setSelectedCourses] = useState([]);
   const [banner, setBanner] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
@@ -43,7 +43,9 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses }) {
     const formData = new FormData();
     formData.append("name", subjectName);
     formData.append("description", description);
-    formData.append("departments[]", departments);
+    departments.forEach(dept => {
+      formData.append("departments[]", dept);
+    });
     
     // The backend expects a real array structure in the multipart form data.
     // We use the 'courses[]' notation for each selected course.
@@ -86,7 +88,7 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses }) {
         // Reset state
         setSubjectName("");
         setDescription("");
-        setDepartments("");
+        setDepartments([]);
         setSelectedCourses([]);
         setBanner(null);
         setBannerPreview(null);
@@ -230,24 +232,40 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses }) {
                 </div>
               </div>
 
-              {/* Department Input */}
+              {/* Department Selection (Multiple) */}
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Academic Department</label>
-                <div className="relative group">
-                  <div className="absolute left-6 top-1/2 -translate-y-1/2 p-2 bg-gray-100 dark:bg-gray-800 rounded-xl group-focus-within:bg-[#0F2843] transition-colors">
-                    <BanknotesIcon className="w-5 h-5 text-[#BB9E7F]" />
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Academic Department (Select Multiple)</label>
+                <div className="relative group p-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus-within:border-[#BB9E7F]/30 rounded-2xl shadow-sm">
+                  <div className="flex flex-col gap-3">
+                    {["science", "art", "commercial"].map((dept) => (
+                      <label key={dept} className="flex items-center gap-3 cursor-pointer group/item">
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                          departments.includes(dept) 
+                            ? "bg-[#0F2843] border-[#0F2843]" 
+                            : "border-gray-300 dark:border-gray-600 group-hover/item:border-[#0F2843]"
+                        }`}>
+                          {departments.includes(dept) && <CheckIcon className="w-3.5 h-3.5 text-white" />}
+                        </div>
+                        <span className={`text-sm font-bold capitalize transition-all ${
+                          departments.includes(dept) ? "text-[#0F2843] dark:text-white" : "text-gray-500 dark:text-gray-400 group-hover/item:text-[#0F2843] dark:group-hover/item:text-white"
+                        }`}>
+                          {dept === "art" ? "Arts" : dept.charAt(0).toUpperCase() + dept.slice(1)}
+                        </span>
+                        <input 
+                          type="checkbox"
+                          value={dept}
+                          checked={departments.includes(dept)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setDepartments(prev => 
+                              prev.includes(val) ? prev.filter(d => d !== val) : [...prev, val]
+                            );
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    ))}
                   </div>
-                  <select 
-                    value={departments}
-                    onChange={(e) => setDepartments(e.target.value)}
-                    required
-                    className="w-full pl-20 pr-8 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 focus:bg-white dark:focus:bg-gray-700 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none transition-all shadow-sm appearance-none cursor-pointer"
-                  >
-                    <option value="">Select Department</option>
-                    <option value="science">Science</option>
-                    <option value="art">Arts</option>
-                    <option value="commercial">Commercial</option>
-                  </select>
                 </div>
               </div>
             </div>

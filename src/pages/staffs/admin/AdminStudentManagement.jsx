@@ -28,7 +28,7 @@ export default function AdminStudentManagement() {
     { label: "Suspended", value: 0, badge: null, icon: <NoSymbolIcon className="w-6 h-6 text-[#E83831]" /> },
   ]);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
   const fetchData = useCallback(async () => {

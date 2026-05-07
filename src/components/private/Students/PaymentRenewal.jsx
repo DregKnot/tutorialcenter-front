@@ -15,7 +15,7 @@ export default function PaymentRenewal({ onPaymentAdded }) {
   });
   const [errors, setErrors] = useState({});
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("student_token");
 
   const durations = ["Weekly", "Monthly", "Quarterly", "Semi-Annually", "Annually"];

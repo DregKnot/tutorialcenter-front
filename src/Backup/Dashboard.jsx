@@ -1,7 +1,7 @@
 import ProgressCard from "../../components/private/ProgressCard";
 import DashboardLayout from "../../components/private/DashboardLayout";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
 export default function StudentDashboard() {
   

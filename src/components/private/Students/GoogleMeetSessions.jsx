@@ -14,7 +14,7 @@ export default function GoogleMeetSessions({ class_link, studentId, class_schedu
             class_schedule_id: class_schedule_id?.toString(),
             sessions: sessions.current
         };
-        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
         const syncUrl = `${API_BASE_URL}/api/sessions/sync`;
         const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
         navigator.sendBeacon(syncUrl, blob);

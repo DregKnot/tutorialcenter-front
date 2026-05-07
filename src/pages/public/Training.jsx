@@ -10,7 +10,7 @@ import jambLogo from "../../assets/images/jamb_logo.png";
 import waecLogo from "../../assets/images/waec_logo.png";
 import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.svg";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
 /* ═══════════════════════════════════════════════════
    ADMISSION GUIDE DATA

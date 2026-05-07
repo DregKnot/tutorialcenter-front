@@ -16,7 +16,7 @@ export default function GuardianTrainingPayment() {
   const [processing, setProcessing] = useState(false);
 
   const API_BASE_URL =
-    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   /* ================= INIT ================= */
   useEffect(() => {

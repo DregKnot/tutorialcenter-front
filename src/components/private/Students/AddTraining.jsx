@@ -8,7 +8,7 @@ import ReviewSelectionModal from "./ReviewSelectionModal";
 import TrainingDurationModal from "./TrainingDurationModal";
 import PaymentMethodModal from "./PaymentMethodModal";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
 export default function AddTraining({ onBack, onSuccess }) {
   const [courses, setCourses] = useState([]);

@@ -68,7 +68,7 @@ export default function StudentBiodata() {
     profile_picture_preview: null,
   });
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const email = localStorage.getItem("studentEmail");
   const tel = localStorage.getItem("studentTel");
 

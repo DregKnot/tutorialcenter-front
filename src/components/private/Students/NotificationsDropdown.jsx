@@ -28,7 +28,7 @@ export default function NotificationsDropdown({ isOpen, onClose, onUpdate, token
     const fetchNotifications = async () => {
       try {
         setLoading(true);
-        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
         const response = await axios.get(`${API_BASE_URL}/api/notifications`, {
           headers: { Authorization: `Bearer ${token}` }
         });

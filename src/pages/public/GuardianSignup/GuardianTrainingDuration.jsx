@@ -9,7 +9,7 @@ export default function GuardianTrainingDuration() {
   const navigate = useNavigate();
 
   const API_BASE_URL =
-    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const [students, setStudents] = useState([]);
   const [error, setError] = useState(false);

@@ -10,7 +10,7 @@ export default function SettingsSidebar({ collapsed, setCollapsed }) {
   const [loadingCourses, setLoadingCourses] = useState(true);
   
   const API_BASE_URL =
-    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   // Fetch student courses dynamically
   useEffect(() => {

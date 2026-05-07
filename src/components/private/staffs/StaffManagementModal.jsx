@@ -77,7 +77,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
   const [toast, setToast] = useState(null);
   const [staffClasses, setStaffClasses] = useState([]);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
   const [imagePreview, setImagePreview] = useState(null);

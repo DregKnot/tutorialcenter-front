@@ -13,7 +13,7 @@ export default function GuardianSubjectSelection() {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);

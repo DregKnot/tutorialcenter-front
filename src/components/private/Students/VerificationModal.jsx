@@ -32,7 +32,7 @@ export default function VerificationModal() {
     num4: useRef(null), num5: useRef(null), num6: useRef(null)
   };
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   // Focus first input on open
   useEffect(() => {

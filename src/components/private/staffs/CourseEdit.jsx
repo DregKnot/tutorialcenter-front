@@ -25,7 +25,7 @@ export default function CourseEdit({ mode = "courses" }) {
   const [showConfirmSave, setShowConfirmSave] = useState(false);
   const [toast, setToast] = useState(null);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
   const config = { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } };
 

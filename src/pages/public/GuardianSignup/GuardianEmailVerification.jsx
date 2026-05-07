@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import signup_img from "../../../assets/images/otpparent.jpg";
 
 export default function GuardianEmailVerification() {
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test"; // Base URL for API
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000"; // Base URL for API
   const navigate = useNavigate(); // Initializing navigation
   const [msg, setMsg] = useState(""); // State for displaying messages
   const [count, setCount] = useState(60); // Timer state for resend OTP

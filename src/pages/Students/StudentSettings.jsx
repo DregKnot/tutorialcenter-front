@@ -10,7 +10,7 @@ import { OTPModal, PasswordChangeModal, SuccessModal, ContactInputModal } from "
 export default function StudentSettings() {
   const { student, token, updateStudent } = useAuth();
   const navigate = useNavigate();
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   // View states: "menu" | "edit_profile"
   const [activeView, setActiveView] = useState("menu");

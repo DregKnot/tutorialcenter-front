@@ -11,7 +11,7 @@ const HOURS = Array.from({ length: HOUR_END - HOUR_START + 1 }, (_, i) => HOUR_S
 
 export default function StudentCalendar() {
   const { token } = useAuth();
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);

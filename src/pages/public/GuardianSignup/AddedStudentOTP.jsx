@@ -15,7 +15,7 @@ export default function AddedStudentOTP() {
   const [msg, setMsg] = useState("");
   const [registering, setRegistering] = useState(false);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const hasRegisteredRef = useRef(false);
   const inputRefs = useRef([]);
