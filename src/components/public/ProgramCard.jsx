@@ -48,13 +48,13 @@ const ProgramCard = ({ subject, title, month, quarter, year, topic1, topic2, top
                                 </p>
                                 <ul className="[&_li]:text-nowrap [&_span]:text-ascent [&_span]:font-semibold [&_span]:pl-3 flex flex-col">
                                     <li>
-                                        Monthly: <span>₦{month}</span>
+                                        Monthly: <span>₦{Number(month).toLocaleString()}</span>
                                     </li>
                                     <li>
-                                        Quarterly: <span>₦{quarter}</span>
+                                        Quarterly: <span>₦{Number(quarter).toLocaleString()}</span>
                                     </li>
                                     <li>
-                                        Annualy: <span>₦{year}</span>
+                                        Annualy: <span>₦{Number(year).toLocaleString()}</span>
                                     </li>
                                 </ul>
                             </div>
