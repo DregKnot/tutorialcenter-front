@@ -615,16 +615,20 @@ export default function StudentRegistration() {
           </form>
 
           {/* Social Divider */}
+          {/* 
           <div className="relative flex items-center justify-center w-full my-8">
             <div className="border-t border-gray-200 w-full"></div>
             <span className="bg-white px-4 text-xs font-bold text-[#888888] absolute uppercase tracking-widest">Or</span>
           </div>
+          */}
 
           {/* Google Button */}
+          {/*
           <button className="w-full py-4 border-2 border-[#EEEEEE] rounded-[22px] flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm active:scale-95">
              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5" />
              <span className="font-bold text-[#555555]">Sign up with Google</span>
           </button>
+          */}
 
           {/* Mobile Login Link */}
           <div className="mt-8 text-center md:hidden">
