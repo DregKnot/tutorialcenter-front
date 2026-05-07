@@ -17,7 +17,8 @@ import {
   CameraIcon,
   UserCircleIcon,
   MapIcon,
-  PhoneIcon
+  PhoneIcon,
+  TicketIcon
 } from "@heroicons/react/24/outline";
 
 const isIOS = () =>
@@ -57,6 +58,7 @@ export default function StudentRegistration() {
     location: "",
     address: "",
     department: "",
+    referral_code: "",
     profile_picture: null,
     profile_picture_preview: null,
     rememberMe: false,
@@ -192,7 +194,12 @@ export default function StudentRegistration() {
 
       if (registerRes.status === 200 || registerRes.status === 201) {
         if (registerRes.data?.student) {
-          localStorage.setItem('studentdata', JSON.stringify({ data: registerRes.data.student }));
+          const studentStorage = { data: registerRes.data.student };
+          // Save referral code to localStorage (not sent to backend registration)
+          if (formData.referral_code.trim()) {
+            studentStorage.referral_code = formData.referral_code.trim();
+          }
+          localStorage.setItem('studentdata', JSON.stringify(studentStorage));
         }
         setToast({ type: "success", message: "Registration Successful!" });
         setShowModal(true);
@@ -595,6 +602,24 @@ export default function StudentRegistration() {
               </div>
             </div>
 
+            {/* Referral Code */}
+            <div className="space-y-2">
+              <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Referral Code <span className="text-gray-300 font-normal lowercase">(optional)</span></label>
+              <div className={getInputStyles("referral_code").container}>
+                <TicketIcon className={getInputStyles("referral_code").icon} />
+                <input
+                  name="referral_code"
+                  type="text"
+                  value={formData.referral_code}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedField("referral_code")}
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="enter referral code"
+                  className={getInputStyles("referral_code").input}
+                />
+              </div>
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
@@ -615,16 +640,20 @@ export default function StudentRegistration() {
           </form>
 
           {/* Social Divider */}
+          {/* 
           <div className="relative flex items-center justify-center w-full my-8">
             <div className="border-t border-gray-200 w-full"></div>
             <span className="bg-white px-4 text-xs font-bold text-[#888888] absolute uppercase tracking-widest">Or</span>
           </div>
+          */}
 
           {/* Google Button */}
+          {/*
           <button className="w-full py-4 border-2 border-[#EEEEEE] rounded-[22px] flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm active:scale-95">
              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5" />
              <span className="font-bold text-[#555555]">Sign up with Google</span>
           </button>
+          */}
 
           {/* Mobile Login Link */}
           <div className="mt-8 text-center md:hidden">

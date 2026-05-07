@@ -3,13 +3,32 @@ import BookIcon from "../../assets/images/emojione_books.png";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
-const ProgramCard = ({subject, title, month, quarter, year, topic1, topic2, topic3, topic4, path, logo}) => {
+const ProgramCard = ({ subject, title, month, quarter, year, topic1, topic2, topic3, topic4, path, logo }) => {
     return (
         <>
             <div className="md:mr-14 mr-5">
-                <div className="max-h-full overflow-hidden shadow-custom-1 rounded-2xl my-2">
-                    <div className="w-full h-[180px] py-2 flex justify-center relative bg-[#A9C1D3]">
-                        <img src={logo} alt="JAMB" className="h-full" />
+                <div className="
+                    max-h-full overflow-hidden my-2 bg-white
+                    rounded-[24px]
+                    border border-gray-100
+                    shadow-[0_8px_30px_rgba(0,0,0,0.06)]
+                    hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)]
+                    transition-all duration-500
+                ">
+                    <div className="
+                        w-full h-[180px]
+                        flex justify-center items-center
+                        relative overflow-hidden
+                        bg-[#FFF0F0]
+                    ">
+                        <img
+                            src={logo || "/fallback-banner.png"}
+                            alt={title}
+                            className="
+                                w-full h-full object-cover
+                                transition-transform duration-500
+                                hover:scale-105
+                            "/>
                         <div className="absolute -bottom-6 right-4 bg-sencondary w-10 h-10 rounded-full flex items-center justify-center">
                             <img className="max-w-4" src={PenIcon} alt="" />
                         </div>
@@ -29,13 +48,13 @@ const ProgramCard = ({subject, title, month, quarter, year, topic1, topic2, topi
                                 </p>
                                 <ul className="[&_li]:text-nowrap [&_span]:text-ascent [&_span]:font-semibold [&_span]:pl-3 flex flex-col">
                                     <li>
-                                        Monthly: <span>₦{month}</span>
+                                        Monthly: <span>₦{Number(month).toLocaleString()}</span>
                                     </li>
                                     <li>
-                                        Quarterly: <span>₦{quarter}</span>
+                                        Quarterly: <span>₦{Number(quarter).toLocaleString()}</span>
                                     </li>
                                     <li>
-                                        Annualy: <span>₦{year}</span>
+                                        Annualy: <span>₦{Number(year).toLocaleString()}</span>
                                     </li>
                                 </ul>
                             </div>
@@ -77,5 +96,5 @@ const ProgramCard = ({subject, title, month, quarter, year, topic1, topic2, topi
         </>
     );
 }
- 
+
 export default ProgramCard;
