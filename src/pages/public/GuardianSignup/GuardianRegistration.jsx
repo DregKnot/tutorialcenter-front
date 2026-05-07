@@ -280,16 +280,20 @@ export const GuardianRegistration = () => {
           </form>
 
           {/* Social Sign Up Divider */}
+          {/*
           <div className="relative flex items-center justify-center my-8">
             <div className="border-t border-gray-300 w-full"></div>
             <span className="bg-white px-4 text-xs font-bold text-[#999999] absolute">Or continue with</span>
           </div>
+          */}
 
           {/* Google Button */}
+          {/*
           <button className="w-full py-4 border-2 border-[#EEEEEE] rounded-[20px] flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm">
              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="h-5 w-5" />
              <span className="font-bold text-[#555555]">Sign up with google</span>
           </button>
+          */}
         </div>
       </div>
 

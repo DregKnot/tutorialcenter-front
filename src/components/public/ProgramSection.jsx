@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import axios from "axios";
 import ProgramCard from "./ProgramCard.jsx";
 import SectionHeading from "./SectionHeading.jsx";
 import jamb from "../../assets/images/jamb_logo.png";
@@ -9,6 +10,10 @@ const ProgramSection = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(2);
     const [isTransitioning, setIsTransitioning] = useState(false);
+
+    const [programDatas, setProgramDatas] = useState([]);
+    const [loading, setLoading] = useState(true);
+    console.log("PROGRAM DATA:", programDatas);
 
     // Adjusts number of visible cards based on screen width
     useEffect(() => {
@@ -21,68 +26,35 @@ const ProgramSection = () => {
         };
 
         handleResize();
-        
+
         // Listen for window resize events
         window.addEventListener("resize", handleResize);
 
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    const programDatas = useMemo(() => (
-        [
-            {
-                title: "JAMB",
-                logo: jamb,
-                subject: "4 Subjects",
-                month: "5,000",
-                quarter: "14,000",
-                year: "55,000",
-                topic1: "Comprehensive tutorials",
-                topic2: "Weekly masterclasses",
-                topic3: "Mock tests and practice questions",
-                topic4: "Live Q&A sessions with experts",
-                path: "/about",
-            },
-            {
-                title: "NECO",
-                subject: "4 Subjects",
-                month: "5,000",
-                quarter: "14,000",
-                year: "55,000",
-                topic1: "Comprehensive tutorials",
-                topic2: "Weekly masterclasses",
-                topic3: "Mock tests and practice questions",
-                topic4: "Live Q&A sessions with experts",
-                path: "/about",
-            },
-            {
-                title: "WAEC",
-                logo: waec,
-                subject: "8-9 Subjects",
-                month: "8,000",
-                quarter: "23,000",
-                year: "88,000",
-                topic1: "Complete syllabus coverage",
-                topic2: "Weekly quizzes and assignments",
-                topic3: "Interactive live sessions with subject tutors",
-                topic4: "Past question reviews and analysis",
-                path: "/about",
-            },
-            {
-                title: "WAEC",
-                logo: waec,
-                subject: "8-9 Subjects",
-                month: "8,000",
-                quarter: "23,000",
-                year: "88,000",
-                topic1: "Complete syllabus coverage",
-                topic2: "Weekly quizzes and assignments",
-                topic3: "Interactive live sessions with subject tutors",
-                topic4: "Past question reviews and analysis",
-                path: "/about",
-            },
-        ]
-    ), []);
+    const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+
+    useEffect(() => {
+        const fetchPrograms = async () => {
+            try {
+                const res = await axios.get(`${API_BASE_URL}/api/courses`);
+
+                console.log("API RESPONSE:", res.data);
+
+                const fetched = res?.data?.courses || [];
+                setProgramDatas(fetched);
+            } catch (err) {
+                console.error("Failed to fetch programs:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPrograms();
+    }, []);
+
+
 
     //next slide function
     const nextSlide = useCallback(() => {
@@ -136,7 +108,7 @@ const ProgramSection = () => {
                                 with confidence and ease
                             </p>
                         </div>
-                    
+
                         <div className="relative">
 
                             {/* Slider Container */}
@@ -146,27 +118,40 @@ const ProgramSection = () => {
                                     className="flex transition-transform duration-500 ease-in-out"
                                     style={{ transform: getTransformValue() }}
                                 >
-                                    {programDatas.map((item, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex-shrink-0"
-                                            style={{ width: `${100 / slidesToShow}%` }}
-                                        >
-                                            <ProgramCard
-                                                subject={item.subject}
-                                                title={item.title}
-                                                logo={item.logo}
-                                                month={item.month}
-                                                quarter={item.quarter}
-                                                year={item.year}
-                                                topic1={item.topic1}
-                                                topic2={item.topic2}
-                                                topic3={item.topic3}
-                                                topic4={item.topic4}
-                                                path={item.path}
-                                            />
-                                        </div>
-                                    ))}
+                                    {programDatas.map((item, index) => {
+
+                                        const basePrice = item.price || 0;
+
+                                        const monthly = basePrice;
+                                        const quarterly = Math.round(basePrice * 3 * 0.95);
+                                        const annually = Math.round(basePrice * 12 * 0.95);
+
+                                        const bannerUrl = item.banner
+                                            ? `${API_BASE_URL}/storage/${item.banner}`
+                                            : null;
+
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="flex-shrink-0"
+                                                style={{ width: `${100 / slidesToShow}%` }}
+                                            >
+                                                <ProgramCard
+                                                    subject={item.title?.toLowerCase().includes("jamb") ? "4 Subjects" : "8-9 Subjects"}
+                                                    title={item.title}
+                                                    logo={bannerUrl}
+                                                    month={monthly}
+                                                    quarter={quarterly}
+                                                    year={annually}
+                                                    topic1="Comprehensive tutorials"
+                                                    topic2="Weekly masterclasses"
+                                                    topic3="Mock tests and practice questions"
+                                                    topic4="Live Q&A sessions with experts"
+                                                    path="/about"
+                                                />
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
@@ -177,7 +162,7 @@ const ProgramSection = () => {
                                 aria-label="Previous slide"
                             >
                                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-primary group-hover:text-white transition-all duration-500">
-                                    <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                             </button>
 
@@ -187,7 +172,7 @@ const ProgramSection = () => {
                                 aria-label="Next slide"
                             >
                                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-primary group-hover:text-white transition-all duration-500">
-                                    <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                             </button>
 
@@ -203,11 +188,10 @@ const ProgramSection = () => {
                                                 setTimeout(() => setIsTransitioning(false), 500);
                                             }
                                         }}
-                                        className={`h-2 rounded-full transition-all ${
-                                            currentIndex === index
+                                        className={`h-2 rounded-full transition-all ${currentIndex === index
                                             ? 'w-8 bg-primary'
                                             : 'w-2 bg-gray-300'
-                                        }`}
+                                            }`}
                                         aria-label={`Go to slide ${index + 1}`}
                                     />
                                 ))}
@@ -219,5 +203,5 @@ const ProgramSection = () => {
         </div>
     );
 }
- 
+
 export default ProgramSection;
