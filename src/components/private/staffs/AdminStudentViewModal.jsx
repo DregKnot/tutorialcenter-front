@@ -15,7 +15,7 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
   // Fetch full student details

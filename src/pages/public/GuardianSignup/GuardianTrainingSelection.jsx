@@ -14,7 +14,7 @@ export default function GuardianTrainingSelection() {
   const [students, setStudents] = useState([]);
 
   const API_BASE_URL =
-    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   /* ================= LOAD STUDENTS FROM LOCALSTORAGE ================= */
   useEffect(() => {

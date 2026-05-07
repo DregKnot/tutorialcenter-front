@@ -21,7 +21,7 @@ export default function TutorMasterClass() {
   const [toast, setToast] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const staffName = localStorage.getItem("staff_name") || "Tutor";
   const staffRole = localStorage.getItem("staff_role") || "Tutor";
   const token = localStorage.getItem("staff_token");

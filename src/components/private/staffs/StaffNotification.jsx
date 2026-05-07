@@ -32,7 +32,7 @@ export default function StaffNotification() {
   const isAdmin = parsedRole === "admin";
   const apiPrefix = isAdmin ? "admin" : "staffs";
   
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const fetchNotifications = useCallback(async () => {
     if (!token) return;

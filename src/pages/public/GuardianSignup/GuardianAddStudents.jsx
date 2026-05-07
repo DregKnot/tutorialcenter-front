@@ -26,7 +26,7 @@ export default function GuardianAddStudents() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [students, setStudents] = useState([{ name: "", email: "", expanded: true }]);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const cleanInput = (input) => {

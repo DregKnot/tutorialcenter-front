@@ -55,7 +55,7 @@ export default function StudentPaymentDisplay() {
     return months === 1 ? total : total - total * 0.05;
   };
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
 
 

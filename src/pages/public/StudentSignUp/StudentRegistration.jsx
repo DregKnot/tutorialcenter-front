@@ -64,7 +64,7 @@ export default function StudentRegistration() {
     rememberMe: false,
   });
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   // Click outside handler for dropdowns
   useEffect(() => {

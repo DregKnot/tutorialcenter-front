@@ -12,7 +12,7 @@ import {
 
 // Defined outside the component so it's a stable reference and won't
 // cause the init useEffect to re-run on every render.
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
 export const StudentSubjectSelection = () => {
   const navigate = useNavigate();

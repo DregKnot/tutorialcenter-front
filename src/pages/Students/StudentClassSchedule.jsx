@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function StudentClassSchedule() {
   const { token: authToken } = useAuth();
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const navigate = useNavigate();
 
   // --- STATE ---

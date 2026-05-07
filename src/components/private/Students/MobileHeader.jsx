@@ -12,7 +12,7 @@ export default function MobileHeader({ pagetitle, hideTitle = false, hideBell = 
   const [unreadCount, setUnreadCount] = useState(0);
   const { token } = useAuth();
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const fetchUnreadCount = useCallback(async () => {
     if (!token) return;

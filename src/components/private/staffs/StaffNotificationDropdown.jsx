@@ -28,7 +28,7 @@ export default function StaffNotificationDropdown({ isOpen, onClose, onUpdate, t
     const fetchNotifications = async () => {
       try {
         setLoading(true);
-        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
         
         const staffRole = localStorage.getItem("staff_role");
         let parsedRole = "";

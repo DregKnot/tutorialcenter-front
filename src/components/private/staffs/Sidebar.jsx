@@ -107,7 +107,7 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
   const staffLoaded = staffInfo?.firstname && staffInfo?.surname;
 
   const profilePic = staffInfo?.profile_picture 
-    ? (process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test") + "/storage/" + staffInfo.profile_picture 
+    ? (process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000") + "/storage/" + staffInfo.profile_picture 
     : null;
 
   const handleLogout = () => {

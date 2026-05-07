@@ -71,7 +71,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
   const { theme, setTheme } = useTheme();
   const { student, logout } = useAuth();
   const API_BASE_URL =
-    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test"; 
+    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000"; 
 
   const studentLoaded = student?.firstname && student?.surname;
   const fullName = studentLoaded

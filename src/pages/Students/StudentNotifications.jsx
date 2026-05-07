@@ -19,7 +19,7 @@ export default function StudentNotifications() {
   const [toast, setToast] = useState(null);
   const { token } = useAuth();
   
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const fetchNotifications = useCallback(async () => {
     if (!token) return;

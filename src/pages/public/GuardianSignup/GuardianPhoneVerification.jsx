@@ -28,7 +28,7 @@ export default function GuardianPhoneVerification() {
       navigate("/register/guardian");
     }
   }, [tel, navigate]);
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const num1 = useRef(null);
   const num2 = useRef(null);
