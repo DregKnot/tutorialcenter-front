@@ -6,7 +6,7 @@ import Footer from "../../components/public/Footer";
 import Hero from "../../components/public/Hero";
 import Navbar from "../../components/public/Navbar";
 import ProgramSection from "../../components/public/ProgramSection";
-import StickyButtons from "../../components/public/StickyButtons";
+// import StickyButtons from "../../components/public/StickyButtons";
 import TestimonialSection from "../../components/public/TestimonialSection";
 
 

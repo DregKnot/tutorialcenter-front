@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import ProgramCard from "./ProgramCard.jsx";
 import SectionHeading from "./SectionHeading.jsx";
-import jamb from "../../assets/images/jamb_logo.png";
-import waec from "../../assets/images/waec_logo.png";
+// import jamb from "../../assets/images/jamb_logo.png";
+// import waec from "../../assets/images/waec_logo.png";
 
 const ProgramSection = () => {
 
@@ -12,8 +12,6 @@ const ProgramSection = () => {
     const [isTransitioning, setIsTransitioning] = useState(false);
 
     const [programDatas, setProgramDatas] = useState([]);
-    const [loading, setLoading] = useState(true);
-    console.log("PROGRAM DATA:", programDatas);
 
     // Adjusts number of visible cards based on screen width
     useEffect(() => {
@@ -46,13 +44,11 @@ const ProgramSection = () => {
                 setProgramDatas(fetched);
             } catch (err) {
                 console.error("Failed to fetch programs:", err);
-            } finally {
-                setLoading(false);
             }
         };
 
         fetchPrograms();
-    }, []);
+    }, [API_BASE_URL]);
 
 
 
