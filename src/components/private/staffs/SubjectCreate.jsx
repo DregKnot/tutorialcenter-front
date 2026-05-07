@@ -4,7 +4,7 @@ import {
   XMarkIcon, 
   CameraIcon, 
   DocumentTextIcon, 
-  BanknotesIcon,
+  // BanknotesIcon,
   CheckIcon,
   PlusIcon,
   AcademicCapIcon,
