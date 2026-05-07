@@ -17,8 +17,10 @@ export const StudentTrainingPayment = () => {
   const [processing, setProcessing] = useState(false);
 
   // Base URL for API, using environment variable with fallback
-  const API_BASE_URL =
-    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+    
+  // Base URL for Affiliate API
+  const AFFILIATE_API_URL = process.env.REACT_APP_AFFILIATE_URL || "http://tutorialcenter-affiliate.test";
     
   /* ================= INIT ================= */
   useEffect(() => {
@@ -164,6 +166,29 @@ export const StudentTrainingPayment = () => {
           alert(
             `Payment was successful for course ${courseId}, but logging failed.`,
           );
+        }
+      }
+
+      // 4️⃣ REFERRAL SUBMISSION (only if referral code was provided)
+      const referralCode = storedData?.referral_code;
+      if (referralCode) {
+        try {
+          const firstName = storedData?.data?.firstname || "";
+          const lastName = storedData?.data?.surname || "";
+          const name = `${firstName} ${lastName}`.trim();
+
+          // Contact: if both email and tel exist, use tel; otherwise use whichever is available
+          const contact = (studentEmail && studentTel) ? studentTel : (studentEmail || studentTel);
+
+          await axios.post(`${AFFILIATE_API_URL}/api/referrals/register`, {
+            name,
+            contact,
+            referral_code: referralCode,
+          });
+          console.log("Referral submitted successfully");
+        } catch (err) {
+          console.error("Referral submission failed:", err.response?.data || err);
+          // Non-blocking: don't alert the user since the payment already succeeded
         }
       }
 

@@ -17,7 +17,8 @@ import {
   CameraIcon,
   UserCircleIcon,
   MapIcon,
-  PhoneIcon
+  PhoneIcon,
+  TicketIcon
 } from "@heroicons/react/24/outline";
 
 const isIOS = () =>
@@ -57,6 +58,7 @@ export default function StudentRegistration() {
     location: "",
     address: "",
     department: "",
+    referral_code: "",
     profile_picture: null,
     profile_picture_preview: null,
     rememberMe: false,
@@ -192,7 +194,12 @@ export default function StudentRegistration() {
 
       if (registerRes.status === 200 || registerRes.status === 201) {
         if (registerRes.data?.student) {
-          localStorage.setItem('studentdata', JSON.stringify({ data: registerRes.data.student }));
+          const studentStorage = { data: registerRes.data.student };
+          // Save referral code to localStorage (not sent to backend registration)
+          if (formData.referral_code.trim()) {
+            studentStorage.referral_code = formData.referral_code.trim();
+          }
+          localStorage.setItem('studentdata', JSON.stringify(studentStorage));
         }
         setToast({ type: "success", message: "Registration Successful!" });
         setShowModal(true);
@@ -591,6 +598,24 @@ export default function StudentRegistration() {
                   onBlur={() => setFocusedField(null)}
                   placeholder="input home address"
                   className={`${getInputStyles("address").input} resize-none`}
+                />
+              </div>
+            </div>
+
+            {/* Referral Code */}
+            <div className="space-y-2">
+              <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Referral Code <span className="text-gray-300 font-normal lowercase">(optional)</span></label>
+              <div className={getInputStyles("referral_code").container}>
+                <TicketIcon className={getInputStyles("referral_code").icon} />
+                <input
+                  name="referral_code"
+                  type="text"
+                  value={formData.referral_code}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedField("referral_code")}
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="enter referral code"
+                  className={getInputStyles("referral_code").input}
                 />
               </div>
             </div>
