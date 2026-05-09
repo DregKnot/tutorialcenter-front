@@ -69,7 +69,9 @@ export default function CoursesManagement() {
   const fetchSubjects = useCallback(async () => {
     console.group("Course Management: Fetch Subjects");
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/subjects`);
+      const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/all`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+      });
       console.log("Subjects Response:", res.data);
       const fetched = res.data?.data || res.data?.subjects || [];
       setSubjects(fetched);
@@ -79,7 +81,7 @@ export default function CoursesManagement() {
     } finally {
       console.groupEnd();
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchCourses();
@@ -274,28 +276,30 @@ export default function CoursesManagement() {
                       setSelectedCourse(course);
                       setIsDetailModalOpen(true);
                     }}
-                    className="w-full text-left bg-white dark:bg-gray-800/50 dark:backdrop-blur-md p-6 rounded-[24px] shadow-sm border border-gray-50 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden"
+                    className="w-full text-left bg-white dark:bg-gray-800/50 dark:backdrop-blur-md rounded-[24px] shadow-sm border border-gray-50 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden flex flex-col"
                   >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#BB9E7F]/5 to-transparent rounded-bl-[100px] opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#BB9E7F]/5 to-transparent rounded-bl-[100px] opacity-0 group-hover:opacity-100 transition-all duration-500 z-10" />
                     
                     {course.banner && (
-                      <div className="w-full h-32 rounded-2xl overflow-hidden mb-4 bg-gray-100 dark:bg-gray-900">
-                        <img src={course.banner.startsWith('http') ? course.banner : `${API_BASE_URL}${course.banner}`} alt="Banner" className="w-full h-full object-cover" />
+                      <div className="w-full h-40 overflow-hidden bg-gray-100 dark:bg-gray-900 shrink-0">
+                        <img src={course.banner.startsWith('http') ? course.banner : `${API_BASE_URL}/storage/${course.banner}`} alt="Banner" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                       </div>
                     )}
                     
-                    <div className="flex items-start justify-between mb-4">
-                      <span className="px-3 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[10px] font-black uppercase tracking-[0.15em] rounded-full">Course</span>
-                      <ChevronLeftIcon className="w-4 h-4 text-gray-300 rotate-180 group-hover:text-[#BB9E7F] transition-colors" />
-                    </div>
-                    
-                    <h3 className="text-xl font-black text-[#0F2843] dark:text-white leading-tight mb-2 group-hover:text-[#BB9E7F] transition-colors uppercase tracking-tight">{course.title}</h3>
-                    <p className="text-[11px] text-gray-400 font-bold mb-4 line-clamp-2">{course.description || "Comprehensive academic tutoring program."}</p>
-                    
-                    <div className="pt-4 border-t border-gray-50 dark:border-gray-700 flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-[#76D287]"></div>
-                      <span className="text-[11px] text-gray-400 font-bold">Operational</span>
-                      <span className="ml-auto text-[11px] text-[#BB9E7F] font-black tracking-widest">₦{Number(course.price || 0).toLocaleString()}</span>
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="flex items-start justify-between mb-4">
+                        <span className="px-3 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[10px] font-black uppercase tracking-[0.15em] rounded-full">Course</span>
+                        <ChevronLeftIcon className="w-4 h-4 text-gray-300 rotate-180 group-hover:text-[#BB9E7F] transition-colors" />
+                      </div>
+                      
+                      <h3 className="text-xl font-black text-[#0F2843] dark:text-white leading-tight mb-2 group-hover:text-[#BB9E7F] transition-colors uppercase tracking-tight">{course.title}</h3>
+                      <p className="text-[11px] text-gray-400 font-bold mb-4 line-clamp-2">{course.description || "Comprehensive academic tutoring program."}</p>
+                      
+                      <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-700 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#76D287]"></div>
+                        <span className="text-[11px] text-gray-400 font-bold">Operational</span>
+                        <span className="ml-auto text-[11px] text-[#BB9E7F] font-black tracking-widest">₦{Number(course.price || 0).toLocaleString()}</span>
+                      </div>
                     </div>
                   </button>
                 )) : (
@@ -347,7 +351,7 @@ export default function CoursesManagement() {
 
               {/* Group subjects by course */}
               {courses.map((course) => {
-                const courseSubjects = subjects.filter(s => Number(s.courses?.[0]) === Number(course.id));
+                const courseSubjects = subjects.filter(s => Number(s.courses?.[0]?.id || s.courses?.[0]) === Number(course.id));
                 if (courseSubjects.length === 0) return null;
                 return (
                   <div key={course.id} className="bg-white dark:bg-gray-800/50 dark:backdrop-blur-md rounded-[24px] shadow-sm border border-gray-50 dark:border-gray-700 overflow-hidden transition-all duration-300">
@@ -369,30 +373,32 @@ export default function CoursesManagement() {
                               setSelectedSubject(subject);
                               setIsSubjectDetailModalOpen(true);
                             }}
-                            className="w-full text-left bg-gray-50/50 dark:bg-gray-900/50 p-6 rounded-[24px] border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden"
+                            className="w-full text-left bg-gray-50/50 dark:bg-gray-900/50 rounded-[24px] border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden flex flex-col"
                           >
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#BB9E7F]/5 to-transparent rounded-bl-[100px] opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#BB9E7F]/5 to-transparent rounded-bl-[100px] opacity-0 group-hover:opacity-100 transition-all duration-500 z-10" />
                             
                             {subject.banner && (
-                              <div className="w-full h-28 rounded-2xl overflow-hidden mb-4 bg-gray-100 dark:bg-gray-800">
-                                <img src={subject.banner.startsWith('http') ? subject.banner : `${API_BASE_URL}${subject.banner}`} alt="Banner" className="w-full h-full object-cover" />
+                              <div className="w-full h-32 overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0">
+                                <img src={subject.banner.startsWith('http') ? subject.banner : `${API_BASE_URL}/storage/${subject.banner}`} alt="Banner" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                               </div>
                             )}
                             
-                            <div className="flex items-start justify-between mb-4">
-                              <span className="px-3 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[9px] font-black uppercase tracking-[0.15em] rounded-full">Subject</span>
-                              <AcademicCapIcon className="w-4 h-4 text-gray-300 group-hover:text-[#BB9E7F] transition-colors" />
-                            </div>
-                            
-                            <h3 className="text-lg font-black text-[#0F2843] dark:text-white leading-tight mb-2 group-hover:text-[#BB9E7F] transition-colors uppercase tracking-tight">{subject.name}</h3>
-                            <p className="text-[10px] text-gray-400 font-bold mb-4 line-clamp-2">{subject.description || "In-depth academic module."}</p>
-                            
-                            <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#76D287]"></div>
-                                <span className="text-[10px] text-gray-400 font-bold">Live</span>
+                            <div className="p-6 flex-1 flex flex-col">
+                              <div className="flex items-start justify-between mb-4">
+                                <span className="px-3 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[9px] font-black uppercase tracking-[0.15em] rounded-full">Subject</span>
+                                <AcademicCapIcon className="w-4 h-4 text-gray-300 group-hover:text-[#BB9E7F] transition-colors" />
                               </div>
-                              <span className="text-[10px] text-gray-300 font-bold italic">Module #{subject.id}</span>
+                              
+                              <h3 className="text-lg font-black text-[#0F2843] dark:text-white leading-tight mb-2 group-hover:text-[#BB9E7F] transition-colors uppercase tracking-tight">{subject.name}</h3>
+                              <p className="text-[10px] text-gray-400 font-bold mb-4 line-clamp-2">{subject.description || "In-depth academic module."}</p>
+                              
+                              <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-[#76D287]"></div>
+                                  <span className="text-[10px] text-gray-400 font-bold">Live</span>
+                                </div>
+                                <span className="text-[10px] text-gray-300 font-bold italic">Module #{subject.id}</span>
+                              </div>
                             </div>
                           </button>
                         ))}
@@ -453,7 +459,7 @@ export default function CoursesManagement() {
       <SubjectDetailModal
         isOpen={isSubjectDetailModalOpen}
         subject={selectedSubject}
-        course={courses.find(c => Number(c.id) === Number(selectedSubject?.courses?.[0]))}
+        course={courses.find(c => Number(c.id) === Number(selectedSubject?.courses?.[0]?.id || selectedSubject?.courses?.[0]))}
         onClose={() => {
           setIsSubjectDetailModalOpen(false);
           setSelectedSubject(null);

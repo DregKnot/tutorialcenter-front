@@ -242,10 +242,13 @@ const Training = () => {
                 <p className="text-gray-400 font-bold text-lg">No programs available at this time.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
                 {courses.map((course) => {
                   const isExpanded = expandedCard === course.id;
-                  const logo = getLogoForCourse(course.title);
+                  const bannerUrl = course.banner
+                    ? `${API_BASE_URL}/storage/${course.banner}`
+                    : getLogoForCourse(course.title);
+                  const hasBanner = !!course.banner;
                   const basePrice = course.price || 0;
 
                   // calculated durations with 5% discount for multi-month
@@ -269,12 +272,15 @@ const Training = () => {
                         }
                       `}
                     >
-                      {/* Pink Top Area with Logo */}
-                      <div className="bg-[#FFF0F0] flex items-center justify-center py-8 relative">
+                      {/* Top Area with Banner or Logo */}
+                      <div className="bg-[#FFF0F0] flex items-center justify-center relative overflow-hidden" style={{ height: hasBanner ? '180px' : undefined, paddingTop: hasBanner ? 0 : '2rem', paddingBottom: hasBanner ? 0 : '2rem' }}>
                         <img
-                          src={logo}
+                          src={bannerUrl}
                           alt={course.title}
-                          className="h-24 w-24 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500"
+                          className={hasBanner
+                            ? "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            : "h-24 w-24 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500"
+                          }
                         />
                         {/* Red icon badge */}
                         <div className="absolute bottom-4 right-4 w-10 h-10 bg-[#E83831] rounded-xl flex items-center justify-center shadow-lg">

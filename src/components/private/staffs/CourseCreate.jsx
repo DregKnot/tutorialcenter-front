@@ -1,10 +1,11 @@
 import { useState } from "react";
 import axios from "axios";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import { 
   XMarkIcon, 
   CameraIcon, 
   BanknotesIcon, 
-  DocumentTextIcon, 
   CheckIcon,
   PlusIcon,
   // TrashIcon,
@@ -210,20 +211,24 @@ export default function CourseCreate({ isOpen, onClose, onSuccess }) {
               </div>
             </div>
 
-            {/* Description Area */}
+            {/* Description Area — WYSIWYG */}
             <div className="space-y-3">
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Academic Overview & Description</label>
-              <div className="relative group">
-                <div className="absolute left-6 top-6 p-2 bg-gray-100 dark:bg-gray-800 rounded-xl group-focus-within:bg-[#BB9E7F] transition-colors">
-                  <DocumentTextIcon className="w-5 h-5 text-[#BB9E7F] group-focus-within:text-white" />
-                </div>
-                <textarea 
+              <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-[24px] border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-sm [&_.ql-editor]:min-h-[200px] [&_.ql-editor]:text-base">
+                <ReactQuill
+                  theme="snow"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows="4"
+                  onChange={setDescription}
                   placeholder="Provide a detailed roadmap of what this course offers..."
-                  required
-                  className="w-full pl-20 pr-8 py-6 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 focus:bg-white dark:focus:bg-gray-700 rounded-[32px] font-bold text-[#0F2843] dark:text-white outline-none transition-all shadow-sm resize-none"
+                  modules={{
+                    toolbar: [
+                      [{ header: [1, 2, 3, false] }],
+                      ["bold", "italic", "underline", "strike"],
+                      [{ list: "ordered" }, { list: "bullet" }],
+                      ["blockquote", "link"],
+                      ["clean"],
+                    ],
+                  }}
                 />
               </div>
             </div>

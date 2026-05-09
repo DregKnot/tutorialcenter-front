@@ -10,9 +10,11 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function CourseDetailModal({ isOpen, course, subjects, onClose, onDelete, onEdit }) {
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+
   if (!isOpen || !course) return null;
 
-  const courseSubjects = subjects.filter(s => Number(s.courses?.[0]) === Number(course.id));
+  const courseSubjects = subjects.filter(s => Number(s.courses?.[0]?.id || s.courses?.[0]) === Number(course.id));
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 backdrop-blur-xl bg-[#0F2843]/60 animate-in fade-in duration-300">
@@ -21,10 +23,10 @@ export default function CourseDetailModal({ isOpen, course, subjects, onClose, o
       <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-[48px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 border border-white/20">
         
         {/* Banner Section */}
-        <div className="relative aspect-video sm:aspect-[21/9] w-full overflow-hidden">
+        <div className="relative aspect-video sm:aspect-[21/18] w-full overflow-hidden">
           {course.banner ? (
             <img 
-              src={course.banner.startsWith('http') ? course.banner : `${process.env.REACT_APP_API_URL}${course.banner}`} 
+              src={course.banner.startsWith('http') ? course.banner : `${API_BASE_URL}/storage/${course.banner}`} 
               alt={course.title} 
               className="w-full h-full object-cover"
             />

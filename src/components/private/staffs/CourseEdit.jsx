@@ -71,7 +71,7 @@ export default function CourseEdit({ mode = "courses" }) {
     // Extract first department if it comes as an array, or handle string
     const existingDept = Array.isArray(item.departments) ? item.departments[0] : (item.departments || item.department || "");
     setDepartments(existingDept);
-    setBannerPreview(item.banner ? (item.banner.startsWith('http') ? item.banner : `${API_BASE_URL}${item.banner}`) : null);
+    setBannerPreview(item.banner ? (item.banner.startsWith('http') ? item.banner : `${API_BASE_URL}/storage/${item.banner}`) : null);
     setBanner(null);
 
     if (type === "course") {

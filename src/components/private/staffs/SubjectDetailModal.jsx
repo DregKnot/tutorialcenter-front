@@ -10,6 +10,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function SubjectDetailModal({ isOpen, subject, course, onClose, onDelete, onEdit }) {
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+
   if (!isOpen || !subject) return null;
 
   return (
@@ -19,10 +21,10 @@ export default function SubjectDetailModal({ isOpen, subject, course, onClose, o
       <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-[48px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-10 duration-500 border border-white/20">
         
         {/* Banner Section */}
-        <div className="relative aspect-video sm:aspect-[21/9] w-full overflow-hidden">
+        <div className="relative aspect-video w-full overflow-hidden shrink-0">
           {subject.banner ? (
             <img 
-              src={subject.banner.startsWith('http') ? subject.banner : `${process.env.REACT_APP_API_URL}${subject.banner}`} 
+              src={subject.banner.startsWith('http') ? subject.banner : `${API_BASE_URL}/storage/${subject.banner}`} 
               alt={subject.name} 
               className="w-full h-full object-cover"
             />
