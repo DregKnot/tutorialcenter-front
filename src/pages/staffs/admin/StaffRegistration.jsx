@@ -151,16 +151,21 @@ export default function StaffRegistration() {
     } catch (error) {
       console.error("Registration error:", error.response?.data);
       const backendErrors = error.response?.data?.errors;
+      let toastMsg = error.response?.data?.message || "Registration failed. Please try again.";
+
       if (backendErrors) {
         const formatted = {};
         Object.keys(backendErrors).forEach(key => {
           formatted[key] = backendErrors[key][0];
         });
         setErrors(formatted);
+        if (Object.keys(backendErrors).length > 0) {
+          toastMsg = backendErrors[Object.keys(backendErrors)[0]][0];
+        }
       }
       setToast({
         type: "error",
-        message: error.response?.data?.message || "Registration failed. Please try again."
+        message: toastMsg
       });
     } finally {
       setLoading(false);

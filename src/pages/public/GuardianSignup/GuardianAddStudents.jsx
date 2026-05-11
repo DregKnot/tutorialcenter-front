@@ -66,7 +66,7 @@ export default function GuardianAddStudents() {
   const removeStudent = (index) => {
     if (students.length <= 1) {
       setToast({ type: "error", message: "You must add at least one student" });
-      setTimeout(() => setToast(null), 3000);
+      setTimeout(() => setToast(null), 4000);
       return;
     }
     setStudents((prev) => prev.filter((_, i) => i !== index));
@@ -157,7 +157,7 @@ export default function GuardianAddStudents() {
     // Step 1: Validate — abort if errors
     if (!validateForm()) {
       setToast({ type: "error", message: "Please fix the errors above" });
-      setTimeout(() => setToast(null), 3000);
+      setTimeout(() => setToast(null), 4000);
       return;
     }
 
@@ -216,7 +216,7 @@ export default function GuardianAddStudents() {
     } catch (err) {
       console.error("Error:", err);
       setToast({ type: "error", message: "Something went wrong. Please try again." });
-      setTimeout(() => setToast(null), 3000);
+      setTimeout(() => setToast(null), 4000);
       setLoading(false);
     }
   };
