@@ -119,7 +119,7 @@ export const StudentSubjectSelection = () => {
   // Auto-dismiss toast after 3 seconds
   useEffect(() => {
     if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 3000);
+    const timer = setTimeout(() => setToast(null), 4000);
     return () => clearTimeout(timer);
   }, [toast]);
 

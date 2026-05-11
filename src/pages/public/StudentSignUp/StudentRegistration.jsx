@@ -66,6 +66,14 @@ export default function StudentRegistration() {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
+  // Auto-dismiss toast after 4 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   // Click outside handler for dropdowns
   useEffect(() => {
     function handleClickOutside(event) {
@@ -212,7 +220,7 @@ export default function StudentRegistration() {
       if (Object.keys(backendErrors).length > 0) {
         const firstErrorKey = Object.keys(backendErrors)[0];
         const firstErrorMessage = backendErrors[firstErrorKey][0];
-        setToast({ type: "error", message: backendMessage || firstErrorMessage || "Validation failed." });
+        setToast({ type: "error", message: firstErrorMessage || backendMessage || "Validation failed." });
         setErrors(backendErrors);
       } else {
         setToast({ type: "error", message: backendMessage || "Registration failed. Please try again." });

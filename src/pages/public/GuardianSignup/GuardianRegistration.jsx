@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import TC_logo from "../../../assets/images/tutorial_logo.png";
 import signup_img from "../../../assets/images/Student_sign_up.jpg";
@@ -26,6 +26,14 @@ export const GuardianRegistration = () => {
   });
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+
+  // Auto-dismiss toast after 4 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -102,11 +110,19 @@ export const GuardianRegistration = () => {
         }, 2000);
       }
     } catch (error) {
+      const backendErrors = error?.response?.data?.errors || {};
+      const backendMessage = error?.response?.data?.message || "";
+      let toastMsg = backendMessage || "Registration failed.";
+
+      if (Object.keys(backendErrors).length > 0) {
+        toastMsg = backendErrors[Object.keys(backendErrors)[0]][0];
+      }
+
       setToast({
         type: "error",
-        message: error?.response?.data?.message || "Registration failed.",
+        message: toastMsg,
       });
-      setErrors(error?.response?.data?.errors || {});
+      setErrors(backendErrors);
     } finally {
       setLoading(false);
     }

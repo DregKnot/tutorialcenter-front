@@ -143,7 +143,7 @@ const ProgramSection = () => {
                                                     topic2="Weekly masterclasses"
                                                     topic3="Mock tests and practice questions"
                                                     topic4="Live Q&A sessions with experts"
-                                                    path="/about"
+                                                    path="/training"
                                                 />
                                             </div>
                                         );

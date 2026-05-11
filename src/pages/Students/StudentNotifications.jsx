@@ -68,7 +68,7 @@ export default function StudentNotifications() {
       setToast({ type: "success", message: "All notifications marked as read" });
       // Sync Header
       window.dispatchEvent(new CustomEvent('updateUnreadCount'));
-      setTimeout(() => setToast(null), 3000);
+      setTimeout(() => setToast(null), 4000);
     } catch (error) {
       console.error("Failed to mark all as read:", error);
     }
@@ -84,7 +84,7 @@ export default function StudentNotifications() {
       setToast({ type: "success", message: "Notification deleted" });
       // Sync Header
       window.dispatchEvent(new CustomEvent('updateUnreadCount'));
-      setTimeout(() => setToast(null), 3000);
+      setTimeout(() => setToast(null), 4000);
     } catch (error) {
       console.error("Failed to delete notification:", error);
     }
