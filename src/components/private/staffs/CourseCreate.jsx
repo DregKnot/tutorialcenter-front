@@ -6,13 +6,12 @@ import {
   XMarkIcon, 
   CameraIcon, 
   BanknotesIcon, 
-  CheckIcon,
   PlusIcon,
   // TrashIcon,
   BookOpenIcon
 } from "@heroicons/react/24/outline";
 
-export default function CourseCreate({ isOpen, onClose, onSuccess }) {
+export default function CourseCreate({ isOpen, onClose, onSuccess, showToast }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
@@ -22,7 +21,6 @@ export default function CourseCreate({ isOpen, onClose, onSuccess }) {
   const [banner, setBanner] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(null);
 
   const handleBannerChange = (e) => {
     const file = e.target.files[0];
@@ -38,16 +36,19 @@ export default function CourseCreate({ isOpen, onClose, onSuccess }) {
     setLoading(true);
     console.group("Course Creation: Submit Form");
     
+    // Strip HTML tags from description for submission as requested
+    const plainDescription = description.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ");
+    
     // Using FormData for banner upload
     const formData = new FormData();
     formData.append("title", courseName);
-    formData.append("description", description);
+    formData.append("description", plainDescription);
     formData.append("price", price);
     formData.append("status", "active");
     if (banner) {
       formData.append("banner", banner);
     } else {
-      setToast({ type: "error", message: "Please upload a course banner." });
+      showToast({ type: "error", message: "Please upload a course banner." });
       setLoading(false);
       return;
     }
@@ -69,7 +70,7 @@ export default function CourseCreate({ isOpen, onClose, onSuccess }) {
       const courseRes = await axios.post(`${API_BASE_URL}/api/admin/courses`, formData, config);
       console.log("Course Creation Response:", courseRes?.data);
 
-      setToast({ type: "success", message: "Course created successfully!" });
+      showToast({ type: "success", message: "Course created successfully!" });
       setTimeout(() => {
         onSuccess?.();
         onClose?.();
@@ -82,7 +83,7 @@ export default function CourseCreate({ isOpen, onClose, onSuccess }) {
       }, 1500);
     } catch (error) {
       console.error("Course/Subjects Creation Error:", error);
-      setToast({ 
+      showToast({ 
         type: "error", 
         message: error.response?.data?.message || "Failed to create course." 
       });
@@ -96,17 +97,6 @@ export default function CourseCreate({ isOpen, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 backdrop-blur-xl bg-[#0F2843]/60 animate-in fade-in duration-300">
-      
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 rounded-3xl shadow-2xl text-white font-black flex items-center gap-4 animate-in slide-in-from-top-10 transition-all ${
-          toast.type === "success" ? "bg-[#76D287]" : "bg-[#E83831]"
-        }`}>
-          {toast.type === "success" ? <CheckIcon className="w-6 h-6" /> : <XMarkIcon className="w-6 h-6" />}
-          {toast.message}
-        </div>
-      )}
-
       <div 
         className="absolute inset-0" 
         onClick={onClose}

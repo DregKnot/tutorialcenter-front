@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import { 
   PencilIcon, 
   TrashIcon, 
@@ -7,10 +9,9 @@ import {
   BookOpenIcon,
   XMarkIcon,
   CheckIcon,
-  ExclamationCircleIcon
 } from "@heroicons/react/24/outline";
 
-export default function CourseEdit({ mode = "courses" }) {
+export default function CourseEdit({ mode = "courses", showToast }) {
   const [courses, setCourses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,12 +19,11 @@ export default function CourseEdit({ mode = "courses" }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [description, setDescription] = useState("");
-  const [departments, setDepartments] = useState(""); // We keep the plural name to match backend expectation
+  const [departments, setDepartments] = useState([]);
   const [price, setPrice] = useState("");
   const [banner, setBanner] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
   const [showConfirmSave, setShowConfirmSave] = useState(false);
-  const [toast, setToast] = useState(null);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
@@ -40,7 +40,9 @@ export default function CourseEdit({ mode = "courses" }) {
 
       if (mode === "subjects") {
         try {
-          const subRes = await axios.get(`${API_BASE_URL}/api/subjects`);
+          const subRes = await axios.get(`${API_BASE_URL}/api/admin/subjects/all`, {
+                  headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+        });
           console.log("Subjects Response:", subRes.data);
           const allSubjects = subRes.data?.subjects || subRes.data?.data || [];
           setSubjects(allSubjects);
@@ -56,7 +58,7 @@ export default function CourseEdit({ mode = "courses" }) {
       setLoading(false);
       console.groupEnd();
     }
-  }, [API_BASE_URL, mode]);
+  }, [API_BASE_URL, mode, token]);
 
   useEffect(() => {
     fetchData();
@@ -66,18 +68,32 @@ export default function CourseEdit({ mode = "courses" }) {
     setEditingItem({ type, data: item });
     setNewName(type === "course" ? item.title : item.name);
     
-    // Populate metadata for both courses and subjects
+    // Populate metadata
     setDescription(item.description || "");
-    // Extract first department if it comes as an array, or handle string
-    const existingDept = Array.isArray(item.departments) ? item.departments[0] : (item.departments || item.department || "");
-    setDepartments(existingDept);
+    
+    // Parse departments correctly
+    let existingDepts = [];
+    if (Array.isArray(item.departments)) {
+      existingDepts = item.departments;
+    } else if (item.departments && typeof item.departments === "string") {
+      try {
+        const parsed = JSON.parse(item.departments);
+        existingDepts = Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        existingDepts = item.departments.split(",").map(d => d.trim());
+      }
+    } else if (item.department) {
+      existingDepts = [item.department];
+    }
+    setDepartments(existingDepts);
+    
     setBannerPreview(item.banner ? (item.banner.startsWith('http') ? item.banner : `${API_BASE_URL}/storage/${item.banner}`) : null);
     setBanner(null);
 
     if (type === "course") {
       setPrice(item.price || "");
     } else {
-      setPrice(""); // Reset price for subjects
+      setPrice("");
     }
     
     setShowConfirmSave(false);
@@ -98,50 +114,64 @@ export default function CourseEdit({ mode = "courses" }) {
     console.group(`Course Edit: Save ${editingItem.type}`);
     
     let payload;
-    let headers = { Authorization: `Bearer ${token}` };
+    let headers = { 
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data"
+    };
+
+    // Strip HTML tags for clean storage as requested
+    const plainDescription = description.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ");
 
     if (editingItem.type === "course") {
-      // Use FormData for courses to support banner upload
       payload = new FormData();
       payload.append("title", newName);
-      payload.append("description", description);
+      payload.append("description", plainDescription);
       payload.append("price", price);
       if (banner) {
         payload.append("banner", banner);
       }
-      headers["Content-Type"] = "multipart/form-data";
+      payload.append("_method", "PUT");
     } else {
-      // Use FormData for subjects too to support banner upload
       payload = new FormData();
       payload.append("name", newName);
-      payload.append("description", description);
-      // Backend requires departments as an array
-      payload.append("departments[]", departments);
+      payload.append("description", plainDescription);
+      payload.append("status", editingItem.data.status || "active");
+      
+      // Include course_id to ensure database integrity during update
+      const cid = editingItem.data.course_id || editingItem.data.courses?.[0]?.id || editingItem.data.courses?.[0];
+      if (cid) {
+        payload.append("course_id", cid);
+        payload.append("courses[]", cid);
+      }
+
+      // Backend expects 'department' key based on validator
+      if (departments && departments.length > 0) {
+        departments.forEach(dept => {
+          payload.append("departments[]", dept);
+        });
+      } 
+
       if (banner) {
         payload.append("banner", banner);
       }
-      headers["Content-Type"] = "multipart/form-data";
+      payload.append("_method", "PUT");
     }
 
     const url = editingItem.type === "course" 
       ? `${API_BASE_URL}/api/admin/courses/update/${editingItem.data.id}` 
       : `${API_BASE_URL}/api/admin/subjects/update/${editingItem.data.id}`;
     
-    console.log("Request URL:", url);
-
     try {
-      // Note: We are using PUT as requested. 
-      const res = await axios.put(url, payload, { headers });
-      console.log("Update Response Data:", res.data);
+      // Use POST with _method=PUT for FormData support
+      await axios.post(url, payload, { headers });
       
-      setToast({ type: "success", message: `${editingItem.type === "course" ? "Course" : "Subject"} updated!` });
+      showToast({ type: "success", message: `${editingItem.type === "course" ? "Course" : "Subject"} updated!` });
       setIsModalOpen(false);
       setShowConfirmSave(false);
       fetchData();
     } catch (error) {
       console.error("Update Error:", error);
-      console.log("Error Response:", error.response?.data);
-      setToast({ type: "error", message: "Failed to update." });
+      showToast({ type: "error", message: "Failed to update." });
     } finally {
       console.groupEnd();
     }
@@ -154,28 +184,17 @@ export default function CourseEdit({ mode = "courses" }) {
       ? `${API_BASE_URL}/api/admin/courses/destroy/${id}`
       : `${API_BASE_URL}/api/admin/subjects/destroy/${id}`;
     
-    console.log("Delete URL:", url);
-
     try {
-      const res = await axios.delete(url, config);
-      console.log("Delete Response Data:", res.data);
-      setToast({ type: "success", message: `${type === "course" ? "Course" : "Subject"} deleted.` });
+      await axios.delete(url, config);
+      showToast({ type: "success", message: `${type === "course" ? "Course" : "Subject"} deleted.` });
       fetchData();
     } catch (error) {
       console.error("Delete Error:", error);
-      console.log("Error Response Details:", error.response?.data);
-      setToast({ type: "error", message: "Failed to delete." });
+      showToast({ type: "error", message: "Failed to delete." });
     } finally {
       console.groupEnd();
     }
   };
-
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
 
   if (loading) {
     return (
@@ -185,7 +204,6 @@ export default function CourseEdit({ mode = "courses" }) {
     );
   }
 
-  // Helper to find course title by id
   const getCourseTitle = (courseId) => {
     const c = courses.find(c => Number(c.id) === Number(courseId));
     return c?.title || "Unknown";
@@ -193,14 +211,6 @@ export default function CourseEdit({ mode = "courses" }) {
 
   return (
     <div className="space-y-4">
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-8 right-8 z-[110] px-8 py-4 rounded-2xl shadow-2xl text-white font-black flex items-center gap-3 animate-in fade-in slide-in-from-right-8 ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}>
-          {toast.type === "success" ? <CheckIcon className="w-6 h-6" /> : <ExclamationCircleIcon className="w-6 h-6" />}
-          {toast.message}
-        </div>
-      )}
-
       {/* ===== COURSES MODE ===== */}
       {mode === "courses" && (
         <>
@@ -219,14 +229,12 @@ export default function CourseEdit({ mode = "courses" }) {
                 <button 
                   onClick={() => handleEditClick("course", course)}
                   className="p-3 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-[#0F2843] dark:hover:text-white hover:bg-white dark:hover:bg-gray-600 hover:shadow-lg rounded-xl transition-all"
-                  title="Edit"
                 >
                   <PencilIcon className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => handleDelete("course", course.id)}
                   className="p-3 bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-600 hover:text-white rounded-xl transition-all"
-                  title="Delete"
                 >
                   <TrashIcon className="w-4 h-4" />
                 </button>
@@ -244,39 +252,37 @@ export default function CourseEdit({ mode = "courses" }) {
       {/* ===== SUBJECTS MODE ===== */}
       {mode === "subjects" && (
         <>
-          {subjects.length > 0 ? subjects.map((subject) => (
-            <div key={subject.id} className="bg-white dark:bg-gray-800/50 dark:backdrop-blur-md p-6 rounded-[24px] shadow-sm border border-gray-50 dark:border-gray-700 hover:shadow-lg hover:-translate-y-0.5 transition-all group flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#0F2843]/10 rounded-2xl flex items-center justify-center group-hover:bg-[#0F2843] transition-all">
-                  <AcademicCapIcon className="w-6 h-6 text-[#0F2843] dark:text-white group-hover:text-white transition-colors" />
+          {subjects.length > 0 ? subjects.map((subject) => {
+             const courseId = subject.courses?.[0]?.id || subject.courses?.[0] || subject.course_id;
+             return (
+              <div key={subject.id} className="bg-white dark:bg-gray-800/50 dark:backdrop-blur-md p-6 rounded-[24px] shadow-sm border border-gray-50 dark:border-gray-700 hover:shadow-lg hover:-translate-y-0.5 transition-all group flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-[#0F2843]/10 rounded-2xl flex items-center justify-center group-hover:bg-[#0F2843] transition-all">
+                    <AcademicCapIcon className="w-6 h-6 text-[#0F2843] dark:text-blue-400 group-hover:text-white transition-colors" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-[#0F2843] dark:text-white tracking-tight">
+                      {getCourseTitle(courseId)} - {subject.name}
+                    </h3>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[9px] font-black text-[#BB9E7F] uppercase tracking-widest">
-                    {getCourseTitle(subject.courses?.[0])}
-                  </span>
-                  <h3 className="text-lg font-black text-[#0F2843] dark:text-white tracking-tight">
-                    {getCourseTitle(subject.courses?.[0])} - {subject.name}
-                  </h3>
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={() => handleEditClick("subject", subject)}
+                    className="p-3 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-[#0F2843] dark:hover:text-white hover:bg-white dark:hover:bg-gray-600 hover:shadow-lg rounded-xl transition-all"
+                  >
+                    <PencilIcon className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete("subject", subject.id)}
+                    className="p-3 bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-600 hover:text-white rounded-xl transition-all"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={() => handleEditClick("subject", subject)}
-                  className="p-3 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-[#0F2843] dark:hover:text-white hover:bg-white dark:hover:bg-gray-600 hover:shadow-lg rounded-xl transition-all"
-                  title="Edit"
-                >
-                  <PencilIcon className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => handleDelete("subject", subject.id)}
-                  className="p-3 bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-600 hover:text-white rounded-xl transition-all"
-                  title="Delete"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )) : (
+            );
+          }) : (
             <div className="py-16 text-center bg-white/30 dark:bg-gray-800/30 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700">
               <AcademicCapIcon className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-4" />
               <h4 className="text-lg font-black text-gray-300 dark:text-gray-500">No Subjects</h4>
@@ -286,45 +292,33 @@ export default function CourseEdit({ mode = "courses" }) {
       )}
 
       {/* Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 backdrop-blur-md bg-[#0F2843]/40 animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-lg rounded-[48px] shadow-2xl overflow-hidden relative animate-in slide-in-from-bottom-8 duration-500">
-            <div className="p-10 flex justify-between items-start">
-              <div>
-                <span className="text-[10px] font-black text-[#BB9E7F] uppercase tracking-[0.2em]">Refine Metadata</span>
-                <h2 className="text-2xl font-black text-[#0F2843] mt-2">Edit {editingItem.type === "course" ? "Course" : "Subject"}</h2>
+      {isModalOpen && editingItem && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 sm:p-6 backdrop-blur-xl bg-[#0F2843]/60 animate-in fade-in duration-300">
+          <div className="absolute inset-0" onClick={() => setIsModalOpen(false)} />
+          <div className="bg-white dark:bg-gray-900 w-full max-w-2xl max-h-[90vh] rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+            
+            {/* Modal Header */}
+            <div className="p-8 flex justify-between items-center bg-[#0F2843] text-white">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                  <PencilIcon className="w-6 h-6 text-[#BB9E7F]" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black uppercase">Edit {editingItem.type}</h2>
+                  <p className="text-[#BB9E7F] text-[9px] font-black uppercase tracking-widest">Update Information</p>
+                </div>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-3 bg-gray-100 rounded-2xl hover:bg-[#E83831] hover:text-white transition-all group shadow-sm hover:shadow-red-900/20">
-                <XMarkIcon className="w-6 h-6 text-gray-400 group-hover:text-white" />
+              <button onClick={() => setIsModalOpen(false)} className="p-3 hover:bg-red-500 rounded-xl transition-all">
+                <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="px-10 pb-6 overflow-y-auto max-h-[60vh] space-y-8 custom-scrollbar">
-              {editingItem.type === "course" && (
-                <div className="space-y-6">
-                  {/* Banner Edit */}
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Course Banner</label>
-                    <div className="relative group aspect-video rounded-3xl overflow-hidden bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700">
-                      {bannerPreview ? (
-                        <img src={bannerPreview} alt="Preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <BookOpenIcon className="w-12 h-12 text-gray-200" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
-                        <CheckIcon className="w-8 h-8 text-white" />
-                        <span className="text-white font-black text-xs uppercase tracking-widest ml-2">Change Image</span>
-                      </div>
-                      <input type="file" onChange={handleBannerChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-                    </div>
-                  </div>
-
-                  {/* Title & Price Row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+              <div className="space-y-8">
+                {editingItem.type === "course" && (
+                  <div className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Title</label>
+                      <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Course Title</label>
                       <input 
                         type="text" 
                         value={newName}
@@ -336,7 +330,7 @@ export default function CourseEdit({ mode = "courses" }) {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Price (₦)</label>
+                      <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Pricing (₦)</label>
                       <input 
                         type="number" 
                         value={price}
@@ -348,45 +342,10 @@ export default function CourseEdit({ mode = "courses" }) {
                       />
                     </div>
                   </div>
+                )}
 
-                  {/* Description */}
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
-                    <textarea 
-                      value={description}
-                      onChange={(e) => {
-                        setDescription(e.target.value);
-                        setShowConfirmSave(true);
-                      }}
-                      rows="4"
-                      className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none resize-none"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {editingItem.type === "subject" && (
-                <div className="space-y-6">
-                  {/* Banner Edit */}
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Subject Banner</label>
-                    <div className="relative group aspect-video rounded-3xl overflow-hidden bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700">
-                      {bannerPreview ? (
-                        <img src={bannerPreview} alt="Preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <AcademicCapIcon className="w-12 h-12 text-gray-200" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
-                        <CheckIcon className="w-8 h-8 text-white" />
-                        <span className="text-white font-black text-xs uppercase tracking-widest ml-2">Change Image</span>
-                      </div>
-                      <input type="file" onChange={handleBannerChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {editingItem.type === "subject" && (
+                  <div className="space-y-6">
                     <div className="space-y-2">
                       <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Subject Name</label>
                       <input 
@@ -399,62 +358,87 @@ export default function CourseEdit({ mode = "courses" }) {
                         className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Academic Department</label>
-                      <select 
-                        value={departments}
-                        onChange={(e) => {
-                          setDepartments(e.target.value);
-                          setShowConfirmSave(true);
-                        }}
-                        className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none appearance-none cursor-pointer"
-                      >
-                        <option value="">Select Department</option>
-                        <option value="science">Science</option>
-                        <option value="art">Arts</option>
-                        <option value="commercial">Commercial</option>
-                      </select>
+                    <div className="space-y-3">
+                      <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Academic Departments</label>
+                      <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-transparent shadow-sm">
+                        {["science", "art", "commercial"].map((dept) => (
+                          <label key={dept} className="flex items-center gap-3 cursor-pointer">
+                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                              departments.includes(dept) 
+                                ? "bg-[#0F2843] border-[#0F2843]" 
+                                : "border-gray-300 dark:border-gray-600"
+                            }`}>
+                              {departments.includes(dept) && <CheckIcon className="w-3.5 h-3.5 text-white" />}
+                            </div>
+                            <span className="text-xs font-bold capitalize">{dept}</span>
+                            <input 
+                              type="checkbox"
+                              checked={departments.includes(dept)}
+                              onChange={() => {
+                                setDepartments(prev => 
+                                  prev.includes(dept) ? prev.filter(d => d !== dept) : [...prev, dept]
+                                );
+                                setShowConfirmSave(true);
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
+                )}
 
-                  {/* Description */}
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Syllabus Description</label>
-                    <textarea 
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Banner Image</label>
+                  <div className="relative group aspect-video rounded-3xl overflow-hidden bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700">
+                    {bannerPreview ? (
+                      <img src={bannerPreview} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <BookOpenIcon className="w-12 h-12 text-gray-200" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
+                      <CheckIcon className="w-8 h-8 text-white" />
+                      <span className="text-white font-black text-xs uppercase tracking-widest ml-2">Update Image</span>
+                    </div>
+                    <input type="file" onChange={handleBannerChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Description / Syllabus</label>
+                  <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm [&_.ql-editor]:min-h-[150px]">
+                    <ReactQuill
+                      theme="snow"
                       value={description}
-                      onChange={(e) => {
-                        setDescription(e.target.value);
+                      onChange={(content) => {
+                        setDescription(content);
                         setShowConfirmSave(true);
                       }}
-                      rows="4"
-                      className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none resize-none"
+                      modules={{
+                        toolbar: [
+                          [{ header: [1, 2, false] }],
+                          ["bold", "italic", "underline"],
+                          [{ list: "ordered" }, { list: "bullet" }],
+                          ["clean"],
+                        ],
+                      }}
                     />
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
-            <div className="p-10 pt-4 flex flex-col gap-4">
-              {showConfirmSave ? (
-                <button 
-                  onClick={handleSave}
-                  className="w-full py-5 bg-[#0F2843] text-white font-black rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-xs"
-                >
-                  Confirm & Save Changes
-                </button>
-              ) : (
-                <button 
-                  disabled
-                  className="w-full py-5 bg-gray-100 text-gray-400 font-bold rounded-2xl cursor-not-allowed uppercase tracking-widest text-xs"
-                >
-                  No Changes Detected
-                </button>
-              )}
+            <div className="p-8 border-t border-gray-100 dark:border-gray-800 flex gap-4">
+              <button onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 text-gray-500 font-black rounded-2xl uppercase text-[10px] tracking-widest">Cancel</button>
               <button 
-                onClick={() => setIsModalOpen(false)}
-                className="w-full py-4 bg-white text-gray-400 hover:text-gray-600 font-bold rounded-2xl transition-all text-xs uppercase tracking-widest"
+                onClick={handleSave} 
+                disabled={!showConfirmSave}
+                className="flex-[2] py-4 bg-[#0F2843] text-white font-black rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 uppercase text-[10px] tracking-widest"
               >
-                Discard
+                Save Changes
               </button>
             </div>
           </div>
