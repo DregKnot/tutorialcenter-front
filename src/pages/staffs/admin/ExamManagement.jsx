@@ -28,7 +28,8 @@ export default function ExamManagement() {
       const config = {
         headers: { 
           "Authorization": `Bearer ${token}`,
-          "Accept": "application/json"
+          "Accept": "application/json",
+          "Content-Type": "application/json"
         }
       };
 
