@@ -61,18 +61,21 @@ export default function CourseDetailModal({ isOpen, course, subjects, onClose, o
 
         {/* Content Section */}
         <div className="flex-1 overflow-y-auto p-8 sm:p-10 custom-scrollbar">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="flex flex-col lg:flex-row gap-10">
             
-            {/* Left Main Content */}
-            <div className="lg:col-span-2 space-y-10">
+            {/* Left Main Content - Description & Subjects */}
+            <div className="flex-1 min-w-0 space-y-10">
               <div className="space-y-4">
                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
                   <div className="w-1.5 h-4 bg-[#BB9E7F] rounded-full"></div>
                   Course Description
                 </h3>
-                <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
-                  {course.description || "In this course, students will receive comprehensive tutoring and preparation tailored to exceed world-class educational standards. Join thousands of successful candidates in mastering this curriculum."}
-                </p>
+                <div 
+                  className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed font-medium quill-content break-words"
+                  dangerouslySetInnerHTML={{ 
+                    __html: course.description || "In this course, students will receive comprehensive tutoring and preparation tailored to exceed world-class educational standards." 
+                  }}
+                />
               </div>
 
               <div className="space-y-6">
@@ -97,8 +100,8 @@ export default function CourseDetailModal({ isOpen, course, subjects, onClose, o
               </div>
             </div>
 
-            {/* Right Sidebar Info */}
-            <div className="space-y-8">
+            {/* Right Sidebar Info - Price & Actions */}
+            <div className="w-full lg:w-[320px] flex-shrink-0 space-y-8">
               <div className="p-8 bg-[#0F2843] rounded-[40px] text-white shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-white/10 to-transparent rounded-bl-[80px]" />
                 <BanknotesIcon className="w-10 h-10 text-[#BB9E7F] mb-4" />
