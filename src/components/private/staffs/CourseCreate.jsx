@@ -82,7 +82,12 @@ export default function CourseCreate({ isOpen, onClose, onSuccess, showToast }) 
         setBannerPreview(null);
       }, 1500);
     } catch (error) {
-      console.error("Course/Subjects Creation Error:", error);
+      console.error("Course Creation Error:", error);
+      console.log("Error Full Response:", error.response?.data);
+      if (error.response?.data?.errors) {
+        console.log("Validation Errors Detail:", error.response.data.errors);
+      }
+
       showToast({ 
         type: "error", 
         message: error.response?.data?.message || "Failed to create course." 
