@@ -95,6 +95,11 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses, sho
       }, 1500);
     } catch (error) {
       console.error("Subject Creation Error:", error);
+      console.log("Error Full Response:", error.response?.data);
+      if (error.response?.data?.errors) {
+        console.log("Validation Errors Detail:", error.response.data.errors);
+      }
+
       showToast({ 
         type: "error", 
         message: error.response?.data?.message || "Failed to create subject." 

@@ -15,7 +15,13 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
 
   const fetchCourses = useCallback(async () => {
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const config = { 
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        } 
+      };
       const res = await axios.get(`${API_BASE_URL}/api/courses`, config);
       console.log("Courses API Response:", res.data);
       setCourses(res.data?.data || res.data?.courses || []);
@@ -46,7 +52,8 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
       const config = {
         headers: { 
           Authorization: `Bearer ${token}`,
-          Accept: "application/json"
+          Accept: "application/json",
+          "Content-Type": "application/json"
         }
       };
 
@@ -58,7 +65,7 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
 
       console.log("[ExamBodyCreateModal] Submitting Payload:", payload);
       console.log("[ExamBodyCreateModal] Creating Exam Body:", `${API_BASE_URL}/api/admin/exam-bodies`);
-      const res = await axios.post(`${API_BASE_URL}/api/admin/exam-bodies/`, payload, config);
+      const res = await axios.post(`${API_BASE_URL}/api/admin/exam-bodies`, payload, config);
       console.log("[ExamBodyCreateModal] Response:", res.data);
       
       setToast({ type: "success", message: "Exam Body created successfully!" });

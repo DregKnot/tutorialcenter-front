@@ -25,7 +25,13 @@ export default function ExamYearCreateModal({
   const fetchSubjects = useCallback(async (cid) => {
     setFetchingSubjects(true);
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const config = { 
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        } 
+      };
       const res = await axios.get(`${API_BASE_URL}/api/courses/${cid}/subjects`, config);
       setSubjects(res.data?.data || res.data?.subjects || []);
     } catch (err) {
@@ -61,7 +67,8 @@ export default function ExamYearCreateModal({
       const config = {
         headers: { 
           Authorization: `Bearer ${token}`,
-          Accept: "application/json"
+          Accept: "application/json",
+          "Content-Type": "application/json"
         }
       };
 

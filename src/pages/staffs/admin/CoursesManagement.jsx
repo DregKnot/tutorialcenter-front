@@ -42,7 +42,13 @@ export default function CoursesManagement() {
   const [expandedCourseIds, setExpandedCourseIds] = useState(new Set());
 
   const token = localStorage.getItem("staff_token");
-  const config = { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } };
+  const config = { 
+    headers: { 
+      Authorization: `Bearer ${token}`, 
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    } 
+  };
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -73,7 +79,11 @@ export default function CoursesManagement() {
     console.group("Course Management: Fetch Subjects");
     try {
       const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/all`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+        headers: { 
+          Authorization: `Bearer ${token}`, 
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        }
       });
       console.log("Subjects Response:", res.data);
       const fetched = res.data?.data || res.data?.subjects || [];
