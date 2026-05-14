@@ -20,6 +20,7 @@ import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import ExamBodyCreateModal from "./ExamBodyCreateModal";
 import ExamYearCreateModal from "./ExamYearCreateModal";
+import SymbolPicker from "../../../common/SymbolPicker";
 
 export default function ExamQuestion() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -141,10 +142,10 @@ export default function ExamQuestion() {
 
         setExamYearId(String(q.exam_year_id || ""));
         setQuestionNumber(q.question_number || "");
-        setQuestionText(q.question || "");
+        setQuestionText(q.question || q.question_text || q.text || "");
         setQuestionType(q.question_type || "multiple_choice");
         setMarks(q.marks || 1);
-        setExplanation(q.explanation || "");
+        setExplanation(q.explanation || q.explanation_text || "");
 
         // Load group info
         if (q.past_question_group_id && q.group) {
@@ -263,6 +264,33 @@ export default function ExamQuestion() {
   };
 
   // Option Handlers
+  const isScienceSubject = () => {
+    const scienceKeywords = ["math", "physic", "chemist", "biolog", "science", "further maths", "geograph", "agric"];
+    const currentSubject = subjects.find(s => String(s.id) === String(subjectId));
+    const name = (currentSubject?.name || "").toLowerCase();
+    return scienceKeywords.some(key => name.includes(key));
+  };
+
+  const insertSymbol = (index, symbol) => {
+    const input = document.getElementById(`option-input-${index}`);
+    if (!input) return;
+
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const text = options[index].option_text;
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    const newText = before + symbol + after;
+
+    handleOptionChange(index, "option_text", newText);
+
+    // Reset cursor position after React re-render
+    setTimeout(() => {
+      input.focus();
+      input.setSelectionRange(start + symbol.length, start + symbol.length);
+    }, 0);
+  };
+
   const handleOptionChange = (index, field, value) => {
     const newOptions = [...options];
     if (field === "is_correct" && questionType === "multiple_choice") {
@@ -656,9 +684,10 @@ export default function ExamQuestion() {
                   <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[250px] [&_.ql-toolbar]:bg-white dark:[&_.ql-toolbar]:bg-gray-800">
                     <ReactQuill
                       theme="snow"
-                      value={groupContent}
+                      value={groupContent || ""}
                       onChange={setGroupContent}
                       placeholder="Enter the comprehension text, instructions, or scenario details here..."
+                      className="[&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!"
                       modules={{
                         toolbar: [
                           [{ header: [1, 2, 3, false] }],
@@ -804,8 +833,8 @@ export default function ExamQuestion() {
               {/* Question Text (WYSIWYG) */}
               <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-gray-700">
                 <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Text</label>
-                <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[150px]">
-                  <ReactQuill theme="snow" value={questionText} onChange={setQuestionText} placeholder="Type your question here..." />
+                <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!">
+                  <ReactQuill theme="snow" value={questionText || ""} onChange={setQuestionText} placeholder="Type your question here..." />
                 </div>
               </div>
 
@@ -834,13 +863,22 @@ export default function ExamQuestion() {
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center font-black text-[#0F2843] dark:text-white shrink-0">
                           {opt.label}
                         </div>
-                        <input 
-                          type="text"
-                          value={opt.option_text}
-                          onChange={(e) => handleOptionChange(idx, "option_text", e.target.value)}
-                          placeholder={`Option ${opt.label} text...`}
-                          className="flex-1 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-blue-500/30 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none shadow-inner"
-                        />
+                        <div className="flex-1 relative group/input">
+                          <input 
+                            id={`option-input-${idx}`}
+                            type="text"
+                            value={opt.option_text}
+                            onChange={(e) => handleOptionChange(idx, "option_text", e.target.value)}
+                            placeholder={`Option ${opt.label} text...`}
+                            className="w-full px-6 py-4 pr-12 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-blue-500/30 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none shadow-inner"
+                          />
+                          {isScienceSubject() && (
+                            <SymbolPicker 
+                              onSelect={(sym) => insertSymbol(idx, sym)} 
+                              className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-focus-within/input:opacity-100 group-hover/input:opacity-100 transition-opacity" 
+                            />
+                          )}
+                        </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <button
                             type="button"
@@ -873,8 +911,8 @@ export default function ExamQuestion() {
               {/* Explanation Section */}
               <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-gray-700">
                 <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Explanation / Answer Key</label>
-                <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[120px]">
-                  <ReactQuill theme="snow" value={explanation} onChange={setExplanation} placeholder="Explain why the answer is correct..." />
+                <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[120px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!">
+                  <ReactQuill theme="snow" value={explanation || ""} onChange={setExplanation} placeholder="Explain why the answer is correct..." />
                 </div>
               </div>
             </div>

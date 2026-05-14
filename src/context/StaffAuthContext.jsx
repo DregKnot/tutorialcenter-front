@@ -90,6 +90,7 @@ export function StaffAuthProvider({ children }) {
     window.addEventListener("keydown", handleActivity);
     window.addEventListener("touchstart", handleActivity);
 
+    /* 
     const interval = setInterval(() => {
       const lastActivity = parseInt(localStorage.getItem("staff_last_activity_at") || "0");
       const diff = Date.now() - lastActivity;
@@ -105,6 +106,7 @@ export function StaffAuthProvider({ children }) {
         setIsInactiveModalOpen(false);
       }
     }, 1000);
+    */
 
     return () => {
       window.removeEventListener("mousemove", handleActivity);
@@ -112,7 +114,7 @@ export function StaffAuthProvider({ children }) {
       window.removeEventListener("scroll", handleActivity);
       window.removeEventListener("keydown", handleActivity);
       window.removeEventListener("touchstart", handleActivity);
-      clearInterval(interval);
+      // clearInterval(interval);
     };
   }, [token, logout]);
 

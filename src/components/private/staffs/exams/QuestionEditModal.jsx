@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import SymbolPicker from "../../../common/SymbolPicker";
 
 export default function QuestionEditModal({ isOpen, onClose, question, onSuccess }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -26,13 +27,42 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
   useEffect(() => {
     if (question) {
       console.log("[QuestionEditModal] Populating with question:", question);
-      setQuestionText(question.question || "");
+      // Try multiple possible keys just in case backend format varies
+      const text = question.question || question.question_text || question.text || "";
+      setQuestionText(text);
       setQuestionType(question.question_type || "multiple_choice");
       setMarks(question.marks || 1);
       setOptions(question.options || []);
-      setExplanation(question.explanation || "");
+      setExplanation(question.explanation || question.explanation_text || "");
     }
   }, [question]);
+
+  const isScienceSubject = () => {
+    const scienceKeywords = ["math", "physic", "chemist", "biolog", "science", "further maths", "geograph", "agric"];
+    const name = (question?.subject?.name || "").toLowerCase();
+    const courseTitle = (question?.course?.title || "").toLowerCase();
+    return scienceKeywords.some(key => name.includes(key) || courseTitle.includes(key));
+  };
+
+  const insertSymbol = (index, symbol) => {
+    const input = document.getElementById(`option-input-${index}`);
+    if (!input) return;
+
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const text = options[index].option_text;
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    const newText = before + symbol + after;
+
+    handleOptionChange(index, "option_text", newText);
+
+    // Reset cursor position after React re-render
+    setTimeout(() => {
+      input.focus();
+      input.setSelectionRange(start + symbol.length, start + symbol.length);
+    }, 0);
+  };
 
   const handleOptionChange = (index, field, value) => {
     const newOptions = [...options];
@@ -61,30 +91,37 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     e.preventDefault();
     setLoading(true);
     // Strip HTML tags for clean storage
-    const stripHtml = (html) => html.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ");
+    const stripHtml = (html) => {
+      if (!html) return "";
+      return html.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ");
+    };
     const plainQuestion = stripHtml(questionText);
     const plainExplanation = stripHtml(explanation);
 
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
+      // Use FormData-like structure or clean JSON for the update
       const payload = {
+        _method: "PUT", // Laravel specific for handling PUT via POST
         exam_year_id: question.exam_year_id,
         question: plainQuestion,
         question_type: questionType,
         marks,
         explanation: plainExplanation,
-        options: options.map(o => ({
-          id: o.id,
+        status: question.status || "active",
+        // Backend deletes and recreates options, so we send them fresh without IDs
+        options: options.map((o, index) => ({
           label: o.label,
           option_text: o.option_text,
           is_correct: o.is_correct ? 1 : 0,
-          sort_order: o.sort_order
+          sort_order: o.sort_order || index + 1
         }))
       };
 
-      console.log("[QuestionEditModal] Updating Question:", `${API_BASE_URL}/api/admin/past-questions/update/${question.id}`);
-      await axios.put(`${API_BASE_URL}/api/admin/past-questions/update/${question.id}`, payload, config);
+      console.log("[QuestionEditModal] Updating Question via POST (_method=PUT):", `${API_BASE_URL}/api/admin/past-questions/update/${question.id}`);
+      await axios.post(`${API_BASE_URL}/api/admin/past-questions/update/${question.id}`, payload, config);
+      
       setToast({ type: "success", message: "Question updated successfully!" });
       setTimeout(() => {
         onSuccess?.();
@@ -93,8 +130,9 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       }, 1500);
     } catch (err) {
       console.error("Update failed:", err);
-      setToast({ type: "error", message: "Failed to update question." });
-      setTimeout(() => setToast(null), 3000);
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || "Failed to update question.";
+      setToast({ type: "error", message: errorMsg });
+      setTimeout(() => setToast(null), 5000);
     } finally {
       setLoading(false);
     }
@@ -161,7 +199,12 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
           <div className="space-y-3">
             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Text</label>
             <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-[#0F2843] dark:text-white">
-              <ReactQuill theme="snow" value={questionText} onChange={setQuestionText} className="[&_.ql-editor]:min-h-[120px] [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" />
+              <ReactQuill 
+                theme="snow" 
+                value={questionText || ""} 
+                onChange={setQuestionText} 
+                className="[&_.ql-editor]:min-h-[120px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
+              />
             </div>
           </div>
 
@@ -187,12 +230,21 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                   <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center font-black text-[#0F2843] dark:text-white shrink-0">
                     {opt.label}
                   </div>
-                  <input 
-                    type="text"
-                    value={opt.option_text}
-                    onChange={(e) => handleOptionChange(idx, "option_text", e.target.value)}
-                    className="flex-1 px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none"
-                  />
+                  <div className="flex-1 relative group/input">
+                    <input 
+                      id={`option-input-${idx}`}
+                      type="text"
+                      value={opt.option_text}
+                      onChange={(e) => handleOptionChange(idx, "option_text", e.target.value)}
+                      className="w-full px-6 py-4 pr-12 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none"
+                    />
+                    {isScienceSubject() && (
+                      <SymbolPicker 
+                        onSelect={(sym) => insertSymbol(idx, sym)} 
+                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-focus-within/input:opacity-100 group-hover/input:opacity-100 transition-opacity" 
+                      />
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <button
                       type="button"
