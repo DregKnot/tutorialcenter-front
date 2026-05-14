@@ -146,7 +146,7 @@ export default function ExamSubjectList() {
                     {subject.title || subject.name}
                   </h3>
                   <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium leading-relaxed mb-6 line-clamp-2 uppercase tracking-wide">
-                    {subject.description || "Foundational subject for the selected exam program."}
+                    {subject.description?.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") || "Foundational subject for the selected exam program."}
                   </p>
 
                   <div className="mt-auto pt-6 border-t border-gray-50 dark:border-gray-700 flex items-center justify-between">

@@ -184,7 +184,7 @@ export default function ExamManagement() {
                             className="fixed inset-0 z-30" 
                             onClick={(e) => { e.stopPropagation(); setActiveMenu(null); }}
                           ></div>
-                          <div className="absolute left-0 mt-3 w-64 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 p-3 z-40 animate-in zoom-in-95 duration-200">
+                          <div className="absolute left-0 mt-3 w-64 bg-white/20 dark:bg-gray-800/20 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-3 z-40 animate-in zoom-in-95 duration-200">
                             <button 
                               onClick={(e) => { e.stopPropagation(); navigate(`/staffs/manage-exams/edit/${exam.id}`); }}
                               className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left group/item"

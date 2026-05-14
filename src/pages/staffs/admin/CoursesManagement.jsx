@@ -12,9 +12,7 @@ import {
   ChevronLeftIcon,
   ChevronDownIcon,
   EllipsisVerticalIcon,
-  EyeIcon,
-  TrashIcon,
-  IdentificationIcon
+  TrashIcon
 } from "@heroicons/react/24/outline";
 import CourseEdit from "../../../components/private/staffs/CourseEdit.jsx";
 import DisenrolledCourses from "../../../components/private/staffs/DisenrolledCourses.jsx";
@@ -31,6 +29,7 @@ export default function CoursesManagement() {
   const [courses, setCourses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [toast, setToast] = useState(null);
+  const [activeMenu, setActiveMenu] = useState(null);
   
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -41,8 +40,6 @@ export default function CoursesManagement() {
   const [isSubjectDetailModalOpen, setIsSubjectDetailModalOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [expandedCourseIds, setExpandedCourseIds] = useState(new Set());
-  const [activeMenu, setActiveMenu] = useState(null);
-  const [activeSubjectMenu, setActiveSubjectMenu] = useState(null);
 
   const token = localStorage.getItem("staff_token");
   const config = { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } };
@@ -274,113 +271,42 @@ export default function CoursesManagement() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {courses.length > 0 ? courses.map((course) => (
-                  <div 
+                  <button 
                     key={course.id} 
-                    className="bg-white dark:bg-gray-800 rounded-[40px] h-[400px] overflow-hidden border border-gray-100 dark:border-gray-700 shadow-xl hover:shadow-2xl transition-all group relative"
+                    onClick={() => {
+                      setSelectedCourse(course);
+                      setIsDetailModalOpen(true);
+                    }}
+                    className="w-full text-left bg-white dark:bg-gray-800/50 dark:backdrop-blur-md rounded-[24px] shadow-sm border border-gray-50 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden flex flex-col"
                   >
-                    {/* Full Background Image */}
-                    <div 
-                      className="absolute inset-0 cursor-pointer" 
-                      onClick={() => {
-                        setSelectedCourse(course);
-                        setIsDetailModalOpen(true);
-                      }}
-                    >
-                      <img 
-                        src={course.banner?.startsWith('http') ? course.banner : (course.banner ? `${API_BASE_URL}/storage/${course.banner}` : "https://images.unsplash.com/photo-1579546678183-a9c101ad2f22?q=80&w=2070&auto=format&fit=crop")} 
-                        alt={course.title} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                      />
-                      {/* Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0F2843] via-[#0F2843]/40 to-transparent"></div>
-                    </div>
-
-                    {/* Top Badge: Price */}
-                    <div className="absolute top-6 right-6 z-10">
-                      <div className="bg-[#0F2843]/80 backdrop-blur-md px-4 py-2 rounded-2xl text-white text-xs font-black min-w-[44px] text-center border border-white/10 shadow-2xl">
-                        ₦{Number(course.price || 0).toLocaleString()}
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#BB9E7F]/5 to-transparent rounded-bl-[100px] opacity-0 group-hover:opacity-100 transition-all duration-500 z-10" />
+                    
+                    {course.banner && (
+                      <div className="w-full h-40 overflow-hidden bg-gray-100 dark:bg-gray-900 shrink-0">
+                        <img src={course.banner.startsWith('http') ? course.banner : `${API_BASE_URL}/storage/${course.banner}`} alt="Banner" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                      </div>
+                    )}
+                    
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="flex items-start justify-between mb-4">
+                        <span className="px-3 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[10px] font-black uppercase tracking-[0.15em] rounded-full">Course</span>
+                        <ChevronLeftIcon className="w-4 h-4 text-gray-300 rotate-180 group-hover:text-[#BB9E7F] transition-colors" />
+                      </div>
+                      
+                      <h3 className="text-xl font-black text-[#0F2843] dark:text-white leading-tight mb-2 group-hover:text-[#BB9E7F] transition-colors uppercase tracking-tight">{course.title}</h3>
+                      <p className="text-[11px] text-gray-400 font-bold mb-4 line-clamp-2">
+                        {course.description?.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") || "Comprehensive academic tutoring program."}
+                      </p>
+                      
+                      <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-700 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#76D287]"></div>
+                        <span className="text-[11px] text-gray-400 font-bold">Operational</span>
+                        <span className="ml-auto text-[11px] text-[#BB9E7F] font-black tracking-widest">₦{Number(course.price || 0).toLocaleString()}</span>
                       </div>
                     </div>
-
-                    {/* Bottom Information Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-8 z-10 pointer-events-none">
-                      <div className="mb-3">
-                        <span className="px-3 py-1 bg-white/10 backdrop-blur-md text-[#BB9E7F] text-[9px] font-black uppercase tracking-[0.2em] rounded-lg border border-white/5">
-                          Course
-                        </span>
-                      </div>
-                      <h3 className="text-3xl font-black text-white uppercase tracking-tight leading-none truncate">
-                        {course.title}
-                      </h3>
-                    </div>
-
-                    {/* Actions: Three Dot Menu */}
-                    <div className="absolute top-6 left-6 z-20">
-                      <div className="relative">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === course.id ? null : course.id); }}
-                          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                            activeMenu === course.id ? "bg-white text-[#0F2843]" : "bg-[#0F2843]/60 backdrop-blur-md text-white hover:bg-white hover:text-[#0F2843]"
-                          }`}
-                        >
-                          <EllipsisVerticalIcon className="w-6 h-6" />
-                        </button>
-
-                        {/* Dropdown Menu */}
-                        {activeMenu === course.id && (
-                          <>
-                            <div 
-                              className="fixed inset-0 z-30" 
-                              onClick={(e) => { e.stopPropagation(); setActiveMenu(null); }}
-                            ></div>
-                            <div className="absolute left-0 mt-3 w-64 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 p-3 z-40 animate-in zoom-in-95 duration-200">
-                              <button 
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  setSelectedCourse(course);
-                                  setIsDetailModalOpen(true);
-                                  setActiveMenu(null);
-                                }}
-                                className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left group/item"
-                              >
-                                <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 group-hover/item:bg-blue-500 group-hover/item:text-white transition-all">
-                                  <EyeIcon className="w-5 h-5" />
-                                </div>
-                                <span className="text-[11px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">View Details</span>
-                              </button>
-
-                              <button 
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  setSelectedCourse(course);
-                                  setActiveView("edit");
-                                  setActiveMenu(null);
-                                }}
-                                className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left group/item"
-                              >
-                                <div className="w-10 h-10 bg-[#BB9E7F]/10 rounded-xl flex items-center justify-center text-[#BB9E7F] group-hover/item:bg-[#BB9E7F] group-hover/item:text-white transition-all">
-                                  <IdentificationIcon className="w-5 h-5" />
-                                </div>
-                                <span className="text-[11px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Edit Course</span>
-                              </button>
-
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); handleDeleteCourse(course.id); setActiveMenu(null); }}
-                                className="w-full flex items-center gap-3 px-4 py-4 hover:bg-red-50 rounded-2xl transition-all text-left group/item"
-                              >
-                                <div className="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500 group-hover/item:bg-red-500 group-hover/item:text-white transition-all">
-                                  <TrashIcon className="w-5 h-5" />
-                                </div>
-                                <span className="text-[11px] font-black text-red-500 uppercase tracking-widest">Delete Course</span>
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  </button>
                 )) : (
                   <div className="col-span-full py-16 text-center bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700">
                     <BookOpenIcon className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-4" />
@@ -448,7 +374,7 @@ export default function CoursesManagement() {
                         {courseSubjects.map((subject) => (
                           <div 
                             key={subject.id} 
-                            className="bg-white dark:bg-gray-800 rounded-[32px] h-[350px] overflow-hidden border border-gray-100 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all group relative"
+                            className="bg-white dark:bg-gray-800 rounded-[32px] h-72 md:h-96 lg:h-[480px] overflow-hidden border border-gray-100 dark:border-gray-700 shadow-xl hover:shadow-2xl transition-all group relative"
                           >
                             {/* Full Background Image */}
                             <div 
@@ -459,70 +385,70 @@ export default function CoursesManagement() {
                               }}
                             >
                               <img 
-                                src={subject.banner?.startsWith('http') ? subject.banner : (subject.banner ? `${API_BASE_URL}/storage/${subject.banner}` : "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop")} 
+                                src={subject.banner ? (subject.banner.startsWith('http') ? subject.banner : `${API_BASE_URL}/storage/${subject.banner}`) : "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop"} 
                                 alt={subject.name} 
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                               />
+                              {/* Gradient Overlay */}
                               <div className="absolute inset-0 bg-gradient-to-t from-[#0F2843] via-[#0F2843]/40 to-transparent"></div>
                             </div>
 
-                            {/* Bottom Info */}
+                            {/* Bottom Information Overlay */}
                             <div className="absolute bottom-0 left-0 right-0 p-6 z-10 pointer-events-none">
                               <div className="mb-2">
                                 <span className="px-3 py-1 bg-white/10 backdrop-blur-md text-[#BB9E7F] text-[8px] font-black uppercase tracking-[0.2em] rounded-lg border border-white/5">
-                                  Subject
+                                  {course.title}
                                 </span>
                               </div>
-                              <h3 className="text-xl font-black text-white uppercase tracking-tight leading-none truncate">
+                              <h3 className="text-xl font-black text-white uppercase tracking-tight leading-none mb-2 truncate">
                                 {subject.name}
                               </h3>
+                              <p className="text-[10px] text-white/60 font-medium line-clamp-2 uppercase tracking-wide">
+                                {subject.description?.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") || "In-depth academic module."}
+                              </p>
                             </div>
 
-                            {/* Menu */}
+                            {/* Actions: Three Dot Menu */}
                             <div className="absolute top-4 left-4 z-20">
                               <div className="relative">
                                 <button 
-                                  onClick={(e) => { e.stopPropagation(); setActiveSubjectMenu(activeSubjectMenu === subject.id ? null : subject.id); }}
+                                  onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === `sub-${subject.id}` ? null : `sub-${subject.id}`); }}
                                   className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                                    activeSubjectMenu === subject.id ? "bg-white text-[#0F2843]" : "bg-[#0F2843]/60 backdrop-blur-md text-white hover:bg-white hover:text-[#0F2843]"
+                                    activeMenu === `sub-${subject.id}` ? "bg-white text-[#0F2843]" : "bg-[#0F2843]/60 backdrop-blur-md text-white hover:bg-white hover:text-[#0F2843]"
                                   }`}
                                 >
                                   <EllipsisVerticalIcon className="w-5 h-5" />
                                 </button>
 
-                                {activeSubjectMenu === subject.id && (
+                                {activeMenu === `sub-${subject.id}` && (
                                   <>
-                                    <div className="fixed inset-0 z-30" onClick={(e) => { e.stopPropagation(); setActiveSubjectMenu(null); }}></div>
-                                    <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-[28px] shadow-2xl border border-gray-100 dark:border-gray-700 p-2 z-40 animate-in zoom-in-95 duration-200">
-                                      <button 
-                                        onClick={(e) => { 
-                                          e.stopPropagation(); 
-                                          setSelectedSubject(subject);
-                                          setIsSubjectDetailModalOpen(true);
-                                          setActiveSubjectMenu(null);
-                                        }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left"
-                                      >
-                                        <EyeIcon className="w-4 h-4 text-blue-500" />
-                                        <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Details</span>
-                                      </button>
+                                    <div className="fixed inset-0 z-30" onClick={(e) => { e.stopPropagation(); setActiveMenu(null); }}></div>
+                                    <div className="absolute left-0 mt-2 w-48 bg-white/20 dark:bg-gray-800/20 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-2 z-40 animate-in zoom-in-95 duration-200">
                                       <button 
                                         onClick={(e) => { 
                                           e.stopPropagation(); 
                                           setSelectedSubject(subject);
                                           setActiveView("edit");
-                                          setActiveSubjectMenu(null);
+                                          setActiveMenu(null);
                                         }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left"
+                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all text-left group/item"
                                       >
-                                        <IdentificationIcon className="w-4 h-4 text-[#BB9E7F]" />
+                                        <div className="w-8 h-8 bg-[#BB9E7F]/10 rounded-lg flex items-center justify-center text-[#BB9E7F] group-hover/item:bg-[#BB9E7F] group-hover/item:text-white transition-all">
+                                          <PencilSquareIcon className="w-4 h-4" />
+                                        </div>
                                         <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Edit</span>
                                       </button>
                                       <button 
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteSubject(subject.id); setActiveSubjectMenu(null); }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-2xl transition-all text-left"
+                                        onClick={(e) => { 
+                                          e.stopPropagation(); 
+                                          handleDeleteSubject(subject.id);
+                                          setActiveMenu(null);
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all text-left group/item"
                                       >
-                                        <TrashIcon className="w-4 h-4 text-red-500" />
+                                        <div className="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-500 group-hover/item:bg-red-500 group-hover/item:text-white transition-all">
+                                          <TrashIcon className="w-4 h-4" />
+                                        </div>
                                         <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Delete</span>
                                       </button>
                                     </div>
