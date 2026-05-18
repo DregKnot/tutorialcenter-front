@@ -71,6 +71,48 @@ export default function useExamForm() {
   const [isExamBodyModalOpen, setIsExamBodyModalOpen] = useState(false);
   const [isExamYearModalOpen, setIsExamYearModalOpen] = useState(false);
 
+  // Batch Submission Tracking
+  const [submissionStatus, setSubmissionStatus] = useState({});
+  const [submissionErrors, setSubmissionErrors] = useState({});
+  const [isBatchSubmitting, setIsBatchSubmitting] = useState(false);
+  const [batchComplete, setBatchComplete] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
+  const [deleting, setDeleting] = useState(false);
+  const [existingQuestions, setExistingQuestions] = useState([]);
+
+  // Fetch existing questions for selected examYearId (cannot be edited, just read-only)
+  useEffect(() => {
+    if (!examYearId) {
+      setExistingQuestions([]);
+      return;
+    }
+    const fetchExistingQuestions = async () => {
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json"
+          }
+        };
+        const res = await axios.get(`${API_BASE_URL}/api/admin/past-questions/all`, config);
+        const allQuestions = res.data?.questions?.data || res.data?.data || res.data?.questions || [];
+        const filtered = allQuestions.filter(q => String(q.exam_year_id) === String(examYearId));
+        
+        // Sort by question number
+        filtered.sort((a, b) => {
+          const numA = parseInt(a.question_number || a.questionNumber, 10) || 0;
+          const numB = parseInt(b.question_number || b.questionNumber, 10) || 0;
+          return numA - numB;
+        });
+
+        setExistingQuestions(filtered);
+      } catch (err) {
+        console.error("Failed to fetch existing questions:", err);
+      }
+    };
+    fetchExistingQuestions();
+  }, [examYearId, API_BASE_URL, token]);
+
   useEffect(() => {
     if (messageToast) {
       const timer = setTimeout(() => setMessageToast(null), 4000);
@@ -481,8 +523,63 @@ export default function useExamForm() {
     setQuestions(newQuestions);
   };
 
+  // Pre-submission validation
+  const validateQuestions = () => {
+    const stripHtml = (html) => html ? html.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ").trim() : "";
+    const errors = {};
+    const unsaved = questions.filter(q => !q.isSaved);
+
+    unsaved.forEach((q, idx) => {
+      const qErrors = [];
+
+      // Question number checks
+      if (!q.questionNumber) qErrors.push("Question number is required");
+      if (q.questionNumber && isDuplicateNumber(questions.indexOf(q), q.questionNumber)) {
+        qErrors.push("Duplicate question number");
+      }
+
+      // Question text check
+      const qText = stripHtml(q.questionText);
+      if (!qText) qErrors.push("Question text is required");
+
+      // Question text vs explanation check
+      const expText = stripHtml(q.explanation);
+      if (qText && expText && qText === expText) {
+        qErrors.push("Question and explanation cannot be the same");
+      }
+
+      // MCQ option checks
+      if (q.questionType === "multiple_choice") {
+        const filledOptions = q.options.filter(o => o.option_text.trim());
+        if (filledOptions.length < 2) qErrors.push("At least 2 options are required");
+
+        const hasCorrect = q.options.some(o => o.is_correct);
+        if (!hasCorrect) qErrors.push("Mark at least one correct answer");
+
+        // Duplicate option text check
+        const optTexts = q.options.map(o => o.option_text.trim().toLowerCase()).filter(t => t);
+        const uniqueTexts = new Set(optTexts);
+        if (optTexts.length !== uniqueTexts.size) qErrors.push("Duplicate option text detected");
+      }
+
+      if (qErrors.length > 0) errors[q.tempId] = qErrors;
+    });
+
+    return { isValid: Object.keys(errors).length === 0, errors };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Run validation first
+    const { isValid, errors } = validateQuestions();
+    if (!isValid) {
+      setValidationErrors(errors);
+      setMessageToast({ type: "error", message: "Please fix the highlighted errors before submitting." });
+      return;
+    }
+    setValidationErrors({});
+
     setLoading(true);
 
     const stripHtml = (html) => html ? html.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") : "";
@@ -493,6 +590,17 @@ export default function useExamForm() {
         "Content-Type": "multipart/form-data"
       }
     };
+
+    // Determine which questions to submit
+    const unsavedQuestions = questions.filter(q => !q.isSaved);
+
+    // Initialize submission tracking
+    const initialStatus = {};
+    unsavedQuestions.forEach(q => { initialStatus[q.tempId] = 'idle'; });
+    setSubmissionStatus(initialStatus);
+    setSubmissionErrors({});
+    setIsBatchSubmitting(true);
+    setBatchComplete(false);
 
     try {
       // 1. Create or Update Group (Shared for the batch)
@@ -508,21 +616,108 @@ export default function useExamForm() {
         if (groupImage) groupFormData.append("image", groupImage);
 
         if (!currentGroupId) {
-          // Create New Group
           const groupRes = await axios.post(`${API_BASE_URL}/api/admin/past-question-groups`, groupFormData, config);
           currentGroupId = groupRes.data?.data?.id || groupRes.data?.id;
           setExistingGroupId(currentGroupId);
         } else {
-          // Update existing group
           groupFormData.append("_method", "PUT");
           await axios.post(`${API_BASE_URL}/api/admin/past-question-groups/update/${currentGroupId}`, groupFormData, config);
         }
       }
 
-      // 2. Process Questions
-      const unsavedQuestions = questions.filter(q => !q.isSaved);
-      
+      // 2. Process Questions one by one
       for (const q of unsavedQuestions) {
+        // Mark as submitting
+        setSubmissionStatus(prev => ({ ...prev, [q.tempId]: 'submitting' }));
+
+        try {
+          const questionFormData = new FormData();
+          questionFormData.append("exam_year_id", examYearId);
+          if (currentGroupId) questionFormData.append("past_question_group_id", currentGroupId);
+          questionFormData.append("question_number", q.questionNumber);
+          questionFormData.append("question", stripHtml(q.questionText));
+          questionFormData.append("question_type", q.questionType);
+          questionFormData.append("marks", q.marks);
+          questionFormData.append("explanation", stripHtml(q.explanation));
+          questionFormData.append("status", q.status);
+
+          // Options
+          q.options.forEach((opt, index) => {
+            questionFormData.append(`options[${index}][label]`, opt.label);
+            questionFormData.append(`options[${index}][option_text]`, opt.option_text);
+            questionFormData.append(`options[${index}][is_correct]`, opt.is_correct ? 1 : 0);
+            questionFormData.append(`options[${index}][sort_order]`, opt.sort_order);
+          });
+
+          // Files
+          q.files.forEach((file, index) => {
+            questionFormData.append(`files[${index}]`, file);
+            questionFormData.append(`captions[${index}]`, q.captions[index] || "");
+          });
+
+          if (isEditMode && editQuestionId) {
+            await axios.put(`${API_BASE_URL}/api/admin/past-questions/update/${editQuestionId}`, questionFormData, config);
+          } else {
+            await axios.post(`${API_BASE_URL}/api/admin/past-questions`, questionFormData, config);
+          }
+
+          // Success
+          setSubmissionStatus(prev => ({ ...prev, [q.tempId]: 'success' }));
+          setQuestions(prev => prev.map(item => item.tempId === q.tempId ? { ...item, isSaved: true } : item));
+
+        } catch (questionErr) {
+          // Categorize the error
+          const statusCode = questionErr.response?.status;
+          let errorMsg = 'Recheck your content';
+          if (statusCode === 500 || !questionErr.response) {
+            errorMsg = 'Network issue';
+          }
+          setSubmissionStatus(prev => ({ ...prev, [q.tempId]: 'failed' }));
+          setSubmissionErrors(prev => ({ ...prev, [q.tempId]: errorMsg }));
+          console.error(`[ExamQuestion] Failed Q${q.questionNumber}:`, questionErr);
+          // Continue to next question (don't stop)
+        }
+      }
+
+    } catch (err) {
+      // Group creation/update failed — mark all as failed
+      console.error("Group operation failed:", err);
+      const statusCode = err.response?.status;
+      let errorMsg = statusCode === 500 || !err.response ? 'Network issue' : 'Recheck your content';
+      unsavedQuestions.forEach(q => {
+        setSubmissionStatus(prev => ({ ...prev, [q.tempId]: 'failed' }));
+        setSubmissionErrors(prev => ({ ...prev, [q.tempId]: errorMsg }));
+      });
+    } finally {
+      setLoading(false);
+      setBatchComplete(true);
+    }
+  };
+
+  // Retry only failed questions
+  const retryFailed = async () => {
+    const failedQuestions = questions.filter(q => submissionStatus[q.tempId] === 'failed');
+    if (failedQuestions.length === 0) return;
+
+    setLoading(true);
+    setBatchComplete(false);
+
+    const stripHtml = (html) => html ? html.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") : "";
+    const config = {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "multipart/form-data"
+      }
+    };
+
+    const currentGroupId = selectedGroupId || existingGroupId;
+
+    for (const q of failedQuestions) {
+      setSubmissionStatus(prev => ({ ...prev, [q.tempId]: 'submitting' }));
+      setSubmissionErrors(prev => { const n = { ...prev }; delete n[q.tempId]; return n; });
+
+      try {
         const questionFormData = new FormData();
         questionFormData.append("exam_year_id", examYearId);
         if (currentGroupId) questionFormData.append("past_question_group_id", currentGroupId);
@@ -533,7 +728,6 @@ export default function useExamForm() {
         questionFormData.append("explanation", stripHtml(q.explanation));
         questionFormData.append("status", q.status);
 
-        // Options
         q.options.forEach((opt, index) => {
           questionFormData.append(`options[${index}][label]`, opt.label);
           questionFormData.append(`options[${index}][option_text]`, opt.option_text);
@@ -541,66 +735,85 @@ export default function useExamForm() {
           questionFormData.append(`options[${index}][sort_order]`, opt.sort_order);
         });
 
-        // Files
         q.files.forEach((file, index) => {
           questionFormData.append(`files[${index}]`, file);
           questionFormData.append(`captions[${index}]`, q.captions[index] || "");
         });
 
-        if (isEditMode && editQuestionId) {
-          console.log(`[ExamQuestion] Updating Question ${editQuestionId}`);
-          await axios.put(`${API_BASE_URL}/api/admin/past-questions/update/${editQuestionId}`, questionFormData, config);
-        } else {
-          console.log(`[ExamQuestion] Creating Question ${q.questionNumber}`);
-          await axios.post(`${API_BASE_URL}/api/admin/past-questions`, questionFormData, config);
-        }
-
-        // Mark as saved in local state
+        await axios.post(`${API_BASE_URL}/api/admin/past-questions`, questionFormData, config);
+        setSubmissionStatus(prev => ({ ...prev, [q.tempId]: 'success' }));
         setQuestions(prev => prev.map(item => item.tempId === q.tempId ? { ...item, isSaved: true } : item));
-      }
 
-      setMessageToast({ 
-        type: "success", 
-        message: isEditMode ? "Question updated successfully!" : `${unsavedQuestions.length} Question(s) processed successfully!` 
+      } catch (questionErr) {
+        const statusCode = questionErr.response?.status;
+        let errorMsg = statusCode === 500 || !questionErr.response ? 'Network issue' : 'Recheck your content';
+        setSubmissionStatus(prev => ({ ...prev, [q.tempId]: 'failed' }));
+        setSubmissionErrors(prev => ({ ...prev, [q.tempId]: errorMsg }));
+      }
+    }
+
+    setLoading(false);
+    setBatchComplete(true);
+  };
+
+  // Close the overlay and clean up
+  const closeBatchOverlay = () => {
+    setIsBatchSubmitting(false);
+    setBatchComplete(false);
+    setSubmissionStatus({});
+    setSubmissionErrors({});
+
+    // Reset to one blank question if all were saved
+    if (!isEditMode) {
+      setQuestions(prev => {
+        const stillUnsaved = prev.filter(q => !q.isSaved);
+        if (stillUnsaved.length === 0) {
+          return [{
+            tempId: Date.now(),
+            questionNumber: "",
+            questionText: "",
+            questionType: "multiple_choice",
+            marks: 1,
+            explanation: "",
+            status: "active",
+            options: [
+              { label: "A", option_text: "", is_correct: false, sort_order: 1 },
+              { label: "B", option_text: "", is_correct: false, sort_order: 2 },
+              { label: "C", option_text: "", is_correct: false, sort_order: 3 },
+              { label: "D", option_text: "", is_correct: false, sort_order: 4 },
+            ],
+            files: [],
+            captions: [],
+            isExpanded: true,
+            isSaved: false
+          }];
+        }
+        return stillUnsaved;
       });
+    }
+  };
 
-      // Clear saved questions if not in edit mode
-      if (!isEditMode) {
-        setTimeout(() => {
-          // Keep only unsaved questions (if any errors occurred) or reset if all saved
-          setQuestions(prev => {
-            const stillUnsaved = prev.filter(q => !q.isSaved);
-            if (stillUnsaved.length === 0) {
-              // Reset to one blank question if all were saved
-              return [{
-                tempId: Date.now(),
-                questionNumber: "",
-                questionText: "",
-                questionType: "multiple_choice",
-                marks: 1,
-                explanation: "",
-                status: "active",
-                options: [
-                  { label: "A", option_text: "", is_correct: false, sort_order: 1 },
-                  { label: "B", option_text: "", is_correct: false, sort_order: 2 },
-                  { label: "C", option_text: "", is_correct: false, sort_order: 3 },
-                  { label: "D", option_text: "", is_correct: false, sort_order: 4 },
-                ],
-                files: [],
-                captions: [],
-                isExpanded: true,
-                isSaved: false
-              }];
-            }
-            return stillUnsaved;
-          });
-        }, 1500);
-      }
+  // Delete question (edit mode only)
+  const handleDeleteQuestion = async () => {
+    if (!isEditMode || !editQuestionId) return;
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this question? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const res = await axios.delete(`${API_BASE_URL}/api/admin/past-questions/destroy/${editQuestionId}`, config);
+      const msg = res.data?.message || "Question deleted successfully!";
+      setMessageToast({ type: "success", message: msg });
+      setTimeout(() => navigate("/staffs/manage-exams"), 1500);
     } catch (err) {
-      console.error("Failed to submit:", err);
-      setMessageToast({ type: "error", message: err.response?.data?.message || "An error occurred during submission." });
+      console.error("Failed to delete question:", err);
+      const msg = err.response?.data?.message || "Failed to delete question.";
+      setMessageToast({ type: "error", message: msg });
     } finally {
-      setLoading(false);
+      setDeleting(false);
     }
   };
 
@@ -664,6 +877,20 @@ export default function useExamForm() {
     removeFile,
     handleCaptionChange,
     handleSubmit,
-    fetchGroupDetails
+    fetchGroupDetails,
+    // Batch submission overlay
+    submissionStatus,
+    submissionErrors,
+    isBatchSubmitting,
+    batchComplete,
+    validationErrors,
+    retryFailed,
+    closeBatchOverlay,
+    // Delete question (edit mode)
+    handleDeleteQuestion,
+    deleting,
+    editQuestionId,
+    existingQuestions,
+    setExistingQuestions
   };
 }

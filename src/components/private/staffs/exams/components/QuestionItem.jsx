@@ -12,6 +12,142 @@ import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import SymbolPicker from "../../../../common/SymbolPicker";
 
+const superscriptMap = {
+  '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+  '+': '⁺', '-': '⁻', '=': '⁼', '(': '⁽', ')': '⁾', 'n': 'ⁿ', 'i': 'ⁱ', 'x': 'ˣ', 'y': 'ʸ', 'a': 'ᵃ', 'b': 'ᵇ',
+  'c': 'ᶜ', 'd': 'ᵈ', 'e': 'ᵉ', 'f': 'ᶠ', 'g': 'ᵍ', 'h': 'ʰ', 'j': 'ʲ', 'k': 'ᵏ', 'l': 'ˡ', 'm': 'ᵐ', 'o': 'ᵒ',
+  'p': 'ᵖ', 'r': 'ʳ', 's': 'ˢ', 't': 'ᵗ', 'u': 'ᵘ', 'v': 'ᵛ', 'w': 'ʷ', 'z': 'ᶻ',
+  'A': 'ᴬ', 'B': 'ᴮ', 'D': 'ᴰ', 'E': 'ᴱ', 'G': 'ᴳ', 'H': 'ᴴ', 'I': 'ᴵ', 'J': 'ᴶ', 'K': 'ᴲ', 'L': 'ᴸ', 'M': 'ᴹ',
+  'N': 'ᴺ', 'O': 'ᴼ', 'P': 'ᴾ', 'R': 'ᴿ', 'T': 'ᵀ', 'U': 'ᵁ', 'V': 'ⱽ', 'W': 'ᵂ'
+};
+
+const subscriptMap = {
+  '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+  '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎', 'x': 'ₓ', 'y': 'ᵧ', 'a': 'ₐ', 'e': 'ₑ', 'h': 'ₕ',
+  'i': 'ᵢ', 'j': 'ⱼ', 'k': 'ₖ', 'l': 'ₗ', 'm': 'ₘ', 'n': 'ₙ', 'o': 'ₒ', 'p': 'ₚ', 'r': 'ᵣ', 's': 'ₛ',
+  't': 'ₜ', 'u': 'ᵤ', 'v': 'ᵥ'
+};
+
+const makeUnicodeFraction = (num, den) => {
+  const commonFractions = {
+    '1/2': '½', '1/3': '⅓', '2/3': '⅔', '1/4': '¼', '3/4': '¾',
+    '1/5': '⅕', '2/5': '⅖', '3/5': '⅗', '4/5': '⅘', '1/6': '⅙',
+    '5/6': '⅚', '1/7': '⅐', '1/8': '⅛', '3/8': '⅜', '5/8': '⅝',
+    '7/8': '⅞', '1/9': '⅑', '1/10': '⅒'
+  };
+
+  const key = `${num}/${den}`;
+  if (commonFractions[key]) {
+    return commonFractions[key];
+  }
+
+  // Convert to high-fidelity unicode fraction using superscripts and fractional slash
+  const convertedNum = num.split('').map(char => superscriptMap[char] || char).join('');
+  const convertedDen = den.split('').map(char => subscriptMap[char] || char).join('');
+  return `${convertedNum}⁄${convertedDen}`;
+};
+
+const transformTextContent = (text) => {
+  if (!text) return text;
+  let result = text;
+
+  // 1. Convert LaTeX Fractions \frac{num}{den} and \frac12
+  result = result.replace(/\\frac\s*\{([^}]+)\}\s*\{([^}]+)\}/g, (match, num, den) => {
+    return makeUnicodeFraction(num.trim(), den.trim());
+  });
+  result = result.replace(/\\frac\s*([a-zA-Z0-9])\s*([a-zA-Z0-9])/g, (match, num, den) => {
+    return makeUnicodeFraction(num.trim(), den.trim());
+  });
+
+  // 2. Strip LaTeX text unit formatting wraps like \text{ m} or \mathrm{ m}
+  result = result.replace(/\\(text|mathrm)\s*\{([^}]+)\}/g, '$2');
+
+  // 2. Common LaTeX/scientific symbols mapping
+  const latexMap = {
+    '\\^\\\\circ': '°',
+    '\\^\\{?\\\\circ\\}?': '°',
+    '\\\\circ': '°',
+    '\\\\degree': '°',
+    '\\\\pi': 'π',
+    '\\\\theta': 'θ',
+    '\\\\alpha': 'α',
+    '\\\\beta': 'β',
+    '\\\\gamma': 'γ',
+    '\\\\delta': 'δ',
+    '\\\\epsilon': 'ε',
+    '\\\\lambda': 'λ',
+    '\\\\mu': 'μ',
+    '\\\\rho': 'ρ',
+    '\\\\sigma': 'σ',
+    '\\\\tau': 'τ',
+    '\\\\omega': 'ω',
+    '\\\\Delta': 'Δ',
+    '\\\\Omega': 'Ω',
+    '\\\\infty': '∞',
+    '\\\\pm': '±',
+    '\\\\div': '÷',
+    '\\\\times': '×',
+    '\\\\approx': '≈',
+    '\\\\neq': '≠',
+    '\\\\leq': '≤',
+    '\\\\geq': '≥',
+    '\\\\sqrt': '√',
+    '\\\\to': '→',
+    '\\\\rightarrow': '→',
+    '\\\\Leftarrow': '⇐',
+    '\\\\Rightarrow': '⇒',
+    '\\\\leftrightarrow': '↔'
+  };
+
+  // Replace standard LaTeX math commands
+  Object.entries(latexMap).forEach(([pattern, unicode]) => {
+    const regex = new RegExp(pattern, 'g');
+    result = result.replace(regex, unicode);
+  });
+
+  // Superscripts replacement: ^2 or ^{2}
+  result = result.replace(/\^\{?([0-9+\-()nixyab])\}?/g, (match, p1) => {
+    return superscriptMap[p1] || match;
+  });
+
+  // Subscripts replacement: _2 or _{2}
+  result = result.replace(/_\{?([0-9+\-()xy])\}?/g, (match, p1) => {
+    return subscriptMap[p1] || match;
+  });
+
+  // Strip LaTeX math wrapper dollars $...$ but preserve contents
+  result = result.replace(/\$([^$]+)\$/g, '$1');
+
+  return result;
+};
+
+const transformSymbols = (html) => {
+  if (!html) return html;
+  if (typeof DOMParser === 'undefined') return html;
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    const walk = (node) => {
+      const TEXT_NODE = 3;
+      if (node.nodeType === TEXT_NODE) {
+        node.nodeValue = transformTextContent(node.nodeValue);
+      } else {
+        for (let child = node.firstChild; child; child = child.nextSibling) {
+          walk(child);
+        }
+      }
+    };
+
+    walk(doc.body);
+    return doc.body.innerHTML;
+  } catch (e) {
+    console.warn("Symbol parser failed, falling back to raw html", e);
+    return html;
+  }
+};
+
 export default function QuestionItem({
   q,
   qIdx,
@@ -28,7 +164,8 @@ export default function QuestionItem({
   handleOptionChange,
   removeOption,
   isScienceSubject,
-  insertSymbol
+  insertSymbol,
+  validationErrors = []
 }) {
   // Helper to strip HTML for summary
   const stripHtml = (html) => html ? html.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") : "";
@@ -39,7 +176,7 @@ export default function QuestionItem({
       {/* Question Header / Toggle */}
       <div 
         onClick={() => toggleExpand(qIdx)}
-        className={`p-6 md:p-10 flex items-center justify-between cursor-pointer transition-all ${q.isExpanded ? 'bg-gray-50/80 dark:bg-gray-900/40' : 'hover:bg-gray-50 dark:hover:bg-gray-900/20'}`}
+        className={`p-6 md:p-10 flex items-center justify-between cursor-pointer transition-all ${validationErrors.length > 0 ? 'bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500' : q.isExpanded ? 'bg-gray-50/80 dark:bg-gray-900/40' : 'hover:bg-gray-50 dark:hover:bg-gray-900/20'}`}
       >
         <div className="flex items-center gap-6 flex-1 overflow-hidden">
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black shrink-0 ${q.isExpanded ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-[#0F2843] dark:text-white'}`}>
@@ -79,6 +216,18 @@ export default function QuestionItem({
       {/* Question Form Content */}
       {q.isExpanded && (
         <div className="p-8 md:p-12 space-y-10 animate-in slide-in-from-top-4 duration-300 bg-white dark:bg-gray-800">
+          {/* Validation Errors Banner */}
+          {validationErrors.length > 0 && (
+            <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500/20 rounded-2xl p-5 space-y-2 animate-in shake-x duration-300">
+              <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Fix the following issues:</p>
+              {validationErrors.map((err, i) => (
+                <p key={i} className="text-red-500 text-xs font-bold flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full shrink-0" />
+                  {err}
+                </p>
+              ))}
+            </div>
+          )}
           {/* Question Header: Number & Type & Marks */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-3">
@@ -174,7 +323,21 @@ export default function QuestionItem({
           <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-gray-700">
             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Text</label>
             <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!">
-              <ReactQuill theme="snow" value={q.questionText} onChange={(val) => updateQuestionField(qIdx, "questionText", val)} placeholder="Type your question here..." />
+              <ReactQuill 
+                theme="snow" 
+                value={q.questionText} 
+                onChange={(val) => {
+                  if (val && (val.includes('$') || val.includes('\\') || val.includes('&') || val.includes('^') || val.includes('_'))) {
+                    const transformed = transformSymbols(val);
+                    if (transformed !== val) {
+                      updateQuestionField(qIdx, "questionText", transformed);
+                      return;
+                    }
+                  }
+                  updateQuestionField(qIdx, "questionText", val);
+                }} 
+                placeholder="Type your question here..." 
+              />
             </div>
           </div>
 
@@ -208,7 +371,17 @@ export default function QuestionItem({
                         id={`option-input-${qIdx}-${optIdx}`}
                         type="text"
                         value={opt.option_text}
-                        onChange={(e) => handleOptionChange(qIdx, optIdx, "option_text", e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val && (val.includes('$') || val.includes('\\') || val.includes('&') || val.includes('^') || val.includes('_'))) {
+                            const transformed = transformTextContent(val);
+                            if (transformed !== val) {
+                              handleOptionChange(qIdx, optIdx, "option_text", transformed);
+                              return;
+                            }
+                          }
+                          handleOptionChange(qIdx, optIdx, "option_text", val);
+                        }}
                         placeholder={`Option ${opt.label} text...`}
                         className="w-full px-6 py-4 pr-12 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-blue-500/30 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none shadow-inner"
                       />
@@ -252,7 +425,21 @@ export default function QuestionItem({
           <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-gray-700">
             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Explanation / Answer Key</label>
             <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[120px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!">
-              <ReactQuill theme="snow" value={q.explanation} onChange={(val) => updateQuestionField(qIdx, "explanation", val)} placeholder="Explain why the answer is correct..." />
+              <ReactQuill 
+                theme="snow" 
+                value={q.explanation} 
+                onChange={(val) => {
+                  if (val && (val.includes('$') || val.includes('\\') || val.includes('&') || val.includes('^') || val.includes('_'))) {
+                    const transformed = transformSymbols(val);
+                    if (transformed !== val) {
+                      updateQuestionField(qIdx, "explanation", transformed);
+                      return;
+                    }
+                  }
+                  updateQuestionField(qIdx, "explanation", val);
+                }} 
+                placeholder="Explain why the answer is correct..." 
+              />
             </div>
           </div>
         </div>

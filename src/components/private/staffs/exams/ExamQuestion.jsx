@@ -6,12 +6,14 @@ import {
   DocumentTextIcon,
   ArrowLeftIcon,
   CheckCircleIcon,
-  XMarkIcon
+  XMarkIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import ExamBodyCreateModal from './ExamBodyCreateModal';
 import ExamYearCreateModal from './ExamYearCreateModal';
 import ExamGroupSection from './components/ExamGroupSection';
 import QuestionItem from './components/QuestionItem';
+import BatchSubmissionOverlay from './components/BatchSubmissionOverlay';
 import useExamForm from './components/useExamForm';
 
 export default function ExamQuestion() {
@@ -60,7 +62,19 @@ export default function ExamQuestion() {
     removeFile,
     handleCaptionChange,
     handleSubmit,
-    fetchGroupDetails
+    fetchGroupDetails,
+    // Batch submission overlay
+    submissionStatus,
+    submissionErrors,
+    isBatchSubmitting,
+    batchComplete,
+    validationErrors,
+    retryFailed,
+    closeBatchOverlay,
+    // Delete question (edit mode)
+    handleDeleteQuestion,
+    deleting,
+    existingQuestions
   } = useExamForm();
 
   return (
@@ -238,6 +252,91 @@ export default function ExamQuestion() {
 
           {/* 3. Questions Batch & Footer - Blurred during group creation */}
           <div className={`transition-all duration-500 ${isGroupCreationMode ? "blur-[8px] pointer-events-none opacity-30 select-none scale-[0.98]" : ""}`}>
+            
+            {/* Existing Questions Read-Only Panel (Preceding the Question Batch) */}
+            {existingQuestions.length > 0 && (
+              <div className="pt-8 border-t border-gray-100 dark:border-gray-700 px-8 md:px-12 mb-12">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 bg-emerald-500/10 rounded-[24px] flex items-center justify-center text-emerald-500">
+                      <CheckCircleIcon className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-[#0F2843] dark:text-white uppercase tracking-tight">Existing Questions ({existingQuestions.length})</h3>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Questions already created for this course</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar border border-gray-100 dark:border-gray-700/50 p-6 rounded-[32px] bg-gray-50/20 dark:bg-gray-900/10">
+                  {existingQuestions.map((eq, eqIdx) => (
+                    <div 
+                      key={eq.id || eqIdx} 
+                      className="p-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 flex flex-col gap-4 relative group hover:border-[#BB9E7F]/30 transition-all duration-300 shadow-sm"
+                    >
+                      {/* Badge / Number */}
+                      <div className="flex items-center justify-between">
+                        <span className="px-4 py-1.5 bg-[#0F2843] text-[#BB9E7F] text-[10px] font-black rounded-full uppercase tracking-widest">
+                          Question {eq.question_number || eq.questionNumber || (eqIdx + 1)}
+                        </span>
+                        {eq.marks && (
+                          <span className="text-[10px] text-gray-400 font-black uppercase tracking-wider">
+                            {eq.marks} Mark{eq.marks > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Question Text */}
+                      <div className="text-[#0F2843] dark:text-gray-100 text-sm font-bold leading-relaxed whitespace-pre-wrap">
+                        <div dangerouslySetInnerHTML={{ __html: eq.question || eq.question_text || eq.text || "" }} />
+                      </div>
+
+                      {/* Options List */}
+                      {eq.options && eq.options.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                          {eq.options.map((opt, oIdx) => (
+                            <div 
+                              key={opt.id || oIdx}
+                              className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${
+                                opt.is_correct || opt.is_correct === 1 || opt.is_correct === "1"
+                                  ? "bg-green-50/30 border-green-500/30 text-green-700 dark:text-green-400"
+                                  : "bg-white/40 border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center ${
+                                  opt.is_correct || opt.is_correct === 1 || opt.is_correct === "1"
+                                    ? "bg-green-500 text-white shadow-md shadow-green-500/20"
+                                    : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+                                }`}>
+                                  {opt.label || String.fromCharCode(65 + oIdx)}
+                                </span>
+                                <span className="text-xs font-bold">{opt.option_text || opt.text}</span>
+                              </div>
+                              {(opt.is_correct || opt.is_correct === 1 || opt.is_correct === "1") && (
+                                <CheckCircleIcon className="w-5 h-5 text-green-500 shrink-0" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Explanation */}
+                      {(eq.explanation || eq.explanation_text) && (
+                        <div className="mt-3 p-4 bg-[#BB9E7F]/5 rounded-2xl border border-[#BB9E7F]/10">
+                          <span className="text-[10px] font-black text-[#BB9E7F] uppercase tracking-wider block mb-1">Explanation</span>
+                          <div 
+                            className="text-xs text-gray-600 dark:text-gray-300 font-bold leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: eq.explanation || eq.explanation_text || "" }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Questions Batch Section */}
             <div className="pt-8 border-t border-gray-100 dark:border-gray-700">
               <div className="flex items-center justify-between mb-12 px-8 md:px-12">
@@ -282,6 +381,7 @@ export default function ExamQuestion() {
                     removeOption={removeOption}
                     isScienceSubject={isScienceSubject}
                     insertSymbol={insertSymbol}
+                    validationErrors={validationErrors[q.tempId] || []}
                   />
                 ))}
               </div>
@@ -305,6 +405,29 @@ export default function ExamQuestion() {
               </button>
             </div>
           </div>
+
+          {/* Danger Zone - Edit Mode Only */}
+          {isEditMode && (
+            <div className="p-8 md:p-12 border-t border-red-100 dark:border-red-900/30">
+              <div className="bg-red-50 dark:bg-red-900/10 rounded-[32px] p-8 border-2 border-red-100 dark:border-red-900/20">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                  <div>
+                    <h3 className="text-sm font-black text-red-500 uppercase tracking-widest">Danger Zone</h3>
+                    <p className="text-xs text-gray-400 font-bold mt-1">Permanently delete this question and all its options, attachments, and data.</p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={handleDeleteQuestion}
+                    disabled={deleting}
+                    className="px-8 py-4 bg-red-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-red-600 active:scale-[0.97] transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-red-500/20 shrink-0"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                    {deleting ? "Deleting..." : "Delete Question"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </form>
       </div>
 
@@ -323,6 +446,17 @@ export default function ExamQuestion() {
         examBodies={examBodies}
         courseId={courseId}
         selectedExamBodyId={examBodyId}
+      />
+
+      {/* Batch Submission Overlay */}
+      <BatchSubmissionOverlay
+        questions={questions}
+        submissionStatus={submissionStatus}
+        submissionErrors={submissionErrors}
+        isBatchSubmitting={isBatchSubmitting}
+        batchComplete={batchComplete}
+        onClose={closeBatchOverlay}
+        onRetryFailed={retryFailed}
       />
     </StaffDashboardLayout>
   );
