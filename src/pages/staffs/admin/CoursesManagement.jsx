@@ -384,7 +384,7 @@ export default function CoursesManagement() {
                         {courseSubjects.map((subject) => (
                           <div 
                             key={subject.id} 
-                            className="bg-white dark:bg-gray-800 rounded-[32px] h-72 md:h-96 lg:h-[480px] overflow-hidden border border-gray-100 dark:border-gray-700 shadow-xl hover:shadow-2xl transition-all group relative"
+                            className="bg-white dark:bg-gray-800 rounded-[32px] h-72 md:h-88 lg:h-[400px] overflow-hidden border border-gray-100 dark:border-gray-700 shadow-xl hover:shadow-2xl transition-all group relative"
                           >
                             {/* Full Background Image */}
                             <div 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
@@ -23,6 +23,15 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses, sho
   const [banner, setBanner] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [localToast, setLocalToast] = useState(null);
+
+  // Auto-dismiss local toast
+  useEffect(() => {
+    if (localToast) {
+      const timer = setTimeout(() => setLocalToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [localToast]);
 
   const handleBannerChange = (e) => {
     const file = e.target.files[0];
@@ -81,7 +90,7 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses, sho
       const res = await axios.post(`${API_BASE_URL}/api/admin/subjects`, formData, config);
       console.log("Subject Creation Response:", res?.data);
       
-      showToast({ type: "success", message: "Subject created successfully!" });
+      setLocalToast({ type: "success", message: "Subject created successfully!" });
       setTimeout(() => {
         onSuccess?.();
         onClose?.();
@@ -96,13 +105,29 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses, sho
     } catch (error) {
       console.error("Subject Creation Error:", error);
       console.log("Error Full Response:", error.response?.data);
-      if (error.response?.data?.errors) {
-        console.log("Validation Errors Detail:", error.response.data.errors);
+      
+      let errorMessage = "Failed to create subject.";
+      
+      if (error.response?.data) {
+        const data = error.response.data;
+        // 1. Check for specific validation errors
+        if (data.errors) {
+          const messages = Object.values(data.errors).flat();
+          if (messages.length > 0) errorMessage = messages[0];
+        } 
+        // 2. Check for explicit error message
+        else if (data.error) {
+          errorMessage = data.error;
+        }
+        // 3. Check for standard message
+        else if (data.message) {
+          errorMessage = data.message;
+        }
       }
 
-      showToast({ 
+      setLocalToast({ 
         type: "error", 
-        message: error.response?.data?.message || "Failed to create subject." 
+        message: errorMessage 
       });
     } finally {
       setLoading(false);
@@ -118,6 +143,16 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses, sho
       
       <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-[48px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
         
+        {/* Local Toast - High Z-Index to stay on top of the modal content */}
+        {localToast && (
+          <div className={`fixed top-10 left-1/2 -translate-x-1/2 z-[160] px-8 py-4 rounded-2xl shadow-2xl text-white font-bold flex items-center gap-3 animate-in slide-in-from-top-10 transition-all ${
+            localToast.type === "success" ? "bg-[#76D287]" : "bg-[#E83831]"
+          }`}>
+            {localToast.type === "success" ? <CheckIcon className="w-5 h-5" /> : <XMarkIcon className="w-5 h-5" />}
+            {localToast.message}
+          </div>
+        )}
+
         {/* Header */}
         <div className="p-8 sm:p-10 flex justify-between items-center bg-[#0F2843] text-white">
           <div className="flex items-center gap-5">

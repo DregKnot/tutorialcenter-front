@@ -24,6 +24,15 @@ export default function CourseEdit({ mode = "courses", showToast }) {
   const [banner, setBanner] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
   const [showConfirmSave, setShowConfirmSave] = useState(false);
+  const [localToast, setLocalToast] = useState(null);
+
+  // Auto-dismiss local toast
+  useEffect(() => {
+    if (localToast) {
+      const timer = setTimeout(() => setLocalToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [localToast]);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
@@ -165,13 +174,27 @@ export default function CourseEdit({ mode = "courses", showToast }) {
       // Use POST with _method=PUT for FormData support
       await axios.post(url, payload, { headers });
       
-      showToast({ type: "success", message: `${editingItem.type === "course" ? "Course" : "Subject"} updated!` });
-      setIsModalOpen(false);
-      setShowConfirmSave(false);
-      fetchData();
+      setLocalToast({ type: "success", message: `${editingItem.type === "course" ? "Course" : "Subject"} updated!` });
+      setTimeout(() => {
+        setIsModalOpen(false);
+        setShowConfirmSave(false);
+        fetchData();
+      }, 1500);
     } catch (error) {
       console.error("Update Error:", error);
-      showToast({ type: "error", message: "Failed to update." });
+      
+      let errorMessage = "Failed to update.";
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (data.errors) {
+          errorMessage = Object.values(data.errors).flat()[0] || errorMessage;
+        } else if (data.error) {
+          errorMessage = data.error;
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      }
+      setLocalToast({ type: "error", message: errorMessage });
     } finally {
       console.groupEnd();
     }
@@ -186,11 +209,11 @@ export default function CourseEdit({ mode = "courses", showToast }) {
     
     try {
       await axios.delete(url, config);
-      showToast({ type: "success", message: `${type === "course" ? "Course" : "Subject"} deleted.` });
+      setLocalToast({ type: "success", message: `${type === "course" ? "Course" : "Subject"} deleted.` });
       fetchData();
     } catch (error) {
       console.error("Delete Error:", error);
-      showToast({ type: "error", message: "Failed to delete." });
+      setLocalToast({ type: "error", message: "Failed to delete." });
     } finally {
       console.groupEnd();
     }
@@ -211,6 +234,15 @@ export default function CourseEdit({ mode = "courses", showToast }) {
 
   return (
     <div className="space-y-4">
+      {/* Global Toast for deletions (since they happen in the list, not the modal) */}
+      {localToast && !isModalOpen && (
+        <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[200] px-6 py-4 rounded-2xl shadow-2xl text-white font-bold flex items-center gap-3 animate-in slide-in-from-top-10 transition-all ${
+          localToast.type === "success" ? "bg-[#76D287]" : "bg-[#E83831]"
+        }`}>
+          {localToast.type === "success" ? <CheckIcon className="w-5 h-5" /> : <XMarkIcon className="w-5 h-5" />}
+          {localToast.message}
+        </div>
+      )}
       {/* ===== COURSES MODE ===== */}
       {mode === "courses" && (
         <>
@@ -297,6 +329,16 @@ export default function CourseEdit({ mode = "courses", showToast }) {
           <div className="absolute inset-0" onClick={() => setIsModalOpen(false)} />
           <div className="bg-white dark:bg-gray-900 w-full max-w-2xl max-h-[90vh] rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
             
+            {/* Modal Specific Toast */}
+            {localToast && isModalOpen && (
+              <div className={`fixed top-10 left-1/2 -translate-x-1/2 z-[210] px-8 py-4 rounded-2xl shadow-2xl text-white font-bold flex items-center gap-3 animate-in slide-in-from-top-10 transition-all ${
+                localToast.type === "success" ? "bg-[#76D287]" : "bg-[#E83831]"
+              }`}>
+                {localToast.type === "success" ? <CheckIcon className="w-5 h-5" /> : <XMarkIcon className="w-5 h-5" />}
+                {localToast.message}
+              </div>
+            )}
+
             {/* Modal Header */}
             <div className="p-8 flex justify-between items-center bg-[#0F2843] text-white">
               <div className="flex items-center gap-4">
