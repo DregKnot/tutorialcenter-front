@@ -7,7 +7,7 @@ import {
   MoonIcon,
 } from "@heroicons/react/24/outline";
 
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { useAuth } from "../../../context/AuthContext";
 import { useTheme } from "../../../context/ThemeContext";
@@ -100,12 +100,14 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
       >
         {/* Logo */}
         <div className="relative flex items-center justify-center p-3 lg:p-6 mt-1 mb-1 overflow-visible flex-shrink-0">
-          <img
-            src={collapsed ? collapselogo : logo}
-            alt="TC Logo"
-            className={`transition-all duration-300 object-contain ${collapsed ? "w-10 h-10" : "w-28 md:w-32 lg:w-40 h-auto"
-              }`}
-          />
+          <Link to="/student/dashboard">
+            <img
+              src={collapsed ? collapselogo : logo}
+              alt="TC Logo"
+              className={`transition-all duration-300 object-contain ${collapsed ? "w-10 h-10" : "w-28 md:w-32 lg:w-40 h-auto"
+                }`}
+            />
+          </Link>
 
           <button
             onClick={() => {
@@ -185,38 +187,54 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
                     </div>
                   );
                 }
+                {/* Menu */ }
+                <nav className="px-0.5 md:px-2 lg:px-3 space-y-1 md:space-y-1.5 lg:space-y-2 mt-2 md:mt-3 lg:mt-6 flex flex-col">
+                  {menuItems.map(({ label, icon, destination }) => {
+                    if (!destination) {
+                      return (
+                        <div
+                          key={label}
+                          className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 py-1.5 md:py-2 lg:py-2.5"
+                            }`}
+                        >
+                          <Icon icon={icon} className="w-5 h-5 flex-shrink-0" />
+                          {!collapsed && <span>{label}</span>}
+                        </div>
+                      );
+                    }
 
-                return (
-                  <NavLink
-                    key={label}
-                    to={destination}
-                    className={({ isActive }) => `
+                    return (
+                      <NavLink
+                        key={label}
+                        to={destination}
+                        className={({ isActive }) => `
                     w-full flex items-center rounded-lg
                     text-xs md:text-sm font-medium transition duration-200
                     ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 lg:px-3 py-1.5 md:py-2 lg:py-2.5"}
                     ${isActive
-                        ? "bg-[#09314F] text-white shadow-md"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-gray-800"
-                      }
+                    ${isActive
+                          ? "bg-[#09314F] text-white shadow-md"
+                          : "text-slate-600 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-gray-800"
+                        }
                   `}
-                  >
-                    <Icon icon={icon} className="w-5 h-5 flex-shrink-0" />
-                    {!collapsed && <span className="truncate">{label}</span>}
-                  </NavLink>
-                );
-              })}
-            </nav>
+                    >
+                      <Icon icon={icon} className="w-5 h-5 flex-shrink-0" />
+                      {!collapsed && <span className="truncate">{label}</span>}
+                    </NavLink>
+                  );
+                })}
+              </nav>
 
             {/* Mobile Footer */}
             <div className="p-1 md:p-2 lg:p-3 pt-1 md:pt-2 lg:pt-3 pb-20 space-y-3 md:space-y-3 lg:space-y-5 mt-auto lg:hidden border-t border-gray-100 dark:border-gray-800">
               {/* Theme Toggle (Mobile) */}
-              <div className={`flex items-center gap-1 ${collapsed ? "justify-center" : "justify-between px-2"}`}>
+              <div className={`flex items - center gap - 1 ${ collapsed ? "justify-center" : "justify-between px-2" } `}>
                 {!collapsed && <span className="text-xs text-gray-500">Light</span>}
                 <button
                   onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                  className={`relative w-12 h-6 rounded-full transition-all duration-300 ${theme === "dark" ? "bg-blue-900" : "bg-gray-300"}`}
+                  className={`relative w - 12 h - 6 rounded - full transition - all duration - 300 ${ theme === "dark" ? "bg-blue-900" : "bg-gray-300" } `}
                 >
-                  <span className={`absolute top-1 w-4 h-4 rounded-full shadow transition-all duration-300 flex items-center justify-center ${theme === "dark" ? "right-1 bg-gray-800" : "left-1 bg-white"}`}>
+                  <span className={`absolute top - 1 w - 4 h - 4 rounded - full shadow transition - all duration - 300 flex items - center justify - center ${ theme === "dark" ? "right-1 bg-gray-800" : "left-1 bg-white" } `}>
                     {theme === "light" ? <SunIcon className="w-3 h-3 text-yellow-500" /> : <MoonIcon className="w-3 h-3 text-blue-300" />}
                   </span>
                 </button>
@@ -230,13 +248,13 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
 
             {/* Desktop Footer (Now inside scroll area to prevent overlap) */}
             <div className="hidden lg:block p-3 pt-3 space-y-3 mt-auto">
-              <div className={`flex items-center gap-1 ${collapsed ? "justify-center" : "justify-between px-2"}`}>
+              <div className={`flex items - center gap - 1 ${ collapsed ? "justify-center" : "justify-between px-2" } `}>
                 {!collapsed && <span className="text-xs text-gray-500">Light</span>}
                 <button
                   onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                  className={`relative w-12 h-6 rounded-full transition-all duration-300 ${theme === "dark" ? "bg-blue-900" : "bg-gray-300"}`}
+                  className={`relative w - 12 h - 6 rounded - full transition - all duration - 300 ${ theme === "dark" ? "bg-blue-900" : "bg-gray-300" } `}
                 >
-                  <span className={`absolute top-1 w-4 h-4 rounded-full shadow transition-all duration-300 flex items-center justify-center ${theme === "dark" ? "right-1 bg-gray-800" : "left-1 bg-white"}`}>
+                  <span className={`absolute top - 1 w - 4 h - 4 rounded - full shadow transition - all duration - 300 flex items - center justify - center ${ theme === "dark" ? "right-1 bg-gray-800" : "left-1 bg-white" } `}>
                     {theme === "light" ? <SunIcon className="w-3 h-3 text-yellow-500" /> : <MoonIcon className="w-3 h-3 text-blue-300" />}
                   </span>
                 </button>
