@@ -37,6 +37,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem("student_info", JSON.stringify(studentData));
     localStorage.setItem("studentdata", JSON.stringify({ data: studentData }));
     localStorage.setItem("last_activity_at", Date.now().toString());
+    localStorage.setItem("student_left_collapsed", "false");
 
     setToken(token);
     setStudent(studentData);

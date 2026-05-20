@@ -21,8 +21,24 @@ export default function StaffDashboardLayout({
   backLabel = "Back"
 }) {
   const navigate = useNavigate();
-  const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [leftCollapsed, setLeftCollapsed] = useState(() => {
+    const saved = localStorage.getItem("staff_left_collapsed");
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+  const [rightCollapsed, setRightCollapsed] = useState(() => {
+    const saved = localStorage.getItem("staff_right_collapsed");
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+
+  const handleSetLeftCollapsed = (val) => {
+    setLeftCollapsed(val);
+    localStorage.setItem("staff_left_collapsed", JSON.stringify(val));
+  };
+
+  const handleSetRightCollapsed = (val) => {
+    setRightCollapsed(val);
+    localStorage.setItem("staff_right_collapsed", JSON.stringify(val));
+  };
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -80,11 +96,11 @@ export default function StaffDashboardLayout({
 
       {/* ===== DESKTOP LAYOUT ===== */}
       <div className="hidden lg:block">
-        <Sidebar collapsed={leftCollapsed} setCollapsed={setLeftCollapsed} />
+        <Sidebar collapsed={leftCollapsed} setCollapsed={handleSetLeftCollapsed} />
 
         <RightPanelToRender
           collapsed={rightCollapsed}
-          setCollapsed={setRightCollapsed}
+          setCollapsed={handleSetRightCollapsed}
         />
 
         <main

@@ -30,10 +30,11 @@ export default function ExamYearList() {
       console.log("[ExamYearList] Fetching Courses:", `${API_BASE_URL}/api/courses`);
       console.log("[ExamYearList] Fetching Exam Years:", `${API_BASE_URL}/api/admin/exam-years/all`);
       
-      const [bodiesRes, subjectsRes, yearsRes] = await Promise.all([
+      const [bodiesRes, subjectsRes, yearsRes, questionsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/admin/exam-bodies/all`, config),
         axios.get(`${API_BASE_URL}/api/courses`, config),
-        axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config)
+        axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config),
+        axios.get(`${API_BASE_URL}/api/admin/past-questions/all`, config)
       ]);
 
       console.log("[ExamYearList] Exam Bodies Response:", bodiesRes.data);
@@ -44,18 +45,30 @@ export default function ExamYearList() {
       setExamBody(bodies.find(b => String(b.id) === String(bodyId)));
 
       const subjects = subjectsRes.data?.data || subjectsRes.data?.courses || [];
-      setSubject(subjects.find(s => String(s.id) === String(subjectId)));
+      const currentSubject = subjects.find(s => String(s.id) === String(subjectId));
+      setSubject(currentSubject);
+
+      let subjectImage = currentSubject?.image || currentSubject?.banner;
+      if (subjectImage && !subjectImage.startsWith('http')) {
+        subjectImage = `${API_BASE_URL}/storage/${subjectImage}`;
+      }
 
       const allYears = yearsRes.data?.data || yearsRes.data?.exam_years || [];
+      const allQuestions = questionsRes.data?.questions?.data || questionsRes.data?.data || questionsRes.data?.questions || [];
+
       const filteredYears = allYears.filter(y => 
         String(y.exam_body_id) === String(bodyId) && 
         String(y.subject_id) === String(subjectId)
       ).map(y => {
-        let yearImage = y.image || y.banner;
+        let yearImage = subjectImage || y.image || y.banner;
         if (yearImage && !yearImage.startsWith('http')) {
           yearImage = `${API_BASE_URL}/storage/${yearImage}`;
         }
-        return { ...y, image: yearImage };
+        
+        // Count questions for this year
+        const questionCount = allQuestions.filter(q => String(q.exam_year_id) === String(y.id)).length;
+        
+        return { ...y, image: yearImage, questionCount };
       });
       console.log("[ExamYearList] Filtered & Prefixed Years:", { bodyId, subjectId }, filteredYears);
       setYears(filteredYears);
@@ -129,7 +142,7 @@ export default function ExamYearList() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute top-4 right-4 px-3 py-1.5 bg-[#0F2843]/90 backdrop-blur-md rounded-xl text-white text-[10px] font-black min-w-[35px] text-center">
-                    0
+                    {year.questionCount || 0}
                   </div>
                 </div>
 

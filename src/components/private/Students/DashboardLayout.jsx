@@ -18,8 +18,24 @@ export default function DashboardLayout({
   hideMobileTitle = false,
   hideMobileBell = false
 }) {
-  const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [leftCollapsed, setLeftCollapsed] = useState(() => {
+    const saved = localStorage.getItem("student_left_collapsed");
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+  const [rightCollapsed, setRightCollapsed] = useState(() => {
+    const saved = localStorage.getItem("student_right_collapsed");
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+
+  const handleSetLeftCollapsed = (val) => {
+    setLeftCollapsed(val);
+    localStorage.setItem("student_left_collapsed", JSON.stringify(val));
+  };
+
+  const handleSetRightCollapsed = (val) => {
+    setRightCollapsed(val);
+    localStorage.setItem("student_right_collapsed", JSON.stringify(val));
+  };
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { 
     shouldShowProfileAlert, 
@@ -95,11 +111,11 @@ export default function DashboardLayout({
 
       {/* ===== DESKTOP LAYOUT ===== */}
       <div className="hidden lg:block">
-        <Sidebar collapsed={leftCollapsed} setCollapsed={setLeftCollapsed} />
+        <Sidebar collapsed={leftCollapsed} setCollapsed={handleSetLeftCollapsed} />
 
         <RightPanelToRender
           collapsed={rightCollapsed}
-          setCollapsed={setRightCollapsed}
+          setCollapsed={handleSetRightCollapsed}
         />
 
         <main
