@@ -71,7 +71,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
   const { theme, setTheme } = useTheme();
   const { student, logout } = useAuth();
   const API_BASE_URL =
-    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000"; 
+    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const studentLoaded = student?.firstname && student?.surname;
   const fullName = studentLoaded
@@ -103,9 +103,8 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
           <img
             src={collapsed ? collapselogo : logo}
             alt="TC Logo"
-            className={`transition-all duration-300 object-contain ${
-              collapsed ? "w-10 h-10" : "w-28 md:w-32 lg:w-40 h-auto"
-            }`}
+            className={`transition-all duration-300 object-contain ${collapsed ? "w-10 h-10" : "w-28 md:w-32 lg:w-40 h-auto"
+              }`}
           />
 
           <button
@@ -138,77 +137,75 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
         <div className={`flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll flex flex-col ${collapsed ? "items-center" : "px-3 md:px-4"}`}>
           {/* Avatar & Name */}
           <div className="flex flex-col min-h-0">
-          <div className={`flex py-1 md:py-2 items-center ${collapsed ? "justify-center" : "gap-2 md:gap-3"}`}>
-            {studentLoaded ? (
-              <img
-                src={
-                  student?.profile_picture !== null
-                    ? `${API_BASE_URL}/storage/${student?.profile_picture}`
-                    : collapselogo
+            <div className={`flex py-1 md:py-2 items-center ${collapsed ? "justify-center" : "gap-2 md:gap-3"}`}>
+              {studentLoaded ? (
+                <img
+                  src={
+                    student?.profile_picture !== null
+                      ? `${API_BASE_URL}/storage/${student?.profile_picture}`
+                      : collapselogo
+                  }
+                  alt="Avatar"
+                  className="rounded-full shadow-lg h-10 w-10 object-cover border-2 border-[#BB9E7F] flex-shrink-0"
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse flex-shrink-0" />
+              )}
+              {!collapsed && (
+                <div className="min-w-0">
+                  {studentLoaded ? (
+                    <>
+                      <h6 className="text-[#BB9E7F] text-xs">Welcome Student</h6>
+                      <h3 className="font-bold dark:text-gray-50 text-sm truncate">
+                        {fullName}
+                      </h3>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse mb-1" />
+                      <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Menu */}
+            <nav className="px-0.5 md:px-2 lg:px-3 space-y-1 md:space-y-1.5 lg:space-y-2 mt-2 md:mt-3 lg:mt-6 flex flex-col">
+              {menuItems.map(({ label, icon, destination }) => {
+                if (!destination) {
+                  return (
+                    <div
+                      key={label}
+                      className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 py-1.5 md:py-2 lg:py-2.5"
+                        }`}
+                    >
+                      <Icon icon={icon} className="w-5 h-5 flex-shrink-0" />
+                      {!collapsed && <span>{label}</span>}
+                    </div>
+                  );
                 }
-                alt="Avatar"
-                className="rounded-full shadow-lg h-10 w-10 object-cover border-2 border-[#BB9E7F] flex-shrink-0"
-              />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse flex-shrink-0" />
-            )}
-            {!collapsed && (
-              <div className="min-w-0">
-                {studentLoaded ? (
-                  <>
-                    <h6 className="text-[#BB9E7F] text-xs">Welcome Student</h6>
-                    <h3 className="font-bold dark:text-gray-50 text-sm truncate">
-                      {fullName}
-                    </h3>
-                  </>
-                ) : (
-                  <>
-                    <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse mb-1" />
-                    <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
-                  </>
-                )}
-              </div>
-            )}
-          </div>
 
-          {/* Menu */}
-          <nav className="px-0.5 md:px-2 lg:px-3 space-y-1 md:space-y-1.5 lg:space-y-2 mt-2 md:mt-3 lg:mt-6 flex flex-col">
-            {menuItems.map(({ label, icon, destination }) => {
-              if (!destination) {
                 return (
-                  <div
+                  <NavLink
                     key={label}
-                    className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 cursor-not-allowed ${
-                      collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 py-1.5 md:py-2 lg:py-2.5"
-                    }`}
-                  >
-                    <Icon icon={icon} className="w-5 h-5 flex-shrink-0" />
-                    {!collapsed && <span>{label}</span>}
-                  </div>
-                );
-              }
-
-              return (
-                <NavLink
-                  key={label}
-                  to={destination}
-                  className={({ isActive }) => `
+                    to={destination}
+                    className={({ isActive }) => `
                     w-full flex items-center rounded-lg
                     text-xs md:text-sm font-medium transition duration-200
                     ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 lg:px-3 py-1.5 md:py-2 lg:py-2.5"}
-                    ${
-                      isActive
+                    ${isActive
                         ? "bg-[#09314F] text-white shadow-md"
                         : "text-slate-600 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-gray-800"
-                    }
+                      }
                   `}
-                >
-                  <Icon icon={icon} className="w-5 h-5 flex-shrink-0" />
-                  {!collapsed && <span className="truncate">{label}</span>}
-                </NavLink>
-              );
-            })}
-          </nav>
+                  >
+                    <Icon icon={icon} className="w-5 h-5 flex-shrink-0" />
+                    {!collapsed && <span className="truncate">{label}</span>}
+                  </NavLink>
+                );
+              })}
+            </nav>
 
             {/* Mobile Footer */}
             <div className="p-1 md:p-2 lg:p-3 pt-1 md:pt-2 lg:pt-3 pb-20 space-y-3 md:space-y-3 lg:space-y-5 mt-auto lg:hidden border-t border-gray-100 dark:border-gray-800">

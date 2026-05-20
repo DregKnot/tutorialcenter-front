@@ -249,12 +249,17 @@ export default function ExamQuestionList() {
         )}
       </div>
 
-      <QuestionEditModal 
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        question={selectedQuestion}
-        onSuccess={fetchData}
-      />
+      {isEditModalOpen && selectedQuestion && (
+        <QuestionEditModal 
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedQuestion(null);
+          }}
+          question={selectedQuestion}
+          onSuccess={fetchData}
+        />
+      )}
     </StaffDashboardLayout>
   );
 }

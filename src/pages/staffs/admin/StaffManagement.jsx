@@ -261,13 +261,18 @@ export default function StaffManagement() {
                   >
                      {/* Name Column with Avatar */}
                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all bg-gray-100 flex-shrink-0">
-                           <img 
-                             src={`${API_BASE_URL}/storage/${staff.profile_picture}`} 
-                             onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=" + (staff.firstname || "User"); }}
-                             className="w-full h-full object-cover" 
-                             alt={staff.name} 
-                           />
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                           {staff.profile_picture ? (
+                             <img 
+                               src={`${API_BASE_URL}/storage/${staff.profile_picture}`} 
+                               className="w-full h-full object-cover" 
+                               alt={staff.name} 
+                             />
+                           ) : (
+                             <span className="font-black text-[#0F2843] text-sm">
+                               {(staff.firstname?.[0] || "U").toUpperCase()}
+                             </span>
+                           )}
                         </div>
                         <span className="font-black text-[#0F2843] text-sm truncate">{staff.name}</span>
                      </div>

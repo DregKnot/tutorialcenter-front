@@ -16,18 +16,17 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
-  const [questionText, setQuestionText] = useState("");
-  const [questionType, setQuestionType] = useState("multiple_choice");
-  const [marks, setMarks] = useState(1);
-  const [options, setOptions] = useState([]);
-  const [explanation, setExplanation] = useState("");
+  const [questionText, setQuestionText] = useState(() => question ? (question.question || question.question_text || question.text || "") : "");
+  const [questionType, setQuestionType] = useState(() => question ? (question.question_type || "multiple_choice") : "multiple_choice");
+  const [marks, setMarks] = useState(() => question ? (question.marks || 1) : 1);
+  const [options, setOptions] = useState(() => question ? (question.options || []) : []);
+  const [explanation, setExplanation] = useState(() => question ? (question.explanation || question.explanation_text || "") : "");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (question) {
       console.log("[QuestionEditModal] Populating with question:", question);
-      // Try multiple possible keys just in case backend format varies
       const text = question.question || question.question_text || question.text || "";
       setQuestionText(text);
       setQuestionType(question.question_type || "multiple_choice");
