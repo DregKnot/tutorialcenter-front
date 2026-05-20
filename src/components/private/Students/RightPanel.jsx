@@ -13,6 +13,7 @@ export default function RightPanel({ collapsed, setCollapsed }) {
   const [monthOffset, setMonthOffset] = useState(0);
   const [notifOpen, setNotifOpen] = useState(true);
   const [classesOpen, setClassesOpen] = useState(true);
+  const [calendarOpen, setCalendarOpen] = useState(true);
   const { token } = useAuth();
 
   // Notifications state
@@ -147,7 +148,7 @@ export default function RightPanel({ collapsed, setCollapsed }) {
 
             <div className={`bg-white dark:bg-gray-800 rounded-xl border border-[#C5A97A]/60 p-5 shadow-sm transition-opacity duration-300 ${collapsed ? "opacity-0" : "opacity-100"}`}>
               <div
-                onClick={() => setClassesOpen(!classesOpen)}
+                onClick={() => setCalendarOpen(!calendarOpen)}
                 className="flex justify-between items-center mb-5 cursor-pointer"
               >
                 <h3 className="font-black text-[#09314F] dark:text-white uppercase text-[15px] tracking-tighter">Calendar</h3>
@@ -155,48 +156,49 @@ export default function RightPanel({ collapsed, setCollapsed }) {
                   {currentDateLabel}
                 </span>
               </div>
+              {calendarOpen && (
+                <div className="bg-[#E6E9EC]/50 dark:bg-gray-700/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-600">
+                  <div className="flex justify-between items-center mb-5">
+                    <span className="font-black text-[#09314F] dark:text-white text-[14px]">
+                      {calendarData.monthLabel}
+                    </span>
+                    <div className="flex gap-3">
+                      <button onClick={() => setMonthOffset((p) => p - 1)} className="hover:bg-white p-1 rounded-md transition-colors">
+                        <ChevronLeftIcon className="w-3.5 h-3.5 text-[#09314F] dark:text-white" />
+                      </button>
+                      <button onClick={() => setMonthOffset((p) => p + 1)} className="hover:bg-white p-1 rounded-md transition-colors">
+                        <ChevronRightIcon className="w-3.5 h-3.5 text-[#09314F] dark:text-white" />
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="bg-[#E6E9EC]/50 dark:bg-gray-700/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-600">
-                <div className="flex justify-between items-center mb-5">
-                  <span className="font-black text-[#09314F] dark:text-white text-[14px]">
-                    {calendarData.monthLabel}
-                  </span>
-                  <div className="flex gap-3">
-                    <button onClick={() => setMonthOffset((p) => p - 1)} className="hover:bg-white p-1 rounded-md transition-colors">
-                      <ChevronLeftIcon className="w-3.5 h-3.5 text-[#09314F] dark:text-white" />
-                    </button>
-                    <button onClick={() => setMonthOffset((p) => p + 1)} className="hover:bg-white p-1 rounded-md transition-colors">
-                      <ChevronRightIcon className="w-3.5 h-3.5 text-[#09314F] dark:text-white" />
-                    </button>
+                  <div className="grid grid-cols-7 text-[10px] mb-4 text-gray-400 dark:text-gray-400 font-black uppercase tracking-widest">
+                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+                      <div key={d} className="text-center">
+                        {d}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-1 text-[12px]">
+                    {calendarData.days.map((dayObj, idx) => (
+                      <div
+                        key={idx}
+                        className={`h-7 flex items-center justify-center transition-all cursor-default font-black
+                      ${isToday(dayObj)
+                            ? "bg-[#09314F] text-white shadow-lg rounded-sm scale-110"
+                            : dayObj.currentMonth
+                              ? "text-[#09314F] dark:text-gray-200"
+                              : "text-gray-300 dark:text-gray-600"
+                          }
+                    `}
+                      >
+                        {dayObj.day}
+                      </div>
+                    ))}
                   </div>
                 </div>
-
-                <div className="grid grid-cols-7 text-[10px] mb-4 text-gray-400 dark:text-gray-400 font-black uppercase tracking-widest">
-                  {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-                    <div key={d} className="text-center">
-                      {d}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-7 gap-1 text-[12px]">
-                  {calendarData.days.map((dayObj, idx) => (
-                    <div
-                      key={idx}
-                      className={`h-7 flex items-center justify-center transition-all cursor-default font-black
-                      ${isToday(dayObj)
-                          ? "bg-[#09314F] text-white shadow-lg rounded-sm scale-110"
-                          : dayObj.currentMonth
-                            ? "text-[#09314F] dark:text-gray-200"
-                            : "text-gray-300 dark:text-gray-600"
-                        }
-                    `}
-                    >
-                      {dayObj.day}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -211,7 +213,7 @@ export default function RightPanel({ collapsed, setCollapsed }) {
                 <span className={`text-[13px] font-black ${unreadCount > 0 ? 'text-[#E83831]' : 'text-gray-500'}`}>
                   {unreadCount}
                 </span>
-                {classesOpen ? (
+                {notifOpen ? (
                   <ChevronUpIcon className="w-4 h-4 text-[#09314F] dark:text-white" />
                 ) : (
                   <ChevronDownIcon className="w-4 h-4 text-[#09314F] dark:text-white" />
@@ -256,65 +258,64 @@ export default function RightPanel({ collapsed, setCollapsed }) {
           </div>
 
           {/* ================= Today's Classes Card ================= */}
-<div className={`bg-white dark:bg-gray-800 rounded-2xl border border-[#C5A97A]/60 p-5 shadow-sm transition-opacity duration-300 ${collapsed ? "opacity-0" : "opacity-100"}`}>
+          <div className={`bg-white dark:bg-gray-800 rounded-2xl border border-[#C5A97A]/60 p-5 shadow-sm transition-opacity duration-300 ${collapsed ? "opacity-0" : "opacity-100"}`}>
 
-  {/* HEADER (click to toggle) */}
-  <div
-    className="flex justify-between items-center mb-5 cursor-pointer"
-    onClick={() => setClassesOpen(prev => !prev)}
-  >
-    <h3 className="font-black text-[#09314F] dark:text-white uppercase text-[15px] tracking-tighter">
-      Today's Classes
-    </h3>
+            {/* HEADER (click to toggle) */}
+            <div
+              className="flex justify-between items-center mb-5 cursor-pointer"
+              onClick={() => setClassesOpen(prev => !prev)}
+            >
+              <h3 className="font-black text-[#09314F] dark:text-white uppercase text-[15px] tracking-tighter">
+                Today's Classes
+              </h3>
 
-    {/* arrow rotates like notification */}
-    <ChevronDownIcon
-      className={`w-4 h-4 text-[#09314F] dark:text-white transition-transform duration-300 ${
-        classesOpen ? "rotate-180" : "rotate-0"
-      }`}
-    />
-  </div>
+              {/* arrow rotates like notification */}
+              <ChevronDownIcon
+                className={`w-4 h-4 text-[#09314F] dark:text-white transition-transform duration-300 ${classesOpen ? "rotate-180" : "rotate-0"
+                  }`}
+              />
+            </div>
 
-  {/* COLLAPSIBLE BODY */}
-  {classesOpen && (
-    <div className="bg-[#E6E9EC]/40 dark:bg-gray-700/50 rounded-2xl p-5 space-y-5">
-      {[
-        ["bg-[#9AB3D5]", "Physics Master Class", "8:30am"],
-        ["bg-[#BDA58E]", "English Master Class", "11:00am"],
-        ["bg-[#E67E7E]", "Mathematics Master C...", "2:30pm"],
-        ["bg-[#F5CB5C]", "Chemistry Master Class", "5:30pm"],
-      ].map(([color, title, time], idx) => (
-        <div key={idx} className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <span className={`w-4 h-4 rounded shadow-sm ${color}`} />
-            <span className="text-[12px] font-black text-[#09314F] dark:text-gray-200">
-              {title}
-            </span>
+            {/* COLLAPSIBLE BODY */}
+            {classesOpen && (
+              <div className="bg-[#E6E9EC]/40 dark:bg-gray-700/50 rounded-2xl p-5 space-y-5">
+                {[
+                  ["bg-[#9AB3D5]", "Physics Master Class", "8:30am"],
+                  ["bg-[#BDA58E]", "English Master Class", "11:00am"],
+                  ["bg-[#E67E7E]", "Mathematics Master C...", "2:30pm"],
+                  ["bg-[#F5CB5C]", "Chemistry Master Class", "5:30pm"],
+                ].map(([color, title, time], idx) => (
+                  <div key={idx} className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                      <span className={`w-4 h-4 rounded shadow-sm ${color}`} />
+                      <span className="text-[12px] font-black text-[#09314F] dark:text-gray-200">
+                        {title}
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-black text-gray-500 dark:text-gray-400">
+                      {time}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <span className="text-[11px] font-black text-gray-500 dark:text-gray-400">
-            {time}
-          </span>
+
         </div>
-      ))}
-    </div>
-  )}
-</div>
 
-      </div>
+      </aside >
 
-    </aside >
-
-      {/* ================= Sentinel Trigger (Visible only when collapsed) ================= */ }
-  {
-    collapsed && (
-      <button
-        onClick={() => setCollapsed(false)}
-        className="fixed right-0 top-[60%] -translate-y-1/2 bg-[#09314F] text-white w-5 h-9 rounded-l-xl flex items-center justify-center hover:bg-[#09314F]/80 z-[50] shadow-[-4px_0_15px_rgba(0,0,0,0.1)] transition-all animate-in fade-in slide-in-from-right-4 duration-500"
-      >
-        <ChevronLeftIcon className="w-4 h-4 text-white stroke-[3]" />
-      </button>
-    )
-  }
+      {/* ================= Sentinel Trigger (Visible only when collapsed) ================= */}
+      {
+        collapsed && (
+          <button
+            onClick={() => setCollapsed(false)}
+            className="fixed right-0 top-[60%] -translate-y-1/2 bg-[#09314F] text-white w-5 h-9 rounded-l-xl flex items-center justify-center hover:bg-[#09314F]/80 z-[50] shadow-[-4px_0_15px_rgba(0,0,0,0.1)] transition-all animate-in fade-in slide-in-from-right-4 duration-500"
+          >
+            <ChevronLeftIcon className="w-4 h-4 text-white stroke-[3]" />
+          </button>
+        )
+      }
     </>
   );
 }
