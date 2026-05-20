@@ -4,7 +4,6 @@ import DashboardLayout from "../../components/private/Students/DashboardLayout.j
 import { useAuth } from "../../context/AuthContext";
 import { 
   BellIcon, 
-  TrashIcon, 
   CheckCircleIcon, 
   InformationCircleIcon, 
   EyeIcon,
@@ -166,15 +165,6 @@ export default function StudentNotifications() {
                   <div className="p-3 bg-gray-50 dark:bg-[#06243A] rounded-xl text-[#09314F] dark:text-blue-400">
                     <EyeIcon className="w-5 h-5" />
                   </div>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(notif.id);
-                    }}
-                    className="p-3 bg-red-50 dark:bg-red-900/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
                 </div>
 
                 {/* Unread indicator */}

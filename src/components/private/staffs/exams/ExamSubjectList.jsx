@@ -134,7 +134,7 @@ export default function ExamSubjectList() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute top-4 right-4 px-3 py-1.5 bg-[#0F2843]/90 backdrop-blur-md rounded-xl text-white text-[10px] font-black min-w-[35px] text-center">
-                    0
+                    {subject.yearCount || 0}
                   </div>
                 </div>
 

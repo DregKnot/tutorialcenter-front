@@ -349,7 +349,7 @@ export default function QuestionItem({
                   <ListBulletIcon className="w-5 h-5 text-blue-500" />
                   <label className="text-[11px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Options & Answers</label>
                 </div>
-                {q.questionType === "multiple_choice" && (
+                {(q.questionType === "multiple_choice" || q.questionType === "true_false") && (
                   <button 
                     type="button" 
                     onClick={() => addOption(qIdx)}
@@ -363,9 +363,12 @@ export default function QuestionItem({
               <div className="space-y-4">
                 {q.options.map((opt, optIdx) => (
                   <div key={optIdx} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-in fade-in duration-300">
-                    <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center font-black text-[#0F2843] dark:text-white shrink-0">
-                      {opt.label}
-                    </div>
+                    <input 
+                      type="text"
+                      value={opt.label}
+                      onChange={(e) => handleOptionChange(qIdx, optIdx, "label", e.target.value)}
+                      className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center font-black text-[#0F2843] dark:text-white shrink-0 text-center outline-none focus:ring-2 focus:ring-blue-500/50"
+                    />
                     <div className="flex-1 relative group/input w-full">
                       <input 
                         id={`option-input-${qIdx}-${optIdx}`}
@@ -405,7 +408,7 @@ export default function QuestionItem({
                         <CheckCircleIcon className="w-4 h-4" />
                         {opt.is_correct ? "Correct" : "Mark Correct"}
                       </button>
-                      {q.questionType === "multiple_choice" && q.options.length > 2 && (
+                      {(q.questionType === "multiple_choice" || q.questionType === "true_false") && q.options.length > 2 && (
                         <button 
                           type="button" 
                           onClick={() => removeOption(qIdx, optIdx)}

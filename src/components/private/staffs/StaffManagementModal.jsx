@@ -98,8 +98,10 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
 
       const data = res.data?.staff || res.data?.data || res.data;
       setStaff(data);
-      if (data.profile_picture) {
+      if (data.profile_picture && data.profile_picture !== "default-avatar.png") {
         setImagePreview(`${API_BASE_URL}/storage/${data.profile_picture}`);
+      } else {
+        setImagePreview(null);
       }
 
       // Filter classes to find only the ones associated with this staff ID
@@ -128,11 +130,11 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
   };
 
   const handleImageChange = (e) => {
-    if (!isEditing) return; // Only allow image change in edit mode
     const file = e.target.files[0];
     if (file) {
       setStaff(prev => ({ ...prev, profile_picture: file }));
       setImagePreview(URL.createObjectURL(file));
+      setIsEditing(true);
     }
   };
 
@@ -254,12 +256,18 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
               className="w-44 h-44 shrink-0 relative cursor-pointer group"
               onClick={() => isEditing && document.getElementById('modalStaffImage').click()}
             >
-              <div className="w-full h-full rounded-[20px] overflow-hidden border border-gray-200">
-                <img 
-                  src={imagePreview || `https://ui-avatars.com/api/?name=${staff.firstname}`}
-                  className="w-full h-full object-cover"
-                  alt="Profile" 
-                />
+              <div className="w-full h-full rounded-[20px] overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center relative">
+                {imagePreview ? (
+                  <img 
+                    src={imagePreview}
+                    className="w-full h-full object-cover"
+                    alt="Profile" 
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#0F2843] text-white flex items-center justify-center text-5xl font-black">
+                    {(staff.firstname?.[0] || "U").toUpperCase()}
+                  </div>
+                )}
                 {isEditing && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Icon icon="heroicons:camera" className="w-8 h-8 text-white" />
@@ -273,6 +281,19 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 accept="image/*" 
                 onChange={handleImageChange} 
               />
+              {!isSuspended && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    document.getElementById('modalStaffImage').click();
+                  }}
+                  className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#0F2843] text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white hover:bg-[#BB9E7F] hover:scale-105 active:scale-95 transition-all z-20"
+                  title="Edit Profile Picture"
+                >
+                  <Icon icon="lucide:pencil" className="w-4 h-4" />
+                </button>
+              )}
               {isSuspended && (
                 <div className="absolute -top-2 -right-2 bg-red-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">
                   Suspended

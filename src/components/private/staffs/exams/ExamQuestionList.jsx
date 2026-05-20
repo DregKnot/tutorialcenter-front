@@ -176,7 +176,7 @@ export default function ExamQuestionList() {
                         </div>
                       )}
                       <div 
-                        className="text-[13px] font-black text-[#0F2843] dark:text-gray-300 uppercase leading-relaxed tracking-tight"
+                        className="text-[13px] text-[#0F2843] dark:text-gray-300 leading-relaxed tracking-tight quill-content"
                         dangerouslySetInnerHTML={{ __html: q.group.content }}
                       />
                     </div>
@@ -203,7 +203,7 @@ export default function ExamQuestionList() {
                      )}
 
                     <div 
-                      className="text-[13px] font-black text-[#0F2843] dark:text-gray-300 leading-relaxed uppercase"
+                      className="text-[13px] text-[#0F2843] dark:text-gray-300 leading-relaxed quill-content"
                       dangerouslySetInnerHTML={{ __html: q.question }}
                     />
                   </div>
@@ -220,7 +220,7 @@ export default function ExamQuestionList() {
                         }`}
                       >
                         <span className="font-black text-[12px] min-w-[20px]">{opt.label}.</span>
-                        <span className="text-[12px] font-black uppercase tracking-tight">
+                        <span className="text-[12px] font-black tracking-tight">
                           {opt.option_text}
                         </span>
                       </div>
@@ -249,12 +249,17 @@ export default function ExamQuestionList() {
         )}
       </div>
 
-      <QuestionEditModal 
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        question={selectedQuestion}
-        onSuccess={fetchData}
-      />
+      {isEditModalOpen && selectedQuestion && (
+        <QuestionEditModal 
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedQuestion(null);
+          }}
+          question={selectedQuestion}
+          onSuccess={fetchData}
+        />
+      )}
     </StaffDashboardLayout>
   );
 }

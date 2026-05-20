@@ -38,7 +38,7 @@ export default function useExamForm() {
       tempId: Date.now(),
       questionNumber: "",
       questionText: "",
-      questionType: "multiple_choice",
+      questionType: "true_false",
       marks: 1,
       explanation: "",
       status: "active",
@@ -254,7 +254,7 @@ export default function useExamForm() {
           tempId: Date.now(),
           questionNumber: q.question_number || "",
           questionText: q.question || q.question_text || q.text || "",
-          questionType: q.question_type || "multiple_choice",
+          questionType: q.question_type || "true_false",
           marks: q.marks || 1,
           explanation: q.explanation || q.explanation_text || "",
           status: q.status || "active",
@@ -384,7 +384,7 @@ export default function useExamForm() {
       tempId: Date.now(),
       questionNumber: "",
       questionText: "",
-      questionType: "multiple_choice",
+      questionType: "true_false",
       marks: 1,
       explanation: "",
       status: "active",
@@ -495,7 +495,6 @@ export default function useExamForm() {
     const newQuestions = [...questions];
     newQuestions[qIdx].options = q.options.filter((_, i) => i !== optIdx).map((opt, i) => ({
       ...opt,
-      label: String.fromCharCode(65 + i),
       sort_order: i + 1
     }));
     setQuestions(newQuestions);
@@ -582,7 +581,7 @@ export default function useExamForm() {
 
     setLoading(true);
 
-    const stripHtml = (html) => html ? html.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") : "";
+
     const config = {
       headers: { 
         Authorization: `Bearer ${token}`,
@@ -611,7 +610,7 @@ export default function useExamForm() {
         groupFormData.append("exam_year_id", examYearId);
         groupFormData.append("type", groupType);
         groupFormData.append("title", groupTitle);
-        groupFormData.append("content", stripHtml(groupContent));
+        groupFormData.append("content", groupContent);
         groupFormData.append("sort_order", sortOrder);
         if (groupImage) groupFormData.append("image", groupImage);
 
@@ -635,10 +634,10 @@ export default function useExamForm() {
           questionFormData.append("exam_year_id", examYearId);
           if (currentGroupId) questionFormData.append("past_question_group_id", currentGroupId);
           questionFormData.append("question_number", q.questionNumber);
-          questionFormData.append("question", stripHtml(q.questionText));
+          questionFormData.append("question", q.questionText);
           questionFormData.append("question_type", q.questionType);
           questionFormData.append("marks", q.marks);
-          questionFormData.append("explanation", stripHtml(q.explanation));
+          questionFormData.append("explanation", q.explanation);
           questionFormData.append("status", q.status);
 
           // Options
@@ -702,7 +701,7 @@ export default function useExamForm() {
     setLoading(true);
     setBatchComplete(false);
 
-    const stripHtml = (html) => html ? html.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") : "";
+
     const config = {
       headers: { 
         Authorization: `Bearer ${token}`,
@@ -722,10 +721,10 @@ export default function useExamForm() {
         questionFormData.append("exam_year_id", examYearId);
         if (currentGroupId) questionFormData.append("past_question_group_id", currentGroupId);
         questionFormData.append("question_number", q.questionNumber);
-        questionFormData.append("question", stripHtml(q.questionText));
+        questionFormData.append("question", q.questionText);
         questionFormData.append("question_type", q.questionType);
         questionFormData.append("marks", q.marks);
-        questionFormData.append("explanation", stripHtml(q.explanation));
+        questionFormData.append("explanation", q.explanation);
         questionFormData.append("status", q.status);
 
         q.options.forEach((opt, index) => {
@@ -772,7 +771,7 @@ export default function useExamForm() {
             tempId: Date.now(),
             questionNumber: "",
             questionText: "",
-            questionType: "multiple_choice",
+            questionType: "true_false",
             marks: 1,
             explanation: "",
             status: "active",

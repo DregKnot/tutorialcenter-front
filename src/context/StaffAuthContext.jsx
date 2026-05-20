@@ -30,6 +30,7 @@ export function StaffAuthProvider({ children }) {
     localStorage.setItem("staff_info", JSON.stringify(staffData));
     localStorage.setItem("staff_role", staffRole);
     localStorage.setItem("staff_last_activity_at", Date.now().toString());
+    localStorage.setItem("staff_left_collapsed", "false");
 
     setToken(token);
     setStaff(staffData);

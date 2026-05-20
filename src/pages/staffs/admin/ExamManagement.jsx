@@ -10,7 +10,8 @@ import {
   ClockIcon,
   EllipsisVerticalIcon,
   EyeIcon,
-  IdentificationIcon
+  IdentificationIcon,
+  CalendarIcon
 } from "@heroicons/react/24/outline";
 
 export default function ExamManagement() {
@@ -187,13 +188,23 @@ export default function ExamManagement() {
                           ></div>
                           <div className="absolute left-0 mt-3 w-64 bg-white/20 dark:bg-gray-800/20 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-3 z-40 animate-in zoom-in-95 duration-200">
                             <button 
-                              onClick={(e) => { e.stopPropagation(); navigate(`/staffs/manage-exams/edit/${exam.id}`); }}
+                              onClick={(e) => { e.stopPropagation(); navigate(`/staffs/manage-exams/edit/${exam.id}?tab=body`); }}
                               className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left group/item"
                             >
                               <div className="w-10 h-10 bg-[#BB9E7F]/10 rounded-xl flex items-center justify-center text-[#BB9E7F] group-hover/item:bg-[#BB9E7F] group-hover/item:text-white transition-all">
                                 <IdentificationIcon className="w-5 h-5" />
                               </div>
                               <span className="text-[11px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Edit Exam Body</span>
+                            </button>
+
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); navigate(`/staffs/manage-exams/edit/${exam.id}?tab=year`); }}
+                              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left group/item"
+                            >
+                              <div className="w-10 h-10 bg-[#0F2843]/10 rounded-xl flex items-center justify-center text-[#0F2843] dark:text-white group-hover/item:bg-[#0F2843] transition-all">
+                                <CalendarIcon className="w-5 h-5" />
+                              </div>
+                              <span className="text-[11px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Edit Exam Year</span>
                             </button>
 
                             <button 
@@ -213,7 +224,7 @@ export default function ExamManagement() {
                               <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 group-hover/item:bg-blue-500 group-hover/item:text-white transition-all">
                                 <EyeIcon className="w-5 h-5" />
                               </div>
-                              <span className="text-[11px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Edit Exam Year</span>
+                              <span className="text-[11px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Existing Questions</span>
                             </button>
                           </div>
                         </>

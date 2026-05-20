@@ -6,7 +6,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 const navigation = [
   { path: "/", name: "Home" },
   { path: "/training", name: "Training / Tuition" },
-  { path: "/career", name: "Career"},
+  { path: "/career", name: "Career" },
   { path: "/blog", name: "Blog" },
   { path: "/contact", name: "Contact Us" },
   { path: "/about", name: "About Us" },
@@ -36,7 +36,9 @@ export default function Navbar() {
         <div className="Container">
           <div className="flex items-center justify-between">
             {/* Tutotrial Logo */}
-            <img src={logo} alt="" className="max-w-[120px]" />
+            <Link to="/">
+              <img src={logo} alt="Tutorial Center Logo" className="max-w-[120px] cursor-pointer" />
+            </Link>
             {/* navigation Links */}
             <div className="hidden lg:block">
               {navigation.map((item, index) =>
@@ -61,8 +63,8 @@ export default function Navbar() {
             </div>
             {/* Apply button */}
             <div className="hidden lg:block">
-              <Link to="/login" 
-              className="mr-7 font-bold px-6 py-2 rounded-[12px] 
+              <Link to="/login"
+                className="mr-7 font-bold px-6 py-2 rounded-[12px] 
              bg-white text-[#09314F]
              shadow-[1px_1px_4px_0px_#00000026] 
              active:shadow-[inset_2px_2px_4px_0px_#00000040] 
@@ -149,20 +151,18 @@ const MobileNavigation = ({ setVisible, visible }) => {
   }, [visible]);
   return (
     <div
-      className={`${
-        visible
+      className={`${visible
           ? "visible opacity-100"
           : "invisible opacity-0"
-      } w-full h-full fixed top-0 left-0 bg-black/40 backdrop-blur-sm z-[100] transition-all duration-300 flex flex-col items-end justify-end`}
+        } w-full h-full fixed top-0 left-0 bg-black/40 backdrop-blur-sm z-[100] transition-all duration-300 flex flex-col items-end justify-end`}
     >
       <div
         onClick={() => setVisible(false)}
         className="w-full h-full absolute top-0 left-0"
       />
       <div
-        className={`${
-          visible ? "translate-x-0" : "translate-x-full"
-        } z-[500] transition-transform duration-500 ease-out max-w-[280px] w-full h-full relative bg-white dark:bg-gray-900 flex flex-col p-8 shadow-2xl`}
+        className={`${visible ? "translate-x-0" : "translate-x-full"
+          } z-[500] transition-transform duration-500 ease-out max-w-[280px] w-full h-full relative bg-white dark:bg-gray-900 flex flex-col p-8 shadow-2xl`}
       >
         <button
           onClick={() => setVisible(false)}

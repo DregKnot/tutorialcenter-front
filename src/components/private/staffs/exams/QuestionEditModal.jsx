@@ -16,21 +16,20 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
-  const [questionText, setQuestionText] = useState("");
-  const [questionType, setQuestionType] = useState("multiple_choice");
-  const [marks, setMarks] = useState(1);
-  const [options, setOptions] = useState([]);
-  const [explanation, setExplanation] = useState("");
+  const [questionText, setQuestionText] = useState(() => question ? (question.question || question.question_text || question.text || "") : "");
+  const [questionType, setQuestionType] = useState(() => question ? (question.question_type || "true_false") : "true_false");
+  const [marks, setMarks] = useState(() => question ? (question.marks || 1) : 1);
+  const [options, setOptions] = useState(() => question ? (question.options || []) : []);
+  const [explanation, setExplanation] = useState(() => question ? (question.explanation || question.explanation_text || "") : "");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (question) {
       console.log("[QuestionEditModal] Populating with question:", question);
-      // Try multiple possible keys just in case backend format varies
       const text = question.question || question.question_text || question.text || "";
       setQuestionText(text);
-      setQuestionType(question.question_type || "multiple_choice");
+      setQuestionType(question.question_type || "true_false");
       setMarks(question.marks || 1);
       setOptions(question.options || []);
       setExplanation(question.explanation || question.explanation_text || "");
@@ -91,12 +90,9 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     e.preventDefault();
     setLoading(true);
     // Strip HTML tags for clean storage
-    const stripHtml = (html) => {
-      if (!html) return "";
-      return html.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ");
-    };
-    const plainQuestion = stripHtml(questionText);
-    const plainExplanation = stripHtml(explanation);
+
+    const plainQuestion = questionText;
+    const plainExplanation = explanation;
 
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
@@ -227,9 +223,12 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             <div className="space-y-4">
               {options.map((opt, idx) => (
                 <div key={idx} className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center font-black text-[#0F2843] dark:text-white shrink-0">
-                    {opt.label}
-                  </div>
+                  <input 
+                    type="text"
+                    value={opt.label}
+                    onChange={(e) => handleOptionChange(idx, "label", e.target.value)}
+                    className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center font-black text-[#0F2843] dark:text-white shrink-0 text-center outline-none focus:ring-2 focus:ring-[#BB9E7F]/30"
+                  />
                   <div className="flex-1 relative group/input">
                     <input 
                       id={`option-input-${idx}`}

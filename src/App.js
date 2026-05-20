@@ -61,7 +61,7 @@ import StaffEmailVerification from "./pages/public/StaffSignUp/StaffEmailVerific
 import AdminStudentManagement from "./pages/staffs/admin/AdminStudentManagement.jsx";
 import ExamManagement from "./pages/staffs/admin/ExamManagement.jsx";
 import ExamQuestion from "./components/private/staffs/exams/ExamQuestion.jsx";
-import ExamEdit from "./components/private/staffs/exams/ExamEdit.jsx";
+import EditExamHeader from "./components/private/staffs/exams/EditExamHeader.jsx";
 import ExamSubjectList from "./components/private/staffs/exams/ExamSubjectList.jsx";
 import ExamYearList from "./components/private/staffs/exams/ExamYearList.jsx";
 import ExamQuestionList from "./components/private/staffs/exams/ExamQuestionList.jsx";
@@ -149,7 +149,7 @@ function App() {
           <Route path="/staffs/manage-exams" element={<ExamManagement />} />
           <Route path="/staffs/manage-exams/question" element={<ExamQuestion />} />
           <Route path="/staffs/manage-exams/question/:id" element={<ExamQuestion />} />
-          <Route path="/staffs/manage-exams/edit/:id" element={<ExamEdit />} />
+          <Route path="/staffs/manage-exams/edit/:id" element={<EditExamHeader />} />
           <Route path="/staffs/manage-exams/:bodyId/subjects" element={<ExamSubjectList />} />
           <Route path="/staffs/manage-exams/:bodyId/subjects/:subjectId/years" element={<ExamYearList />} />
           <Route path="/staffs/manage-exams/:bodyId/subjects/:subjectId/years/:yearId/questions" element={<ExamQuestionList />} />
