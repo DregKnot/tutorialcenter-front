@@ -12,6 +12,7 @@
     "@testing-library/user-event": "^13.5.0",
     "@zoom/meetingsdk": "^6.0.0",
     "axios": "^1.13.4",
+    "katex": "^0.16.47",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-quill-new": "^3.8.3",

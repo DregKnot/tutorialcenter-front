@@ -5,7 +5,9 @@ import StaffDashboardLayout from "../DashboardLayout.jsx";
 import { 
   ArrowLeftIcon,
   IdentificationIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  TrashIcon,
+  XMarkIcon
 } from "@heroicons/react/24/outline";
 
 export default function ExamEdit() {
@@ -19,7 +21,16 @@ export default function ExamEdit() {
   const [status, setStatus] = useState("active");
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [messageToast, setMessageToast] = useState(null);
+
+  useEffect(() => {
+    if (messageToast) {
+      const timer = setTimeout(() => setMessageToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [messageToast]);
 
   const fetchData = useCallback(async () => {
     setFetching(true);
@@ -93,8 +104,40 @@ export default function ExamEdit() {
     }
   };
 
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${name}"? This action cannot be undone and will remove all associated exam years, subjects, and questions.`
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const res = await axios.delete(`${API_BASE_URL}/api/admin/exam-bodies/destroy/${id}`, config);
+      const msg = res.data?.message || "Exam body deleted successfully!";
+      setMessageToast({ type: "success", message: msg });
+      setTimeout(() => navigate("/staffs/manage-exams"), 1500);
+    } catch (err) {
+      console.error("Failed to delete exam body:", err);
+      const msg = err.response?.data?.message || "Failed to delete exam body.";
+      setMessageToast({ type: "error", message: msg });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <StaffDashboardLayout pagetitle="Edit Exam">
+      {/* Toast Notification */}
+      {messageToast && (
+        <div className={`fixed top-10 left-1/2 -translate-x-1/2 z-[250] px-8 py-4 rounded-2xl shadow-2xl text-white font-black text-xs uppercase tracking-widest flex items-center gap-3 animate-in slide-in-from-top-10 transition-all ${
+          messageToast.type === "success" ? "bg-green-500" : "bg-red-500"
+        }`}>
+          {messageToast.type === "success" ? <CheckCircleIcon className="w-5 h-5" /> : <XMarkIcon className="w-5 h-5" />}
+          {messageToast.message}
+        </div>
+      )}
+
       <div className="p-4 md:p-8 max-w-4xl mx-auto w-full">
         
         {/* Back Navigation */}
@@ -201,6 +244,27 @@ export default function ExamEdit() {
                     {loading ? "Saving Changes..." : "Save Exam Details"}
                     {!loading && <CheckCircleIcon className="w-5 h-5 text-[#BB9E7F]" />}
                   </button>
+                </div>
+
+                {/* Danger Zone */}
+                <div className="pt-8 border-t border-red-100 dark:border-red-900/30">
+                  <div className="bg-red-50 dark:bg-red-900/10 rounded-[32px] p-8 border-2 border-red-100 dark:border-red-900/20">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                      <div>
+                        <h3 className="text-sm font-black text-red-500 uppercase tracking-widest">Danger Zone</h3>
+                        <p className="text-xs text-gray-400 font-bold mt-1">Permanently delete this exam body and all its associated data.</p>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="px-8 py-4 bg-red-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-red-600 active:scale-[0.97] transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-red-500/20 shrink-0"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                        {deleting ? "Deleting..." : "Delete Exam Body"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
