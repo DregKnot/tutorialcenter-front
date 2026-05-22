@@ -34,6 +34,7 @@ const menuItems = [
   {
     label: "Exam Practice",
     icon: "mdi:clipboard-text-outline",
+    destination: "/student/exams",
   },
   {
     label: "Calendar",
