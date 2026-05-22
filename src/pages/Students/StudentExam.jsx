@@ -81,10 +81,7 @@ export default function StudentExam() {
       setCourses(coursesData);
       setAvailableExams(availableData);
 
-      // Pre-select first course if available
-      if (coursesData.length > 0) {
-        setSelectedCourse(coursesData[0]);
-      }
+      // Course is unselected by default
     } catch (err) {
       console.error("Failed to load initial exam data:", err);
       setError("Failed to load active courses and available exams. Please refresh the page.");
@@ -377,49 +374,58 @@ export default function StudentExam() {
                   <p className="text-sm text-gray-400 font-bold">No ongoing courses found.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {courses.map((item, idx) => {
-                    const title = item.course?.title || item.title || "Course";
-                    const isSelected = selectedCourse && (item.enrollment_id === selectedCourse.enrollment_id || item.id === selectedCourse.id);
-                    return (
-                      <div
-                        key={item.enrollment_id || item.id || idx}
-                        onClick={() => handleCourseSelect(item)}
-                        className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 relative group flex items-start gap-4 shadow-sm ${
-                          isSelected
-                            ? "bg-[#09314F]/10 dark:bg-[#09314F]/60 border-[#BB9E7F] ring-2 ring-[#BB9E7F]/20"
-                            : "bg-white dark:bg-[#09314F]/30 border-gray-100 dark:border-[#09314F] hover:border-gray-300 dark:hover:border-blue-800"
-                        }`}
-                      >
+                <div className="relative">
+                  {/* Left and right fade overlays */}
+                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#E6E9EC] dark:from-gray-900 to-transparent pointer-events-none z-10 opacity-30"></div>
+                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#E6E9EC] dark:from-gray-900 to-transparent pointer-events-none z-10 opacity-30"></div>
+
+                  <div
+                    className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800 select-none"
+                    style={{ WebkitOverflowScrolling: "touch" }}
+                  >
+                    {courses.map((item, idx) => {
+                      const title = item.course?.title || item.title || "Course";
+                      const isSelected = selectedCourse && (item.enrollment_id === selectedCourse.enrollment_id || item.id === selectedCourse.id);
+                      return (
                         <div
-                          className={`p-3 rounded-xl shrink-0 transition-colors ${
+                          key={item.enrollment_id || item.id || idx}
+                          onClick={() => handleCourseSelect(item)}
+                          className={`min-w-[240px] md:min-w-[280px] p-5 rounded-2xl border cursor-pointer transition-all duration-300 relative group flex items-start gap-4 shadow-sm shrink-0 ${
                             isSelected
-                              ? "bg-[#09314F] text-white dark:bg-blue-600"
-                              : "bg-gray-50 dark:bg-[#06243A] text-gray-400 group-hover:text-gray-600"
+                              ? "bg-[#09314F]/10 dark:bg-[#09314F]/60 border-[#C5A97A] ring-2 ring-[#C5A97A]/20"
+                              : "bg-white dark:bg-[#09314F]/30 border-gray-100 dark:border-[#09314F] hover:border-gray-200 dark:hover:border-blue-800"
                           }`}
                         >
-                          <Icon icon="mdi:book-open-page-variant" className="w-6 h-6" />
-                        </div>
-                        <div className="min-w-0">
-                          <h4
-                            className={`font-black uppercase tracking-tight text-sm truncate ${
-                              isSelected ? "text-[#09314F] dark:text-white" : "text-gray-700 dark:text-gray-200"
+                          <div
+                            className={`p-3 rounded-xl shrink-0 transition-colors ${
+                              isSelected
+                                ? "bg-[#09314F] text-white dark:bg-blue-600"
+                                : "bg-gray-50 dark:bg-[#06243A] text-gray-400 group-hover:text-gray-600"
                             }`}
                           >
-                            {title}
-                          </h4>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase mt-1">
-                            {item.subjects?.length || 0} subjects enrolled
-                          </p>
-                        </div>
-                        {isSelected && (
-                          <div className="absolute top-3 right-3 text-[#BB9E7F]">
-                            <Icon icon="lucide:check-circle" className="w-5 h-5 animate-scale-in" />
+                            <Icon icon="mdi:book-open-page-variant" className="w-6 h-6" />
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                          <div className="min-w-0">
+                            <h4
+                              className={`font-black uppercase tracking-tight text-sm truncate ${
+                                isSelected ? "text-[#09314F] dark:text-white" : "text-gray-700 dark:text-gray-200"
+                              }`}
+                            >
+                              {title}
+                            </h4>
+                            <p className="text-[11px] text-gray-400 font-bold uppercase mt-1">
+                              {item.subjects?.length || 0} subjects enrolled
+                            </p>
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-3 right-3 text-[#C5A97A]">
+                              <Icon icon="lucide:check-circle" className="w-5 h-5 animate-scale-in" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -459,16 +465,19 @@ export default function StudentExam() {
                         const name = sub.name || sub.title || "Subject";
                         const available = isSubjectAvailable(sub.id);
                         const isSelected = selectedSubject && String(selectedSubject.id) === String(sub.id);
+                        const bannerUrl = sub.banner
+                          ? (sub.banner.startsWith("http") ? sub.banner : `${API_BASE_URL}/storage/${sub.banner}`)
+                          : "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop";
 
                         return (
                           <div
                             key={sub.id || idx}
                             onClick={() => available && handleSubjectSelect(sub)}
-                            className={`min-w-[180px] md:min-w-[210px] p-5 rounded-3xl border flex flex-col justify-between transition-all duration-300 relative select-none ${
+                            className={`min-w-[180px] md:min-w-[210px] p-4 rounded-3xl border flex flex-col justify-between transition-all duration-300 relative select-none group ${
                               !available
                                 ? "bg-gray-100 dark:bg-gray-900/40 border-gray-200/50 dark:border-gray-800/30 cursor-not-allowed opacity-60"
                                 : isSelected
-                                ? "bg-[#09314F] text-white border-transparent ring-4 ring-[#BB9E7F]/30 scale-[1.02] shadow-md"
+                                ? "bg-[#09314F] text-white border-transparent ring-4 ring-[#C5A97A]/30 scale-[1.02] shadow-md"
                                 : "bg-white dark:bg-[#09314F]/40 border-gray-100 dark:border-[#09314F] hover:border-gray-200 hover:scale-[1.01] cursor-pointer shadow-sm"
                             }`}
                           >
@@ -476,28 +485,28 @@ export default function StudentExam() {
                             {!available && (
                               <div className="absolute inset-0 bg-black/60 dark:bg-black/75 rounded-3xl flex items-center justify-center p-4 z-20 text-center animate-fade-in">
                                 <span className="text-[11px] font-bold text-white uppercase tracking-widest leading-relaxed">
-                                  Not available at the moment
+                                  Not available
                                 </span>
                               </div>
                             )}
 
-                            <div className="flex items-center justify-between mb-8">
-                              <div
-                                className={`p-2.5 rounded-xl ${
-                                  isSelected
-                                    ? "bg-white/10 text-white"
-                                    : "bg-gray-50 dark:bg-[#06243A] text-gray-400"
-                                }`}
-                              >
-                                <Icon icon="mdi:book" className="w-5 h-5" />
-                              </div>
+                            {/* Banner Header Image */}
+                            <div className="w-full h-24 rounded-2xl overflow-hidden mb-3 relative shrink-0">
+                              <img
+                                src={bannerUrl}
+                                alt={name}
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-black/10 dark:bg-black/35"></div>
                               {isSelected && (
-                                <Icon icon="lucide:check-circle-2" className="w-5 h-5 text-[#C5A97A]" />
+                                <div className="absolute top-2.5 right-2.5 bg-[#C5A97A] text-white p-1 rounded-full shadow-md flex items-center justify-center animate-scale-in">
+                                  <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
+                                </div>
                               )}
                             </div>
 
-                            <div>
-                              <span className="text-[9px] font-black uppercase tracking-widest text-[#C5A97A]">
+                            <div className="mt-1">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-[#C5A97A] block">
                                 SUBJECT
                               </span>
                               <h4 className="text-sm font-black uppercase tracking-tight truncate mt-1">
