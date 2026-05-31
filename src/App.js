@@ -43,6 +43,7 @@ import StaffLogin from "./pages/public/StaffLogin.jsx";
 import StaffDashboard from "./pages/staffs/admin/StaffDashboard.jsx";
 import StaffRegistration from "./pages/staffs/admin/StaffRegistration.jsx"
 import StaffManagement from "./pages/staffs/admin/StaffManagement.jsx";
+import AdminPaymentHistory from "./pages/staffs/admin/AdminPaymentHistory.jsx";
 import TutorDashboard from "./pages/staffs/tutor/TutorDashboard.jsx";
 import TutorMasterClass from "./pages/staffs/tutor/TutorMasterClass.jsx";
 import CourseAdvisorDashboard from "./pages/staffs/courseadvisor/CourseAdvisorDashboard.jsx";
@@ -74,7 +75,7 @@ function App() {
     <>
 
       <StickyButtons />
-      
+
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
@@ -91,6 +92,7 @@ function App() {
         <Route path="/staff/login" element={<StaffLogin />} />
         <Route path="/staff-verify-email" element={<StaffEmailVerification />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+
 
         {/* Guardian Registration Routes */}
         <Route path="/register/guardian" element={<GuardianRegistration />} />
@@ -155,6 +157,10 @@ function App() {
           <Route path="/staffs/manage-exams/:bodyId/subjects" element={<ExamSubjectList />} />
           <Route path="/staffs/manage-exams/:bodyId/subjects/:subjectId/years" element={<ExamYearList />} />
           <Route path="/staffs/manage-exams/:bodyId/subjects/:subjectId/years/:yearId/questions" element={<ExamQuestionList />} />
+          <Route
+            path="/staffs/payments"
+            element={<AdminPaymentHistory />}
+          />
         </Route>
       </Routes>
     </>
