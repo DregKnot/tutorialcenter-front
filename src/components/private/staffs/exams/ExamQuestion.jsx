@@ -62,6 +62,7 @@ export default function ExamQuestion() {
     removeFile,
     handleCaptionChange,
     handleSubmit,
+    handleSubmitGroup,
     fetchGroupDetails,
     // Batch submission overlay
     submissionStatus,
@@ -248,6 +249,7 @@ export default function ExamQuestion() {
             setGroupSearchTerm={setGroupSearchTerm}
             allGroups={allGroups}
             fetchGroupDetails={fetchGroupDetails}
+            handleSubmitGroup={handleSubmitGroup}
           />
 
           {/* 3. Questions Batch & Footer - Blurred during group creation */}

@@ -30,7 +30,8 @@ export default function ExamGroupSection({
   groupSearchTerm,
   setGroupSearchTerm,
   allGroups,
-  fetchGroupDetails
+  fetchGroupDetails,
+  handleSubmitGroup
 }) {
   if (groupType === "none") return null;
 
@@ -231,6 +232,27 @@ export default function ExamGroupSection({
             <input type="file" onChange={handleGroupImageChange} accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
           </div>
         </div>
+
+        {/* Save Group Title Alone Button */}
+        {isGroupCreationMode && (
+          <div className="pt-8 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-end gap-4 animate-in fade-in duration-300">
+            <button
+              type="button"
+              onClick={() => setIsGroupCreationMode(false)}
+              className="px-6 py-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-400 font-black rounded-2xl text-xs uppercase tracking-widest transition-all border border-gray-200 dark:border-gray-700 shadow-sm"
+            >
+              Cancel Group Title Setup
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmitGroup}
+              className="px-8 py-4 bg-[#BB9E7F] hover:bg-[#a88d65] text-[#0F2843] font-black rounded-2xl text-xs uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2"
+            >
+              <CheckCircleIcon className="w-5 h-5 text-[#0F2843]" />
+              Save & Submit Group Title
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

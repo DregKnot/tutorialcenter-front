@@ -567,6 +567,68 @@ export default function useExamForm() {
     return { isValid: Object.keys(errors).length === 0, errors };
   };
 
+  const handleSubmitGroup = async (e) => {
+    if (e) e.preventDefault();
+
+    if (!examYearId) {
+      setMessageToast({ type: "error", message: "Please select an Exam Year first." });
+      return;
+    }
+
+    if (!groupTitle.trim()) {
+      setMessageToast({ type: "error", message: "Group Title is required." });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "multipart/form-data"
+        }
+      };
+
+      const groupFormData = new FormData();
+      groupFormData.append("exam_year_id", examYearId);
+      groupFormData.append("type", groupType);
+      groupFormData.append("title", groupTitle);
+      groupFormData.append("content", groupContent);
+      groupFormData.append("sort_order", sortOrder);
+      if (groupImage) groupFormData.append("image", groupImage);
+
+      let res;
+      let newGroupId;
+      if (!selectedGroupId && !existingGroupId) {
+        // Create new group
+        res = await axios.post(`${API_BASE_URL}/api/admin/past-question-groups`, groupFormData, config);
+        newGroupId = res.data?.data?.id || res.data?.id;
+        setSelectedGroupId(newGroupId);
+        setExistingGroupId(newGroupId);
+        setMessageToast({ type: "success", message: "Group title successfully created and saved!" });
+      } else {
+        // Update existing group
+        const currentGroupId = selectedGroupId || existingGroupId;
+        groupFormData.append("_method", "PUT");
+        res = await axios.post(`${API_BASE_URL}/api/admin/past-question-groups/update/${currentGroupId}`, groupFormData, config);
+        newGroupId = currentGroupId;
+        setMessageToast({ type: "success", message: "Group title successfully updated!" });
+      }
+
+      // Refresh list of groups & set selection
+      await fetchGroups();
+      setIsGroupCreationMode(false);
+      setGroupSearchTerm(groupTitle);
+    } catch (err) {
+      console.error("Failed to submit group:", err);
+      const msg = err.response?.data?.message || "Failed to save question group.";
+      setMessageToast({ type: "error", message: msg });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -876,6 +938,7 @@ export default function useExamForm() {
     removeFile,
     handleCaptionChange,
     handleSubmit,
+    handleSubmitGroup,
     fetchGroupDetails,
     // Batch submission overlay
     submissionStatus,

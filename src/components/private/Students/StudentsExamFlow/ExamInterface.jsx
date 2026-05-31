@@ -296,7 +296,7 @@ export default function ExamInterface({
     const percentage = resultSummary?.percentage || (totalQuestions > 0 ? Math.round((scoreVal / totalQuestions) * 100) : 0);
 
     return (
-      <div className="max-w-xl mx-auto w-full pb-20 px-2 lg:px-4 animate-in fade-in duration-500">
+      <div className="max-w-3xl mx-auto w-full pb-20 px-2 lg:px-4 animate-in fade-in duration-500">
         <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-[#C5A97A]/30 p-8 shadow-2xl text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-green-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
 
@@ -382,7 +382,7 @@ export default function ExamInterface({
   }
 
   return (
-    <div className="max-w-5xl mx-auto w-full pb-20 px-2 lg:px-4 animate-in fade-in duration-500">
+    <div className="w-full animate-in fade-in duration-500">
       {/* Toast Alert */}
       {toast && (
         <div
