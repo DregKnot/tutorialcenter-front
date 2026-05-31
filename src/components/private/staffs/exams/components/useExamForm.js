@@ -680,6 +680,11 @@ export default function useExamForm() {
           const groupRes = await axios.post(`${API_BASE_URL}/api/admin/past-question-groups`, groupFormData, config);
           currentGroupId = groupRes.data?.data?.id || groupRes.data?.id;
           setExistingGroupId(currentGroupId);
+          setSelectedGroupId(currentGroupId);
+          setIsGroupCreationMode(false);
+          setGroupSearchTerm(groupTitle);
+          // Fetch groups in background
+          fetchGroups().catch(err => console.error("Failed to refresh groups:", err));
         } else {
           groupFormData.append("_method", "PUT");
           await axios.post(`${API_BASE_URL}/api/admin/past-question-groups/update/${currentGroupId}`, groupFormData, config);
