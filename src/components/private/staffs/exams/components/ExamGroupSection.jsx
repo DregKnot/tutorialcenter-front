@@ -30,7 +30,8 @@ export default function ExamGroupSection({
   groupSearchTerm,
   setGroupSearchTerm,
   allGroups,
-  fetchGroupDetails
+  fetchGroupDetails,
+  handleSubmitGroup
 }) {
   if (groupType === "none") return null;
 
@@ -149,22 +150,43 @@ export default function ExamGroupSection({
 
               </div>
             ) : (
-              <div className="relative group animate-in zoom-in-95 duration-300">
-                <input 
-                  type="text"
-                  value={groupTitle}
-                  onChange={(e) => setGroupTitle(e.target.value)}
-                  placeholder="Enter new group title..."
-                  autoFocus
-                  className="w-full px-8 py-5 bg-white dark:bg-gray-800 border-2 border-[#BB9E7F] rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none shadow-xl"
-                />
-                <button 
-                  type="button"
-                  onClick={() => setIsGroupCreationMode(false)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-[#0F2843] dark:hover:text-white"
-                >
-                  <CheckCircleIcon className="w-6 h-6 text-[#76D287]" />
-                </button>
+              <div className="space-y-4 animate-in zoom-in-95 duration-300">
+                <div className="relative group">
+                  <input 
+                    type="text"
+                    value={groupTitle}
+                    onChange={(e) => setGroupTitle(e.target.value)}
+                    placeholder="Enter new group title..."
+                    autoFocus
+                    className="w-full px-8 py-5 bg-white dark:bg-gray-800 border-2 border-[#BB9E7F] rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none shadow-xl animate-pulse focus:animate-none"
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => setIsGroupCreationMode(false)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-[#0F2843] dark:hover:text-white"
+                  >
+                    <XMarkIcon className="w-5 h-5 text-red-400 hover:text-red-600" />
+                  </button>
+                </div>
+                
+                {/* Save Group Title Alone Button directly under the input */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 animate-in fade-in duration-300">
+                  <button
+                    type="button"
+                    onClick={handleSubmitGroup}
+                    className="w-full sm:w-auto px-6 py-4 bg-[#BB9E7F] hover:bg-[#a88d65] text-[#0F2843] font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2"
+                  >
+                    <CheckCircleIcon className="w-4 h-4 text-[#0F2843]" />
+                    Save Title
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsGroupCreationMode(false)}
+                    className="w-full sm:w-auto px-6 py-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-400 font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all border border-gray-200 dark:border-gray-700 shadow-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
           </div>

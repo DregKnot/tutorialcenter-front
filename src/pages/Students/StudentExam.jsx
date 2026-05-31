@@ -281,7 +281,7 @@ export default function StudentExam() {
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto w-full pb-20 px-2 lg:px-4">
+      <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto w-full pb-20 px-2 lg:px-4 transition-all duration-300">
         {showExamInterface && activeAttemptId ? (
           <ExamInterface
             attemptId={activeAttemptId}
@@ -295,6 +295,7 @@ export default function StudentExam() {
           />
         ) : showHistory ? (
           <ExamHistory
+            availableExams={availableExams}
             onBack={() => setShowHistory(false)}
           />
         ) : loading ? (

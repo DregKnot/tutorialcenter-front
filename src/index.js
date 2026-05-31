@@ -7,6 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
+import QueryProvider from "./providers/QueryProvider";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
@@ -15,7 +16,9 @@ root.render(
       <ThemeProvider>
         <AuthProvider>
           <StaffAuthProvider>
-            <App />
+            <QueryProvider>
+              <App />
+            </QueryProvider>
           </StaffAuthProvider>
         </AuthProvider>
       </ThemeProvider>

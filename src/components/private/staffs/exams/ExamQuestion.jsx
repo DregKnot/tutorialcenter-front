@@ -62,6 +62,7 @@ export default function ExamQuestion() {
     removeFile,
     handleCaptionChange,
     handleSubmit,
+    handleSubmitGroup,
     fetchGroupDetails,
     // Batch submission overlay
     submissionStatus,
@@ -248,10 +249,11 @@ export default function ExamQuestion() {
             setGroupSearchTerm={setGroupSearchTerm}
             allGroups={allGroups}
             fetchGroupDetails={fetchGroupDetails}
+            handleSubmitGroup={handleSubmitGroup}
           />
 
-          {/* 3. Questions Batch & Footer - Blurred during group creation */}
-          <div className={`transition-all duration-500 ${isGroupCreationMode ? "blur-[8px] pointer-events-none opacity-30 select-none scale-[0.98]" : ""}`}>
+          {/* 3. Questions Batch & Footer - Fully interactive so the user can submit the group and questions together */}
+          <div className="transition-all duration-500">
             
             {/* Existing Questions Count Info Panel (Preceding the Question Batch) */}
             {existingQuestions.length > 0 && (
@@ -336,7 +338,9 @@ export default function ExamQuestion() {
                 disabled={loading || fetchingData || questions.some((q, i) => isDuplicateNumber(i, q.questionNumber))}
                 className="w-full md:flex-[2] py-6 bg-[#0F2843] text-white font-black rounded-[28px] shadow-2xl shadow-[#0F2843]/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.3em] text-sm flex items-center justify-center gap-3"
               >
-                {loading ? "Processing Batch..." : (isEditMode ? "Update Changes" : `Create ${questions.length} Question${questions.length > 1 ? 's' : ''}`)}
+                {loading ? "Processing Batch..." : (
+                  isGroupCreationMode ? "Submit Group & Questions" : (isEditMode ? "Update Changes" : `Create ${questions.length} Question${questions.length > 1 ? 's' : ''}`)
+                )}
               </button>
             </div>
           </div>

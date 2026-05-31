@@ -93,28 +93,13 @@ const StreakFire = ({ streak }) => {
   const styles = getStreakFlameStyles(streak);
   
   // Outer flame keyframes paths for native fluid morphing
-  const outerPaths = `
-    M30 85 C15 75 10 50 25 25 C30 15 35 5 35 5 C35 5 40 18 45 28 C55 15 65 0 65 0 C65 0 65 15 60 30 C75 55 70 75 55 85 C48 90 38 90 30 85 Z;
-    M32 84 C18 76 13 47 28 22 C32 16 36 8 36 8 C36 8 38 19 43 31 C52 18 63 6 63 6 C63 6 62 17 58 32 C71 57 67 76 53 84 C46 88 38 88 32 84 Z;
-    M28 86 C12 74 8 52 23 27 C28 14 34 2 34 2 C34 2 41 17 47 26 C57 12 67 3 67 3 C67 3 67 13 61 28 C77 53 72 73 57 86 C50 91 40 91 28 86 Z;
-    M30 85 C15 75 10 50 25 25 C30 15 35 5 35 5 C35 5 40 18 45 28 C55 15 65 0 65 0 C65 0 65 15 60 30 C75 55 70 75 55 85 C48 90 38 90 30 85 Z
-  `;
+  const outerPaths = "M30 85 C15 75 10 50 25 25 C30 15 35 5 35 5 C35 5 40 18 45 28 C55 15 65 0 65 0 C65 0 65 15 60 30 C75 55 70 75 55 85 C48 90 38 90 30 85 Z;M32 84 C18 76 13 47 28 22 C32 16 36 8 36 8 C36 8 38 19 43 31 C52 18 63 6 63 6 C63 6 62 17 58 32 C71 57 67 76 53 84 C46 88 38 88 32 84 Z;M28 86 C12 74 8 52 23 27 C28 14 34 2 34 2 C34 2 41 17 47 26 C57 12 67 3 67 3 C67 3 67 13 61 28 C77 53 72 73 57 86 C50 91 40 91 28 86 Z;M30 85 C15 75 10 50 25 25 C30 15 35 5 35 5 C35 5 40 18 45 28 C55 15 65 0 65 0 C65 0 65 15 60 30 C75 55 70 75 55 85 C48 90 38 90 30 85 Z";
 
   // Middle flame keyframes paths for native fluid morphing
-  const middlePaths = `
-    M33 80 C23 72 20 53 30 35 C33 28 37 20 37 20 C37 20 40 30 44 38 C51 28 58 17 58 17 C58 17 58 29 54 40 C64 59 60 74 49 80 C44 84 37 84 33 80 Z;
-    M35 79 C26 73 22 51 31 33 C34 29 38 23 38 23 C38 23 39 31 43 40 C49 30 56 22 56 22 C56 22 56 31 52 42 C62 60 58 75 47 79 C42 82 36 82 35 79 Z;
-    M31 81 C20 70 18 55 28 37 C31 27 35 17 35 17 C35 17 41 29 45 36 C53 26 60 13 60 13 C60 13 60 27 56 38 C66 57 62 72 51 81 C46 85 39 85 31 81 Z;
-    M33 80 C23 72 20 53 30 35 C33 28 37 20 37 20 C37 20 40 30 44 38 C51 28 58 17 58 17 C58 17 58 29 54 40 C64 59 60 74 49 80 C44 84 37 84 33 80 Z
-  `;
+  const middlePaths = "M33 80 C23 72 20 53 30 35 C33 28 37 20 37 20 C37 20 40 30 44 38 C51 28 58 17 58 17 C58 17 58 29 54 40 C64 59 60 74 49 80 C44 84 37 84 33 80 Z;M35 79 C26 73 22 51 31 33 C34 29 38 23 38 23 C38 23 39 31 43 40 C49 30 56 22 56 22 C56 22 56 31 52 42 C62 60 58 75 47 79 C42 82 36 82 35 79 Z;M31 81 C20 70 18 55 28 37 C31 27 35 17 35 17 C35 17 41 29 45 36 C53 26 60 13 60 13 C60 13 60 27 56 38 C66 57 62 72 51 81 C46 85 39 85 31 81 Z;M33 80 C23 72 20 53 30 35 C33 28 37 20 37 20 C37 20 40 30 44 38 C51 28 58 17 58 17 C58 17 58 29 54 40 C64 59 60 74 49 80 C44 84 37 84 33 80 Z";
 
   // Inner flame keyframes paths for native fluid morphing
-  const innerPaths = `
-    M37 75 C30 68 28 55 35 43 C37 38 40 32 40 32 C40 32 42 38 45 44 C50 37 54 29 54 29 C54 29 54 38 51 46 C57 60 54 71 46 75 C42 78 38 78 37 75 Z;
-    M38 74 C32 69 30 53 36 41 C38 37 41 33 41 33 C41 33 42 39 44 45 C48 39 52 31 52 31 C52 31 52 39 49 47 C55 61 52 72 45 74 C41 76 38 76 38 74 Z;
-    M35 76 C28 66 26 57 33 44 C35 39 38 30 38 30 C38 30 43 37 46 43 C51 35 56 26 56 26 C56 26 55 37 52 45 C58 59 55 70 47 76 C43 79 38 79 35 76 Z;
-    M37 75 C30 68 28 55 35 43 C37 38 40 32 40 32 C40 32 42 38 45 44 C50 37 54 29 54 29 C54 29 54 38 51 46 C57 60 54 71 46 75 C42 78 38 78 37 75 Z
-  `;
+  const innerPaths = "M37 75 C30 68 28 55 35 43 C37 38 40 32 40 32 C40 32 42 38 45 44 C50 37 54 29 54 29 C54 29 54 38 51 46 C57 60 54 71 46 75 C42 78 38 78 37 75 Z;M38 74 C32 69 30 53 36 41 C38 37 41 33 41 33 C41 33 42 39 44 45 C48 39 52 31 52 31 C52 31 52 39 49 47 C55 61 52 72 45 74 C41 76 38 76 38 74 Z;M35 76 C28 66 26 57 33 44 C35 39 38 30 38 30 C38 30 43 37 46 43 C51 35 56 26 56 26 C56 26 55 37 52 45 C58 59 55 70 47 76 C43 79 38 79 35 76 Z;M37 75 C30 68 28 55 35 43 C37 38 40 32 40 32 C40 32 42 38 45 44 C50 37 54 29 54 29 C54 29 54 38 51 46 C57 60 54 71 46 75 C42 78 38 78 37 75 Z";
 
   const glowColor = styles.glow;
 
@@ -154,33 +139,30 @@ const StreakFire = ({ streak }) => {
         className={`w-full h-full flame-streak-anim-${streak}`}
         style={{ overflow: "visible" }}
       >
-        <defs>
-          <linearGradient id={`outerGrad-${streak}`} x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor={styles.outer[0]} />
-            <stop offset="100%" stopColor={styles.outer[1]} stopOpacity="0.4" />
-          </linearGradient>
-          <linearGradient id={`midGrad-${streak}`} x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor={styles.middle[0]} />
-            <stop offset="100%" stopColor={styles.middle[1]} />
-          </linearGradient>
-          <linearGradient id={`innerGrad-${streak}`} x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor={styles.inner[0]} />
-            <stop offset="100%" stopColor={styles.inner[1]} />
-          </linearGradient>
-        </defs>
-
         {/* Outer Flame Layer */}
-        <path d="M30 85 C15 75 10 50 25 25 C30 15 35 5 35 5 C35 5 40 18 45 28 C55 15 65 0 65 0 C65 0 65 15 60 30 C75 55 70 75 55 85 C48 90 38 90 30 85 Z" fill={`url(#outerGrad-${streak})`}>
+        <path 
+          d="M30 85 C15 75 10 50 25 25 C30 15 35 5 35 5 C35 5 40 18 45 28 C55 15 65 0 65 0 C65 0 65 15 60 30 C75 55 70 75 55 85 C48 90 38 90 30 85 Z" 
+          fill={styles.outer[0]} 
+          fillOpacity="0.65"
+        >
           <animate attributeName="d" dur={styles.speed} repeatCount="indefinite" values={outerPaths} />
         </path>
 
         {/* Middle Flame Layer */}
-        <path d="M33 80 C23 72 20 53 30 35 C33 28 37 20 37 20 C37 20 40 30 44 38 C51 28 58 17 58 17 C58 17 58 29 54 40 C64 59 60 74 49 80 C44 84 37 84 33 80 Z" fill={`url(#midGrad-${streak})`}>
+        <path 
+          d="M33 80 C23 72 20 53 30 35 C33 28 37 20 37 20 C37 20 40 30 44 38 C51 28 58 17 58 17 C58 17 58 29 54 40 C64 59 60 74 49 80 C44 84 37 84 33 80 Z" 
+          fill={styles.middle[0]} 
+          fillOpacity="0.8"
+        >
           <animate attributeName="d" dur={styles.speed} repeatCount="indefinite" values={middlePaths} />
         </path>
 
         {/* Inner Flame Layer */}
-        <path d="M37 75 C30 68 28 55 35 43 C37 38 40 32 40 32 C40 32 42 38 45 44 C50 37 54 29 54 29 C54 29 54 38 51 46 C57 60 54 71 46 75 C42 78 38 78 37 75 Z" fill={`url(#innerGrad-${streak})`}>
+        <path 
+          d="M37 75 C30 68 28 55 35 43 C37 38 40 32 40 32 C40 32 42 38 45 44 C50 37 54 29 54 29 C54 29 54 38 51 46 C57 60 54 71 46 75 C42 78 38 78 37 75 Z" 
+          fill={styles.inner[0]} 
+          fillOpacity="1.0"
+        >
           <animate attributeName="d" dur={styles.speed} repeatCount="indefinite" values={innerPaths} />
         </path>
 
@@ -197,7 +179,7 @@ const StreakFire = ({ streak }) => {
   );
 };
 
-export default function ExamHistory({ onBack }) {
+export default function ExamHistory({ availableExams = [], onBack }) {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("student_token") || "";
@@ -334,9 +316,39 @@ export default function ExamHistory({ onBack }) {
       ? attempt.unanswered_answers_count
       : (attempt.unanswered || (totalQ - correct - wrong >= 0 ? totalQ - correct - wrong : 0));
 
-    const courseTitle = attempt.course?.title || attempt.exam_year?.subject?.course?.title || attempt.course_title || "General Course";
-    const subjectName = attempt.subject?.name || attempt.exam_year?.subject?.name || attempt.subject_name || "General Subject";
-    const yearValue = attempt.year || attempt.exam_year?.year || attempt.exam_year_name || "N/A";
+    // Try to find matching exam from availableExams fallback
+    const matchingExam = (availableExams || []).find(
+      (exam) => 
+        String(exam.id) === String(attempt.exam_year_id) ||
+        String(exam.exam_year_id) === String(attempt.exam_year_id)
+    );
+
+    const courseTitle = 
+      attempt.course?.title || 
+      attempt.exam_year?.subject?.course?.title || 
+      attempt.examYear?.subject?.course?.title ||
+      matchingExam?.subject?.course?.title ||
+      matchingExam?.course?.title ||
+      attempt.course_title || 
+      "General Course";
+
+    const subjectName = 
+      attempt.subject?.name || 
+      attempt.exam_year?.subject?.name || 
+      attempt.examYear?.subject?.name ||
+      matchingExam?.subject?.name ||
+      matchingExam?.subject?.title ||
+      attempt.subject_name || 
+      "General Subject";
+
+    const yearValue = 
+      attempt.year || 
+      attempt.exam_year?.year || 
+      attempt.examYear?.year ||
+      matchingExam?.exam_year?.year ||
+      matchingExam?.year ||
+      attempt.exam_year_name || 
+      "N/A";
 
     return {
       score: scoreVal,
@@ -449,7 +461,7 @@ export default function ExamHistory({ onBack }) {
     });
 
   return (
-    <div className="max-w-5xl mx-auto w-full pb-20 px-2 lg:px-4 animate-in fade-in duration-500">
+    <div className="w-full animate-in fade-in duration-500">
       {/* Toast Alert */}
       {toast && (
         <div
@@ -484,9 +496,9 @@ export default function ExamHistory({ onBack }) {
       </div>
 
       {/* 1. Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Metric Card 1: Average Score */}
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center gap-5">
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col xl:flex-row items-center xl:items-start text-center xl:text-left gap-4 xl:gap-5">
           <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 text-[#C5A97A] rounded-2xl shrink-0">
             <Icon icon="lucide:award" className="w-8 h-8" />
           </div>
@@ -501,7 +513,7 @@ export default function ExamHistory({ onBack }) {
         </div>
 
         {/* Metric Card 2: Highest Score */}
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center gap-5">
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col xl:flex-row items-center xl:items-start text-center xl:text-left gap-4 xl:gap-5">
           <div className="p-4 bg-green-50 dark:bg-green-950/20 text-[#76D287] rounded-2xl shrink-0">
             <Icon icon="lucide:trophy" className="w-8 h-8" />
           </div>
@@ -518,7 +530,7 @@ export default function ExamHistory({ onBack }) {
         </div>
 
         {/* Metric Card 3: Daily Streak */}
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center gap-5">
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col xl:flex-row items-center xl:items-start text-center xl:text-left gap-4 xl:gap-5">
           <div className={`p-1.5 ${getStreakFlameStyles(activeStreak).bgClass} rounded-2xl shrink-0 relative flex items-center justify-center`}>
             <StreakFire streak={activeStreak} />
           </div>
@@ -649,10 +661,10 @@ export default function ExamHistory({ onBack }) {
             return (
               <div
                 key={attempt.id}
-                className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] p-6 shadow-sm hover:shadow-md hover:scale-[1.005] transition-all duration-300 flex flex-col md:flex-row gap-6 justify-between items-center"
+                className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] p-6 shadow-sm hover:shadow-md hover:scale-[1.005] transition-all duration-300 flex flex-col xl:flex-row gap-6 justify-between xl:items-center w-full"
               >
                 {/* Score Circular Progress & Titles */}
-                <div className="flex items-center gap-5 w-full md:w-auto">
+                <div className="flex items-center gap-5 w-full xl:w-auto shrink-0">
                   <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle
@@ -680,7 +692,7 @@ export default function ExamHistory({ onBack }) {
                       </span>
                     </div>
                   </div>
-
+ 
                   <div className="min-w-0">
                     <span className="text-[10px] font-black uppercase text-[#C5A97A] tracking-wider block">
                       {stats.courseTitle}
@@ -714,9 +726,9 @@ export default function ExamHistory({ onBack }) {
                     </div>
                   </div>
                 </div>
-
+ 
                 {/* Timeline display details */}
-                <div className="flex items-center gap-4 py-4 md:py-0 w-full md:w-auto border-y md:border-y-0 border-gray-50 dark:border-gray-900 px-4 md:px-0">
+                <div className="flex items-center justify-between xl:justify-start gap-4 py-4 xl:py-0 w-full xl:w-auto border-y xl:border-y-0 border-gray-100 dark:border-gray-800 px-2 xl:px-0 shrink-0">
                   {/* Start Point */}
                   {startStamp && (
                     <div className="text-left shrink-0">
@@ -732,12 +744,12 @@ export default function ExamHistory({ onBack }) {
                       </p>
                     </div>
                   )}
-
+ 
                   {/* Connector Line */}
-                  <div className="flex-1 md:w-12 h-[1px] md:h-0.5 bg-gray-200 dark:bg-gray-800 shrink-0 relative flex items-center justify-center">
+                  <div className="flex-1 xl:w-12 h-[1px] xl:h-0.5 bg-gray-200 dark:bg-gray-800 shrink-0 relative flex items-center justify-center">
                     <Icon icon="lucide:chevron-right" className="w-3.5 h-3.5 text-gray-300 absolute" />
                   </div>
-
+ 
                   {/* Submit Point */}
                   <div className="text-left shrink-0">
                     <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
@@ -762,9 +774,9 @@ export default function ExamHistory({ onBack }) {
                     )}
                   </div>
                 </div>
-
+ 
                 {/* Score breakdown metrics grid */}
-                <div className="grid grid-cols-3 gap-2 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 w-full md:w-auto">
+                <div className="grid grid-cols-3 gap-2 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 w-full xl:w-auto shrink-0">
                   <div className="text-center px-1">
                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
                       Correct
