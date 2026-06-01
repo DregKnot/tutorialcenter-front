@@ -147,6 +147,25 @@ const transformSymbols = (html) => {
     return html;
   }
 };
+// Define allowed formats, specifically omitting 'divider' or 'hr' so ____ doesn't turn into a line
+const quillFormats = [
+  'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+  'list', 'bullet', 'indent', 'link', 'image', 'video', 'script'
+];
+
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'script': 'sub'}, { 'script': 'super' }],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['link', 'image', 'video'],
+    ['clean']
+  ],
+  clipboard: {
+    matchVisual: false
+  }
+};
 
 export default function QuestionItem({
   q,
@@ -167,10 +186,6 @@ export default function QuestionItem({
   insertSymbol,
   validationErrors = []
 }) {
-  // Helper to strip HTML for summary
-  const stripHtml = (html) => html ? html.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") : "";
-  const textSnippet = stripHtml(q.questionText);
-
   return (
     <div className="border-t border-gray-100 dark:border-gray-700 first:border-t-0">
       {/* Question Header / Toggle */}
@@ -183,9 +198,16 @@ export default function QuestionItem({
             {q.questionNumber || qIdx + 1}
           </div>
           <div className="overflow-hidden">
-            <h3 className="text-sm md:text-base font-black text-[#0F2843] dark:text-white uppercase tracking-tight truncate">
-              {q.isExpanded ? (isEditMode ? 'Editing Question' : 'Question Configuration') : (textSnippet ? textSnippet.substring(0, 80) + '...' : 'Blank Question')}
-            </h3>
+            {q.isExpanded ? (
+              <h3 className="text-sm md:text-base font-black text-[#0F2843] dark:text-white uppercase tracking-tight truncate">
+                {isEditMode ? 'Editing Question' : 'Question Configuration'}
+              </h3>
+            ) : (
+              <div 
+                className="text-sm md:text-base text-[#0F2843] dark:text-white truncate quill-content [&_*]:!inline [&>p]:!inline"
+                dangerouslySetInnerHTML={{ __html: q.questionText || '<span class="italic text-gray-400">Blank Question</span>' }}
+              />
+            )}
             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
               {q.isSaved ? (
                 <span className="text-green-500 flex items-center gap-1"><CheckCircleIcon className="w-3 h-3"/> Successfully Saved</span>
@@ -326,6 +348,8 @@ export default function QuestionItem({
               <ReactQuill 
                 theme="snow" 
                 value={q.questionText} 
+                modules={quillModules}
+                formats={quillFormats}
                 onChange={(val) => {
                   if (val && (val.includes('$') || val.includes('\\') || val.includes('&') || val.includes('^') || val.includes('_'))) {
                     const transformed = transformSymbols(val);
@@ -431,6 +455,8 @@ export default function QuestionItem({
               <ReactQuill 
                 theme="snow" 
                 value={q.explanation} 
+                modules={quillModules}
+                formats={quillFormats}
                 onChange={(val) => {
                   if (val && (val.includes('$') || val.includes('\\') || val.includes('&') || val.includes('^') || val.includes('_'))) {
                     const transformed = transformSymbols(val);
