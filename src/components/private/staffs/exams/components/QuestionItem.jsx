@@ -51,6 +51,11 @@ const transformTextContent = (text) => {
   if (!text) return text;
   let result = text;
 
+  // SKIP transformation if there are 3+ consecutive underscores (fill-in-the-blank pattern)
+  if (/_{3,}/.test(result)) {
+    return result;
+  }
+
   // 1. Convert LaTeX Fractions \frac{num}{den} and \frac12
   result = result.replace(/\\frac\s*\{([^}]+)\}\s*\{([^}]+)\}/g, (match, num, den) => {
     return makeUnicodeFraction(num.trim(), den.trim());
@@ -125,6 +130,11 @@ const transformSymbols = (html) => {
   if (!html) return html;
   if (typeof DOMParser === 'undefined') return html;
 
+  // SKIP transformation if there are 3+ consecutive underscores (fill-in-the-blank pattern)
+  if (/_{3,}/.test(html)) {
+    return html;
+  }
+
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
@@ -150,7 +160,7 @@ const transformSymbols = (html) => {
 // Define allowed formats, specifically omitting 'divider' or 'hr' so ____ doesn't turn into a line
 const quillFormats = [
   'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
-  'list', 'bullet', 'indent', 'link', 'image', 'video', 'script'
+  'list', 'indent', 'link', 'image', 'video', 'script'
 ];
 
 const quillModules = {

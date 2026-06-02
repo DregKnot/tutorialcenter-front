@@ -57,6 +57,46 @@ export default function ExamGroupSection({
       )}
 
       <div className={`space-y-12 transition-all duration-300 ${isGroupCreationMode ? "relative z-[110]" : ""}`}>
+        {/* Selected Group Info Card - Shows when a group is selected */}
+        {selectedGroupId && !isGroupCreationMode && (
+          <div className="bg-gradient-to-r from-[#BB9E7F]/5 to-[#76D287]/5 border-2 border-[#BB9E7F]/20 rounded-[28px] p-6 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Currently Editing</p>
+                <p className="text-lg font-black text-[#0F2843] dark:text-white mb-3">{groupTitle}</p>
+                <div className="space-y-2 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                  {groupContent && (
+                    <p>
+                      <span className="text-[#BB9E7F]">Content:</span> {groupContent.replace(/<[^>]*>/g, '').substring(0, 60)}...
+                    </p>
+                  )}
+                  <p>
+                    <span className="text-[#BB9E7F]">Sort Order:</span> {sortOrder}
+                  </p>
+                  {groupImagePreview && (
+                    <p>
+                      <span className="text-[#BB9E7F]">Visual Aid:</span> Loaded
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedGroupId("");
+                  setGroupSearchTerm("");
+                  setGroupTitle("");
+                  setGroupContent("");
+                  setGroupImagePreview(null);
+                }}
+                className="flex-shrink-0 p-2 text-gray-400 hover:text-red-500 transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Group Title Selection/Creation */}
           <div className="space-y-4">
@@ -95,7 +135,11 @@ export default function ExamGroupSection({
                       setGroupImagePreview(null);
                     }
                   }}
-                  className="w-full pl-16 pr-14 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
+                  className={`w-full pl-16 pr-14 py-5 rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none shadow-inner transition-all ${
+                    selectedGroupId 
+                      ? "bg-[#76D287]/10 border-2 border-[#76D287]/40 dark:bg-[#76D287]/20" 
+                      : "bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30"
+                  }`}
                 />
 
                 {/* Inline Clear Button when a group is selected */}
@@ -168,25 +212,6 @@ export default function ExamGroupSection({
                     <XMarkIcon className="w-5 h-5 text-red-400 hover:text-red-600" />
                   </button>
                 </div>
-                
-                {/* Save Group Title Alone Button directly under the input */}
-                <div className="flex flex-col sm:flex-row items-center gap-3 animate-in fade-in duration-300">
-                  <button
-                    type="button"
-                    onClick={handleSubmitGroup}
-                    className="w-full sm:w-auto px-6 py-4 bg-[#BB9E7F] hover:bg-[#a88d65] text-[#0F2843] font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2"
-                  >
-                    <CheckCircleIcon className="w-4 h-4 text-[#0F2843]" />
-                    Save Title
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsGroupCreationMode(false)}
-                    className="w-full sm:w-auto px-6 py-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-400 font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all border border-gray-200 dark:border-gray-700 shadow-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
               </div>
             )}
           </div>
@@ -253,6 +278,34 @@ export default function ExamGroupSection({
             <input type="file" onChange={handleGroupImageChange} accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
           </div>
         </div>
+
+        {/* Form Submit Button - Appears at the end */}
+        {(isGroupCreationMode || selectedGroupId) && (
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-8 border-t border-gray-100 dark:border-gray-700 animate-in fade-in duration-300">
+            <button
+              type="button"
+              onClick={handleSubmitGroup}
+              className="w-full sm:w-auto px-8 py-5 bg-[#BB9E7F] hover:bg-[#a88d65] text-[#0F2843] font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <CheckCircleIcon className="w-5 h-5 text-[#0F2843]" />
+              {isGroupCreationMode ? "Create Group" : "Update Group"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsGroupCreationMode(false);
+                setSelectedGroupId("");
+                setGroupSearchTerm("");
+                setGroupTitle("");
+                setGroupContent("");
+                setGroupImagePreview(null);
+              }}
+              className="w-full sm:w-auto px-8 py-5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-400 font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all border border-gray-200 dark:border-gray-700 shadow-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
