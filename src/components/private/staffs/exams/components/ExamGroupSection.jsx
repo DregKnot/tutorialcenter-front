@@ -110,6 +110,7 @@ export default function ExamGroupSection({
                   setGroupTitle("");
                   setGroupContent("");
                   setGroupImagePreview(null);
+                  setSortOrder(1);
                 }}
                 className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] flex items-center gap-1 transition-colors uppercase"
               >
@@ -216,68 +217,74 @@ export default function ExamGroupSection({
             )}
           </div>
 
-          {/* Sort Order */}
-          <div className="space-y-4">
-            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Sort Order</label>
-            <input 
-              type="number"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              className="w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
-            />
-          </div>
+          {/* Sort Order - Now visible both in creation and edit mode */}
+          {(isGroupCreationMode || selectedGroupId) && (
+            <div className="space-y-4">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Sort Order</label>
+              <input 
+                type="number"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(Number(e.target.value))}
+                className="w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
+              />
+            </div>
+          )}
         </div>
 
-        {/* Group Content (WYSIWYG) */}
-        <div className="space-y-4">
-          <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Content / Narrative</label>
-          <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[250px] [&_.ql-toolbar]:bg-white dark:[&_.ql-toolbar]:bg-gray-800">
-            <ReactQuill
-              theme="snow"
-              value={groupContent || ""}
-              onChange={setGroupContent}
-              placeholder="Enter the comprehension text, instructions, or scenario details here..."
-              className="[&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!"
-              modules={{
-                toolbar: [
-                  [{ header: [1, 2, 3, false] }],
-                  ["bold", "italic", "underline", "strike"],
-                  [{ list: "ordered" }, { list: "bullet" }],
-                  ["blockquote", "link"],
-                  ["clean"],
-                ],
-              }}
-            />
+        {/* Group Content (WYSIWYG) - Only show when group is selected or creating */}
+        {(isGroupCreationMode || selectedGroupId) && (
+          <div className="space-y-4 animate-in fade-in duration-300">
+            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Content / Narrative</label>
+            <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[250px] [&_.ql-toolbar]:bg-white dark:[&_.ql-toolbar]:bg-gray-800">
+              <ReactQuill
+                theme="snow"
+                value={groupContent || ""}
+                onChange={setGroupContent}
+                placeholder="Enter the comprehension text, instructions, or scenario details here..."
+                className="[&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!"
+                modules={{
+                  toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ["bold", "italic", "underline", "strike"],
+                    [{ list: "ordered" }, { list: "bullet" }],
+                    ["blockquote", "link"],
+                    ["clean"],
+                  ],
+                }}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Group Image Upload */}
-        <div className="space-y-4">
-          <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Visual Aid (Optional)</label>
-          <div className={`relative group border-2 border-dashed rounded-[40px] overflow-hidden bg-gray-50 dark:bg-gray-900/50 transition-all ${
-            groupImagePreview ? "border-[#76D287]/30" : "border-gray-200 dark:border-gray-700 hover:border-[#BB9E7F]/40"
-          }`}>
-            {groupImagePreview ? (
-              <div className="relative aspect-video">
-                <img src={groupImagePreview} alt="Preview" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
-                  <CameraIcon className="w-12 h-12 text-white" />
+        {/* Group Image Upload - Only show when group is selected or creating */}
+        {(isGroupCreationMode || selectedGroupId) && (
+          <div className="space-y-4 animate-in fade-in duration-300">
+            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Visual Aid (Optional)</label>
+            <div className={`relative group border-2 border-dashed rounded-[40px] overflow-hidden bg-gray-50 dark:bg-gray-900/50 transition-all ${
+              groupImagePreview ? "border-[#76D287]/30" : "border-gray-200 dark:border-gray-700 hover:border-[#BB9E7F]/40"
+            }`}>
+              {groupImagePreview ? (
+                <div className="relative aspect-video">
+                  <img src={groupImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
+                    <CameraIcon className="w-12 h-12 text-white" />
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="p-16 flex flex-col items-center justify-center text-center gap-6 cursor-pointer">
-                <div className="w-24 h-24 bg-white dark:bg-gray-800 rounded-[32px] shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <BookOpenIcon className="w-12 h-12 text-[#BB9E7F]" />
+              ) : (
+                <div className="p-16 flex flex-col items-center justify-center text-center gap-6 cursor-pointer">
+                  <div className="w-24 h-24 bg-white dark:bg-gray-800 rounded-[32px] shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <BookOpenIcon className="w-12 h-12 text-[#BB9E7F]" />
+                  </div>
+                  <div>
+                    <p className="text-[#0F2843] dark:text-white font-black text-xl">Upload Visual Assets</p>
+                    <p className="text-gray-400 text-sm font-bold mt-2">Diagrams, maps, or illustrations for this group</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[#0F2843] dark:text-white font-black text-xl">Upload Visual Assets</p>
-                  <p className="text-gray-400 text-sm font-bold mt-2">Diagrams, maps, or illustrations for this group</p>
-                </div>
-              </div>
-            )}
-            <input type="file" onChange={handleGroupImageChange} accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
+              )}
+              <input type="file" onChange={handleGroupImageChange} accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Form Submit Button - Appears at the end */}
         {(isGroupCreationMode || selectedGroupId) && (
