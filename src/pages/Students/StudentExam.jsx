@@ -31,11 +31,23 @@ export default function StudentExam() {
   const [activeAttemptId, setActiveAttemptId] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Clock picker modal state
+  const [isClockModalOpen, setIsClockModalOpen] = useState(false);
+  const [modalHours, setModalHours] = useState(0);
+  const [modalMinutes, setModalMinutes] = useState(50);
+
+  // Sync modal controls when modal is opened
+  useEffect(() => {
+    if (isClockModalOpen) {
+      const totalMins = parseInt(timer, 10) || 50;
+      setModalHours(Math.floor(totalMins / 60));
+      setModalMinutes(totalMins % 60);
+    }
+  }, [isClockModalOpen, timer]);
+
   // References
   const subjectRowRef = useRef(null);
 
-  // Timer options (minutes)
-  const timerOptions = ["10", "15", "20", "25", "30", "40", "50", "60", "70", "80", "90", "100", "110", "120"];
 
   // Handle responsiveness breakpoints
   useEffect(() => {
@@ -239,7 +251,15 @@ export default function StudentExam() {
   };
 
   // Dynamic values
-  const displayTimer = `${timer} Mins`;
+  const displayTimer = (() => {
+    const mins = parseInt(timer, 10) || 50;
+    const hrs = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (hrs > 0) {
+      return `${hrs} hr${hrs > 1 ? 's' : ''} ${m} min${m > 1 ? 's' : ''}`;
+    }
+    return `${m} mins`;
+  })();
 
   return (
     <DashboardLayout pagetitle="Exam Practice">
@@ -576,22 +596,17 @@ export default function StudentExam() {
                     </p>
                   </div>
 
-                  <div>
-                    <select
-                      value={timer}
-                      onChange={(e) => setTimer(e.target.value)}
-                      className="w-full px-4 py-3.5 bg-gray-50 dark:bg-[#06243A] border border-gray-200 dark:border-[#1a4a75] rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-[#BB9E7F] focus:ring-1 focus:ring-[#BB9E7F]/30 transition-all appearance-none cursor-pointer"
-                    >
-                      {timerOptions.map((opt) => (
-                        <option
-                          key={opt}
-                          value={opt}
-                          className="dark:bg-[#09314F] text-gray-800 dark:text-gray-100"
-                        >
-                          {opt} Mins
-                        </option>
-                      ))}
-                    </select>
+                  <div 
+                    onClick={() => setIsClockModalOpen(true)}
+                    className="w-full px-5 py-4 bg-gray-50 dark:bg-[#06243A] border border-gray-200 dark:border-[#1a4a75] rounded-xl text-sm font-bold text-[#09314F] dark:text-white outline-none focus:border-[#BB9E7F] focus:ring-1 focus:ring-[#BB9E7F]/30 transition-all cursor-pointer flex items-center justify-between group/time"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon icon="lucide:clock" className="w-5 h-5 text-[#C5A97A]" />
+                      <span>{displayTimer}</span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase text-[#C5A97A] tracking-wider group-hover/time:underline">
+                      Set Duration
+                    </span>
                   </div>
                 </div>
               </div>
@@ -655,6 +670,125 @@ export default function StudentExam() {
           </div>
         )}
       </div>
+
+      {/* Custom Floating Clock Picker Modal */}
+      {isClockModalOpen && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsClockModalOpen(false)} />
+          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-[32px] p-8 w-[90%] max-w-md shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white">
+            <div className="text-center mb-6">
+              <Icon icon="lucide:clock" className="w-10 h-10 text-[#C5A97A] mx-auto mb-2" />
+              <h3 className="text-lg font-black uppercase tracking-widest text-[#09314F] dark:text-white">
+                Choose Practice Time
+              </h3>
+              <p className="text-xs text-gray-400 mt-1">Set hours and minutes for your exam session</p>
+            </div>
+
+            {/* Hours and Minutes Adjuster */}
+            <div className="flex items-center justify-center gap-6 bg-gray-50 dark:bg-[#06243A] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6">
+              {/* Hours section */}
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hours</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setModalHours(prev => Math.max(0, prev - 1))}
+                    className="w-8 h-8 rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white"
+                  >
+                    -
+                  </button>
+                  <span className="text-3xl font-black font-mono w-12 text-center">{String(modalHours).padStart(2, '0')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setModalHours(prev => Math.min(12, prev + 1))}
+                    className="w-8 h-8 rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <span className="text-3xl font-black text-gray-300 dark:text-gray-600">:</span>
+
+              {/* Minutes section */}
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Minutes</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setModalMinutes(prev => {
+                      if (prev === 0) return 59;
+                      return prev - 1;
+                    })}
+                    className="w-8 h-8 rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white"
+                  >
+                    -
+                  </button>
+                  <span className="text-3xl font-black font-mono w-12 text-center">{String(modalMinutes).padStart(2, '0')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setModalMinutes(prev => {
+                      if (prev === 59) return 0;
+                      return prev + 1;
+                    })}
+                    className="w-8 h-8 rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="mb-6">
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-3 text-center">Quick Presets</span>
+              <div className="flex flex-wrap justify-center gap-2">
+                {[
+                  { label: "30m", h: 0, m: 30 },
+                  { label: "45m", h: 0, m: 45 },
+                  { label: "1h", h: 1, m: 0 },
+                  { label: "1h 30m", h: 1, m: 30 },
+                  { label: "2h", h: 2, m: 0 },
+                ].map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setModalHours(preset.h);
+                      setModalMinutes(preset.m);
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl border border-gray-200 dark:border-[#1a4a75] bg-white dark:bg-[#06243A] text-xs font-bold hover:border-[#C5A97A] hover:bg-[#C5A97A]/5 transition-all text-gray-700 dark:text-white"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setIsClockModalOpen(false)}
+                className="flex-1 py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 uppercase tracking-widest transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const total = (modalHours * 60) + modalMinutes;
+                  setTimer(String(total > 0 ? total : 10)); // Min 10 mins
+                  setIsClockModalOpen(false);
+                }}
+                className="flex-1 py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md"
+              >
+                Apply Time
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
