@@ -388,7 +388,7 @@ export default function StaffRegistration() {
                     }`}
                   >
                     <option value="">select role</option>
-                    {/* <option value="admin">Admin</option> */}
+                    <option value="admin">Admin</option>
                     <option value="tutor">Tutor</option>
                     <option value="advisor">Advisor</option>
                   </select>

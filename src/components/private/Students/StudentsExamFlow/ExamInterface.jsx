@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
+import { useTimer } from "react-timer-hook";
 
 export default function ExamInterface({
   attemptId,
@@ -24,9 +25,6 @@ export default function ExamInterface({
   const [submittedAnswers, setSubmittedAnswers] = useState({}); // server synced { [questionId]: optionId }
   const [savingAnswer, setSavingAnswer] = useState(false);
   
-  // Timer States
-  const [timeLeft, setTimeLeft] = useState(null);
-  
   // Dialog / Warning / Submit States
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
@@ -34,6 +32,30 @@ export default function ExamInterface({
   const [toast, setToast] = useState(null);
   const [examFinished, setExamFinished] = useState(false);
   const [resultSummary, setResultSummary] = useState(null);
+
+  // react-timer-hook setup
+  const minutesVal = parseInt(timer, 10) || 50;
+  const initialExpiry = new Date();
+  initialExpiry.setSeconds(initialExpiry.getSeconds() + minutesVal * 60);
+
+  const {
+    seconds,
+    minutes: displayMinutes,
+    hours: displayHours,
+    pause,
+    restart,
+  } = useTimer({
+    expiryTimestamp: initialExpiry,
+    onExpire: () => handleAutoSubmit(),
+    autoStart: false
+  });
+
+  // Pause timer when exam finishes
+  useEffect(() => {
+    if (examFinished) {
+      pause();
+    }
+  }, [examFinished, pause]);
 
   // References
   const paginationRef = useRef(null);
@@ -80,9 +102,11 @@ export default function ExamInterface({
       setSelectedOptions(initialSelected);
       setSubmittedAnswers(initialSubmitted);
 
-      // Set countdown timer
-      const minutes = parseInt(timer) || 50;
-      setTimeLeft(minutes * 60);
+      // Set countdown timer using react-timer-hook
+      const minutesVal = parseInt(timer, 10) || 50;
+      const expiry = new Date();
+      expiry.setSeconds(expiry.getSeconds() + minutesVal * 60);
+      restart(expiry);
 
     } catch (err) {
       console.error("Failed to load attempt questions:", err);
@@ -90,35 +114,11 @@ export default function ExamInterface({
     } finally {
       setLoading(false);
     }
-  }, [attemptId, API_BASE_URL, token, timer]);
+  }, [attemptId, API_BASE_URL, token, timer, restart]);
 
   useEffect(() => {
     fetchQuestions();
   }, [fetchQuestions]);
-
-  // Timer countdown hook
-  useEffect(() => {
-    if (timeLeft === null || examFinished) return;
-    if (timeLeft <= 0) {
-      handleAutoSubmit();
-      return;
-    }
-
-    const intervalId = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- handleAutoSubmit is stable
-  }, [timeLeft, examFinished]);
-
-  // Format seconds to MM:SS
-  const formatTime = (totalSeconds) => {
-    if (totalSeconds === null) return "--:--";
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  };
 
   // Safe helper to extract option fields
   const getOptionsList = (question) => {
@@ -410,7 +410,7 @@ export default function ExamInterface({
       )}
 
       {/* Main Exam Header Workspace */}
-      <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm mb-6 flex flex-wrap items-center justify-between gap-6 relative overflow-hidden">
+      <div className="sticky top-4 z-40 bg-white/95 dark:bg-[#09314F]/90 backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-md mb-6 flex flex-wrap items-center justify-between gap-6 relative overflow-hidden transition-all">
         {/* Back navigation */}
         <button
           onClick={() => setShowExitConfirm(true)}
@@ -424,7 +424,9 @@ export default function ExamInterface({
         <div className="flex items-center gap-3 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 px-5 py-2.5 rounded-2xl relative shadow-inner">
           <div className="w-2 h-2 rounded-full bg-red-500 animate-ping"></div>
           <span className="text-2xl font-black font-mono tracking-widest text-red-600 dark:text-red-400">
-            {formatTime(timeLeft)}
+            {displayHours > 0 
+              ? `${String(displayHours).padStart(2, "0")}:${String(displayMinutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+              : `${String(displayMinutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
           </span>
           <span className="text-[10px] font-black uppercase text-gray-400 ml-1">
             Timer / {timer}mins
@@ -481,7 +483,7 @@ export default function ExamInterface({
             {/* Question Box */}
             <div className="p-6 md:p-8">
               <div 
-                className="text-gray-700 dark:text-gray-200 text-[15px] font-medium leading-relaxed mb-8 prose dark:prose-invert max-w-none"
+                className="text-gray-700 dark:text-gray-200 text-[15px] font-normal leading-relaxed mb-8 prose dark:prose-invert max-w-none quill-content"
                 dangerouslySetInnerHTML={{ __html: currentQuestion.question }}
               />
 
@@ -591,23 +593,26 @@ export default function ExamInterface({
             >
               Previous
             </button>
-            <button
-              onClick={() => handleNavigate(currentIndex + 1)}
-              disabled={currentIndex === totalQuestions - 1 || savingAnswer}
-              className="py-4 bg-white dark:bg-[#09314F]/40 border border-gray-100 dark:border-[#09314F] hover:bg-gray-50 rounded-2xl font-bold text-[#09314F] dark:text-white text-xs uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
-            >
-              Next
-            </button>
+            {currentIndex === totalQuestions - 1 ? (
+              <button
+                type="button"
+                onClick={() => setShowSubmitConfirm(true)}
+                disabled={savingAnswer}
+                className="py-4 bg-[#E83831] hover:bg-[#d0312b] rounded-2xl font-black text-white text-xs uppercase tracking-widest transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2"
+              >
+                <Icon icon="lucide:check-square" className="w-4 h-4" />
+                <span>Submit Exam</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => handleNavigate(currentIndex + 1)}
+                disabled={savingAnswer}
+                className="py-4 bg-white dark:bg-[#09314F]/40 border border-gray-100 dark:border-[#09314F] hover:bg-gray-50 rounded-2xl font-bold text-[#09314F] dark:text-white text-xs uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
+              >
+                Next
+              </button>
+            )}
           </div>
-
-          {/* Big Solid Submit Button at the bottom */}
-          <button
-            onClick={() => setShowSubmitConfirm(true)}
-            className="w-full py-4.5 bg-[#09314F] dark:bg-blue-600 hover:opacity-95 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3 active:scale-[0.99] mt-8"
-          >
-            <Icon icon="lucide:check-square" className="w-5 h-5" />
-            <span>Submit Exam Session</span>
-          </button>
         </div>
       ) : (
         <div className="py-24 text-center bg-white dark:bg-[#09314F]/40 border rounded-[32px] p-8">

@@ -145,7 +145,6 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
     setSubmitting(true);
 
     const data = new FormData();
-    data.append("_method", "PUT");
 
     Object.keys(staff).forEach(key => {
       const value = staff[key];
@@ -158,8 +157,11 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
       }
     });
 
+    // Log the payload to debug what is being sent to the backend
+    console.log("Updating Staff Payload:", Object.fromEntries(data.entries()));
+
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/admin/staffs/update/${staffId}`, data, {
+      const res = await axios.put(`${API_BASE_URL}/api/admin/staffs/update/${staffId}`, data, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -382,7 +384,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
               options={[
                 { label: "Admin", value: "admin" },
                 { label: "Tutor", value: "tutor" },
-                { label: "Moderator", value: "moderator" }
+                { label: "Advisor", value: "advisor" }
               ]}
             />
 
@@ -459,10 +461,14 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
 
           {/* Right Action: Save/Edit */}
           <button 
-            type={isEditing ? "submit" : "button"}
-            form={isEditing ? "staffUpdateForm" : undefined}
-            onClick={() => !isEditing && setIsEditing(true)}
-            onSubmit={isEditing ? handleUpdate : undefined}
+            type="button"
+            onClick={(e) => {
+              if (isEditing) {
+                handleUpdate(e);
+              } else {
+                setIsEditing(true);
+              }
+            }}
             disabled={submitting}
             className="flex-1 py-4 bg-[#0F2843] text-white font-black text-sm uppercase tracking-widest rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
@@ -473,9 +479,6 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
             )}
           </button>
         </div>
-
-        {/* Hidden Form Submit Trigger */}
-        <form id="staffUpdateForm" onSubmit={handleUpdate} className="hidden" />
 
         {/* Suspend/Restore Logic (Floating or separate button if needed) */}
         {!isEditing && (
