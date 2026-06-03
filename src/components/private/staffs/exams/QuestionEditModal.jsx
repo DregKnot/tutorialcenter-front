@@ -11,6 +11,7 @@ import {
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import SymbolPicker from "../../../common/SymbolPicker";
+import { Icon } from "@iconify/react";
 
 export default function QuestionEditModal({ isOpen, onClose, question, onSuccess }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -24,6 +25,14 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
+  // Group Details States
+  const [groupTitle, setGroupTitle] = useState("");
+  const [groupContent, setGroupContent] = useState("");
+  const [groupSortOrder, setGroupSortOrder] = useState(1);
+  const [groupType, setGroupType] = useState("comprehension");
+  const [groupImagePreview, setGroupImagePreview] = useState(null);
+  const [groupImageFile, setGroupImageFile] = useState(null);
+
   useEffect(() => {
     if (question) {
       console.log("[QuestionEditModal] Populating with question:", question);
@@ -33,8 +42,38 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       setMarks(question.marks || 1);
       setOptions(question.options || []);
       setExplanation(question.explanation || question.explanation_text || "");
+
+      // Populate group details if the question belongs to a group
+      const groupData = question.group || question.past_question_group;
+      if (question.past_question_group_id && groupData) {
+        setGroupTitle(groupData.title || "");
+        setGroupContent(groupData.content || "");
+        setGroupSortOrder(groupData.sort_order || 1);
+        setGroupType(groupData.type || "comprehension");
+        if (groupData.image) {
+          setGroupImagePreview(groupData.image.startsWith('http') ? groupData.image : `${API_BASE_URL}/storage/${groupData.image}`);
+        } else {
+          setGroupImagePreview(null);
+        }
+        setGroupImageFile(null);
+      } else {
+        setGroupTitle("");
+        setGroupContent("");
+        setGroupSortOrder(1);
+        setGroupType("comprehension");
+        setGroupImagePreview(null);
+        setGroupImageFile(null);
+      }
     }
-  }, [question]);
+  }, [question, API_BASE_URL]);
+
+  const handleGroupImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setGroupImageFile(file);
+      setGroupImagePreview(URL.createObjectURL(file));
+    }
+  };
 
   const isScienceSubject = () => {
     const scienceKeywords = ["math", "physic", "chemist", "biolog", "science", "further maths", "geograph", "agric"];
@@ -86,10 +125,18 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     setOptions(options.filter((_, i) => i !== index));
   };
 
+  const groupData = question ? (question.group || question.past_question_group) : null;
+  const showGroup = Boolean(
+    question && 
+    question.past_question_group_id !== null && 
+    question.past_question_group_id !== undefined && 
+    groupData !== null && 
+    groupData !== undefined
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Strip HTML tags for clean storage
 
     const plainQuestion = questionText;
     const plainExplanation = explanation;
@@ -97,16 +144,40 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      // Use FormData-like structure or clean JSON for the update
+      // 1. Update Group details first if the question is mapped to a group and group details are shown
+      if (showGroup) {
+        const groupId = question.past_question_group_id || groupData.id;
+        const groupFormData = new FormData();
+        groupFormData.append("_method", "PUT");
+        groupFormData.append("exam_year_id", question.exam_year_id);
+        groupFormData.append("type", groupType);
+        groupFormData.append("title", groupTitle);
+        groupFormData.append("content", groupContent);
+        groupFormData.append("sort_order", groupSortOrder);
+        if (groupImageFile) {
+          groupFormData.append("image", groupImageFile);
+        }
+
+        console.log(`[QuestionEditModal] Updating Group ${groupId} details...`);
+        const groupConfig = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "multipart/form-data"
+          }
+        };
+        await axios.post(`${API_BASE_URL}/api/admin/past-question-groups/update/${groupId}`, groupFormData, groupConfig);
+      }
+
+      // 2. Update Question details
       const payload = {
-        _method: "PUT", // Laravel specific for handling PUT via POST
+        _method: "PUT",
         exam_year_id: question.exam_year_id,
         question: plainQuestion,
         question_type: questionType,
         marks,
         explanation: plainExplanation,
         status: question.status || "active",
-        // Backend deletes and recreates options, so we send them fresh without IDs
         options: options.map((o, index) => ({
           label: o.label,
           option_text: o.option_text,
@@ -169,6 +240,92 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
         {/* Content */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
           
+          {/* Group Details section (visible only if question has a group) */}
+          {showGroup && (
+            <div className="space-y-8 pb-10 border-b border-gray-100 dark:border-gray-800 animate-in slide-in-from-top-4 duration-300">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#BB9E7F]/10 rounded-xl flex items-center justify-center text-[#BB9E7F]">
+                  <Icon icon="heroicons:rectangle-group" className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-[#0F2843] dark:text-white uppercase tracking-tight">Group Assets / Context</h3>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">Shared comprehension text or diagram details</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Title</label>
+                  <input 
+                    type="text"
+                    value={groupTitle}
+                    onChange={(e) => setGroupTitle(e.target.value)}
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Type</label>
+                  <select 
+                    value={groupType}
+                    onChange={(e) => setGroupType(e.target.value)}
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none appearance-none"
+                  >
+                    <option value="comprehension">Comprehension</option>
+                    <option value="instruction">Instruction</option>
+                    <option value="diagram">Diagram</option>
+                    <option value="case_study">Case Study</option>
+                  </select>
+                </div>
+                <div className="space-y-3 md:col-span-2">
+                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Sort Order</label>
+                  <input 
+                    type="number"
+                    value={groupSortOrder}
+                    onChange={(e) => setGroupSortOrder(Number(e.target.value))}
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Content / Narrative</label>
+                <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-[#0F2843] dark:text-white">
+                  <ReactQuill 
+                    theme="snow" 
+                    value={groupContent || ""} 
+                    onChange={setGroupContent} 
+                    className="[&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Visual Aid (Optional)</label>
+                <div className={`relative group border-2 border-dashed rounded-[32px] overflow-hidden bg-gray-50 dark:bg-gray-800/30 transition-all ${
+                  groupImagePreview ? "border-green-500/30" : "border-gray-200 dark:border-gray-700 hover:border-[#BB9E7F]/40"
+                }`}>
+                  {groupImagePreview ? (
+                    <div className="relative aspect-video max-h-[250px] overflow-hidden">
+                      <img src={groupImagePreview} alt="Group Visual Aid" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
+                        <Icon icon="heroicons:camera" className="w-10 h-10 text-white" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-8 flex flex-col items-center justify-center text-center gap-3 cursor-pointer">
+                      <Icon icon="heroicons:photo" className="w-8 h-8 text-[#BB9E7F]" />
+                      <div>
+                        <p className="text-[#0F2843] dark:text-white font-black text-sm">Upload Diagram / Map</p>
+                        <p className="text-gray-400 text-[10px] font-bold mt-1">Illustrations for this group context</p>
+                      </div>
+                    </div>
+                  )}
+                  <input type="file" onChange={handleGroupImageChange} accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Type</label>
