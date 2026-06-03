@@ -360,7 +360,8 @@ export default function QuestionItem({
                 value={q.questionText} 
                 modules={quillModules}
                 formats={quillFormats}
-                onChange={(val) => {
+                onChange={(val, delta, source) => {
+                  if (source !== 'user') return;
                   if (val && (val.includes('$') || val.includes('\\') || val.includes('&') || val.includes('^') || val.includes('_'))) {
                     const transformed = transformSymbols(val);
                     if (transformed !== val) {
@@ -467,7 +468,8 @@ export default function QuestionItem({
                 value={q.explanation} 
                 modules={quillModules}
                 formats={quillFormats}
-                onChange={(val) => {
+                onChange={(val, delta, source) => {
+                  if (source !== 'user') return;
                   if (val && (val.includes('$') || val.includes('\\') || val.includes('&') || val.includes('^') || val.includes('_'))) {
                     const transformed = transformSymbols(val);
                     if (transformed !== val) {
