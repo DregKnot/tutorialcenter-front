@@ -165,9 +165,19 @@ export default function ExamQuestionList() {
                 <div className="space-y-6">
                   {/* Group Content (If any) */}
                   {q.group && q.group.type !== 'none' && (
-                    <div className="mb-6 space-y-4">
+                    <div className="mb-8 p-6 bg-white dark:bg-gray-900/40 rounded-[24px] border border-gray-200/50 dark:border-gray-700/30 space-y-4 shadow-sm">
+                      <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className="px-2.5 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[9px] font-black uppercase rounded-md tracking-wider">
+                          Group: {q.group.type.replace('_', ' ')}
+                        </span>
+                        {q.group.title && (
+                          <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                            — {q.group.title}
+                          </span>
+                        )}
+                      </div>
                       {q.group.image && (
-                        <div className="w-full max-w-md bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
                           <img 
                             src={q.group.image.startsWith('http') ? q.group.image : `${API_BASE_URL}/storage/${q.group.image}`} 
                             alt="Group Diagram" 
@@ -176,7 +186,7 @@ export default function ExamQuestionList() {
                         </div>
                       )}
                       <div 
-                        className="text-[13px] text-[#0F2843] dark:text-gray-300 leading-relaxed tracking-tight quill-content"
+                        className="text-[13px] text-[#0F2843] dark:text-gray-300 leading-relaxed tracking-tight quill-content break-words whitespace-normal w-full overflow-hidden"
                         dangerouslySetInnerHTML={{ __html: q.group.content }}
                       />
                     </div>
@@ -203,7 +213,7 @@ export default function ExamQuestionList() {
                      )}
 
                     <div 
-                      className="text-[13px] text-[#0F2843] dark:text-gray-300 leading-relaxed quill-content"
+                      className="text-[13px] text-[#0F2843] dark:text-gray-300 leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
                       dangerouslySetInnerHTML={{ __html: q.question }}
                     />
                   </div>
