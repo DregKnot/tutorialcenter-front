@@ -171,6 +171,15 @@ export default function ExamGroupSection({
                           onClick={() => {
                             setSelectedGroupId(group.id);
                             setGroupSearchTerm(group.title);
+                            setGroupTitle(group.title || "");
+                            setGroupContent(group.content || "");
+                            setSortOrder(group.sort_order || 1);
+                            if (group.image) {
+                              const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+                              setGroupImagePreview(group.image.startsWith('http') ? group.image : `${API_BASE_URL}/storage/${group.image}`);
+                            } else {
+                              setGroupImagePreview(null);
+                            }
                             fetchGroupDetails(group.id);
                           }}
                           className="w-full px-8 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between group/item"
