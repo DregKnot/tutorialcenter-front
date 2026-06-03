@@ -173,6 +173,8 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       const payload = {
         _method: "PUT",
         exam_year_id: question.exam_year_id,
+        past_question_group_id: question.past_question_group_id || (question.group?.id) || (question.past_question_group?.id) || null,
+        question_number: String(question.question_number || question.questionNumber || ""),
         question: plainQuestion,
         question_type: questionType,
         marks,
