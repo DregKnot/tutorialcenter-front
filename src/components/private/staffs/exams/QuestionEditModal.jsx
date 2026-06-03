@@ -33,6 +33,32 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
   const [groupImagePreview, setGroupImagePreview] = useState(null);
   const [groupImageFile, setGroupImageFile] = useState(null);
 
+  // Group selection states
+  const [allGroups, setAllGroups] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [isGroupCreationMode, setIsGroupCreationMode] = useState(false);
+  const [groupSearchTerm, setGroupSearchTerm] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const fetchGroups = async () => {
+      try {
+        const config = { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json"
+          } 
+        };
+        const res = await axios.get(`${API_BASE_URL}/api/admin/past-question-groups/all`, config);
+        const fetchedGroups = res.data?.groups?.data || res.data?.data || res.data || [];
+        setAllGroups(Array.isArray(fetchedGroups) ? fetchedGroups : []);
+      } catch (err) {
+        console.error("Failed to fetch groups:", err);
+      }
+    };
+    fetchGroups();
+  }, [isOpen, API_BASE_URL, token]);
+
   useEffect(() => {
     if (question) {
       console.log("[QuestionEditModal] Populating with question:", question);
@@ -46,6 +72,9 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       // Populate group details if the question belongs to a group
       const groupData = question.group || question.past_question_group;
       if (question.past_question_group_id && groupData) {
+        setSelectedGroupId(question.past_question_group_id || groupData.id);
+        setGroupSearchTerm(groupData.title || "");
+        setIsGroupCreationMode(false);
         setGroupTitle(groupData.title || "");
         setGroupContent(groupData.content || "");
         setGroupSortOrder(groupData.sort_order || 1);
@@ -57,6 +86,9 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
         }
         setGroupImageFile(null);
       } else {
+        setSelectedGroupId("");
+        setGroupSearchTerm("");
+        setIsGroupCreationMode(false);
         setGroupTitle("");
         setGroupContent("");
         setGroupSortOrder(1);
@@ -126,13 +158,6 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
   };
 
   const groupData = question ? (question.group || question.past_question_group) : null;
-  const showGroup = Boolean(
-    question && 
-    question.past_question_group_id !== null && 
-    question.past_question_group_id !== undefined && 
-    groupData !== null && 
-    groupData !== undefined
-  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -144,11 +169,11 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      // 1. Update Group details first if the question is mapped to a group and group details are shown
-      if (showGroup) {
-        const groupId = question.past_question_group_id || groupData.id;
+      // 1. Create or Update Group details if group title is filled
+      let groupId = selectedGroupId || question.past_question_group_id || (groupData?.id);
+      
+      if (groupTitle.trim()) {
         const groupFormData = new FormData();
-        groupFormData.append("_method", "PUT");
         groupFormData.append("exam_year_id", question.exam_year_id);
         groupFormData.append("type", groupType);
         groupFormData.append("title", groupTitle);
@@ -158,7 +183,6 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
           groupFormData.append("image", groupImageFile);
         }
 
-        console.log(`[QuestionEditModal] Updating Group ${groupId} details...`);
         const groupConfig = {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -166,14 +190,24 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             "Content-Type": "multipart/form-data"
           }
         };
-        await axios.post(`${API_BASE_URL}/api/admin/past-question-groups/update/${groupId}`, groupFormData, groupConfig);
+
+        if (groupId) {
+          console.log(`[QuestionEditModal] Updating Group ${groupId} details...`);
+          groupFormData.append("_method", "PUT");
+          await axios.post(`${API_BASE_URL}/api/admin/past-question-groups/update/${groupId}`, groupFormData, groupConfig);
+        } else {
+          console.log("[QuestionEditModal] Creating a new Group for this question...");
+          const res = await axios.post(`${API_BASE_URL}/api/admin/past-question-groups`, groupFormData, groupConfig);
+          groupId = res.data?.data?.id || res.data?.id;
+          console.log(`[QuestionEditModal] New Group created with ID: ${groupId}`);
+        }
       }
 
       // 2. Update Question details
       const payload = {
         _method: "PUT",
         exam_year_id: question.exam_year_id,
-        past_question_group_id: question.past_question_group_id || (question.group?.id) || (question.past_question_group?.id) || null,
+        past_question_group_id: groupId || null,
         question_number: String(question.question_number || question.questionNumber || ""),
         question: plainQuestion,
         question_type: questionType,
@@ -242,8 +276,8 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
         {/* Content */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
           
-          {/* Group Details section (visible only if question has a group) */}
-          {showGroup && (
+          {/* Group Details section (always visible) */}
+          {true && (
             <div className="space-y-8 pb-10 border-b border-gray-100 dark:border-gray-800 animate-in slide-in-from-top-4 duration-300">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#BB9E7F]/10 rounded-xl flex items-center justify-center text-[#BB9E7F]">
@@ -256,15 +290,136 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Selected Group Info Card - Shows when a group is selected */}
+                {selectedGroupId && !isGroupCreationMode && (
+                  <div className="md:col-span-2 bg-gradient-to-r from-[#BB9E7F]/5 to-[#76D287]/5 border-2 border-[#BB9E7F]/20 rounded-2xl p-5 mb-2 flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Currently Selected Group</p>
+                      <p className="text-sm font-black text-[#0F2843] dark:text-white mb-2">{groupTitle}</p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold">
+                        <span className="text-[#BB9E7F]">Type:</span> {groupType} | <span className="text-[#BB9E7F]">Sort Order:</span> {groupSortOrder}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedGroupId("");
+                        setGroupSearchTerm("");
+                        setGroupTitle("");
+                        setGroupContent("");
+                        setGroupImagePreview(null);
+                        setGroupSortOrder(1);
+                        setGroupType("comprehension");
+                      }}
+                      className="flex-shrink-0 p-2 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Group Title selection/creation */}
                 <div className="space-y-3">
-                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Title</label>
-                  <input 
-                    type="text"
-                    value={groupTitle}
-                    onChange={(e) => setGroupTitle(e.target.value)}
-                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
-                  />
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Group Title</label>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setIsGroupCreationMode(true);
+                        setSelectedGroupId("");
+                        setGroupTitle("");
+                        setGroupContent("");
+                        setGroupImagePreview(null);
+                        setGroupSortOrder(1);
+                        setGroupType("comprehension");
+                      }}
+                      className="text-[9px] font-black text-[#BB9E7F] hover:text-[#0F2843] flex items-center gap-1 transition-colors uppercase"
+                    >
+                      <PlusIcon className="w-3 h-3" /> Create New
+                    </button>
+                  </div>
+
+                  {!isGroupCreationMode ? (
+                    <div className="relative group/search">
+                      <input 
+                        type="text"
+                        placeholder="Search existing groups..."
+                        value={groupSearchTerm}
+                        onChange={(e) => {
+                          setGroupSearchTerm(e.target.value);
+                          if (selectedGroupId) {
+                            setSelectedGroupId("");
+                            setGroupTitle("");
+                            setGroupContent("");
+                            setGroupImagePreview(null);
+                            setGroupSortOrder(1);
+                            setGroupType("comprehension");
+                          }
+                        }}
+                        className={`w-full px-6 py-4 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-inner transition-all ${
+                          selectedGroupId 
+                            ? "bg-[#76D287]/10 border-2 border-[#76D287]/40 dark:bg-[#76D287]/20" 
+                            : "bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30"
+                        }`}
+                      />
+
+                      {/* Dropdown */}
+                      {!selectedGroupId && groupSearchTerm && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-[120] max-h-[200px] overflow-y-auto custom-scrollbar">
+                          {allGroups.filter(g => g.title?.toLowerCase().includes(groupSearchTerm.toLowerCase())).length > 0 ? (
+                            allGroups.filter(g => g.title?.toLowerCase().includes(groupSearchTerm.toLowerCase())).map(group => (
+                              <button
+                                key={group.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedGroupId(group.id);
+                                  setGroupSearchTerm(group.title || "");
+                                  setGroupTitle(group.title || "");
+                                  setGroupContent(group.content || "");
+                                  setGroupSortOrder(group.sort_order || 1);
+                                  setGroupType(group.type || "comprehension");
+                                  if (group.image) {
+                                    setGroupImagePreview(group.image.startsWith('http') ? group.image : `${API_BASE_URL}/storage/${group.image}`);
+                                  } else {
+                                    setGroupImagePreview(null);
+                                  }
+                                }}
+                                className="w-full px-6 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between"
+                              >
+                                <div>
+                                  <p className="font-black text-[#0F2843] dark:text-white text-xs">{group.title}</p>
+                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">{group.type || "comprehension"}</p>
+                                </div>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="p-4 text-center">
+                              <p className="text-gray-400 text-xs font-bold">No groups found</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <input 
+                        type="text"
+                        value={groupTitle}
+                        onChange={(e) => setGroupTitle(e.target.value)}
+                        placeholder="Enter new group title..."
+                        className="w-full px-6 py-4 bg-white dark:bg-gray-800 border-2 border-[#BB9E7F] rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-md"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => setIsGroupCreationMode(false)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-500"
+                      >
+                        <XMarkIcon className="w-5 h-5 text-red-400" />
+                      </button>
+                    </div>
+                  )}
                 </div>
+
                 <div className="space-y-3">
                   <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Type</label>
                   <select 

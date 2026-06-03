@@ -258,10 +258,33 @@ export default function ExamInterface({
   const answeredCount = Object.keys(submittedAnswers).length;
   const unansweredCount = totalQuestions - answeredCount;
 
+  const cleanText = (htmlStr) => {
+    if (!htmlStr) return "";
+    return htmlStr.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  };
+
   // Active element
   const currentQuestion = questions[currentIndex];
   const activeOptions = getOptionsList(currentQuestion);
   const activeLocalChoice = currentQuestion ? selectedOptions[currentQuestion.id] : null;
+  const activeGroup = (() => {
+    if (!currentQuestion) return null;
+    if (currentQuestion.group) return currentQuestion.group;
+    if (currentQuestion.past_question_group) return currentQuestion.past_question_group;
+    
+    // Fallback: search other questions in the list that share the same group ID and have the group object
+    const groupId = currentQuestion.past_question_group_id;
+    if (groupId) {
+      const match = questions.find(q => 
+        String(q.past_question_group_id) === String(groupId) && 
+        (q.group || q.past_question_group)
+      );
+      if (match) {
+        return match.group || match.past_question_group;
+      }
+    }
+    return null;
+  })();
 
   if (loading) {
     return (
@@ -482,8 +505,48 @@ export default function ExamInterface({
 
             {/* Question Box */}
             <div className="p-6 md:p-8">
+              {activeGroup && activeGroup.type !== 'none' && (
+                <div className="mb-8">
+                  {/* Group type & title */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="px-2.5 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[9px] font-black uppercase rounded-md tracking-wider">
+                      {cleanText(activeGroup.type).replace('_', ' ')}
+                    </span>
+                    {activeGroup.title && (
+                      <span className="text-[11px] font-black text-[#09314F] dark:text-white uppercase tracking-widest">
+                        {cleanText(activeGroup.title)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* pagination (separator) */}
+                  <div className="border-b-2 border-gray-200 dark:border-gray-700/80 my-6" />
+
+                  {/* Group content */}
+                  <div className="space-y-4 my-4">
+                    {activeGroup.image && (
+                      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
+                        <img 
+                          src={activeGroup.image.startsWith('http') ? activeGroup.image : `${API_BASE_URL}/storage/${activeGroup.image}`} 
+                          alt="Group Visual Aid" 
+                          className="w-full h-auto rounded-xl"
+                        />
+                      </div>
+                    )}
+                    <div 
+                      className="text-gray-700 dark:text-gray-300 text-[14px] leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
+                      dangerouslySetInnerHTML={{ __html: activeGroup.content }}
+                    />
+                  </div>
+
+                  {/* pagination (separator) */}
+                  <div className="border-b-2 border-gray-200 dark:border-gray-700/80 my-6" />
+                </div>
+              )}
+
+              {/* question */}
               <div 
-                className="text-gray-700 dark:text-gray-200 text-[15px] font-normal leading-relaxed mb-8 prose dark:prose-invert max-w-none quill-content"
+                className="text-gray-700 dark:text-gray-200 text-[15px] font-normal leading-relaxed mb-8 prose dark:prose-invert max-w-none quill-content break-words whitespace-normal w-full overflow-hidden"
                 dangerouslySetInnerHTML={{ __html: currentQuestion.question }}
               />
 

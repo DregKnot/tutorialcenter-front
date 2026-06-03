@@ -236,6 +236,16 @@ export default function ExamQuestionList() {
                       </div>
                     ))}
                   </div>
+
+                  {q.explanation && (
+                    <div className="mt-6 p-5 bg-[#BB9E7F]/5 dark:bg-[#BB9E7F]/10 rounded-[20px] border border-[#BB9E7F]/20 space-y-2">
+                      <p className="text-[10px] font-black text-[#BB9E7F] uppercase tracking-widest">Explanation</p>
+                      <div 
+                        className="text-xs text-[#0F2843] dark:text-gray-300 leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
+                        dangerouslySetInnerHTML={{ __html: q.explanation }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
