@@ -108,16 +108,16 @@ export default function StudentNotifications() {
 
       <div className="max-w-4xl mx-auto py-4">
         {/* Header Controls */}
-        <div className="flex items-center justify-between mb-8 px-4">
-          <div>
+        <div className="flex items-center justify-between mb-8 px-4 gap-4">
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Inbox</p>
-            <h2 className="text-xl font-black text-[#09314F] dark:text-white mt-0.5">Your Updates</h2>
+            <h2 className="text-lg sm:text-xl font-black text-[#09314F] dark:text-white mt-0.5 truncate">Your Updates</h2>
           </div>
           
           <button 
             onClick={handleMarkAllAsRead}
             disabled={!notifications.some(n => !n.read_at)}
-            className="px-6 py-3 bg-white dark:bg-[#09314F] border border-gray-100 dark:border-[#1a4a75] text-[#09314F] dark:text-gray-300 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a4a75] transition-all disabled:opacity-50 shadow-sm"
+            className="px-3 sm:px-6 py-2.5 sm:py-3 bg-white dark:bg-[#09314F] border border-gray-100 dark:border-[#1a4a75] text-[#09314F] dark:text-gray-300 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a4a75] transition-all disabled:opacity-50 shadow-sm shrink-0 whitespace-nowrap"
           >
             Mark all read
           </button>
@@ -134,42 +134,42 @@ export default function StudentNotifications() {
               <div 
                 key={notif.id}
                 onClick={() => openDetail(notif)}
-                className={`group relative p-6 bg-white dark:bg-[#09314F] rounded-[32px] border border-gray-100 dark:border-[#1a4a75] shadow-sm transition-all hover:shadow-md cursor-pointer flex items-start gap-6 ${
+                className={`group relative p-4 sm:p-6 bg-white dark:bg-[#09314F] rounded-2xl sm:rounded-[32px] border border-gray-100 dark:border-[#1a4a75] shadow-sm transition-all hover:shadow-md cursor-pointer flex items-start gap-3 sm:gap-6 ${
                   !notif.read_at ? "ring-2 ring-[#09314F]/10 dark:ring-blue-500/10" : "opacity-80 hover:opacity-100"
                 }`}
               >
                 {/* Icon Column */}
-                <div className={`mt-1 w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                <div className={`mt-1 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 ${
                   notif.data?.type === "success" ? "bg-green-50 text-green-500" : "bg-blue-50 text-blue-500"
                 }`}>
-                  {notif.data?.type === "success" ? <CheckCircleIcon className="w-6 h-6" /> : <InformationCircleIcon className="w-6 h-6" />}
+                  {notif.data?.type === "success" ? <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" /> : <InformationCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
                 </div>
 
                 {/* Content Column */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className={`text-[17px] font-black tracking-tight capitalize ${!notif.read_at ? "text-[#09314F] dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
+                <div className="flex-1 min-w-0 pr-8 sm:pr-12">
+                  <div className="flex justify-between items-start mb-1 gap-2">
+                    <h3 className={`text-sm sm:text-[17px] font-black tracking-tight capitalize truncate ${!notif.read_at ? "text-[#09314F] dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
                       {notif.data?.type || "Notification"}
                     </h3>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase whitespace-nowrap pt-1">
+                    <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase whitespace-nowrap pt-1">
                       {new Date(notif.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
                     </span>
                   </div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 line-clamp-2">
+                  <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 line-clamp-2">
                     {notif.data?.message}
                   </p>
                 </div>
 
-                {/* Hover Actions */}
-                <div className="absolute top-1/2 -translate-y-1/2 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="p-3 bg-gray-50 dark:bg-[#06243A] rounded-xl text-[#09314F] dark:text-blue-400">
-                    <EyeIcon className="w-5 h-5" />
+                {/* Hover / End Actions (visible on hover, or always partially visible/accessible on mobile) */}
+                <div className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-6 flex items-center gap-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                  <div className="p-2 sm:p-3 bg-gray-50 dark:bg-[#06243A] rounded-lg sm:rounded-xl text-[#09314F] dark:text-blue-400 hover:bg-gray-100 transition-colors">
+                    <EyeIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
 
                 {/* Unread indicator */}
                 {!notif.read_at && (
-                  <div className="absolute top-6 left-6 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <div className="absolute top-4 left-4 sm:top-6 sm:left-6 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-red-500 rounded-full animate-pulse" />
                 )}
               </div>
             ))}

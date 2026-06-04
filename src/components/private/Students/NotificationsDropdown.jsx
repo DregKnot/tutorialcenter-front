@@ -53,7 +53,7 @@ export default function NotificationsDropdown({ isOpen, onClose, onUpdate, token
   return (
     <div 
       ref={dropdownRef}
-      className="absolute top-16 right-0 sm:right-6 w-[340px] sm:w-[380px] bg-white dark:bg-[#09314F] rounded-3xl shadow-[0_20px_60px_rgb(0,0,0,0.15)] dark:shadow-[0_20px_60px_rgb(0,0,0,0.4)] border border-gray-100 dark:border-[#1a4a75] overflow-hidden z-[999] animate-in fade-in slide-in-from-top-4 duration-300 origin-top-right flex flex-col max-h-[85vh]"
+      className="absolute top-16 right-0 sm:right-6 w-[340px] sm:w-[380px] bg-white dark:bg-[#09314F] rounded-3xl shadow-[0_20px_60px_rgb(0,0,0,0.15)] dark:shadow-[0_20px_60px_rgb(0,0,0,0.4)] border border-gray-100 dark:border-[#1a4a75] overflow-hidden z-[999] animate-in fade-in slide-in-from-top-4 duration-300 origin-top-right flex flex-col max-h-[60vh] sm:max-h-[80vh]"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-[#1a4a75] bg-gray-50 dark:bg-[#06243A]">

@@ -9,7 +9,7 @@ import {
 const tabs = [
   { label: "Dashboard", icon: HomeIcon, to: "/student/dashboard" },
   { label: "Courses", icon: BookOpenIcon, to: "/student/class-schedule" },
-  { label: "Exam Practice", icon: ClipboardDocumentCheckIcon, to: "/student/exam-practice" },
+  { label: "Exam Practice", icon: ClipboardDocumentCheckIcon, to: "/student/exams" },
   { label: "Payment", icon: CreditCardIcon, to: "/student/payment-history" },
 ];
 

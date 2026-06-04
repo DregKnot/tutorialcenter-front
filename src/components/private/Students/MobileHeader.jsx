@@ -95,6 +95,7 @@ export default function MobileHeader({ pagetitle, hideTitle = false, hideBell = 
               isOpen={isNotificationsOpen} 
               onClose={() => setIsNotificationsOpen(false)} 
               onUpdate={fetchUnreadCount}
+              token={token}
             />
           </div>
         ) : (
