@@ -57,6 +57,24 @@ export default function ExamInterface({
     }
   }, [examFinished, pause]);
 
+  // Suppress dev-mode ResizeObserver loop limit exceeded error overlays
+  useEffect(() => {
+    const handleResizeError = (e) => {
+      if (
+        e.message?.includes("ResizeObserver") ||
+        e.message?.includes("loop limit exceeded") ||
+        e.message?.includes("undelivered notifications")
+      ) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("error", handleResizeError);
+    return () => {
+      window.removeEventListener("error", handleResizeError);
+    };
+  }, []);
+
   // References
   const paginationRef = useRef(null);
 
@@ -119,6 +137,24 @@ export default function ExamInterface({
   useEffect(() => {
     fetchQuestions();
   }, [fetchQuestions]);
+
+  // Auto-scroll active pagination item into view
+  useEffect(() => {
+    const activeBtn = document.getElementById(`pag-btn-${currentIndex}`);
+    if (activeBtn) {
+      activeBtn.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center"
+      });
+    }
+  }, [currentIndex]);
+
+  const cleanHtmlContent = (html) => {
+    if (!html) return "";
+    // Replace non-breaking spaces with standard space to allow proper word-wrapping on mobile
+    return html.replace(/&nbsp;/g, " ");
+  };
 
   // Safe helper to extract option fields
   const getOptionsList = (question) => {
@@ -535,7 +571,7 @@ export default function ExamInterface({
                     )}
                     <div 
                       className="text-gray-700 dark:text-gray-300 text-[14px] leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
-                      dangerouslySetInnerHTML={{ __html: activeGroup.content }}
+                      dangerouslySetInnerHTML={{ __html: cleanHtmlContent(activeGroup.content) }}
                     />
                   </div>
 
@@ -547,7 +583,7 @@ export default function ExamInterface({
               {/* question */}
               <div 
                 className="text-gray-700 dark:text-gray-200 text-[15px] font-normal leading-relaxed mb-8 prose dark:prose-invert max-w-none quill-content break-words whitespace-normal w-full overflow-hidden"
-                dangerouslySetInnerHTML={{ __html: currentQuestion.question }}
+                dangerouslySetInnerHTML={{ __html: cleanHtmlContent(currentQuestion.question) }}
               />
 
               {/* Options selection */}
@@ -622,6 +658,7 @@ export default function ExamInterface({
                   return (
                     <button
                       key={q.id}
+                      id={`pag-btn-${idx}`}
                       onClick={() => handleNavigate(idx)}
                       className={`w-10 h-10 rounded-xl font-bold text-xs shrink-0 transition-all ${
                         isCurrent
