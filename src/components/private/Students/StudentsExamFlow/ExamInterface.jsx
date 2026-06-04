@@ -351,8 +351,10 @@ export default function ExamInterface({
 
   if (examFinished) {
     // Dynamic results display
-    const scoreVal = resultSummary?.score || resultSummary?.score_obtained || 0;
-    const percentage = resultSummary?.percentage || (totalQuestions > 0 ? Math.round((scoreVal / totalQuestions) * 100) : 0);
+    const scoreVal = resultSummary?.score !== undefined ? Number(resultSummary.score) : 0;
+    const percentage = resultSummary?.percentage !== undefined 
+      ? Math.round(Number(resultSummary.percentage)) 
+      : (totalQuestions > 0 ? Math.round((scoreVal / totalQuestions) * 100) : 0);
 
     return (
       <div className="max-w-3xl mx-auto w-full pb-20 px-2 lg:px-4 animate-in fade-in duration-500">
@@ -406,7 +408,7 @@ export default function ExamInterface({
                 Correct
               </span>
               <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                {resultSummary?.correct_answers_count || resultSummary?.correct || scoreVal}
+                {resultSummary?.correct_answers !== undefined ? resultSummary.correct_answers : (resultSummary?.correct || scoreVal)}
               </span>
             </div>
             <div className="flex flex-col items-center">
@@ -415,7 +417,7 @@ export default function ExamInterface({
                 Wrong
               </span>
               <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                {resultSummary?.wrong_answers_count || resultSummary?.wrong || (totalQuestions - scoreVal)}
+                {resultSummary?.wrong_answers !== undefined ? resultSummary.wrong_answers : (resultSummary?.wrong || 0)}
               </span>
             </div>
             <div className="flex flex-col items-center">
@@ -424,17 +426,19 @@ export default function ExamInterface({
                 Skipped
               </span>
               <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                {totalQuestions - (resultSummary?.attempted_count || totalQuestions)}
+                {resultSummary?.unanswered !== undefined ? resultSummary.unanswered : (totalQuestions - (resultSummary?.attempted_count || totalQuestions))}
               </span>
             </div>
           </div>
 
-          <button
-            onClick={onBack}
-            className="w-full py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
-          >
-            Go back to Center
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              onClick={onBack}
+              className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
+            >
+              Go back to Center
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -468,48 +472,73 @@ export default function ExamInterface({
         </div>
       )}
 
-      {/* Main Exam Header Workspace */}
-      <div className="sticky top-4 z-40 bg-white/95 dark:bg-[#09314F]/90 backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-md mb-6 flex flex-wrap items-center justify-between gap-6 relative overflow-hidden transition-all">
-        {/* Back navigation */}
-        <button
-          onClick={() => setShowExitConfirm(true)}
-          className="flex items-center gap-2 group text-gray-500 hover:text-[#09314F] dark:hover:text-white transition-colors"
-        >
-          <Icon icon="lucide:chevron-left" className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
-          <span className="text-sm font-bold">Back</span>
-        </button>
+{/* Top Navigation & Timers Bar Container */}
+<div className="mb-6 flex items-center justify-between gap-4 py-2 relative w-full">
+  
+  {/* Left Side: Back Navigation button (Flows normally) */}
+  <button
+    onClick={() => setShowExitConfirm(true)}
+    className="flex items-center gap-1.5 group text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors shrink-0 z-10"
+  >
+    <Icon icon="lucide:chevron-left" className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
+    <span className="text-xs md:text-sm font-black uppercase tracking-wider">Back</span>
+  </button>
 
-        {/* Dynamic ticking timer */}
-        <div className="flex items-center gap-3 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 px-5 py-2.5 rounded-2xl relative shadow-inner">
-          <div className="w-2 h-2 rounded-full bg-red-500 animate-ping"></div>
-          <span className="text-2xl font-black font-mono tracking-widest text-red-600 dark:text-red-400">
-            {displayHours > 0 
-              ? `${String(displayHours).padStart(2, "0")}:${String(displayMinutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
-              : `${String(displayMinutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
+  {/* Middle: Active Countdown Ticking Timer */}
+  {/* Fixed globally at the top center of the viewport for both Mobile and Laptop/Desktop views */}
+  <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-red-50/90 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 px-4 md:px-6 py-1.5 md:py-3 rounded-2xl shadow-lg backdrop-blur-md transition-all">
+    <div className="w-2 h-2 rounded-full bg-red-500 animate-ping"></div>
+    <span className="text-base md:text-2xl font-black font-mono tracking-widest text-red-600 dark:text-red-400">
+      {displayHours > 0 
+        ? `${String(displayHours).padStart(2, "0")}:${String(displayMinutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+        : `${String(displayMinutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
+    </span>
+  </div>
+
+  {/* Right Side: Static Time Chosen Display (Flows normally) */}
+  <div className="px-3 py-1.5 bg-white dark:bg-[#09314F] border border-gray-100 dark:border-[#1a4a75] rounded-xl shrink-0 text-right shadow-sm z-10">
+    <span className="text-[9px] font-black uppercase text-gray-400 block tracking-wider">
+      Duration
+    </span>
+    <span className="text-xs md:text-sm font-black text-gray-700 dark:text-gray-200">
+      {timer} mins
+    </span>
+  </div>
+
+
+
+
+</div>
+      {/* Main Exam Header Workspace (Course, Question Count, and Subject info) */}
+      <div className="mb-6 bg-white/95 dark:bg-[#09314F]/90 backdrop-blur-md rounded-2xl md:rounded-3xl p-5 md:p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center justify-between gap-4 min-w-0 transition-all">
+        {/* Far Left: Course Info */}
+        <div className="min-w-0 text-left">
+          <span className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest block">
+            COURSE
           </span>
-          <span className="text-[10px] font-black uppercase text-gray-400 ml-1">
-            Timer / {timer}mins
+          <span className="text-xs md:text-sm font-black uppercase text-[#09314F] dark:text-white block truncate">
+            {selectedCourse?.course?.title || selectedCourse?.title || "JAMB"}
           </span>
         </div>
 
-        {/* Labels info */}
-        <div className="flex gap-6 text-right">
-          <div>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
-              COURSE
-            </span>
-            <span className="text-sm font-black uppercase text-[#09314F] dark:text-white">
-              {selectedCourse?.course?.title || selectedCourse?.title || "JAMB"}
-            </span>
-          </div>
-          <div className="border-l border-gray-100 dark:border-gray-800 pl-6">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
-              SUBJECT
-            </span>
-            <span className="text-sm font-black uppercase text-[#09314F] dark:text-white">
-              {selectedSubject?.name || selectedSubject?.title}
-            </span>
-          </div>
+        {/* Middle: Total Questions Count */}
+        <div className="text-center shrink-0">
+          <span className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest block">
+            PRACTICE SIZE
+          </span>
+          <span className="text-xs md:text-sm font-black uppercase text-[#C5A97A] block">
+            {totalQuestions} Questions
+          </span>
+        </div>
+
+        {/* Far Right: Subject Info */}
+        <div className="min-w-0 text-right">
+          <span className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest block">
+            SUBJECT
+          </span>
+          <span className="text-xs md:text-sm font-black uppercase text-[#09314F] dark:text-white block truncate">
+            {selectedSubject?.name || selectedSubject?.title}
+          </span>
         </div>
       </div>
 
@@ -586,8 +615,8 @@ export default function ExamInterface({
                 dangerouslySetInnerHTML={{ __html: cleanHtmlContent(currentQuestion.question) }}
               />
 
-              {/* Options selection */}
-              <div className="space-y-3.5">
+              {/* Options selection (Grid for laptop, column for mobile) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {activeOptions.map((opt) => {
                   const letter = opt.letter || opt.option_letter || "A";
                   const isSelected = String(activeLocalChoice) === String(opt.id);
@@ -600,7 +629,7 @@ export default function ExamInterface({
                       className={`p-5 rounded-2xl border cursor-pointer transition-all duration-200 flex items-center justify-between group ${
                         isSelected
                           ? "bg-blue-50/70 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500 ring-2 ring-blue-500/20"
-                          : "bg-white dark:bg-[#09314F]/30 border-gray-100 dark:border-[#09314F] hover:border-gray-200 hover:scale-[1.005]"
+                          : "bg-white dark:bg-[#09314F]/30 border-gray-100 dark:border-[#09314F] hover:border-gray-200"
                       }`}
                     >
                       <div className="flex items-center gap-4">
