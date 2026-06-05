@@ -385,35 +385,35 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     }
   };
 
-  const handleDeleteQuestion = async () => {
-    if (!window.confirm("Are you sure you want to delete this question? This action cannot be undone.")) {
-      return;
-    }
-    setLoading(true);
-    try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json"
-        }
-      };
-      console.log(`[QuestionEditModal] Deleting question ${question.id}...`);
-      await axios.delete(`${API_BASE_URL}/api/admin/past-questions/destroy/${question.id}`, config);
-      setToast({ type: "success", message: "Question deleted successfully!" });
-      setTimeout(() => {
-        onSuccess?.();
-        onClose();
-        setToast(null);
-      }, 1500);
-    } catch (err) {
-      console.error("Deletion failed:", err);
-      const errorMsg = err.response?.data?.message || err.response?.data?.error || "Failed to delete question.";
-      setToast({ type: "error", message: errorMsg });
-      setTimeout(() => setToast(null), 3000);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleDeleteQuestion = async () => {
+  //   if (!window.confirm("Are you sure you want to delete this question? This action cannot be undone.")) {
+  //     return;
+  //   }
+  //   setLoading(true);
+  //   try {
+  //     const config = {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         Accept: "application/json"
+  //       }
+  //     };
+  //     console.log(`[QuestionEditModal] Deleting question ${question.id}...`);
+  //     await axios.delete(`${API_BASE_URL}/api/admin/past-questions/destroy/${question.id}`, config);
+  //     setToast({ type: "success", message: "Question deleted successfully!" });
+  //     setTimeout(() => {
+  //       onSuccess?.();
+  //       onClose();
+  //       setToast(null);
+  //     }, 1500);
+  //   } catch (err) {
+  //     console.error("Deletion failed:", err);
+  //     const errorMsg = err.response?.data?.message || err.response?.data?.error || "Failed to delete question.";
+  //     setToast({ type: "error", message: errorMsg });
+  //     setTimeout(() => setToast(null), 3000);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   if (!isOpen) return null;
 
@@ -895,6 +895,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
 
         {/* Footer */}
         <div className="px-10 py-8 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+          {/* Delete button — commented out for now
           <button 
             type="button"
             onClick={handleDeleteQuestion}
@@ -904,6 +905,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             <TrashIcon className="w-4 h-4" />
             Delete Question
           </button>
+          */}
           <div className="flex gap-4">
             <button 
               type="button"
