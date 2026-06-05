@@ -421,9 +421,25 @@ export default function useExamForm() {
     setQuestions(newQuestions);
   };
 
-  const isDuplicateNumber = (qIdx, num) => {
+  // Check duplicate within the current batch
+  const isDuplicateBatchNumber = (qIdx, num) => {
     if (!num) return false;
-    return questions.some((q, i) => i !== qIdx && q.questionNumber === num);
+    return questions.some((q, i) => i !== qIdx && String(q.questionNumber) === String(num));
+  };
+
+  // Check duplicate against existing DB questions (skip the question being edited)
+  const isDuplicateDbNumber = (num) => {
+    if (!num) return false;
+    return existingQuestions.some(eq => {
+      // In edit mode, skip the question we're editing
+      if (isEditMode && String(eq.id) === String(editQuestionId)) return false;
+      return String(eq.question_number) === String(num);
+    });
+  };
+
+  // Combined check: batch + DB
+  const isDuplicateNumber = (qIdx, num) => {
+    return isDuplicateBatchNumber(qIdx, num) || isDuplicateDbNumber(num);
   };
 
   // Option Handlers
@@ -533,8 +549,11 @@ export default function useExamForm() {
 
       // Question number checks
       if (!q.questionNumber) qErrors.push("Question number is required");
-      if (q.questionNumber && isDuplicateNumber(questions.indexOf(q), q.questionNumber)) {
-        qErrors.push("Duplicate question number");
+      if (q.questionNumber && isDuplicateBatchNumber(questions.indexOf(q), q.questionNumber)) {
+        qErrors.push("Duplicate question number in this batch");
+      }
+      if (q.questionNumber && isDuplicateDbNumber(q.questionNumber)) {
+        qErrors.push(`Question #${q.questionNumber} already exists in this exam year`);
       }
 
       // Question text check
@@ -547,13 +566,13 @@ export default function useExamForm() {
         qErrors.push("Question and explanation cannot be the same");
       }
 
-      // MCQ option checks
-      if (q.questionType === "multiple_choice") {
+      // Option checks for MCQ and True/False
+      if (q.questionType === "multiple_choice" || q.questionType === "true_false") {
         const filledOptions = q.options.filter(o => o.option_text.trim());
         if (filledOptions.length < 2) qErrors.push("At least 2 options are required");
 
         const hasCorrect = q.options.some(o => o.is_correct);
-        if (!hasCorrect) qErrors.push("Mark at least one correct answer");
+        if (!hasCorrect) qErrors.push("You must mark one option as the correct answer");
 
         // Duplicate option text check
         const optTexts = q.options.map(o => o.option_text.trim().toLowerCase()).filter(t => t);

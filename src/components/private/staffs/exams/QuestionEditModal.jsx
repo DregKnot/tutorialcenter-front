@@ -6,24 +6,54 @@ import {
   PlusIcon, 
   ListBulletIcon,
   DocumentTextIcon,
-  TrashIcon
+  TrashIcon,
+  PaperClipIcon,
+  PhotoIcon,
+  CheckCircleIcon
 } from "@heroicons/react/24/outline";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import SymbolPicker from "../../../common/SymbolPicker";
 import { Icon } from "@iconify/react";
 
-export default function QuestionEditModal({ isOpen, onClose, question, onSuccess }) {
+// Quill configuration matching QuestionItem.jsx — includes superscript/subscript support
+const quillFormats = [
+  'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+  'list', 'indent', 'link', 'image', 'video', 'script'
+];
+
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'script': 'sub'}, { 'script': 'super' }],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['link', 'image', 'video'],
+    ['clean']
+  ],
+  clipboard: {
+    matchVisual: false
+  }
+};
+
+export default function QuestionEditModal({ isOpen, onClose, question, onSuccess, existingQuestions }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
   const [questionText, setQuestionText] = useState(() => question ? (question.question || question.question_text || question.text || "") : "");
+  const [questionNumber, setQuestionNumber] = useState(() => question ? (question.question_number || question.questionNumber || "") : "");
   const [questionType, setQuestionType] = useState(() => question ? (question.question_type || "true_false") : "true_false");
   const [marks, setMarks] = useState(() => question ? (question.marks || 1) : 1);
   const [options, setOptions] = useState(() => question ? (question.options || []) : []);
   const [explanation, setExplanation] = useState(() => question ? (question.explanation || question.explanation_text || "") : "");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // File/Image states
+  const [existingFiles, setExistingFiles] = useState([]); // Files already on the server
+  const [newFiles, setNewFiles] = useState([]);            // New File objects to upload
+  const [newCaptions, setNewCaptions] = useState([]);      // Captions for new files
+  const [filesToDelete, setFilesToDelete] = useState([]);   // IDs of existing files to remove
 
   // Group Details States
   const [groupTitle, setGroupTitle] = useState("");
@@ -64,10 +94,23 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       console.log("[QuestionEditModal] Populating with question:", question);
       const text = question.question || question.question_text || question.text || "";
       setQuestionText(text);
+      setQuestionNumber(question.question_number || question.questionNumber || "");
       setQuestionType(question.question_type || "true_false");
       setMarks(question.marks || 1);
       setOptions(question.options || []);
       setExplanation(question.explanation || question.explanation_text || "");
+
+      // Populate existing files/images from the question data
+      const questionFiles = question.files || question.images || question.attachments || [];
+      setExistingFiles(questionFiles.map(f => ({
+        id: f.id,
+        file_path: f.file_path || f.path || f.url || "",
+        caption: f.caption || "",
+        original_name: f.original_name || f.name || f.file_path || "Attachment"
+      })));
+      setNewFiles([]);
+      setNewCaptions([]);
+      setFilesToDelete([]);
 
       // Populate group details if the question belongs to a group
       const groupData = question.group || question.past_question_group;
@@ -105,6 +148,43 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       setGroupImageFile(file);
       setGroupImagePreview(URL.createObjectURL(file));
     }
+  };
+
+  // File handlers for question attachments
+  const handleNewFilesChange = (e) => {
+    const files = Array.from(e.target.files);
+    setNewFiles(prev => [...prev, ...files]);
+    setNewCaptions(prev => [...prev, ...files.map(() => "")]);
+  };
+
+  const removeNewFile = (fIdx) => {
+    setNewFiles(prev => prev.filter((_, i) => i !== fIdx));
+    setNewCaptions(prev => prev.filter((_, i) => i !== fIdx));
+  };
+
+  const updateNewCaption = (fIdx, value) => {
+    setNewCaptions(prev => prev.map((c, i) => i === fIdx ? value : c));
+  };
+
+  const removeExistingFile = (fileId) => {
+    setFilesToDelete(prev => [...prev, fileId]);
+    setExistingFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
+  const updateExistingCaption = (fileId, value) => {
+    setExistingFiles(prev => prev.map(f => f.id === fileId ? { ...f, caption: value } : f));
+  };
+
+  const getFilePreviewUrl = (filePath) => {
+    if (!filePath) return null;
+    if (filePath.startsWith('http')) return filePath;
+    return `${API_BASE_URL}/storage/${filePath}`;
+  };
+
+  const isImageFile = (filePath) => {
+    if (!filePath) return false;
+    const ext = filePath.split('.').pop().toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
   };
 
   const isScienceSubject = () => {
@@ -166,8 +246,46 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     const plainQuestion = questionText;
     const plainExplanation = explanation;
 
+    // 1. Validation: Correct option check (for multiple_choice and true_false)
+    const hasCorrectOption = options.some(o => o.is_correct || o.is_correct === 1);
+    if (!hasCorrectOption) {
+      setToast({ type: "error", message: "You must choose a correct option." });
+      setTimeout(() => setToast(null), 3000);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Validation: Question Number check
+    if (!questionNumber || String(questionNumber).trim() === "") {
+      setToast({ type: "error", message: "Question number is required." });
+      setTimeout(() => setToast(null), 3000);
+      setLoading(false);
+      return;
+    }
+
+    const numVal = parseInt(questionNumber, 10);
+    if (isNaN(numVal) || numVal <= 0) {
+      setToast({ type: "error", message: "Question number must be a valid positive integer." });
+      setTimeout(() => setToast(null), 3000);
+      setLoading(false);
+      return;
+    }
+
+    // 3. Validation: Duplicate check in DB (excluding current question)
+    if (existingQuestions && Array.isArray(existingQuestions)) {
+      const duplicate = existingQuestions.find(q => 
+        String(q.id) !== String(question.id) && 
+        parseInt(q.question_number || q.questionNumber, 10) === numVal
+      );
+      if (duplicate) {
+        setToast({ type: "error", message: `Question #${numVal} already exists in this exam year.` });
+        setTimeout(() => setToast(null), 3000);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
-      const config = { headers: { Authorization: `Bearer ${token}` } };
       
       // 1. Create or Update Group details if group title is filled
       let groupId = selectedGroupId || question.past_question_group_id || (groupData?.id);
@@ -203,27 +321,53 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
         }
       }
 
-      // 2. Update Question details
-      const payload = {
-        _method: "PUT",
-        exam_year_id: question.exam_year_id,
-        past_question_group_id: groupId || null,
-        question_number: String(question.question_number || question.questionNumber || ""),
-        question: plainQuestion,
-        question_type: questionType,
-        marks,
-        explanation: plainExplanation,
-        status: question.status || "active",
-        options: options.map((o, index) => ({
-          label: o.label,
-          option_text: o.option_text,
-          is_correct: o.is_correct ? 1 : 0,
-          sort_order: o.sort_order || index + 1
-        }))
+      // 2. Update Question details using FormData to support file uploads
+      const questionFormData = new FormData();
+      questionFormData.append("_method", "PUT");
+      questionFormData.append("exam_year_id", question.exam_year_id);
+      questionFormData.append("past_question_group_id", groupId || "");
+      questionFormData.append("question_number", String(questionNumber));
+      questionFormData.append("question", plainQuestion);
+      questionFormData.append("question_type", questionType);
+      questionFormData.append("marks", marks);
+      questionFormData.append("explanation", plainExplanation);
+      questionFormData.append("status", question.status || "active");
+
+      // Options
+      options.forEach((o, index) => {
+        questionFormData.append(`options[${index}][label]`, o.label);
+        questionFormData.append(`options[${index}][option_text]`, o.option_text);
+        questionFormData.append(`options[${index}][is_correct]`, o.is_correct ? 1 : 0);
+        questionFormData.append(`options[${index}][sort_order]`, o.sort_order || index + 1);
+      });
+
+      // New files + captions
+      newFiles.forEach((file, index) => {
+        questionFormData.append(`files[${index}]`, file);
+        questionFormData.append(`captions[${index}]`, newCaptions[index] || "");
+      });
+
+      // Existing file caption updates
+      existingFiles.forEach((ef, index) => {
+        questionFormData.append(`existing_files[${index}][id]`, ef.id);
+        questionFormData.append(`existing_files[${index}][caption]`, ef.caption || "");
+      });
+
+      // Files to delete
+      filesToDelete.forEach((fileId, index) => {
+        questionFormData.append(`delete_files[${index}]`, fileId);
+      });
+
+      const uploadConfig = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "multipart/form-data"
+        }
       };
 
       console.log("[QuestionEditModal] Updating Question via POST (_method=PUT):", `${API_BASE_URL}/api/admin/past-questions/update/${question.id}`);
-      await axios.post(`${API_BASE_URL}/api/admin/past-questions/update/${question.id}`, payload, config);
+      await axios.post(`${API_BASE_URL}/api/admin/past-questions/update/${question.id}`, questionFormData, uploadConfig);
       
       setToast({ type: "success", message: "Question updated successfully!" });
       setTimeout(() => {
@@ -450,7 +594,9 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                   <ReactQuill 
                     theme="snow" 
                     value={groupContent || ""} 
-                    onChange={setGroupContent} 
+                    onChange={setGroupContent}
+                    modules={quillModules}
+                    formats={quillFormats}
                     className="[&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
                   />
                 </div>
@@ -483,7 +629,17 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Number</label>
+              <input 
+                type="number"
+                required
+                value={questionNumber}
+                onChange={(e) => setQuestionNumber(e.target.value)}
+                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
+              />
+            </div>
             <div className="space-y-3">
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Type</label>
               <select 
@@ -512,9 +668,117 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
               <ReactQuill 
                 theme="snow" 
                 value={questionText || ""} 
-                onChange={setQuestionText} 
+                onChange={setQuestionText}
+                modules={quillModules}
+                formats={quillFormats}
                 className="[&_.ql-editor]:min-h-[120px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
               />
+            </div>
+          </div>
+
+          {/* Question Attachments / Images Section */}
+          <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center gap-3 px-1">
+              <PaperClipIcon className="w-5 h-5 text-[#BB9E7F]" />
+              <label className="text-[11px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Question Attachments</label>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Existing files from the server */}
+              {existingFiles.map((ef) => (
+                <div key={`existing-${ef.id}`} className="bg-gray-50 dark:bg-gray-800/50 p-5 rounded-[28px] border-2 border-emerald-500/20 relative group animate-in zoom-in-95">
+                  <button 
+                    type="button"
+                    onClick={() => removeExistingFile(ef.id)}
+                    className="absolute top-3 right-3 p-2 bg-white dark:bg-gray-800 text-red-500 rounded-xl shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                  
+                  {/* Image preview or file icon */}
+                  {isImageFile(ef.file_path) ? (
+                    <div className="w-full aspect-video rounded-2xl overflow-hidden mb-4 bg-gray-100 dark:bg-gray-700">
+                      <img 
+                        src={getFilePreviewUrl(ef.file_path)} 
+                        alt={ef.caption || "Question attachment"} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 shrink-0">
+                        <DocumentTextIcon className="w-6 h-6" />
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="text-xs font-black text-[#0F2843] dark:text-white truncate uppercase tracking-tight">{ef.original_name}</p>
+                        <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-wider mt-0.5">Saved on Server</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Caption editor for existing file */}
+                  <input 
+                    type="text"
+                    value={ef.caption}
+                    onChange={(e) => updateExistingCaption(ef.id, e.target.value)}
+                    placeholder="Update caption for this attachment..."
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-xl text-[11px] font-bold outline-none"
+                  />
+                </div>
+              ))}
+
+              {/* New files to upload */}
+              {newFiles.map((file, fIdx) => (
+                <div key={`new-${fIdx}`} className="bg-gray-50 dark:bg-gray-800/50 p-5 rounded-[28px] border-2 border-[#BB9E7F]/20 relative group animate-in zoom-in-95">
+                  <button 
+                    type="button"
+                    onClick={() => removeNewFile(fIdx)}
+                    className="absolute top-3 right-3 p-2 bg-white dark:bg-gray-800 text-red-500 rounded-xl shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+
+                  {/* Preview for new image files */}
+                  {file.type?.startsWith('image/') ? (
+                    <div className="w-full aspect-video rounded-2xl overflow-hidden mb-4 bg-gray-100 dark:bg-gray-700">
+                      <img 
+                        src={URL.createObjectURL(file)} 
+                        alt={file.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-12 h-12 bg-[#BB9E7F]/10 rounded-2xl flex items-center justify-center text-[#BB9E7F] shrink-0">
+                        <DocumentTextIcon className="w-6 h-6" />
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="text-xs font-black text-[#0F2843] dark:text-white truncate uppercase tracking-tight">{file.name}</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">{(file.size / 1024).toFixed(0)} KB</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Caption input for new file */}
+                  <input 
+                    type="text"
+                    value={newCaptions[fIdx]}
+                    onChange={(e) => updateNewCaption(fIdx, e.target.value)}
+                    placeholder="Add a caption for this file..."
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-xl text-[11px] font-bold outline-none"
+                  />
+                </div>
+              ))}
+
+              {/* Upload new files button */}
+              <div className="relative border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-[28px] hover:border-[#BB9E7F]/40 transition-all group flex flex-col items-center justify-center p-8 min-h-[160px] cursor-pointer">
+                <div className="w-12 h-12 bg-[#BB9E7F]/5 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                  <PhotoIcon className="w-6 h-6 text-[#BB9E7F]" />
+                </div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Add Image / Attachment</p>
+                <p className="text-[9px] text-gray-300 dark:text-gray-500 font-bold mt-1">Diagrams, charts, or supporting files</p>
+                <input type="file" multiple accept="image/*,.pdf,.doc,.docx" onChange={handleNewFilesChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+              </div>
             </div>
           </div>
 
@@ -562,12 +826,13 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                     <button
                       type="button"
                       onClick={() => handleOptionChange(idx, "is_correct", !opt.is_correct)}
-                      className={`px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
+                      className={`px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${
                         opt.is_correct 
                           ? "bg-green-500 text-white shadow-lg" 
                           : "bg-gray-100 dark:bg-gray-800 text-gray-400"
                       }`}
                     >
+                      <CheckCircleIcon className="w-4 h-4" />
                       {opt.is_correct ? "Correct" : "Mark"}
                     </button>
                     <button 
@@ -586,7 +851,14 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
           <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-gray-800">
             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Explanation</label>
             <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-[#0F2843] dark:text-white">
-              <ReactQuill theme="snow" value={explanation} onChange={setExplanation} className="[&_.ql-editor]:min-h-[100px] [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" />
+              <ReactQuill 
+                theme="snow" 
+                value={explanation} 
+                onChange={setExplanation}
+                modules={quillModules}
+                formats={quillFormats}
+                className="[&_.ql-editor]:min-h-[100px] [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" 
+              />
             </div>
           </div>
         </form>

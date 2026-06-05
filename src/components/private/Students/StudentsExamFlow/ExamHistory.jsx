@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
+import ExamReview from "./ExamReview.jsx";
 
 // Helper to calculate flame visual styles and characteristics based on daily streak
 const getStreakFlameStyles = (streak) => {
@@ -188,6 +189,7 @@ export default function ExamHistory({ availableExams = [], onBack }) {
   const [attempts, setAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedAttemptId, setExpandedAttemptId] = useState(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -298,23 +300,24 @@ export default function ExamHistory({ availableExams = [], onBack }) {
 
   // Helper to extract stats
   const getAttemptStats = (attempt) => {
-    const scoreVal = attempt.score !== undefined ? attempt.score : (attempt.correct_answers_count || 0);
-    const totalQ = attempt.total_questions || attempt.questions_count || 0;
+    const scoreVal = attempt.score !== undefined ? Number(attempt.score) : (attempt.correct_answers !== undefined ? Number(attempt.correct_answers) : 0);
+    const totalQ = attempt.total_questions !== undefined ? Number(attempt.total_questions) : (attempt.questions_count !== undefined ? Number(attempt.questions_count) : 0);
+    
     const percentage = attempt.percentage !== undefined
-      ? attempt.percentage
+      ? Math.round(Number(attempt.percentage))
       : (totalQ ? Math.round((scoreVal / totalQ) * 100) : 0);
 
-    const correct = attempt.correct_answers_count !== undefined
-      ? attempt.correct_answers_count
-      : (attempt.correct || scoreVal || 0);
+    const correct = attempt.correct_answers !== undefined
+      ? Number(attempt.correct_answers)
+      : (attempt.correct_answers_count !== undefined ? Number(attempt.correct_answers_count) : (attempt.correct !== undefined ? Number(attempt.correct) : scoreVal));
 
-    const wrong = attempt.wrong_answers_count !== undefined
-      ? attempt.wrong_answers_count
-      : (attempt.wrong || 0);
+    const wrong = attempt.wrong_answers !== undefined
+      ? Number(attempt.wrong_answers)
+      : (attempt.wrong_answers_count !== undefined ? Number(attempt.wrong_answers_count) : (attempt.wrong !== undefined ? Number(attempt.wrong) : 0));
 
-    const unanswered = attempt.unanswered_answers_count !== undefined
-      ? attempt.unanswered_answers_count
-      : (attempt.unanswered || (totalQ - correct - wrong >= 0 ? totalQ - correct - wrong : 0));
+    const unanswered = attempt.unanswered !== undefined
+      ? Number(attempt.unanswered)
+      : (attempt.unanswered_answers_count !== undefined ? Number(attempt.unanswered_answers_count) : (totalQ - correct - wrong >= 0 ? totalQ - correct - wrong : 0));
 
     // Try to find matching exam from availableExams fallback
     const matchingExam = (availableExams || []).find(
@@ -658,148 +661,176 @@ export default function ExamHistory({ availableExams = [], onBack }) {
               strokeColor = "#C5A97A"; // gold
             }
 
+            const isExpanded = String(expandedAttemptId) === String(attempt.id);
+
             return (
-              <div
-                key={attempt.id}
-                className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] p-6 shadow-sm hover:shadow-md hover:scale-[1.005] transition-all duration-300 flex flex-col xl:flex-row gap-6 justify-between xl:items-center w-full"
-              >
-                {/* Score Circular Progress & Titles */}
-                <div className="flex items-center gap-5 w-full xl:w-auto shrink-0">
-                  <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="32"
-                        className="stroke-gray-100 dark:stroke-gray-800 fill-transparent"
-                        strokeWidth="6"
-                      />
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="32"
-                        className="fill-transparent transition-all duration-1000 ease-out"
-                        style={{ stroke: strokeColor }}
-                        strokeWidth="6"
-                        strokeDasharray={201}
-                        strokeDashoffset={201 - (201 * scorePercentage) / 100}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="absolute flex flex-col items-center">
-                      <span className="text-base font-black text-[#09314F] dark:text-white">
-                        {scorePercentage}%
+              <div key={attempt.id} className="space-y-4">
+                <div
+                  onClick={() => setExpandedAttemptId(isExpanded ? null : attempt.id)}
+                  className={`bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border p-6 shadow-sm hover:shadow-md hover:scale-[1.005] cursor-pointer transition-all duration-300 flex flex-col xl:flex-row gap-6 justify-between xl:items-center w-full ${
+                    isExpanded ? "border-[#C5A97A] ring-2 ring-[#C5A97A]/25" : "border-gray-100 dark:border-[#09314F]"
+                  }`}
+                >
+                  {/* Score Circular Progress & Titles */}
+                  <div className="flex items-center gap-5 w-full xl:w-auto shrink-0">
+                    <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
+                      <svg className="w-full h-full transform -rotate-90">
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="32"
+                          className="stroke-gray-100 dark:stroke-gray-800 fill-transparent"
+                          strokeWidth="6"
+                        />
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="32"
+                          className="fill-transparent transition-all duration-1000 ease-out"
+                          style={{ stroke: strokeColor }}
+                          strokeWidth="6"
+                          strokeDasharray={201}
+                          strokeDashoffset={201 - (201 * scorePercentage) / 100}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute flex flex-col items-center">
+                        <span className="text-base font-black text-[#09314F] dark:text-white">
+                          {scorePercentage}%
+                        </span>
+                      </div>
+                    </div>
+   
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-black uppercase text-[#C5A97A] tracking-wider block">
+                        {stats.courseTitle}
                       </span>
+                      <h3 className="text-base font-black text-[#09314F] dark:text-white uppercase tracking-tight mt-1 truncate">
+                        {stats.subjectName} - {stats.yearValue}
+                      </h3>
+                      <div className="mt-2.5 flex items-center gap-2">
+                        {/* Status Badges */}
+                        {status === "completed" && (
+                          <span className="px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5">
+                            <Icon icon="lucide:check-circle" className="w-3.5 h-3.5" />
+                            Completed
+                          </span>
+                        )}
+                        {status === "abandoned" && (
+                          <span className="px-2.5 py-1 bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5">
+                            <Icon icon="lucide:alert-triangle" className="w-3.5 h-3.5" />
+                            Abandoned
+                          </span>
+                        )}
+                        {status === "in_progress" && (
+                          <span className="px-2.5 py-1 bg-gray-500/10 text-gray-500 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-gray-400 animate-ping"></span>
+                            In Progress
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-400 font-bold">
+                          Score: {stats.score}/{stats.totalQuestions}
+                        </span>
+                      </div>
                     </div>
                   </div>
- 
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-black uppercase text-[#C5A97A] tracking-wider block">
-                      {stats.courseTitle}
-                    </span>
-                    <h3 className="text-base font-black text-[#09314F] dark:text-white uppercase tracking-tight mt-1 truncate">
-                      {stats.subjectName} - {stats.yearValue}
-                    </h3>
-                    <div className="mt-2.5 flex items-center gap-2">
-                      {/* Status Badges */}
-                      {status === "completed" && (
-                        <span className="px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5">
-                          <Icon icon="lucide:check-circle" className="w-3.5 h-3.5" />
-                          Completed
+   
+                  {/* Timeline display details */}
+                  <div className="flex items-center justify-between xl:justify-start gap-4 py-4 xl:py-0 w-full xl:w-auto border-y xl:border-y-0 border-gray-100 dark:border-gray-800 px-2 xl:px-0 shrink-0">
+                    {/* Start Point */}
+                    {startStamp && (
+                      <div className="text-left shrink-0">
+                        <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
+                          <Icon icon="lucide:calendar" className="w-3 h-3 text-[#C5A97A]" />
+                          Started
                         </span>
-                      )}
-                      {status === "abandoned" && (
-                        <span className="px-2.5 py-1 bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5">
-                          <Icon icon="lucide:alert-triangle" className="w-3.5 h-3.5" />
-                          Abandoned
-                        </span>
-                      )}
-                      {status === "in_progress" && (
-                        <span className="px-2.5 py-1 bg-gray-500/10 text-gray-500 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-gray-400 animate-ping"></span>
-                          In Progress
-                        </span>
-                      )}
-                      <span className="text-xs text-gray-400 font-bold">
-                        Score: {stats.score}/{stats.totalQuestions}
-                      </span>
-                    </div>
-                  </div>
-                </div>
- 
-                {/* Timeline display details */}
-                <div className="flex items-center justify-between xl:justify-start gap-4 py-4 xl:py-0 w-full xl:w-auto border-y xl:border-y-0 border-gray-100 dark:border-gray-800 px-2 xl:px-0 shrink-0">
-                  {/* Start Point */}
-                  {startStamp && (
-                    <div className="text-left shrink-0">
-                      <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
-                        <Icon icon="lucide:calendar" className="w-3 h-3 text-[#C5A97A]" />
-                        Started
-                      </span>
-                      <p className="text-xs font-bold text-gray-700 dark:text-gray-200 mt-1">
-                        {startStamp.date}
-                      </p>
-                      <p className="text-[10px] font-medium text-gray-400 mt-0.5">
-                        {startStamp.time} ({startStamp.day})
-                      </p>
-                    </div>
-                  )}
- 
-                  {/* Connector Line */}
-                  <div className="flex-1 xl:w-12 h-[1px] xl:h-0.5 bg-gray-200 dark:bg-gray-800 shrink-0 relative flex items-center justify-center">
-                    <Icon icon="lucide:chevron-right" className="w-3.5 h-3.5 text-gray-300 absolute" />
-                  </div>
- 
-                  {/* Submit Point */}
-                  <div className="text-left shrink-0">
-                    <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
-                      <Icon icon="lucide:check-circle-2" className="w-3 h-3 text-green-500" />
-                      Submitted
-                    </span>
-                    {status === "in_progress" ? (
-                      <p className="text-xs font-bold text-orange-500 dark:text-orange-400 mt-1 animate-pulse">
-                        Ticking...
-                      </p>
-                    ) : endStamp ? (
-                      <>
                         <p className="text-xs font-bold text-gray-700 dark:text-gray-200 mt-1">
-                          {endStamp.date}
+                          {startStamp.date}
                         </p>
                         <p className="text-[10px] font-medium text-gray-400 mt-0.5">
-                          {endStamp.time} ({endStamp.day})
+                          {startStamp.time} ({startStamp.day})
                         </p>
-                      </>
-                    ) : (
-                      <p className="text-xs font-bold text-gray-400 mt-1">N/A</p>
+                      </div>
                     )}
+   
+                    {/* Connector Line */}
+                    <div className="flex-1 xl:w-12 h-[1px] xl:h-0.5 bg-gray-200 dark:bg-gray-800 shrink-0 relative flex items-center justify-center">
+                      <Icon icon="lucide:chevron-right" className="w-3.5 h-3.5 text-gray-300 absolute" />
+                    </div>
+   
+                    {/* Submit Point */}
+                    <div className="text-left shrink-0">
+                      <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
+                        <Icon icon="lucide:check-circle-2" className="w-3 h-3 text-green-500" />
+                        Submitted
+                      </span>
+                      {status === "in_progress" ? (
+                        <p className="text-xs font-bold text-orange-500 dark:text-orange-400 mt-1 animate-pulse">
+                          Ticking...
+                        </p>
+                      ) : endStamp ? (
+                        <>
+                          <p className="text-xs font-bold text-gray-700 dark:text-gray-200 mt-1">
+                            {endStamp.date}
+                          </p>
+                          <p className="text-[10px] font-medium text-gray-400 mt-0.5">
+                            {endStamp.time} ({endStamp.day})
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-xs font-bold text-gray-400 mt-1">N/A</p>
+                      )}
+                    </div>
+                  </div>
+   
+                  {/* Score breakdown metrics grid */}
+                  <div className="grid grid-cols-3 gap-2 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 w-full xl:w-auto shrink-0">
+                    <div className="text-center px-1">
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
+                        Correct
+                      </span>
+                      <span className="text-sm font-black text-green-500 block mt-1">
+                        {stats.correct}
+                      </span>
+                    </div>
+                    <div className="text-center px-1 border-x border-gray-200/50 dark:border-gray-800/50">
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
+                        Wrong
+                      </span>
+                      <span className="text-sm font-black text-red-500 block mt-1">{stats.wrong}</span>
+                    </div>
+                    <div className="text-center px-1">
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
+                        Skipped
+                      </span>
+                      <span className="text-sm font-black text-gray-500 block mt-1">
+                        {stats.unanswered}
+                      </span>
+                    </div>
                   </div>
                 </div>
- 
-                {/* Score breakdown metrics grid */}
-                <div className="grid grid-cols-3 gap-2 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 w-full xl:w-auto shrink-0">
-                  <div className="text-center px-1">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
-                      Correct
-                    </span>
-                    <span className="text-sm font-black text-green-500 block mt-1">
-                      {stats.correct}
-                    </span>
+
+                {/* Collapsible expanded section containing practice stats and detailed review list */}
+                {isExpanded && (
+                  <div className="bg-gray-50/50 dark:bg-gray-900/30 rounded-[32px] border border-gray-200 dark:border-gray-800 p-4 md:p-6 animate-in slide-in-from-top-4 duration-300">
+                    <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-800 mb-6">
+                      <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-widest">
+                        Detailed Exam Analysis
+                      </h4>
+                      <button
+                        onClick={() => setExpandedAttemptId(null)}
+                        className="text-xs font-black text-red-500 hover:underline uppercase tracking-wider flex items-center gap-1"
+                      >
+                        <Icon icon="lucide:x" className="w-3.5 h-3.5" />
+                        Close Review
+                      </button>
+                    </div>
+                    {/* Render scrollable ExamReview list container */}
+                    <div className="max-h-[60vh] overflow-y-auto pr-1">
+                      <ExamReview attemptId={attempt.id} hideHeader={true} onBack={() => setExpandedAttemptId(null)} />
+                    </div>
                   </div>
-                  <div className="text-center px-1 border-x border-gray-200/50 dark:border-gray-800/50">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
-                      Wrong
-                    </span>
-                    <span className="text-sm font-black text-red-500 block mt-1">{stats.wrong}</span>
-                  </div>
-                  <div className="text-center px-1">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
-                      Skipped
-                    </span>
-                    <span className="text-sm font-black text-gray-500 block mt-1">
-                      {stats.unanswered}
-                    </span>
-                  </div>
-                </div>
+                )}
               </div>
             );
           })}
