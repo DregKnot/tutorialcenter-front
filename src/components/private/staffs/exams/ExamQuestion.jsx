@@ -255,9 +255,9 @@ export default function ExamQuestion() {
           {/* 3. Questions Batch & Footer - Fully interactive so the user can submit the group and questions together */}
           <div className="transition-all duration-500">
             
-            {/* Existing Questions Count Info Panel (Preceding the Question Batch) */}
+            {/* Existing Questions Count Info Panel + Number Grid */}
             {existingQuestions.length > 0 && (
-              <div className="pt-8 border-t border-gray-100 dark:border-gray-700 px-8 md:px-12 mb-8">
+              <div className="pt-8 border-t border-gray-100 dark:border-gray-700 px-8 md:px-12 mb-8 space-y-5">
                 <div className="flex items-center gap-4 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-[24px]">
                   <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 shrink-0">
                     <CheckCircleIcon className="w-5 h-5" />
@@ -271,6 +271,53 @@ export default function ExamQuestion() {
                     </p>
                   </div>
                 </div>
+
+                {/* Question Number Grid Visualizer */}
+                {(() => {
+                  const existingNums = existingQuestions
+                    .map(eq => parseInt(eq.question_number || eq.questionNumber, 10))
+                    .filter(n => !isNaN(n));
+                  const maxNum = Math.max(...existingNums, 0);
+                  const existingSet = new Set(existingNums);
+
+                  if (maxNum <= 0) return null;
+
+                  return (
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-[24px] p-5 border border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-4 px-1">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Question Number Map</p>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 rounded bg-emerald-500/80"></div>
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">Created</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 rounded border-2 border-dashed border-amber-400/60 bg-amber-50 dark:bg-amber-900/20"></div>
+                            <span className="text-[9px] font-bold text-gray-400 uppercase">Missing</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.from({ length: maxNum }, (_, i) => i + 1).map(num => {
+                          const exists = existingSet.has(num);
+                          return (
+                            <div
+                              key={num}
+                              className={`w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black transition-all ${
+                                exists
+                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                                  : "bg-amber-50 dark:bg-amber-900/10 text-amber-500/70 border-2 border-dashed border-amber-400/40"
+                              }`}
+                              title={exists ? `Question ${num} — created` : `Question ${num} — missing`}
+                            >
+                              {num}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 

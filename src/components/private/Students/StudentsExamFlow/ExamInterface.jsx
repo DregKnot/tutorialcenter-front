@@ -16,9 +16,19 @@ export default function ExamInterface({
 
   // State Management
   const [questions, setQuestions] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const saved = localStorage.getItem(`exam_attempt_${attemptId}_index`);
+    return saved !== null ? parseInt(saved, 10) : 0;
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Sync currentIndex to localStorage
+  useEffect(() => {
+    if (attemptId) {
+      localStorage.setItem(`exam_attempt_${attemptId}_index`, currentIndex.toString());
+    }
+  }, [currentIndex, attemptId]);
 
   // Answering States
   const [selectedOptions, setSelectedOptions] = useState({}); // local state { [questionId]: optionId }
