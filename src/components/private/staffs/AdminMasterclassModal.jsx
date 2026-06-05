@@ -4,7 +4,7 @@ import {
   BookOpenIcon,
   CalendarIcon,
   ClockIcon,
-  ChevronDownIcon,
+  // ChevronDownIcon,
   // GlobeAltIcon,
   UserGroupIcon,
   LinkIcon,
@@ -50,6 +50,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
   const [courseSearch, setCourseSearch] = useState("");
   const [subjectSearch, setSubjectSearch] = useState("");
+  const [courseFocused, setCourseFocused] = useState(false);
+  const [subjectFocused, setSubjectFocused] = useState(false);
   const [tutorSearch, setTutorSearch] = useState("");
   const [assistantSearch, setAssistantSearch] = useState("");
 
@@ -86,6 +88,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
   const fetchCourses = useCallback(async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/courses`);
+      console.log("Fetched Courses Response:", res.data);
       const fetched = res.data?.courses || res.data?.data || [];
       setCourses(fetched);
     } catch (error) {
@@ -98,6 +101,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
       const res = await axios.get(
         `${API_BASE_URL}/api/courses/${courseId}/subjects`,
       );
+      console.log(`Fetched Subjects Response for course ${courseId}:`, res.data);
       const fetched = res.data?.subjects || res.data?.data || [];
       setSubjects(fetched);
       console.log(
@@ -155,13 +159,12 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
      INPUT HANDLERS
   ============================= */
 
-  const handleCourseChange = (e) => {
+  const handleCourseSearchChange = (e) => {
     const value = e.target.value;
     setCourseSearch(value);
-
-    const course = courses.find((c) => (c.title || c.name) === value);
-
-    if (!course) {
+    
+    // If they modify the search, clear current selection
+    if (selectedCourse) {
       setSelectedCourse(null);
       setSubjects([]);
       setFormData((prev) => ({
@@ -169,45 +172,22 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
         course_id: "",
         subject_id: "",
       }));
-      return;
+      setSubjectSearch("");
+      setSelectedSubject(null);
     }
-
-    setSelectedCourse(course);
-
-    setFormData((prev) => ({
-      ...prev,
-      course_id: course.id,
-      subject_id: "",
-    }));
-
-    setSubjectSearch("");
-    setSelectedSubject(null);
   };
 
-  const handleSubjectChange = (e) => {
+  const handleSubjectSearchChange = (e) => {
     const value = e.target.value;
     setSubjectSearch(value);
-
-    const subject = subjects.find((s) => s.name === value);
-
-    if (!subject) {
+    
+    if (selectedSubject) {
       setSelectedSubject(null);
       setFormData((prev) => ({
         ...prev,
         subject_id: "",
       }));
-      return;
     }
-
-    setSelectedSubject(subject);
-
-    const autoTitle = `${selectedCourse?.title || selectedCourse?.name} - ${subject.name}`;
-
-    setFormData((prev) => ({
-      ...prev,
-      subject_id: subject.id,
-      title: autoTitle,
-    }));
   };
 
   const handleStaffChange = (e, field) => {
@@ -562,49 +542,131 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
         </div>
 
         {/* Course Selection */}
-        <div>
-          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border ${
-            errors.course_id ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
-          }`}>
-            <BookOpenIcon className="w-5 h-5 text-gray-400" />
-            <input
-              list="course-list"
-              name="course_id"
-              value={courseSearch}
-              onChange={handleCourseChange}
-              placeholder="JAMB"
-              className="flex-1 bg-transparent text-gray-900 dark:text-white font-medium outline-none placeholder:text-gray-400"
-            />
-            <datalist id="course-list">
-              {courses.map((course) => (
-                <option key={course.id} value={course.title || course.name} />
-              ))}
-            </datalist>
+        <div className="space-y-3">
+          <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Course Selection</label>
+          <div className="relative">
+            <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border transition-all ${
+              errors.course_id ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
+            } ${selectedCourse ? "bg-green-50/10 border-green-500/30" : ""}`}>
+              <BookOpenIcon className="w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search and select course (e.g. JAMB, WAEC)..."
+                value={courseSearch}
+                onChange={handleCourseSearchChange}
+                onFocus={() => setCourseFocused(true)}
+                onBlur={() => setTimeout(() => setCourseFocused(false), 200)}
+                autoComplete="off"
+                className="flex-1 bg-transparent text-gray-900 dark:text-white font-medium outline-none placeholder:text-gray-400"
+              />
+              {selectedCourse && (
+                <span className="text-xs font-black text-green-500 bg-green-500/10 px-3 py-1 rounded-full uppercase tracking-wider">
+                  Selected
+                </span>
+              )}
+            </div>
+
+            {/* Custom Course Dropdown */}
+            {!selectedCourse && (courseFocused || courseSearch.trim()) && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-[120] max-h-[200px] overflow-y-auto custom-scrollbar">
+                {(() => {
+                  const filtered = courseSearch.trim()
+                    ? courses.filter(c => (c.title || c.name || "").toLowerCase().includes(courseSearch.toLowerCase()))
+                    : courses;
+                  return filtered.length > 0 ? (
+                    filtered.map(course => (
+                      <button
+                        key={course.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCourse(course);
+                          setCourseSearch(course.title || course.name || "");
+                          setFormData((prev) => ({
+                            ...prev,
+                            course_id: course.id,
+                            subject_id: "",
+                          }));
+                          setSubjectSearch("");
+                          setSelectedSubject(null);
+                        }}
+                        className="w-full text-left px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium text-sm text-[#0F2843] dark:text-white transition-colors border-b border-gray-50 dark:border-gray-700/30 last:border-0"
+                      >
+                        {course.title || course.name}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-6 py-4 text-xs font-bold text-gray-400 text-center uppercase tracking-wider">
+                      No matching courses found
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
           {errors.course_id && <p className="text-red-500 text-xs mt-2">{errors.course_id}</p>}
         </div>
 
         {/* Subject Selection */}
-        <div>
-          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border ${
-            errors.subject_id ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
-          } ${!formData.course_id && 'opacity-50'}`}>
-            <BookOpenIcon className="w-5 h-5 text-gray-400" />
-            <input
-              list="subject-list"
-              name="subject_id"
-              value={subjectSearch}
-              onChange={handleSubjectChange}
-              disabled={!formData.course_id}
-              placeholder="Geography"
-              className="flex-1 bg-transparent text-gray-900 dark:text-white font-medium outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
-            />
-            <ChevronDownIcon className="w-5 h-5 text-gray-400" />
-            <datalist id="subject-list">
-              {subjects.map((subject) => (
-                <option key={subject.id} value={subject.name} />
-              ))}
-            </datalist>
+        <div className="space-y-3">
+          <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Subject Selection</label>
+          <div className="relative">
+            <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border transition-all ${
+              errors.subject_id ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
+            } ${!formData.course_id ? "opacity-50 cursor-not-allowed" : ""} ${selectedSubject ? "bg-green-50/10 border-green-500/30" : ""}`}>
+              <BookOpenIcon className="w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder={formData.course_id ? "Search and select subject (e.g. Mathematics)..." : "Please select a course first"}
+                value={subjectSearch}
+                onChange={handleSubjectSearchChange}
+                onFocus={() => setSubjectFocused(true)}
+                onBlur={() => setTimeout(() => setSubjectFocused(false), 200)}
+                disabled={!formData.course_id}
+                autoComplete="off"
+                className="flex-1 bg-transparent text-gray-900 dark:text-white font-medium outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
+              />
+              {selectedSubject && (
+                <span className="text-xs font-black text-green-500 bg-green-500/10 px-3 py-1 rounded-full uppercase tracking-wider">
+                  Selected
+                </span>
+              )}
+            </div>
+
+            {/* Custom Subject Dropdown */}
+            {formData.course_id && !selectedSubject && (subjectFocused || subjectSearch.trim()) && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-[120] max-h-[200px] overflow-y-auto custom-scrollbar">
+                {(() => {
+                  const filtered = subjectSearch.trim()
+                    ? subjects.filter(s => (s.name || "").toLowerCase().includes(subjectSearch.toLowerCase()))
+                    : subjects;
+                  return filtered.length > 0 ? (
+                    filtered.map(subject => (
+                      <button
+                        key={subject.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSubject(subject);
+                          setSubjectSearch(subject.name || "");
+                          const autoTitle = `${selectedCourse?.title || selectedCourse?.name} - ${subject.name}`;
+                          setFormData((prev) => ({
+                            ...prev,
+                            subject_id: subject.id,
+                            title: autoTitle,
+                          }));
+                        }}
+                        className="w-full text-left px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium text-sm text-[#0F2843] dark:text-white transition-colors border-b border-gray-50 dark:border-gray-700/30 last:border-0"
+                      >
+                        {subject.name}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-6 py-4 text-xs font-bold text-gray-400 text-center uppercase tracking-wider">
+                      No matching subjects found
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
           {errors.subject_id && <p className="text-red-500 text-xs mt-2">{errors.subject_id}</p>}
         </div>
