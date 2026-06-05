@@ -278,6 +278,7 @@ export default function ExamQuestionList() {
           }}
           question={selectedQuestion}
           onSuccess={fetchData}
+          existingQuestions={questions}
         />
       )}
     </StaffDashboardLayout>

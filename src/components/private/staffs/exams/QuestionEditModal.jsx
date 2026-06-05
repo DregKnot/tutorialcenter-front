@@ -36,11 +36,12 @@ const quillModules = {
   }
 };
 
-export default function QuestionEditModal({ isOpen, onClose, question, onSuccess }) {
+export default function QuestionEditModal({ isOpen, onClose, question, onSuccess, existingQuestions }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
   const [questionText, setQuestionText] = useState(() => question ? (question.question || question.question_text || question.text || "") : "");
+  const [questionNumber, setQuestionNumber] = useState(() => question ? (question.question_number || question.questionNumber || "") : "");
   const [questionType, setQuestionType] = useState(() => question ? (question.question_type || "true_false") : "true_false");
   const [marks, setMarks] = useState(() => question ? (question.marks || 1) : 1);
   const [options, setOptions] = useState(() => question ? (question.options || []) : []);
@@ -93,6 +94,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       console.log("[QuestionEditModal] Populating with question:", question);
       const text = question.question || question.question_text || question.text || "";
       setQuestionText(text);
+      setQuestionNumber(question.question_number || question.questionNumber || "");
       setQuestionType(question.question_type || "true_false");
       setMarks(question.marks || 1);
       setOptions(question.options || []);
@@ -244,6 +246,45 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     const plainQuestion = questionText;
     const plainExplanation = explanation;
 
+    // 1. Validation: Correct option check (for multiple_choice and true_false)
+    const hasCorrectOption = options.some(o => o.is_correct || o.is_correct === 1);
+    if (!hasCorrectOption) {
+      setToast({ type: "error", message: "You must choose a correct option." });
+      setTimeout(() => setToast(null), 3000);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Validation: Question Number check
+    if (!questionNumber || String(questionNumber).trim() === "") {
+      setToast({ type: "error", message: "Question number is required." });
+      setTimeout(() => setToast(null), 3000);
+      setLoading(false);
+      return;
+    }
+
+    const numVal = parseInt(questionNumber, 10);
+    if (isNaN(numVal) || numVal <= 0) {
+      setToast({ type: "error", message: "Question number must be a valid positive integer." });
+      setTimeout(() => setToast(null), 3000);
+      setLoading(false);
+      return;
+    }
+
+    // 3. Validation: Duplicate check in DB (excluding current question)
+    if (existingQuestions && Array.isArray(existingQuestions)) {
+      const duplicate = existingQuestions.find(q => 
+        String(q.id) !== String(question.id) && 
+        parseInt(q.question_number || q.questionNumber, 10) === numVal
+      );
+      if (duplicate) {
+        setToast({ type: "error", message: `Question #${numVal} already exists in this exam year.` });
+        setTimeout(() => setToast(null), 3000);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       
       // 1. Create or Update Group details if group title is filled
@@ -285,7 +326,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       questionFormData.append("_method", "PUT");
       questionFormData.append("exam_year_id", question.exam_year_id);
       questionFormData.append("past_question_group_id", groupId || "");
-      questionFormData.append("question_number", String(question.question_number || question.questionNumber || ""));
+      questionFormData.append("question_number", String(questionNumber));
       questionFormData.append("question", plainQuestion);
       questionFormData.append("question_type", questionType);
       questionFormData.append("marks", marks);
@@ -588,7 +629,17 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Number</label>
+              <input 
+                type="number"
+                required
+                value={questionNumber}
+                onChange={(e) => setQuestionNumber(e.target.value)}
+                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
+              />
+            </div>
             <div className="space-y-3">
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Type</label>
               <select 
