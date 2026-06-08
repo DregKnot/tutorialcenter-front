@@ -443,7 +443,7 @@ export default function ExamHistory({ availableExams = [], onBack }) {
       const matchesSearch =
         stats.subjectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         stats.courseTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        stats.yearValue.toLowerCase().includes(searchQuery.toLowerCase());
+        String(stats.yearValue || "").toLowerCase().includes(searchQuery.toLowerCase());
 
       const statusVal = a.status || "completed";
       const matchesStatus = selectedStatus === "all" || statusVal === selectedStatus;
@@ -810,7 +810,7 @@ export default function ExamHistory({ availableExams = [], onBack }) {
                   </div>
                 </div>
 
-                {/* Collapsible expanded section containing practice stats and detailed review list */}
+                {/* Dropdown collapsible section containing practice stats and detailed review list */}
                 {isExpanded && (
                   <div className="bg-gray-50/50 dark:bg-gray-900/30 rounded-[32px] border border-gray-200 dark:border-gray-800 p-4 md:p-6 animate-in slide-in-from-top-4 duration-300">
                     <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-800 mb-6">
@@ -825,8 +825,8 @@ export default function ExamHistory({ availableExams = [], onBack }) {
                         Close Review
                       </button>
                     </div>
-                    {/* Render scrollable ExamReview list container */}
-                    <div className="max-h-[60vh] overflow-y-auto pr-1">
+                    {/* Render scrollable ExamReview list container with increased height */}
+                    <div className="max-h-[120vh] overflow-y-auto pr-1">
                       <ExamReview attemptId={attempt.id} hideHeader={true} onBack={() => setExpandedAttemptId(null)} />
                     </div>
                   </div>

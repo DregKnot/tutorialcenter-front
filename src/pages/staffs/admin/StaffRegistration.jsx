@@ -178,9 +178,9 @@ export default function StaffRegistration() {
       backPath="/staffs/manage-staffs"
       backLabel="Staff Information"
     >
-      <div className="max-w-4xl mx-auto p-4 lg:p-2 relative">
+      <div className="w-full relative mt-4">
 
-        <section className="bg-gray-50 dark:bg-gray-800 p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100">
+        <section className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md p-8 sm:p-10 rounded-[32px] shadow-sm border border-gray-100 dark:border-[#09314F]">
           <form className="space-y-4" onSubmit={handleSubmit}>
             
             {/* Top Section: Image Upload + Name/Contact */}
@@ -477,10 +477,10 @@ export default function StaffRegistration() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full rounded-xl font-bold py-4 text-sm transition-all shadow-lg flex items-center justify-center gap-2 ${
+                className={`w-full rounded-2xl font-black py-4 text-xs uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${
                   loading 
-                    ? "bg-gray-400 cursor-not-allowed" 
-                    : "bg-[#09314F] hover:bg-[#051b2b] text-white active:scale-[0.98]"
+                    ? "bg-gray-400 dark:bg-gray-700 cursor-not-allowed text-white" 
+                    : "bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white"
                 }`}
               >
                 {loading ? (

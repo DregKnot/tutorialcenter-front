@@ -554,205 +554,297 @@ export default function ExamInterface({
 
       {/* Main Question Card Area */}
       {questions.length > 0 && currentQuestion ? (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] shadow-sm relative overflow-hidden">
-            {/* Header info */}
-            <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/10">
-              <span className="px-4 py-1.5 bg-[#09314F] dark:bg-blue-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">
-                Question {currentIndex + 1}
-              </span>
+        (() => {
+          // Check if subject is science/calculation based
+          const subName = (selectedSubject?.name || selectedSubject?.title || "").toLowerCase();
+          const isScience = [
+            "math",
+            "mathematics",
+            "f-math",
+            "fmath",
+            "further math",
+            "further mathematics",
+            "physics",
+            "chemistry",
+            "biology"
+          ].some(keyword => subName.includes(keyword));
 
-              <div className="flex gap-4 text-xs font-black uppercase tracking-wider text-gray-400">
-                <p>
-                  Answered:{" "}
-                  <span className="text-green-500 dark:text-green-400 ml-1 font-black">
-                    {answeredCount}/{totalQuestions}
+          const mainContent = (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] shadow-sm relative overflow-hidden">
+                {/* Header info */}
+                <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/10">
+                  <span className="px-4 py-1.5 bg-[#09314F] dark:bg-blue-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">
+                    Question {currentIndex + 1}
                   </span>
-                </p>
-                <p>
-                  Unanswered:{" "}
-                  <span className="text-gray-500 dark:text-gray-300 ml-1 font-black">
-                    {unansweredCount}/{totalQuestions}
-                  </span>
-                </p>
-              </div>
-            </div>
 
-            {/* Question Box */}
-            <div className="p-6 md:p-8">
-              {activeGroup && activeGroup.type !== 'none' && (
-                <div className="mb-8">
-                  {/* Group type & title */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="px-2.5 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[9px] font-black uppercase rounded-md tracking-wider">
-                      {cleanText(activeGroup.type).replace('_', ' ')}
-                    </span>
-                    {activeGroup.title && (
-                      <span className="text-[11px] font-black text-[#09314F] dark:text-white uppercase tracking-widest">
-                        {cleanText(activeGroup.title)}
+                  <div className="flex gap-4 text-xs font-black uppercase tracking-wider text-gray-400">
+                    <p>
+                      Answered:{" "}
+                      <span className="text-green-500 dark:text-green-400 ml-1 font-black">
+                        {answeredCount}/{totalQuestions}
                       </span>
-                    )}
+                    </p>
+                    <p>
+                      Unanswered:{" "}
+                      <span className="text-gray-500 dark:text-gray-300 ml-1 font-black">
+                        {unansweredCount}/{totalQuestions}
+                      </span>
+                    </p>
                   </div>
+                </div>
 
-                  {/* pagination (separator) */}
-                  <div className="border-b-2 border-gray-200 dark:border-gray-700/80 my-6" />
+                {/* Inner Content scroll container */}
+                <div className="p-6 md:p-8 space-y-6">
+                  {/* Passage group content */}
+                  {activeGroup && activeGroup.type !== "none" && (
+                    <div className="mb-8 p-6 bg-[#EDF0F3]/30 dark:bg-gray-900/40 rounded-[24px] border border-gray-200/50 dark:border-gray-700/30 space-y-4 shadow-sm">
+                      <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className="px-2.5 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[9px] font-black uppercase rounded-md tracking-wider">
+                          Group: {cleanText(activeGroup.type).replace("_", " ")}
+                        </span>
+                        {activeGroup.title && (
+                          <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                            — {cleanText(activeGroup.title)}
+                          </span>
+                        )}
+                      </div>
+                      {activeGroup.image && (
+                        <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
+                          <img
+                            src={
+                              activeGroup.image.startsWith("http")
+                                ? activeGroup.image
+                                : `${API_BASE_URL}/storage/${activeGroup.image}`
+                            }
+                            alt="Group Passage Diagram"
+                            className="w-full h-auto rounded-xl"
+                          />
+                        </div>
+                      )}
+                      <div
+                        className="text-[13px] text-[#09314F] dark:text-gray-300 leading-relaxed tracking-tight quill-content break-words whitespace-normal w-full overflow-hidden"
+                        dangerouslySetInnerHTML={{ __html: cleanHtmlContent(activeGroup.content) }}
+                      />
+                    </div>
+                  )}
 
-                  {/* Group content */}
-                  <div className="space-y-4 my-4">
-                    {activeGroup.image && (
-                      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
-                        <img 
-                          src={activeGroup.image.startsWith('http') ? activeGroup.image : `${API_BASE_URL}/storage/${activeGroup.image}`} 
-                          alt="Group Visual Aid" 
+                  {/* Actual Question details */}
+                  <div className="space-y-6">
+                    <div
+                      className="text-[15px] font-black text-[#09314F] dark:text-white leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
+                      dangerouslySetInnerHTML={{ __html: cleanHtmlContent(currentQuestion.question) }}
+                    />
+
+                    {currentQuestion.image && (
+                      <div className="w-full max-w-md bg-gray-50 dark:bg-[#06243A] rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-800">
+                        <img
+                          src={
+                            currentQuestion.image.startsWith("http")
+                              ? currentQuestion.image
+                              : `${API_BASE_URL}/storage/${currentQuestion.image}`
+                          }
+                          alt="Question Diagram"
                           className="w-full h-auto rounded-xl"
                         />
                       </div>
                     )}
-                    <div 
-                      className="text-gray-700 dark:text-gray-300 text-[14px] leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
-                      dangerouslySetInnerHTML={{ __html: cleanHtmlContent(activeGroup.content) }}
-                    />
                   </div>
 
-                  {/* pagination (separator) */}
-                  <div className="border-b-2 border-gray-200 dark:border-gray-700/80 my-6" />
-                </div>
-              )}
+                  {/* Options List */}
+                  <div className="grid grid-cols-1 gap-3.5 pt-4">
+                    {activeOptions?.map((opt) => {
+                      const letter = opt.label || "A";
+                      const isSelected = String(activeLocalChoice) === String(opt.id);
+                      const isSynced = String(submittedAnswers[currentQuestion.id]) === String(opt.id);
 
-              {/* question */}
-              <div 
-                className="text-gray-700 dark:text-gray-200 text-[15px] font-normal leading-relaxed mb-8 prose dark:prose-invert max-w-none quill-content break-words whitespace-normal w-full overflow-hidden"
-                dangerouslySetInnerHTML={{ __html: cleanHtmlContent(currentQuestion.question) }}
-              />
-
-              {/* Options selection (Grid for laptop, column for mobile) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {activeOptions.map((opt) => {
-                  const letter = opt.letter || opt.option_letter || "A";
-                  const isSelected = String(activeLocalChoice) === String(opt.id);
-                  const isSynced = String(submittedAnswers[currentQuestion.id]) === String(opt.id);
-
-                  return (
-                    <div
-                      key={opt.id}
-                      onClick={() => handleOptionSelect(opt.id)}
-                      className={`p-5 rounded-2xl border cursor-pointer transition-all duration-200 flex items-center justify-between group ${
-                        isSelected
-                          ? "bg-blue-50/70 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500 ring-2 ring-blue-500/20"
-                          : "bg-white dark:bg-[#09314F]/30 border-gray-100 dark:border-[#09314F] hover:border-gray-200"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
+                      return (
                         <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs transition-colors shrink-0 ${
+                          key={opt.id}
+                          onClick={() => handleOptionSelect(opt.id)}
+                          className={`flex items-center justify-between gap-4 px-6 py-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group ${
                             isSelected
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-50 dark:bg-[#06243A] text-gray-400 group-hover:bg-gray-100"
+                              ? "bg-blue-50/50 dark:bg-blue-950/20 border-[#C5A97A] text-blue-900 dark:text-blue-200"
+                              : "bg-white dark:bg-[#09314F]/30 hover:border-gray-300 dark:hover:border-blue-800 border-gray-100 dark:border-[#09314F] text-gray-700 dark:text-gray-200"
                           }`}
                         >
-                          {letter}
-                        </div>
-                        <span
-                          className={`text-sm font-medium ${
-                            isSelected ? "text-blue-900 dark:text-blue-200 font-bold" : "text-gray-700 dark:text-gray-200"
-                          }`}
-                        >
-                          {opt.option || opt.text}
-                        </span>
-                      </div>
-                      
-                      {isSelected && (
-                        <div>
-                          {isSynced ? (
-                            <Icon icon="lucide:cloud-upload" className="w-5 h-5 text-blue-500 animate-pulse" />
-                          ) : (
-                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                          <div className="flex items-center gap-4">
+                            <div
+                              className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center transition-all ${
+                                isSelected
+                                  ? "bg-[#C5A97A] text-white"
+                                  : "bg-gray-50 dark:bg-[#06243A] text-gray-400 group-hover:bg-gray-100"
+                              }`}
+                            >
+                              {letter}
+                            </div>
+                            <span
+                              className={`text-sm font-medium ${
+                                isSelected
+                                  ? "text-blue-900 dark:text-blue-200 font-bold"
+                                  : "text-gray-700 dark:text-gray-200"
+                              }`}
+                            >
+                              {opt.option || opt.text}
+                            </span>
+                          </div>
+
+                          {isSelected && (
+                            <div>
+                              {isSynced ? (
+                                <Icon icon="lucide:cloud-upload" className="w-5 h-5 text-blue-500 animate-pulse" />
+                              ) : (
+                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Pagination numbers scroll area at the bottom of the card */}
+                <div className="px-6 py-5 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                  <button
+                    onClick={() => handleNavigate(currentIndex - 1)}
+                    disabled={currentIndex === 0}
+                    className="p-3 bg-gray-50 dark:bg-[#06243A] hover:bg-gray-100 disabled:opacity-30 rounded-xl transition-all shrink-0 text-[#09314F] dark:text-white"
+                  >
+                    <Icon icon="lucide:chevron-left" className="w-4 h-4" />
+                  </button>
+
+                  <div
+                    ref={paginationRef}
+                    className="flex-1 flex gap-2 overflow-x-auto pb-1 scrollbar-none"
+                  >
+                    {questions.map((q, idx) => {
+                      const isCurrent = idx === currentIndex;
+                      const isAnswered = submittedAnswers[q.id] !== undefined;
+
+                      return (
+                        <button
+                          key={q.id}
+                          id={`pag-btn-${idx}`}
+                          onClick={() => handleNavigate(idx)}
+                          className={`w-10 h-10 rounded-xl font-bold text-xs shrink-0 transition-all ${
+                            isCurrent
+                              ? "bg-[#09314F] text-white border-transparent"
+                              : isAnswered
+                              ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30"
+                              : "bg-gray-50 dark:bg-[#06243A] border border-transparent text-gray-400 hover:bg-gray-100"
+                          }`}
+                        >
+                          {idx + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => handleNavigate(currentIndex + 1)}
+                    disabled={currentIndex === totalQuestions - 1}
+                    className="p-3 bg-gray-50 dark:bg-[#06243A] hover:bg-gray-100 disabled:opacity-30 rounded-xl transition-all shrink-0 text-[#09314F] dark:text-white"
+                  >
+                    <Icon icon="lucide:chevron-right" className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Navigation Controls underneath card */}
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => handleNavigate(currentIndex - 1)}
+                  disabled={currentIndex === 0 || savingAnswer}
+                  className="py-4 bg-white dark:bg-[#09314F]/40 border border-gray-100 dark:border-[#09314F] hover:bg-gray-50 rounded-2xl font-bold text-[#09314F] dark:text-white text-xs uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
+                >
+                  Previous
+                </button>
+                {currentIndex === totalQuestions - 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowSubmitConfirm(true)}
+                    disabled={savingAnswer}
+                    className="py-4 bg-[#E83831] hover:bg-[#d0312b] rounded-2xl font-black text-white text-xs uppercase tracking-widest transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2"
+                  >
+                    <Icon icon="lucide:check-square" className="w-4 h-4" />
+                    <span>Submit Exam</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleNavigate(currentIndex + 1)}
+                    disabled={savingAnswer}
+                    className="py-4 bg-white dark:bg-[#09314F]/40 border border-gray-100 dark:border-[#09314F] hover:bg-gray-50 rounded-2xl font-bold text-[#09314F] dark:text-white text-xs uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
+                  >
+                    Next
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+
+          if (isScience) {
+            return (
+              <div className="flex flex-col lg:flex-row gap-6 items-start">
+                <div className="flex-1 w-full lg:min-w-0">{mainContent}</div>
+                
+                {/* Right Panel Workspace */}
+                <div className="w-full lg:w-80 shrink-0 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] p-6 shadow-sm flex flex-col gap-6">
+                  <div>
+                    <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-widest mb-1">
+                      Subject Overview
+                    </h4>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      Calculation Assistant Mode
+                    </p>
+                  </div>
+
+                  {/* Question navigation grid */}
+                  <div>
+                    <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest block mb-3">
+                      Questions Navigator
+                    </span>
+                    <div className="grid grid-cols-5 gap-2 max-h-[240px] overflow-y-auto pr-1">
+                      {questions.map((q, idx) => {
+                        const isCurrent = idx === currentIndex;
+                        const isAnswered = submittedAnswers[q.id] !== undefined;
+                        return (
+                          <button
+                            key={q.id}
+                            onClick={() => handleNavigate(idx)}
+                            className={`h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
+                              isCurrent
+                                ? "bg-[#09314F] text-white"
+                                : isAnswered
+                                ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30"
+                                : "bg-gray-50 dark:bg-[#06243A] text-gray-400 hover:bg-gray-100"
+                            }`}
+                          >
+                            {idx + 1}
+                          </button>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  </div>
+
+                  <hr className="border-gray-100 dark:border-gray-800" />
+
+                  {/* Prominent Submit Exam Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowSubmitConfirm(true)}
+                    className="w-full py-4 bg-[#E83831] hover:bg-[#d0312b] text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2"
+                  >
+                    <Icon icon="lucide:check-square" className="w-4.5 h-4.5" />
+                    <span>Submit Attempt</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            );
+          }
 
-            {/* Pagination numbers scroll area at the bottom of the card */}
-            <div className="px-6 py-5 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3">
-              <button
-                onClick={() => handleNavigate(currentIndex - 1)}
-                disabled={currentIndex === 0}
-                className="p-3 bg-gray-50 dark:bg-[#06243A] hover:bg-gray-100 disabled:opacity-30 rounded-xl transition-all shrink-0 text-[#09314F] dark:text-white"
-              >
-                <Icon icon="lucide:chevron-left" className="w-4 h-4" />
-              </button>
-
-              <div
-                ref={paginationRef}
-                className="flex-1 flex gap-2 overflow-x-auto pb-1 scrollbar-none"
-              >
-                {questions.map((q, idx) => {
-                  const isCurrent = idx === currentIndex;
-                  const isAnswered = submittedAnswers[q.id] !== undefined;
-
-                  return (
-                    <button
-                      key={q.id}
-                      id={`pag-btn-${idx}`}
-                      onClick={() => handleNavigate(idx)}
-                      className={`w-10 h-10 rounded-xl font-bold text-xs shrink-0 transition-all ${
-                        isCurrent
-                          ? "bg-[#09314F] text-white border-transparent"
-                          : isAnswered
-                          ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30"
-                          : "bg-gray-50 dark:bg-[#06243A] border border-transparent text-gray-400 hover:bg-gray-100"
-                      }`}
-                    >
-                      {idx + 1}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={() => handleNavigate(currentIndex + 1)}
-                disabled={currentIndex === totalQuestions - 1}
-                className="p-3 bg-gray-50 dark:bg-[#06243A] hover:bg-gray-100 disabled:opacity-30 rounded-xl transition-all shrink-0 text-[#09314F] dark:text-white"
-              >
-                <Icon icon="lucide:chevron-right" className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Navigation Controls underneath card */}
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => handleNavigate(currentIndex - 1)}
-              disabled={currentIndex === 0 || savingAnswer}
-              className="py-4 bg-white dark:bg-[#09314F]/40 border border-gray-100 dark:border-[#09314F] hover:bg-gray-50 rounded-2xl font-bold text-[#09314F] dark:text-white text-xs uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
-            >
-              Previous
-            </button>
-            {currentIndex === totalQuestions - 1 ? (
-              <button
-                type="button"
-                onClick={() => setShowSubmitConfirm(true)}
-                disabled={savingAnswer}
-                className="py-4 bg-[#E83831] hover:bg-[#d0312b] rounded-2xl font-black text-white text-xs uppercase tracking-widest transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2"
-              >
-                <Icon icon="lucide:check-square" className="w-4 h-4" />
-                <span>Submit Exam</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => handleNavigate(currentIndex + 1)}
-                disabled={savingAnswer}
-                className="py-4 bg-white dark:bg-[#09314F]/40 border border-gray-100 dark:border-[#09314F] hover:bg-gray-50 rounded-2xl font-bold text-[#09314F] dark:text-white text-xs uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
-              >
-                Next
-              </button>
-            )}
-          </div>
-        </div>
+          return mainContent;
+        })()
       ) : (
         <div className="py-24 text-center bg-white dark:bg-[#09314F]/40 border rounded-[32px] p-8">
           <p className="text-gray-400 font-bold">No questions loaded for this attempt.</p>
