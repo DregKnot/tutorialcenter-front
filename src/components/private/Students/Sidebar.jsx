@@ -52,6 +52,10 @@ const menuItems = [
     destination: "/student/games",
   },
   {
+    label: "Scholarship",
+    icon: "mdi:school-outline",
+  },
+  {
     label: "Payment",
     icon: "mdi:credit-card-outline",
     destination: "/student/payment-history", // This makes it clickable!
@@ -68,7 +72,7 @@ const menuItems = [
   },
 ];
 
-export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
+export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose, isExamActive = false }) {
   const { theme, setTheme } = useTheme();
   const { student, logout } = useAuth();
   const API_BASE_URL =
@@ -96,6 +100,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
           transition-all duration-300
           ${collapsed ? "w-20" : "w-64"}
           ${isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0 lg:translate-x-0 lg:opacity-100"}
+          ${isExamActive ? "opacity-35 pointer-events-none" : ""}
           lg:rounded-xl lg:shadow-2xl flex flex-col overflow-hidden
         `}
       >
@@ -137,7 +142,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
         </div>
 
         {/* Scrollable Content Area */}
-        <div className={`flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll flex flex-col ${collapsed ? "items-center" : "px-3 md:px-4"}`}>
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll flex flex-col ${collapsed ? "items-center" : "px-3 md:px-4 space-y-4"}`}>
           {/* Avatar & Name */}
           <div className="flex flex-col min-h-0">
             <div className={`flex py-1 md:py-2 items-center ${collapsed ? "justify-center" : "gap-2 md:gap-3"}`}>
@@ -174,7 +179,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
             </div>
 
             {/* Menu */}
-            <nav className="px-0.5 md:px-2 lg:px-3 space-y-1 md:space-y-1.5 lg:space-y-2 mt-2 md:mt-3 lg:mt-6 flex flex-col">
+            <nav className="px-0.5 md:px-2 lg:px-3 space-y-1 md:space-y-1.5 lg:space-y-2 mt-2 md:mt-3 lg:mt-6 flex flex-col flex-1">
               {menuItems.map(({ label, icon, destination }) => {
                 if (!destination) {
                   return (
@@ -196,7 +201,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
                     className={({ isActive }) => `
                     w-full flex items-center rounded-lg
                     text-xs md:text-sm font-medium transition duration-200
-                    ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 lg:px-3 py-1.5 md:py-2 lg:py-2.5"}
+                    ${collapsed ? "justify-center py-3" : "gap-3 px-2 md:px-3 lg:px-3 py-3"}
                     ${isActive
                         ? "bg-[#09314F] text-white shadow-md"
                         : "text-slate-600 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-gray-800"
@@ -211,7 +216,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
             </nav>
 
             {/* Mobile Footer */}
-            <div className="p-1 md:p-2 lg:p-3 pt-1 md:pt-2 lg:pt-3 pb-20 space-y-3 md:space-y-3 lg:space-y-5 mt-auto lg:hidden border-t border-gray-100 dark:border-gray-800">
+            <div className="p-2 md:p-3 lg:p-4 pt-2 md:pt-3 lg:pt-4 pb-20 space-y-3 md:space-y-4 lg:space-y-5 mt-auto lg:hidden border-t border-gray-100 dark:border-gray-800">
               {/* Theme Toggle (Mobile) */}
               <div className={`flex items-center gap-1 ${collapsed ? "justify-center" : "justify-between px-2"}`}>
                 {!collapsed && <span className="text-xs text-gray-500">Light</span>}
@@ -232,7 +237,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose }) {
             </div>
 
             {/* Desktop Footer (Now inside scroll area to prevent overlap) */}
-            <div className="hidden lg:block p-3 pt-3 space-y-3 mt-auto">
+            <div className="hidden lg:block p-4 pt-4 space-y-4 mt-auto border-t border-gray-100 dark:border-gray-800">
               <div className={`flex items-center gap-1 ${collapsed ? "justify-center" : "justify-between px-2"}`}>
                 {!collapsed && <span className="text-xs text-gray-500">Light</span>}
                 <button

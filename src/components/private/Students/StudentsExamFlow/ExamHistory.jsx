@@ -501,11 +501,11 @@ export default function ExamHistory({ availableExams = [], onBack }) {
       {/* 1. Metrics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Metric Card 1: Average Score */}
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col xl:flex-row items-center xl:items-start text-center xl:text-left gap-4 xl:gap-5">
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center text-left gap-4">
           <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 text-[#C5A97A] rounded-2xl shrink-0">
             <Icon icon="lucide:award" className="w-8 h-8" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h4 className="text-[28px] font-black text-[#09314F] dark:text-white leading-none">
               {averageScore}%
             </h4>
@@ -516,7 +516,7 @@ export default function ExamHistory({ availableExams = [], onBack }) {
         </div>
 
         {/* Metric Card 2: Highest Score */}
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col xl:flex-row items-center xl:items-start text-center xl:text-left gap-4 xl:gap-5">
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center text-left gap-4">
           <div className="p-4 bg-green-50 dark:bg-green-950/20 text-[#76D287] rounded-2xl shrink-0">
             <Icon icon="lucide:trophy" className="w-8 h-8" />
           </div>
@@ -533,11 +533,11 @@ export default function ExamHistory({ availableExams = [], onBack }) {
         </div>
 
         {/* Metric Card 3: Daily Streak */}
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col xl:flex-row items-center xl:items-start text-center xl:text-left gap-4 xl:gap-5">
-          <div className={`p-1.5 ${getStreakFlameStyles(activeStreak).bgClass} rounded-2xl shrink-0 relative flex items-center justify-center`}>
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center text-left gap-4">
+          <div className={`${getStreakFlameStyles(activeStreak).bgClass} rounded-2xl shrink-0 relative w-16 h-16 flex items-center justify-center`}>
             <StreakFire streak={activeStreak} />
           </div>
-          <div>
+          <div className="min-w-0">
             <h4 className="text-[28px] font-black text-[#09314F] dark:text-white leading-none">
               {activeStreak} {activeStreak === 1 ? "Day" : "Days"}
             </h4>
