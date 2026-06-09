@@ -315,9 +315,7 @@ export default function ExamHistory({ availableExams = [], onBack }) {
       ? Number(attempt.wrong_answers)
       : (attempt.wrong_answers_count !== undefined ? Number(attempt.wrong_answers_count) : (attempt.wrong !== undefined ? Number(attempt.wrong) : 0));
 
-    const unanswered = attempt.unanswered !== undefined
-      ? Number(attempt.unanswered)
-      : (attempt.unanswered_answers_count !== undefined ? Number(attempt.unanswered_answers_count) : (totalQ - correct - wrong >= 0 ? totalQ - correct - wrong : 0));
+    const unanswered = totalQ - (correct + wrong) > 0 ? totalQ - (correct + wrong) : 0;
 
     // Try to find matching exam from availableExams fallback
     const matchingExam = (availableExams || []).find(
@@ -810,34 +808,7 @@ export default function ExamHistory({ availableExams = [], onBack }) {
                   </div>
                 </div>
 
-                {/* Dropdown collapsible section containing practice stats and detailed review list */}
-                {isExpanded && (
-                  <>
-                    {/* Blur backdrop overlay for focus */}
-                    <div 
-                      className="fixed inset-0 z-[40] bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300"
-                      onClick={() => setExpandedAttemptId(null)}
-                    />
-                    <div className="relative z-[50] bg-white dark:bg-gray-900 rounded-[32px] border border-gray-200 dark:border-gray-800 p-4 md:p-8 animate-in slide-in-from-top-4 duration-300 shadow-2xl">
-                      <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-800 mb-6">
-                        <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-widest">
-                          Detailed Exam Analysis
-                        </h4>
-                        <button
-                          onClick={() => setExpandedAttemptId(null)}
-                          className="text-xs font-black text-red-500 hover:underline uppercase tracking-wider flex items-center gap-1"
-                        >
-                          <Icon icon="lucide:x" className="w-3.5 h-3.5" />
-                          Close Review
-                        </button>
-                      </div>
-                      {/* Render scrollable ExamReview list container with increased height */}
-                      <div className="max-h-[150vh] overflow-y-auto pr-1">
-                        <ExamReview attemptId={attempt.id} hideHeader={true} onBack={() => setExpandedAttemptId(null)} />
-                      </div>
-                    </div>
-                  </>
-                )}
+                
               </div>
             );
           })}
@@ -866,6 +837,85 @@ export default function ExamHistory({ availableExams = [], onBack }) {
           </button>
         </div>
       )}
+
+      {/* Full-page review overlay (rendered at root to bypass parent transforms/gaps) */}
+      {(() => {
+        const activeAttemptForReview = filteredAttempts.find(a => String(a.id) === String(expandedAttemptId));
+        if (!activeAttemptForReview) return null;
+
+        const stats = getAttemptStats(activeAttemptForReview);
+
+        return (
+          <div className="fixed inset-0 z-[999] flex flex-col bg-slate-900/50 backdrop-blur-xl animate-in fade-in duration-300">
+            {/* Scrollable page content */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="max-w-5xl mx-auto w-full px-4 md:px-8 pt-4 md:pt-6 pb-20">
+                
+                {/* Close button row */}
+                <div className="flex items-center justify-between mb-6">
+                  <button
+                    onClick={() => setExpandedAttemptId(null)}
+                    className="flex items-center gap-2 group text-gray-500 hover:text-[#09314F] dark:hover:text-white transition-colors"
+                  >
+                    <Icon icon="lucide:chevron-left" className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="text-xs font-black uppercase tracking-widest text-[#09314F] dark:text-white">Back to History</span>
+                  </button>
+                  <button
+                    onClick={() => setExpandedAttemptId(null)}
+                    className="p-2.5 bg-white dark:bg-[#09314F]/40 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-all group"
+                  >
+                    <Icon icon="lucide:x" className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
+                  </button>
+                </div>
+
+                {/* Attempt Summary Card (mirrors the history card) */}
+                <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] p-6 md:p-8 shadow-sm mb-8">
+                  <div className="flex flex-col xl:flex-row xl:items-center gap-6">
+                    {/* Left: Score ring + subject info */}
+                    <div className="flex items-center gap-5 flex-1 min-w-0">
+                      <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+                        <svg className="w-full h-full transform -rotate-90">
+                          <circle cx="32" cy="32" r="26" className="stroke-gray-100 dark:stroke-[#06243A] fill-transparent" strokeWidth="5" />
+                          <circle cx="32" cy="32" r="26" className="stroke-[#C5A97A] fill-transparent" strokeWidth="5" strokeDasharray={163} strokeDashoffset={163 - (163 * stats.percentage) / 100} strokeLinecap="round" />
+                        </svg>
+                        <span className="absolute text-xs font-black text-[#09314F] dark:text-white">{stats.percentage}%</span>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-black uppercase text-[#C5A97A] tracking-wider block">{stats.courseTitle}</span>
+                        <h3 className="text-base font-black text-[#09314F] dark:text-white uppercase tracking-tight mt-1 truncate">
+                          {stats.subjectName} - {stats.yearValue}
+                        </h3>
+                        <span className="text-xs text-gray-400 font-bold mt-1 block">
+                          Score: {stats.score}/{stats.totalQuestions}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Right: Score breakdown */}
+                    <div className="grid grid-cols-3 gap-2 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 w-full xl:w-auto shrink-0">
+                      <div className="text-center px-3">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Correct</span>
+                        <span className="text-sm font-black text-green-500 block mt-1">{stats.correct}</span>
+                      </div>
+                      <div className="text-center px-3 border-x border-gray-200/50 dark:border-gray-800/50">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Wrong</span>
+                        <span className="text-sm font-black text-red-500 block mt-1">{stats.wrong}</span>
+                      </div>
+                      <div className="text-center px-3">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Skipped</span>
+                        <span className="text-sm font-black text-gray-500 block mt-1">{stats.unanswered}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Full ExamReview content */}
+                <ExamReview attemptId={activeAttemptForReview.id} hideHeader={true} onBack={() => setExpandedAttemptId(null)} />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
