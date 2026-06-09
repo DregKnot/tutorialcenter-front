@@ -359,100 +359,19 @@ export default function ExamInterface({
     );
   }
 
-  if (examFinished) {
-    // Dynamic results display
-    const scoreVal = resultSummary?.score !== undefined ? Number(resultSummary.score) : 0;
-    const percentage = resultSummary?.percentage !== undefined 
-      ? Math.round(Number(resultSummary.percentage)) 
-      : (totalQuestions > 0 ? Math.round((scoreVal / totalQuestions) * 100) : 0);
+  // Import calculator component inline
+  const CalculatorRightbar = require("./CalculatorRightbar.jsx").default;
 
-    return (
-      <div className="max-w-3xl mx-auto w-full pb-20 px-2 lg:px-4 animate-in fade-in duration-500">
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-[#C5A97A]/30 p-8 shadow-2xl text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-green-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
+  // Calculate results if finished
+  const scoreVal = resultSummary?.score !== undefined ? Number(resultSummary.score) : 0;
+  const percentage = resultSummary?.percentage !== undefined 
+    ? Math.round(Number(resultSummary.percentage)) 
+    : (totalQuestions > 0 ? Math.round((scoreVal / totalQuestions) * 100) : 0);
 
-          <Icon icon="lucide:party-popper" className="w-20 h-20 text-[#C5A97A] mx-auto mb-6 animate-bounce" />
-          <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight mb-2">
-            Practice Completed!
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
-            Excellent job completing your practice attempt. Here is your summary:
-          </p>
+  const correctVal = resultSummary?.correct_answers !== undefined ? resultSummary.correct_answers : (resultSummary?.correct || scoreVal);
+  const wrongVal = resultSummary?.wrong_answers !== undefined ? resultSummary.wrong_answers : (resultSummary?.wrong || 0);
+  const skippedVal = resultSummary?.unanswered !== undefined ? resultSummary.unanswered : (totalQuestions - (resultSummary?.attempted_count || totalQuestions));
 
-          {/* Prominent Circular Progress Score Chart */}
-          <div className="relative w-40 h-40 mx-auto mb-8 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90">
-              <circle
-                cx="80"
-                cy="80"
-                r="68"
-                className="stroke-gray-100 dark:stroke-[#09314F] fill-transparent"
-                strokeWidth="10"
-              />
-              <circle
-                cx="80"
-                cy="80"
-                r="68"
-                className="stroke-[#C5A97A] fill-transparent transition-all duration-1000 ease-out"
-                strokeWidth="10"
-                strokeDasharray={427}
-                strokeDashoffset={427 - (427 * percentage) / 100}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute flex flex-col items-center">
-              <span className="text-3xl font-black text-[#09314F] dark:text-white">
-                {percentage}%
-              </span>
-              <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mt-1">
-                SCORE OBTAINED
-              </span>
-            </div>
-          </div>
-
-          {/* Details Section */}
-          <div className="grid grid-cols-3 gap-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-5 mb-8 border border-gray-100 dark:border-gray-800">
-            <div className="flex flex-col items-center">
-              <Icon icon="lucide:check-circle" className="w-5 h-5 text-green-500 mb-1" />
-              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                Correct
-              </span>
-              <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                {resultSummary?.correct_answers !== undefined ? resultSummary.correct_answers : (resultSummary?.correct || scoreVal)}
-              </span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Icon icon="lucide:x-circle" className="w-5 h-5 text-red-500 mb-1" />
-              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                Wrong
-              </span>
-              <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                {resultSummary?.wrong_answers !== undefined ? resultSummary.wrong_answers : (resultSummary?.wrong || 0)}
-              </span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Icon icon="lucide:help-circle" className="w-5 h-5 text-gray-400 mb-1" />
-              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                Skipped
-              </span>
-              <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                {resultSummary?.unanswered !== undefined ? resultSummary.unanswered : (totalQuestions - (resultSummary?.attempted_count || totalQuestions))}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={onBack}
-              className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
-            >
-              Go back to Center
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full animate-in fade-in duration-500">
@@ -632,7 +551,7 @@ export default function ExamInterface({
                   {/* Actual Question details */}
                   <div className="space-y-6">
                     <div
-                      className="text-[15px] font-black text-[#09314F] dark:text-white leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
+                      className="text-[15px] font-normal text-[#09314F] dark:text-white leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
                       dangerouslySetInnerHTML={{ __html: cleanHtmlContent(currentQuestion.question) }}
                     />
 
@@ -652,7 +571,7 @@ export default function ExamInterface({
                   </div>
 
                   {/* Options List */}
-                  <div className="grid grid-cols-1 gap-3.5 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-4">
                     {activeOptions?.map((opt) => {
                       const letter = opt.label || "A";
                       const isSelected = String(activeLocalChoice) === String(opt.id);
@@ -785,59 +704,12 @@ export default function ExamInterface({
 
           if (isScience) {
             return (
-              <div className="flex flex-col lg:flex-row gap-6 items-start">
+              <div className="flex flex-col lg:flex-row gap-6 items-start relative overflow-hidden">
                 <div className="flex-1 w-full lg:min-w-0">{mainContent}</div>
                 
-                {/* Right Panel Workspace */}
-                <div className="w-full lg:w-80 shrink-0 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] p-6 shadow-sm flex flex-col gap-6">
-                  <div>
-                    <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-widest mb-1">
-                      Subject Overview
-                    </h4>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      Calculation Assistant Mode
-                    </p>
-                  </div>
-
-                  {/* Question navigation grid */}
-                  <div>
-                    <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest block mb-3">
-                      Questions Navigator
-                    </span>
-                    <div className="grid grid-cols-5 gap-2 max-h-[240px] overflow-y-auto pr-1">
-                      {questions.map((q, idx) => {
-                        const isCurrent = idx === currentIndex;
-                        const isAnswered = submittedAnswers[q.id] !== undefined;
-                        return (
-                          <button
-                            key={q.id}
-                            onClick={() => handleNavigate(idx)}
-                            className={`h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
-                              isCurrent
-                                ? "bg-[#09314F] text-white"
-                                : isAnswered
-                                ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30"
-                                : "bg-gray-50 dark:bg-[#06243A] text-gray-400 hover:bg-gray-100"
-                            }`}
-                          >
-                            {idx + 1}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <hr className="border-gray-100 dark:border-gray-800" />
-
-                  {/* Prominent Submit Exam Button */}
-                  <button
-                    type="button"
-                    onClick={() => setShowSubmitConfirm(true)}
-                    className="w-full py-4 bg-[#E83831] hover:bg-[#d0312b] text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2"
-                  >
-                    <Icon icon="lucide:check-square" className="w-4.5 h-4.5" />
-                    <span>Submit Attempt</span>
-                  </button>
+                {/* Right Panel Workspace wrapper matching native sidebar */}
+                <div className="relative shrink-0 z-[100]">
+                  <CalculatorRightbar />
                 </div>
               </div>
             );
@@ -904,6 +776,94 @@ export default function ExamInterface({
                 className="flex-1 py-3.5 bg-[#09314F] hover:bg-[#0a3d63] text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md shadow-blue-200"
               >
                 Yes, Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Congratulations / Exam Finished Modal Overlay (with blur backdrop to keep active exam layout visible at the back) */}
+      {examFinished && (
+        <div className="fixed inset-0 z-[2500] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-500">
+          <div className="bg-white dark:bg-[#09314F] rounded-[32px] border border-[#C5A97A]/30 p-8 shadow-2xl text-center max-w-3xl w-full relative overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-green-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
+
+            <Icon icon="lucide:party-popper" className="w-20 h-20 text-[#C5A97A] mx-auto mb-6 animate-bounce" />
+            <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight mb-2">
+              Practice Completed!
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+              Excellent job completing your practice attempt. Here is your summary:
+            </p>
+
+            {/* Prominent Circular Progress Score Chart */}
+            <div className="relative w-40 h-40 mx-auto mb-8 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="68"
+                  className="stroke-gray-100 dark:stroke-[#09314F] fill-transparent"
+                  strokeWidth="10"
+                />
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="68"
+                  className="stroke-[#C5A97A] fill-transparent transition-all duration-1000 ease-out"
+                  strokeWidth="10"
+                  strokeDasharray={427}
+                  strokeDashoffset={427 - (427 * percentage) / 100}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute flex flex-col items-center">
+                <span className="text-3xl font-black text-[#09314F] dark:text-white">
+                  {percentage}%
+                </span>
+                <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mt-1">
+                  SCORE OBTAINED
+                </span>
+              </div>
+            </div>
+
+            {/* Details Section */}
+            <div className="grid grid-cols-3 gap-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-5 mb-8 border border-gray-100 dark:border-gray-800">
+              <div className="flex flex-col items-center">
+                <Icon icon="lucide:check-circle" className="w-5 h-5 text-green-500 mb-1" />
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  Correct
+                </span>
+                <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
+                  {correctVal}
+                </span>
+              </div>
+              <div className="flex flex-col items-center">
+                <Icon icon="lucide:x-circle" className="w-5 h-5 text-red-500 mb-1" />
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  Wrong
+                </span>
+                <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
+                  {wrongVal}
+                </span>
+              </div>
+              <div className="flex flex-col items-center">
+                <Icon icon="lucide:help-circle" className="w-5 h-5 text-gray-400 mb-1" />
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  Skipped
+                </span>
+                <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
+                  {skippedVal}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={onBack}
+                className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
+              >
+                Go back to Center
               </button>
             </div>
           </div>

@@ -812,24 +812,31 @@ export default function ExamHistory({ availableExams = [], onBack }) {
 
                 {/* Dropdown collapsible section containing practice stats and detailed review list */}
                 {isExpanded && (
-                  <div className="bg-gray-50/50 dark:bg-gray-900/30 rounded-[32px] border border-gray-200 dark:border-gray-800 p-4 md:p-6 animate-in slide-in-from-top-4 duration-300">
-                    <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-800 mb-6">
-                      <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-widest">
-                        Detailed Exam Analysis
-                      </h4>
-                      <button
-                        onClick={() => setExpandedAttemptId(null)}
-                        className="text-xs font-black text-red-500 hover:underline uppercase tracking-wider flex items-center gap-1"
-                      >
-                        <Icon icon="lucide:x" className="w-3.5 h-3.5" />
-                        Close Review
-                      </button>
+                  <>
+                    {/* Blur backdrop overlay for focus */}
+                    <div 
+                      className="fixed inset-0 z-[40] bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300"
+                      onClick={() => setExpandedAttemptId(null)}
+                    />
+                    <div className="relative z-[50] bg-white dark:bg-gray-900 rounded-[32px] border border-gray-200 dark:border-gray-800 p-4 md:p-8 animate-in slide-in-from-top-4 duration-300 shadow-2xl">
+                      <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-800 mb-6">
+                        <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-widest">
+                          Detailed Exam Analysis
+                        </h4>
+                        <button
+                          onClick={() => setExpandedAttemptId(null)}
+                          className="text-xs font-black text-red-500 hover:underline uppercase tracking-wider flex items-center gap-1"
+                        >
+                          <Icon icon="lucide:x" className="w-3.5 h-3.5" />
+                          Close Review
+                        </button>
+                      </div>
+                      {/* Render scrollable ExamReview list container with increased height */}
+                      <div className="max-h-[150vh] overflow-y-auto pr-1">
+                        <ExamReview attemptId={attempt.id} hideHeader={true} onBack={() => setExpandedAttemptId(null)} />
+                      </div>
                     </div>
-                    {/* Render scrollable ExamReview list container with increased height */}
-                    <div className="max-h-[120vh] overflow-y-auto pr-1">
-                      <ExamReview attemptId={attempt.id} hideHeader={true} onBack={() => setExpandedAttemptId(null)} />
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             );

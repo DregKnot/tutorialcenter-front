@@ -114,7 +114,7 @@ export default function DashboardLayout({
 
       {/* ===== DESKTOP LAYOUT ===== */}
       <div className="hidden lg:block">
-        <Sidebar collapsed={leftCollapsed} setCollapsed={handleSetLeftCollapsed} isExamActive={isExamActive} />
+        <Sidebar collapsed={isExamActive ? true : leftCollapsed} setCollapsed={handleSetLeftCollapsed} isExamActive={isExamActive} />
 
         {!isExamActive && (
           <RightPanelToRender
@@ -126,7 +126,7 @@ export default function DashboardLayout({
         <main
           className={`
             transition-all duration-300 p-6 pt-2
-            ${leftCollapsed ? "ml-20" : "ml-64"}
+            ${isExamActive ? "ml-20" : (leftCollapsed ? "ml-20" : "ml-64")}
             ${isExamActive ? "mr-0" : (rightCollapsed ? "mr-0" : "mr-80")}
           `}
         >
