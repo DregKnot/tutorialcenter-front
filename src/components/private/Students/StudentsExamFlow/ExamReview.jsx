@@ -120,7 +120,13 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
                 Unanswered
               </span>
               <span className="text-base font-black text-gray-500 block mt-1">
-                {attempt.unanswered !== undefined ? attempt.unanswered : (attempt.total_questions - attempt.correct_answers - attempt.wrong_answers || 0)}
+                {(() => {
+                  const total = questions.length;
+                  const correct = Number(attempt.correct_answers || 0);
+                  const wrong = Number(attempt.wrong_answers || 0);
+                  const diff = total - (correct + wrong);
+                  return diff > 0 ? diff : 0;
+                })()}
               </span>
             </div>
           </div>
