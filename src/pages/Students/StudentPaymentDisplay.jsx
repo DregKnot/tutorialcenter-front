@@ -175,95 +175,214 @@ export default function StudentPaymentDisplay() {
   };
 
   // ===================== MAIN VIEW =====================
-  const MainView = () => (
-    <>
-      <div className="space-y-3 mb-10">
-        <button 
-          onClick={() => setActiveView("add")}
-          className="w-full text-left px-6 py-4 bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md border border-gray-200 dark:border-[#09314F] rounded-xl text-[15px] font-bold text-[#09314F] dark:text-white hover:shadow-md hover:border-gray-300 dark:hover:border-blue-400 transition-all active:scale-[0.99]"
-        >
-          Add Training
-        </button>
-        <button
-          onClick={() => setActiveView("renew")}
-          className="w-full text-left px-6 py-4 bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md border border-gray-200 dark:border-[#09314F] rounded-xl text-[15px] font-bold text-[#09314F] dark:text-white hover:shadow-md hover:border-gray-300 dark:hover:border-blue-400 transition-all active:scale-[0.99]"
-        >
-          Renew Payment
-        </button>
-      </div>
+  const MainView = () => {
+    // Calculate summary stats
+    const totalPaid = payments.filter(p => p.status === 'successful' || p.status === 'paid').reduce((acc, p) => acc + Number(p.amount || 0), 0);
+    const totalTransactions = payments.length;
+    const activeCount = payments.filter(p => p.status === 'successful' || p.status === 'paid').length;
 
-      <div>
-        <h2 className="text-lg font-black text-[#09314F] dark:text-[#3A5ECC] mb-6">History</h2>
+    return (
+      <>
+        {/* Action Buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <button 
+            onClick={() => setActiveView("add")}
+            className="px-6 py-5 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] rounded-3xl text-left hover:shadow-md hover:border-[#C5A97A]/40 transition-all active:scale-[0.99] group shadow-sm"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-50 dark:bg-green-950/20 rounded-2xl flex items-center justify-center border border-green-100 dark:border-green-900/30 shrink-0">
+                <span className="text-xl text-green-500">+</span>
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-[#09314F] dark:text-white uppercase tracking-tight">Add Training</h4>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Enroll in a new course</p>
+              </div>
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveView("renew")}
+            className="px-6 py-5 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] rounded-3xl text-left hover:shadow-md hover:border-[#C5A97A]/40 transition-all active:scale-[0.99] group shadow-sm"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-950/20 rounded-2xl flex items-center justify-center border border-blue-100 dark:border-blue-900/30 shrink-0">
+                <span className="text-xl text-[#C5A97A]">↻</span>
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-[#09314F] dark:text-white uppercase tracking-tight">Renew Payment</h4>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Extend your subscription</p>
+              </div>
+            </div>
+          </button>
+        </div>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-[#09314F] dark:border-white mx-auto" />
-            <p className="mt-4 text-gray-500 dark:text-gray-400 font-bold text-sm">Loading payments...</p>
-          </div>
-        ) : payments.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-400 font-bold">No payment history found.</p>
-          </div>
-        ) : (
-          <div className="space-y-0">
-            {payments.map((payment, index) => {
-              // Match payment's course_enrollment_id with enrollment_id from courses API
-              const relatedCourse = activeCourses.find(c => 
-                Number(c.enrollment_id) === Number(payment.course_enrollment_id) ||
-                Number(c.course_id) === Number(payment.course_id)
-              );
-              
-              const displayTitle = payment.course?.title || payment.course_title || payment.course_name || relatedCourse?.course?.title || payment.name || `Payment #${payment.id}`;
-
-              return (
-                <div
-                  key={payment.id || `history-${index}`}
-                  className="flex flex-wrap items-center justify-between gap-4 py-4 border-b border-gray-300 dark:border-blue-600 last:border-0"
-                >
-                  <span className={`text-sm font-black tracking-wide min-w-[80px] ${payment.status === 'cancelled' || payment.status === 'removed' ? 'text-red-500 dark:text-red-400' : 'text-[#09314F] dark:text-[#3A5ECC]'}`}>
-                    {displayTitle}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    {(payment.status === 'successful' || payment.status === 'paid') && (
-                      <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-[11px] font-black uppercase tracking-tighter border border-green-100 shadow-sm whitespace-nowrap">
-                        Paid - {formatDate(payment.start_date || payment.paid_at || payment.created_at)}
-                      </span>
-                    )}
-                    {(payment.status === 'cancelled' || payment.status === 'removed') && (
-                      <span className="text-[12px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
-                        Paid - {formatDate(payment.start_date || payment.paid_at || payment.created_at)}
-                      </span>
-                    )}
-                    {payment.status !== 'successful' && payment.status !== 'paid' && payment.status !== 'cancelled' && payment.status !== 'removed' && (
-                      <span className="text-[12px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
-                        Paid - {formatDate(payment.start_date || payment.paid_at || payment.created_at)}
-                      </span>
-                    )}
-                    {(payment.status === 'cancelled' || payment.status === 'removed') && (
-                      <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-red-100 shadow-sm">
-                        Cancelled
-                      </span>
-                    )}
-                    {(() => {
-                      const isCancelled = payment.status === 'cancelled' || payment.status === 'removed';
-                      const startDate = payment.start_date || payment.paid_at || payment.created_at;
-                      const computedExpiry = calculateExpiryDate(startDate, payment.billing_cycle);
-                      const expiryDisplay = computedExpiry ? formatDate(computedExpiry) : formatDate(payment.end_date || payment.expires_at || payment.expiry_date);
-                      return (
-                        <span className={`text-[12px] font-medium whitespace-nowrap ${isCancelled ? 'text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                          {isCancelled ? 'Expired - --' : `Expires - ${expiryDisplay}`}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </div>
-              );
-            })}
+        {/* Summary Stats Row */}
+        {!loading && payments.length > 0 && (
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-5 border border-gray-100 dark:border-[#09314F] shadow-sm">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
+              <p className="text-xl font-black text-[#09314F] dark:text-white">₦{totalPaid.toLocaleString()}</p>
+            </div>
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-5 border border-gray-100 dark:border-[#09314F] shadow-sm">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Transactions</p>
+              <p className="text-xl font-black text-[#09314F] dark:text-white">{totalTransactions}</p>
+            </div>
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-5 border border-gray-100 dark:border-[#09314F] shadow-sm">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Active</p>
+              <p className="text-xl font-black text-green-500">{activeCount}</p>
+            </div>
           </div>
         )}
-      </div>
-    </>
-  );
+
+        {/* Payment History Table */}
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] shadow-sm overflow-hidden">
+          {/* Table Header */}
+          <div className="px-6 md:px-8 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+            <h2 className="text-sm font-black text-[#09314F] dark:text-white uppercase tracking-widest">Payment History</h2>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{payments.length} Records</span>
+          </div>
+
+          {/* Table Column Headers (Desktop) */}
+          {!loading && payments.length > 0 && (
+            <div className="hidden md:grid grid-cols-12 gap-4 px-6 md:px-8 py-3 bg-gray-50/80 dark:bg-gray-900/20 border-b border-gray-100 dark:border-gray-800 text-[9px] font-black text-gray-400 uppercase tracking-widest">
+              <div className="col-span-4">Course</div>
+              <div className="col-span-2 text-center">Amount</div>
+              <div className="col-span-2 text-center">Billing</div>
+              <div className="col-span-2 text-center">Status</div>
+              <div className="col-span-2 text-right">Expires</div>
+            </div>
+          )}
+
+          {/* Table Content */}
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            {loading ? (
+              <div className="text-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#09314F] border-t-transparent dark:border-white dark:border-t-transparent mx-auto" />
+                <p className="mt-4 text-gray-400 font-black text-xs uppercase tracking-widest">Loading payments...</p>
+              </div>
+            ) : payments.length === 0 ? (
+              <div className="text-center py-20 px-8">
+                <div className="w-16 h-16 bg-gray-50 dark:bg-[#06243A] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl text-gray-300">₦</span>
+                </div>
+                <h3 className="text-base font-black text-[#09314F] dark:text-white mb-1">No Payment History</h3>
+                <p className="text-xs text-gray-400 max-w-sm mx-auto">You haven't made any payments yet. Add a training to get started.</p>
+              </div>
+            ) : (
+              payments.map((payment, index) => {
+                const relatedCourse = activeCourses.find(c => 
+                  Number(c.enrollment_id) === Number(payment.course_enrollment_id) ||
+                  Number(c.course_id) === Number(payment.course_id)
+                );
+                
+                const displayTitle = payment.course?.title || payment.course_title || payment.course_name || relatedCourse?.course?.title || payment.name || `Payment #${payment.id}`;
+                const isCancelled = payment.status === 'cancelled' || payment.status === 'removed';
+                const isSuccessful = payment.status === 'successful' || payment.status === 'paid';
+                const isPending = !isSuccessful && !isCancelled;
+
+                const startDate = payment.start_date || payment.paid_at || payment.created_at;
+                const computedExpiry = calculateExpiryDate(startDate, payment.billing_cycle);
+                const expiryDisplay = computedExpiry ? formatDate(computedExpiry) : formatDate(payment.end_date || payment.expires_at || payment.expiry_date);
+
+                const billingLabel = payment.billing_cycle ? payment.billing_cycle.replace('_', '-') : '—';
+
+                return (
+                  <div
+                    key={payment.id || `history-${index}`}
+                    className="px-6 md:px-8 py-5 hover:bg-gray-50/50 dark:hover:bg-gray-900/10 transition-all"
+                  >
+                    {/* Desktop Row */}
+                    <div className="hidden md:grid grid-cols-12 gap-4 items-center">
+                      {/* Course Info */}
+                      <div className="col-span-4 flex items-center gap-3.5 min-w-0">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${
+                          isCancelled 
+                            ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30 text-red-500' 
+                            : isPending
+                            ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900/30 text-[#C5A97A]'
+                            : 'bg-green-50 dark:bg-green-950/20 border-green-100 dark:border-green-900/30 text-green-500'
+                        }`}>
+                          <span className="font-black text-sm">₦</span>
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-tight truncate">{displayTitle}</h4>
+                          <p className="text-[10px] text-gray-400 font-bold mt-0.5">{formatDate(startDate)}</p>
+                        </div>
+                      </div>
+
+                      {/* Amount */}
+                      <div className="col-span-2 text-center">
+                        <span className="text-sm font-black text-[#09314F] dark:text-white">₦{Number(payment.amount || 0).toLocaleString()}</span>
+                      </div>
+
+                      {/* Billing Cycle */}
+                      <div className="col-span-2 text-center">
+                        <span className="px-3 py-1.5 bg-gray-100 dark:bg-[#06243A] text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider rounded-lg capitalize">{billingLabel}</span>
+                      </div>
+
+                      {/* Status */}
+                      <div className="col-span-2 text-center">
+                        {isSuccessful && (
+                          <span className="px-3 py-1.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-[9px] font-black uppercase tracking-wider border border-green-500/20">
+                            Paid
+                          </span>
+                        )}
+                        {isCancelled && (
+                          <span className="px-3 py-1.5 bg-red-500/10 text-red-600 dark:text-red-400 rounded-full text-[9px] font-black uppercase tracking-wider border border-red-500/20">
+                            Cancelled
+                          </span>
+                        )}
+                        {isPending && (
+                          <span className="px-3 py-1.5 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-full text-[9px] font-black uppercase tracking-wider border border-yellow-500/20">
+                            Pending
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Expiry */}
+                      <div className="col-span-2 text-right">
+                        <span className={`text-[11px] font-bold ${isCancelled ? 'text-red-400 line-through' : 'text-gray-500 dark:text-gray-400'}`}>
+                          {isCancelled ? 'Expired' : expiryDisplay}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Mobile Row */}
+                    <div className="md:hidden flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${
+                          isCancelled 
+                            ? 'bg-red-50 border-red-100 text-red-500' 
+                            : 'bg-green-50 border-green-100 text-green-500'
+                        }`}>
+                          <span className="font-black text-sm">₦</span>
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-tight truncate">{displayTitle}</h4>
+                          <p className="text-[10px] text-gray-400 font-bold mt-0.5">₦{Number(payment.amount || 0).toLocaleString()} • {billingLabel}</p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        {isSuccessful && (
+                          <span className="px-2.5 py-1 bg-green-500/10 text-green-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-green-500/20 block mb-1">Paid</span>
+                        )}
+                        {isCancelled && (
+                          <span className="px-2.5 py-1 bg-red-500/10 text-red-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-red-500/20 block mb-1">Cancelled</span>
+                        )}
+                        {isPending && (
+                          <span className="px-2.5 py-1 bg-yellow-500/10 text-yellow-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-yellow-500/20 block mb-1">Pending</span>
+                        )}
+                        <span className="text-[10px] text-gray-400 font-bold">{isCancelled ? 'Expired' : expiryDisplay}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </>
+    );
+  };
 
   // ===================== RENEW VIEW (ON-GOING TRAINING) =====================
   const RenewView = () => (

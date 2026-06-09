@@ -155,6 +155,17 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     }
   }, [formData.course_id, fetchSubjects]);
 
+  // Sync title whenever course or subject changes
+  useEffect(() => {
+    if (selectedCourse && selectedSubject) {
+      const generatedTitle = `${selectedCourse.title || selectedCourse.name} - ${selectedSubject.name}`;
+      setFormData((prev) => ({
+        ...prev,
+        title: generatedTitle,
+      }));
+    }
+  }, [selectedCourse, selectedSubject]);
+
   /* =============================
      INPUT HANDLERS
   ============================= */
@@ -302,6 +313,17 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
   const validateForm = () => {
     const newErrors = {};
 
+    console.log("=== VALIDATION DEBUG ===");
+    console.log("formData.course_id:", formData.course_id, "selectedCourse:", selectedCourse);
+    console.log("formData.subject_id:", formData.subject_id, "selectedSubject:", selectedSubject);
+    console.log("formData.title:", formData.title);
+    console.log("formData.start_date:", formData.start_date);
+    console.log("formData.end_date:", formData.end_date);
+    console.log("formData.link:", formData.link);
+    console.log("formData.tutor_ids:", formData.tutor_ids, "selectedTutors:", selectedTutors);
+    console.log("daySchedules:", daySchedules);
+    console.log("=====================");
+
     if (!formData.course_id) newErrors.course_id = "Course is required";
 
     if (!formData.subject_id) newErrors.subject_id = "Subject is required";
@@ -312,13 +334,18 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
     if (!formData.end_date) newErrors.end_date = "End date required";
 
-    if (!formData.link) newErrors.link = "End date required";
+    if (!formData.link) newErrors.link = "Meeting link is required";
+
+    if (formData.link && !/^https?:\/\/.+/.test(formData.link)) {
+      newErrors.link = "Please enter a valid URL (e.g., https://...)";
+    }
 
     if (formData.tutor_ids.length === 0)
       newErrors.tutor_ids = "At least one tutor is required";
 
     if (daySchedules.length === 0) newErrors.days = "Select schedule days";
 
+    console.log("Validation check - newErrors:", newErrors);
     setErrors(newErrors);
 
     return Object.keys(newErrors).length === 0;
@@ -329,9 +356,26 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
   ============================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Submit clicked, formData:", formData);
+    console.log("daySchedules:", daySchedules);
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      console.log("Validation failed, errors:", errors);
+      // Show alert with validation errors
+      const errorMessages = Object.entries(errors)
+        .map(([field, message]) => `${field}: ${message}`)
+        .join("\n");
+      console.error("Form validation errors:\n", errorMessages);
+      
+      // Scroll to errors
+      const scrollContainer = document.querySelector(".flex-1.overflow-y-auto");
+      if (scrollContainer) {
+        scrollContainer.scrollTop = 0;
+      }
+      return;
+    }
 
+    console.log("Validation passed, proceeding with submission");
     setLoading(true);
     setApiError(null);
 
@@ -405,6 +449,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
       );
 
       if (res.status === 201 || res.status === 200) {
+        console.log("Masterclass created successfully:", res.data);
         onSuccess(res.data);
       }
     } catch (error) {
@@ -416,7 +461,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
         const formatted = {};
 
         Object.entries(error.response.data.errors).forEach(([k, v]) => {
-          formatted[k] = v[0];
+          const errorKey = k === 'class_link' ? 'link' : k;
+          formatted[errorKey] = v[0];
         });
 
         setErrors(formatted);

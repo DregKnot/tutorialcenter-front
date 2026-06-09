@@ -16,7 +16,9 @@ export default function DashboardLayout({
   hideHeader = false,
   RightPanelComponent: CustomRightPanel,
   hideMobileTitle = false,
-  hideMobileBell = false
+  hideMobileBell = false,
+  hideHeaderBell = false,
+  isExamActive = false
 }) {
   const [leftCollapsed, setLeftCollapsed] = useState(() => {
     const saved = localStorage.getItem("student_left_collapsed");
@@ -28,8 +30,9 @@ export default function DashboardLayout({
   });
 
   const handleSetLeftCollapsed = (val) => {
-    setLeftCollapsed(val);
-    localStorage.setItem("student_left_collapsed", JSON.stringify(val));
+    const finalVal = isExamActive ? true : val;
+    setLeftCollapsed(finalVal);
+    localStorage.setItem("student_left_collapsed", JSON.stringify(finalVal));
   };
 
   const handleSetRightCollapsed = (val) => {
@@ -111,47 +114,53 @@ export default function DashboardLayout({
 
       {/* ===== DESKTOP LAYOUT ===== */}
       <div className="hidden lg:block">
-        <Sidebar collapsed={leftCollapsed} setCollapsed={handleSetLeftCollapsed} />
+        <Sidebar collapsed={isExamActive ? true : leftCollapsed} setCollapsed={handleSetLeftCollapsed} isExamActive={isExamActive} />
 
-        <RightPanelToRender
-          collapsed={rightCollapsed}
-          setCollapsed={handleSetRightCollapsed}
-        />
+        {!isExamActive && (
+          <RightPanelToRender
+            collapsed={rightCollapsed}
+            setCollapsed={handleSetRightCollapsed}
+          />
+        )}
 
         <main
           className={`
             transition-all duration-300 p-6 pt-2
-            ${leftCollapsed ? "ml-20" : "ml-64"}
-            ${rightCollapsed ? "mr-0" : "mr-80"}
+            ${isExamActive ? "ml-20" : (leftCollapsed ? "ml-20" : "ml-64")}
+            ${isExamActive ? "mr-0" : (rightCollapsed ? "mr-0" : "mr-80")}
           `}
         >
           {/* Header Row */}
-          {!hideHeader && (
+          {!hideHeader && !isExamActive && (
             <div className="flex justify-between items-center mb-10 px-0 mt-2">
               <h1 className="text-[36px] font-black text-[#09314F] dark:text-white tracking-tighter leading-none uppercase">
                 {pagetitle || "Dashboard"}
               </h1>
               <div className="relative z-50">
-                <div 
-                  className="bg-white dark:bg-[#09314F]/60 p-3 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-[#09314F] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1a4a75] transition-all"
-                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                >
-                  <button className="relative flex items-center justify-center pointer-events-none">
-                    <BellIcon className="w-7 h-7 text-[#09314F] dark:text-white" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 bg-[#E83831] rounded-full border-2 border-white dark:border-[#09314F] shadow-sm flex items-center justify-center px-1">
-                        <span className="text-[10px] font-black text-white">{unreadCount > 99 ? "99+" : unreadCount}</span>
-                      </span>
-                    )}
-                  </button>
-                </div>
-                <NotificationsDropdown 
-                  isOpen={isNotificationsOpen} 
-                  onClose={() => setIsNotificationsOpen(false)} 
-                  onUpdate={fetchUnreadCount}
-                  token={token}
-                  viewAllLink="/student/notifications"
-                />
+                {!hideHeaderBell && (
+                  <div 
+                    className="bg-white dark:bg-[#09314F]/60 p-3 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-[#09314F] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1a4a75] transition-all"
+                    onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  >
+                    <button className="relative flex items-center justify-center pointer-events-none">
+                      <BellIcon className="w-7 h-7 text-[#09314F] dark:text-white" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 bg-[#E83831] rounded-full border-2 border-white dark:border-[#09314F] shadow-sm flex items-center justify-center px-1">
+                          <span className="text-[10px] font-black text-white">{unreadCount > 99 ? "99+" : unreadCount}</span>
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                )}
+                {!hideHeaderBell && (
+                  <NotificationsDropdown 
+                    isOpen={isNotificationsOpen} 
+                    onClose={() => setIsNotificationsOpen(false)} 
+                    onUpdate={fetchUnreadCount}
+                    token={token}
+                    viewAllLink="/student/notifications"
+                  />
+                )}
               </div>
             </div>
           )}

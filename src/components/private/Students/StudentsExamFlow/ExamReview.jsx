@@ -53,7 +53,7 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
   };
 
   return (
-    <div className="w-full animate-in fade-in duration-500 max-w-5xl mx-auto p-0 md:p-4">
+    <div className="w-full animate-in fade-in duration-500 p-0 md:p-2">
       {/* Top Header Row */}
       {!hideHeader && (
         <div className="flex items-center justify-between mb-8">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import { useAuth } from "../../context/AuthContext";
 import { 
@@ -12,6 +13,7 @@ import {
 import NotificationDetailModal from "../../components/private/Students/NotificationDetailModal.jsx";
 
 export default function StudentNotifications() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNotif, setSelectedNotif] = useState(null);
@@ -97,7 +99,7 @@ export default function StudentNotifications() {
   };
 
   return (
-    <DashboardLayout pagetitle="Notifications">
+    <DashboardLayout pagetitle="Notifications" hideHeaderBell={true}>
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[2000] px-8 py-4 bg-[#09314F] text-white rounded-2xl shadow-2xl animate-in slide-in-from-bottom-5 duration-300 flex items-center gap-3">
@@ -106,7 +108,14 @@ export default function StudentNotifications() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto py-4">
+      <div className="py-4">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-6 flex items-center gap-2 text-gray-500 hover:text-[#09314F] dark:hover:text-white transition-colors group"
+        >
+          <span className="text-sm font-black uppercase tracking-wider group-hover:-translate-x-1 transition-transform">← Back</span>
+        </button>
         {/* Header Controls */}
         <div className="flex items-center justify-between mb-8 px-4 gap-4">
           <div className="min-w-0 flex-1">

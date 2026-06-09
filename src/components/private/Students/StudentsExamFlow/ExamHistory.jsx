@@ -443,7 +443,7 @@ export default function ExamHistory({ availableExams = [], onBack }) {
       const matchesSearch =
         stats.subjectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         stats.courseTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        stats.yearValue.toLowerCase().includes(searchQuery.toLowerCase());
+        String(stats.yearValue || "").toLowerCase().includes(searchQuery.toLowerCase());
 
       const statusVal = a.status || "completed";
       const matchesStatus = selectedStatus === "all" || statusVal === selectedStatus;
@@ -501,11 +501,11 @@ export default function ExamHistory({ availableExams = [], onBack }) {
       {/* 1. Metrics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Metric Card 1: Average Score */}
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col xl:flex-row items-center xl:items-start text-center xl:text-left gap-4 xl:gap-5">
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center text-left gap-4">
           <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 text-[#C5A97A] rounded-2xl shrink-0">
             <Icon icon="lucide:award" className="w-8 h-8" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h4 className="text-[28px] font-black text-[#09314F] dark:text-white leading-none">
               {averageScore}%
             </h4>
@@ -516,7 +516,7 @@ export default function ExamHistory({ availableExams = [], onBack }) {
         </div>
 
         {/* Metric Card 2: Highest Score */}
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col xl:flex-row items-center xl:items-start text-center xl:text-left gap-4 xl:gap-5">
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center text-left gap-4">
           <div className="p-4 bg-green-50 dark:bg-green-950/20 text-[#76D287] rounded-2xl shrink-0">
             <Icon icon="lucide:trophy" className="w-8 h-8" />
           </div>
@@ -533,11 +533,11 @@ export default function ExamHistory({ availableExams = [], onBack }) {
         </div>
 
         {/* Metric Card 3: Daily Streak */}
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col xl:flex-row items-center xl:items-start text-center xl:text-left gap-4 xl:gap-5">
-          <div className={`p-1.5 ${getStreakFlameStyles(activeStreak).bgClass} rounded-2xl shrink-0 relative flex items-center justify-center`}>
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center text-left gap-4">
+          <div className={`${getStreakFlameStyles(activeStreak).bgClass} rounded-2xl shrink-0 relative w-16 h-16 flex items-center justify-center`}>
             <StreakFire streak={activeStreak} />
           </div>
-          <div>
+          <div className="min-w-0">
             <h4 className="text-[28px] font-black text-[#09314F] dark:text-white leading-none">
               {activeStreak} {activeStreak === 1 ? "Day" : "Days"}
             </h4>
@@ -810,26 +810,33 @@ export default function ExamHistory({ availableExams = [], onBack }) {
                   </div>
                 </div>
 
-                {/* Collapsible expanded section containing practice stats and detailed review list */}
+                {/* Dropdown collapsible section containing practice stats and detailed review list */}
                 {isExpanded && (
-                  <div className="bg-gray-50/50 dark:bg-gray-900/30 rounded-[32px] border border-gray-200 dark:border-gray-800 p-4 md:p-6 animate-in slide-in-from-top-4 duration-300">
-                    <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-800 mb-6">
-                      <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-widest">
-                        Detailed Exam Analysis
-                      </h4>
-                      <button
-                        onClick={() => setExpandedAttemptId(null)}
-                        className="text-xs font-black text-red-500 hover:underline uppercase tracking-wider flex items-center gap-1"
-                      >
-                        <Icon icon="lucide:x" className="w-3.5 h-3.5" />
-                        Close Review
-                      </button>
+                  <>
+                    {/* Blur backdrop overlay for focus */}
+                    <div 
+                      className="fixed inset-0 z-[40] bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300"
+                      onClick={() => setExpandedAttemptId(null)}
+                    />
+                    <div className="relative z-[50] bg-white dark:bg-gray-900 rounded-[32px] border border-gray-200 dark:border-gray-800 p-4 md:p-8 animate-in slide-in-from-top-4 duration-300 shadow-2xl">
+                      <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-800 mb-6">
+                        <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-widest">
+                          Detailed Exam Analysis
+                        </h4>
+                        <button
+                          onClick={() => setExpandedAttemptId(null)}
+                          className="text-xs font-black text-red-500 hover:underline uppercase tracking-wider flex items-center gap-1"
+                        >
+                          <Icon icon="lucide:x" className="w-3.5 h-3.5" />
+                          Close Review
+                        </button>
+                      </div>
+                      {/* Render scrollable ExamReview list container with increased height */}
+                      <div className="max-h-[150vh] overflow-y-auto pr-1">
+                        <ExamReview attemptId={attempt.id} hideHeader={true} onBack={() => setExpandedAttemptId(null)} />
+                      </div>
                     </div>
-                    {/* Render scrollable ExamReview list container */}
-                    <div className="max-h-[60vh] overflow-y-auto pr-1">
-                      <ExamReview attemptId={attempt.id} hideHeader={true} onBack={() => setExpandedAttemptId(null)} />
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             );

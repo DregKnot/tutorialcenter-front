@@ -262,7 +262,7 @@ export default function StudentExam() {
   })();
 
   return (
-    <DashboardLayout pagetitle="Exam Practice">
+    <DashboardLayout pagetitle="Exam Practice" isExamActive={showExamInterface && !!activeAttemptId}>
       {/* Toast Alert */}
       {toast && (
         <div
@@ -301,7 +301,7 @@ export default function StudentExam() {
         </div>
       )}
 
-      <div className="max-w-[1400px] 2xl:max-w-[1600px] mx-auto w-full pb-20 px-2 lg:px-4 transition-all duration-300">
+      <div className="w-full pb-20 px-2 lg:px-4 transition-all duration-300">
         {showExamInterface && activeAttemptId ? (
           <ExamInterface
             attemptId={activeAttemptId}
@@ -342,9 +342,7 @@ export default function StudentExam() {
             {/* Top Action Row */}
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h1 className="text-xl md:text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight">
-                  Practice Center
-                </h1>
+                {/* Practice Center title removed - header handles this */}
               </div>
               <button
                 onClick={() => setShowHistory(true)}

@@ -359,100 +359,19 @@ export default function ExamInterface({
     );
   }
 
-  if (examFinished) {
-    // Dynamic results display
-    const scoreVal = resultSummary?.score !== undefined ? Number(resultSummary.score) : 0;
-    const percentage = resultSummary?.percentage !== undefined 
-      ? Math.round(Number(resultSummary.percentage)) 
-      : (totalQuestions > 0 ? Math.round((scoreVal / totalQuestions) * 100) : 0);
+  // Import calculator component inline
+  const CalculatorRightbar = require("./CalculatorRightbar.jsx").default;
 
-    return (
-      <div className="max-w-3xl mx-auto w-full pb-20 px-2 lg:px-4 animate-in fade-in duration-500">
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-[#C5A97A]/30 p-8 shadow-2xl text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-green-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
+  // Calculate results if finished
+  const scoreVal = resultSummary?.score !== undefined ? Number(resultSummary.score) : 0;
+  const percentage = resultSummary?.percentage !== undefined 
+    ? Math.round(Number(resultSummary.percentage)) 
+    : (totalQuestions > 0 ? Math.round((scoreVal / totalQuestions) * 100) : 0);
 
-          <Icon icon="lucide:party-popper" className="w-20 h-20 text-[#C5A97A] mx-auto mb-6 animate-bounce" />
-          <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight mb-2">
-            Practice Completed!
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
-            Excellent job completing your practice attempt. Here is your summary:
-          </p>
+  const correctVal = resultSummary?.correct_answers !== undefined ? resultSummary.correct_answers : (resultSummary?.correct || scoreVal);
+  const wrongVal = resultSummary?.wrong_answers !== undefined ? resultSummary.wrong_answers : (resultSummary?.wrong || 0);
+  const skippedVal = resultSummary?.unanswered !== undefined ? resultSummary.unanswered : (totalQuestions - (resultSummary?.attempted_count || totalQuestions));
 
-          {/* Prominent Circular Progress Score Chart */}
-          <div className="relative w-40 h-40 mx-auto mb-8 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90">
-              <circle
-                cx="80"
-                cy="80"
-                r="68"
-                className="stroke-gray-100 dark:stroke-[#09314F] fill-transparent"
-                strokeWidth="10"
-              />
-              <circle
-                cx="80"
-                cy="80"
-                r="68"
-                className="stroke-[#C5A97A] fill-transparent transition-all duration-1000 ease-out"
-                strokeWidth="10"
-                strokeDasharray={427}
-                strokeDashoffset={427 - (427 * percentage) / 100}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute flex flex-col items-center">
-              <span className="text-3xl font-black text-[#09314F] dark:text-white">
-                {percentage}%
-              </span>
-              <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mt-1">
-                SCORE OBTAINED
-              </span>
-            </div>
-          </div>
-
-          {/* Details Section */}
-          <div className="grid grid-cols-3 gap-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-5 mb-8 border border-gray-100 dark:border-gray-800">
-            <div className="flex flex-col items-center">
-              <Icon icon="lucide:check-circle" className="w-5 h-5 text-green-500 mb-1" />
-              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                Correct
-              </span>
-              <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                {resultSummary?.correct_answers !== undefined ? resultSummary.correct_answers : (resultSummary?.correct || scoreVal)}
-              </span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Icon icon="lucide:x-circle" className="w-5 h-5 text-red-500 mb-1" />
-              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                Wrong
-              </span>
-              <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                {resultSummary?.wrong_answers !== undefined ? resultSummary.wrong_answers : (resultSummary?.wrong || 0)}
-              </span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Icon icon="lucide:help-circle" className="w-5 h-5 text-gray-400 mb-1" />
-              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                Skipped
-              </span>
-              <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                {resultSummary?.unanswered !== undefined ? resultSummary.unanswered : (totalQuestions - (resultSummary?.attempted_count || totalQuestions))}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={onBack}
-              className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
-            >
-              Go back to Center
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full animate-in fade-in duration-500">
@@ -554,205 +473,250 @@ export default function ExamInterface({
 
       {/* Main Question Card Area */}
       {questions.length > 0 && currentQuestion ? (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] shadow-sm relative overflow-hidden">
-            {/* Header info */}
-            <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/10">
-              <span className="px-4 py-1.5 bg-[#09314F] dark:bg-blue-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">
-                Question {currentIndex + 1}
-              </span>
+        (() => {
+          // Check if subject is science/calculation based
+          const subName = (selectedSubject?.name || selectedSubject?.title || "").toLowerCase();
+          const isScience = [
+            "math",
+            "mathematics",
+            "f-math",
+            "fmath",
+            "further math",
+            "further mathematics",
+            "physics",
+            "chemistry",
+            "biology"
+          ].some(keyword => subName.includes(keyword));
 
-              <div className="flex gap-4 text-xs font-black uppercase tracking-wider text-gray-400">
-                <p>
-                  Answered:{" "}
-                  <span className="text-green-500 dark:text-green-400 ml-1 font-black">
-                    {answeredCount}/{totalQuestions}
+          const mainContent = (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] shadow-sm relative overflow-hidden">
+                {/* Header info */}
+                <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/10">
+                  <span className="px-4 py-1.5 bg-[#09314F] dark:bg-blue-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">
+                    Question {currentIndex + 1}
                   </span>
-                </p>
-                <p>
-                  Unanswered:{" "}
-                  <span className="text-gray-500 dark:text-gray-300 ml-1 font-black">
-                    {unansweredCount}/{totalQuestions}
-                  </span>
-                </p>
-              </div>
-            </div>
 
-            {/* Question Box */}
-            <div className="p-6 md:p-8">
-              {activeGroup && activeGroup.type !== 'none' && (
-                <div className="mb-8">
-                  {/* Group type & title */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="px-2.5 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[9px] font-black uppercase rounded-md tracking-wider">
-                      {cleanText(activeGroup.type).replace('_', ' ')}
-                    </span>
-                    {activeGroup.title && (
-                      <span className="text-[11px] font-black text-[#09314F] dark:text-white uppercase tracking-widest">
-                        {cleanText(activeGroup.title)}
+                  <div className="flex gap-4 text-xs font-black uppercase tracking-wider text-gray-400">
+                    <p>
+                      Answered:{" "}
+                      <span className="text-green-500 dark:text-green-400 ml-1 font-black">
+                        {answeredCount}/{totalQuestions}
                       </span>
-                    )}
+                    </p>
+                    <p>
+                      Unanswered:{" "}
+                      <span className="text-gray-500 dark:text-gray-300 ml-1 font-black">
+                        {unansweredCount}/{totalQuestions}
+                      </span>
+                    </p>
                   </div>
+                </div>
 
-                  {/* pagination (separator) */}
-                  <div className="border-b-2 border-gray-200 dark:border-gray-700/80 my-6" />
+                {/* Inner Content scroll container */}
+                <div className="p-6 md:p-8 space-y-6">
+                  {/* Passage group content */}
+                  {activeGroup && activeGroup.type !== "none" && (
+                    <div className="mb-8 p-6 bg-[#EDF0F3]/30 dark:bg-gray-900/40 rounded-[24px] border border-gray-200/50 dark:border-gray-700/30 space-y-4 shadow-sm">
+                      <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
+                        <span className="px-2.5 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[9px] font-black uppercase rounded-md tracking-wider">
+                          Group: {cleanText(activeGroup.type).replace("_", " ")}
+                        </span>
+                        {activeGroup.title && (
+                          <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                            — {cleanText(activeGroup.title)}
+                          </span>
+                        )}
+                      </div>
+                      {activeGroup.image && (
+                        <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
+                          <img
+                            src={
+                              activeGroup.image.startsWith("http")
+                                ? activeGroup.image
+                                : `${API_BASE_URL}/storage/${activeGroup.image}`
+                            }
+                            alt="Group Passage Diagram"
+                            className="w-full h-auto rounded-xl"
+                          />
+                        </div>
+                      )}
+                      <div
+                        className="text-[13px] text-[#09314F] dark:text-gray-300 leading-relaxed tracking-tight quill-content break-words whitespace-normal w-full overflow-hidden"
+                        dangerouslySetInnerHTML={{ __html: cleanHtmlContent(activeGroup.content) }}
+                      />
+                    </div>
+                  )}
 
-                  {/* Group content */}
-                  <div className="space-y-4 my-4">
-                    {activeGroup.image && (
-                      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
-                        <img 
-                          src={activeGroup.image.startsWith('http') ? activeGroup.image : `${API_BASE_URL}/storage/${activeGroup.image}`} 
-                          alt="Group Visual Aid" 
+                  {/* Actual Question details */}
+                  <div className="space-y-6">
+                    <div
+                      className="text-[15px] font-normal text-[#09314F] dark:text-white leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
+                      dangerouslySetInnerHTML={{ __html: cleanHtmlContent(currentQuestion.question) }}
+                    />
+
+                    {currentQuestion.image && (
+                      <div className="w-full max-w-md bg-gray-50 dark:bg-[#06243A] rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-800">
+                        <img
+                          src={
+                            currentQuestion.image.startsWith("http")
+                              ? currentQuestion.image
+                              : `${API_BASE_URL}/storage/${currentQuestion.image}`
+                          }
+                          alt="Question Diagram"
                           className="w-full h-auto rounded-xl"
                         />
                       </div>
                     )}
-                    <div 
-                      className="text-gray-700 dark:text-gray-300 text-[14px] leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
-                      dangerouslySetInnerHTML={{ __html: cleanHtmlContent(activeGroup.content) }}
-                    />
                   </div>
 
-                  {/* pagination (separator) */}
-                  <div className="border-b-2 border-gray-200 dark:border-gray-700/80 my-6" />
-                </div>
-              )}
+                  {/* Options List */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-4">
+                    {activeOptions?.map((opt) => {
+                      const letter = opt.label || "A";
+                      const isSelected = String(activeLocalChoice) === String(opt.id);
+                      const isSynced = String(submittedAnswers[currentQuestion.id]) === String(opt.id);
 
-              {/* question */}
-              <div 
-                className="text-gray-700 dark:text-gray-200 text-[15px] font-normal leading-relaxed mb-8 prose dark:prose-invert max-w-none quill-content break-words whitespace-normal w-full overflow-hidden"
-                dangerouslySetInnerHTML={{ __html: cleanHtmlContent(currentQuestion.question) }}
-              />
-
-              {/* Options selection (Grid for laptop, column for mobile) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {activeOptions.map((opt) => {
-                  const letter = opt.letter || opt.option_letter || "A";
-                  const isSelected = String(activeLocalChoice) === String(opt.id);
-                  const isSynced = String(submittedAnswers[currentQuestion.id]) === String(opt.id);
-
-                  return (
-                    <div
-                      key={opt.id}
-                      onClick={() => handleOptionSelect(opt.id)}
-                      className={`p-5 rounded-2xl border cursor-pointer transition-all duration-200 flex items-center justify-between group ${
-                        isSelected
-                          ? "bg-blue-50/70 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500 ring-2 ring-blue-500/20"
-                          : "bg-white dark:bg-[#09314F]/30 border-gray-100 dark:border-[#09314F] hover:border-gray-200"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
+                      return (
                         <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs transition-colors shrink-0 ${
+                          key={opt.id}
+                          onClick={() => handleOptionSelect(opt.id)}
+                          className={`flex items-center justify-between gap-4 px-6 py-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group ${
                             isSelected
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-50 dark:bg-[#06243A] text-gray-400 group-hover:bg-gray-100"
+                              ? "bg-blue-50/50 dark:bg-blue-950/20 border-[#C5A97A] text-blue-900 dark:text-blue-200"
+                              : "bg-white dark:bg-[#09314F]/30 hover:border-gray-300 dark:hover:border-blue-800 border-gray-100 dark:border-[#09314F] text-gray-700 dark:text-gray-200"
                           }`}
                         >
-                          {letter}
-                        </div>
-                        <span
-                          className={`text-sm font-medium ${
-                            isSelected ? "text-blue-900 dark:text-blue-200 font-bold" : "text-gray-700 dark:text-gray-200"
-                          }`}
-                        >
-                          {opt.option || opt.text}
-                        </span>
-                      </div>
-                      
-                      {isSelected && (
-                        <div>
-                          {isSynced ? (
-                            <Icon icon="lucide:cloud-upload" className="w-5 h-5 text-blue-500 animate-pulse" />
-                          ) : (
-                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                          <div className="flex items-center gap-4">
+                            <div
+                              className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center transition-all ${
+                                isSelected
+                                  ? "bg-[#C5A97A] text-white"
+                                  : "bg-gray-50 dark:bg-[#06243A] text-gray-400 group-hover:bg-gray-100"
+                              }`}
+                            >
+                              {letter}
+                            </div>
+                            <span
+                              className={`text-sm font-medium ${
+                                isSelected
+                                  ? "text-blue-900 dark:text-blue-200 font-bold"
+                                  : "text-gray-700 dark:text-gray-200"
+                              }`}
+                            >
+                              {opt.option || opt.text}
+                            </span>
+                          </div>
+
+                          {isSelected && (
+                            <div>
+                              {isSynced ? (
+                                <Icon icon="lucide:cloud-upload" className="w-5 h-5 text-blue-500 animate-pulse" />
+                              ) : (
+                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Pagination numbers scroll area at the bottom of the card */}
+                <div className="px-6 py-5 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                  <button
+                    onClick={() => handleNavigate(currentIndex - 1)}
+                    disabled={currentIndex === 0}
+                    className="p-3 bg-gray-50 dark:bg-[#06243A] hover:bg-gray-100 disabled:opacity-30 rounded-xl transition-all shrink-0 text-[#09314F] dark:text-white"
+                  >
+                    <Icon icon="lucide:chevron-left" className="w-4 h-4" />
+                  </button>
+
+                  <div
+                    ref={paginationRef}
+                    className="flex-1 flex gap-2 overflow-x-auto pb-1 scrollbar-none"
+                  >
+                    {questions.map((q, idx) => {
+                      const isCurrent = idx === currentIndex;
+                      const isAnswered = submittedAnswers[q.id] !== undefined;
+
+                      return (
+                        <button
+                          key={q.id}
+                          id={`pag-btn-${idx}`}
+                          onClick={() => handleNavigate(idx)}
+                          className={`w-10 h-10 rounded-xl font-bold text-xs shrink-0 transition-all ${
+                            isCurrent
+                              ? "bg-[#09314F] text-white border-transparent"
+                              : isAnswered
+                              ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30"
+                              : "bg-gray-50 dark:bg-[#06243A] border border-transparent text-gray-400 hover:bg-gray-100"
+                          }`}
+                        >
+                          {idx + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => handleNavigate(currentIndex + 1)}
+                    disabled={currentIndex === totalQuestions - 1}
+                    className="p-3 bg-gray-50 dark:bg-[#06243A] hover:bg-gray-100 disabled:opacity-30 rounded-xl transition-all shrink-0 text-[#09314F] dark:text-white"
+                  >
+                    <Icon icon="lucide:chevron-right" className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Navigation Controls underneath card */}
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => handleNavigate(currentIndex - 1)}
+                  disabled={currentIndex === 0 || savingAnswer}
+                  className="py-4 bg-white dark:bg-[#09314F]/40 border border-gray-100 dark:border-[#09314F] hover:bg-gray-50 rounded-2xl font-bold text-[#09314F] dark:text-white text-xs uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
+                >
+                  Previous
+                </button>
+                {currentIndex === totalQuestions - 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowSubmitConfirm(true)}
+                    disabled={savingAnswer}
+                    className="py-4 bg-[#E83831] hover:bg-[#d0312b] rounded-2xl font-black text-white text-xs uppercase tracking-widest transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2"
+                  >
+                    <Icon icon="lucide:check-square" className="w-4 h-4" />
+                    <span>Submit Exam</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleNavigate(currentIndex + 1)}
+                    disabled={savingAnswer}
+                    className="py-4 bg-white dark:bg-[#09314F]/40 border border-gray-100 dark:border-[#09314F] hover:bg-gray-50 rounded-2xl font-bold text-[#09314F] dark:text-white text-xs uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
+                  >
+                    Next
+                  </button>
+                )}
               </div>
             </div>
+          );
 
-            {/* Pagination numbers scroll area at the bottom of the card */}
-            <div className="px-6 py-5 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3">
-              <button
-                onClick={() => handleNavigate(currentIndex - 1)}
-                disabled={currentIndex === 0}
-                className="p-3 bg-gray-50 dark:bg-[#06243A] hover:bg-gray-100 disabled:opacity-30 rounded-xl transition-all shrink-0 text-[#09314F] dark:text-white"
-              >
-                <Icon icon="lucide:chevron-left" className="w-4 h-4" />
-              </button>
-
-              <div
-                ref={paginationRef}
-                className="flex-1 flex gap-2 overflow-x-auto pb-1 scrollbar-none"
-              >
-                {questions.map((q, idx) => {
-                  const isCurrent = idx === currentIndex;
-                  const isAnswered = submittedAnswers[q.id] !== undefined;
-
-                  return (
-                    <button
-                      key={q.id}
-                      id={`pag-btn-${idx}`}
-                      onClick={() => handleNavigate(idx)}
-                      className={`w-10 h-10 rounded-xl font-bold text-xs shrink-0 transition-all ${
-                        isCurrent
-                          ? "bg-[#09314F] text-white border-transparent"
-                          : isAnswered
-                          ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30"
-                          : "bg-gray-50 dark:bg-[#06243A] border border-transparent text-gray-400 hover:bg-gray-100"
-                      }`}
-                    >
-                      {idx + 1}
-                    </button>
-                  );
-                })}
+          if (isScience) {
+            return (
+              <div className="flex flex-col lg:flex-row gap-6 items-start relative overflow-hidden">
+                <div className="flex-1 w-full lg:min-w-0">{mainContent}</div>
+                
+                {/* Right Panel Workspace wrapper matching native sidebar */}
+                <div className="relative shrink-0 z-[100]">
+                  <CalculatorRightbar />
+                </div>
               </div>
+            );
+          }
 
-              <button
-                onClick={() => handleNavigate(currentIndex + 1)}
-                disabled={currentIndex === totalQuestions - 1}
-                className="p-3 bg-gray-50 dark:bg-[#06243A] hover:bg-gray-100 disabled:opacity-30 rounded-xl transition-all shrink-0 text-[#09314F] dark:text-white"
-              >
-                <Icon icon="lucide:chevron-right" className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Navigation Controls underneath card */}
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => handleNavigate(currentIndex - 1)}
-              disabled={currentIndex === 0 || savingAnswer}
-              className="py-4 bg-white dark:bg-[#09314F]/40 border border-gray-100 dark:border-[#09314F] hover:bg-gray-50 rounded-2xl font-bold text-[#09314F] dark:text-white text-xs uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
-            >
-              Previous
-            </button>
-            {currentIndex === totalQuestions - 1 ? (
-              <button
-                type="button"
-                onClick={() => setShowSubmitConfirm(true)}
-                disabled={savingAnswer}
-                className="py-4 bg-[#E83831] hover:bg-[#d0312b] rounded-2xl font-black text-white text-xs uppercase tracking-widest transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2"
-              >
-                <Icon icon="lucide:check-square" className="w-4 h-4" />
-                <span>Submit Exam</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => handleNavigate(currentIndex + 1)}
-                disabled={savingAnswer}
-                className="py-4 bg-white dark:bg-[#09314F]/40 border border-gray-100 dark:border-[#09314F] hover:bg-gray-50 rounded-2xl font-bold text-[#09314F] dark:text-white text-xs uppercase tracking-widest disabled:opacity-30 transition-all shadow-sm"
-              >
-                Next
-              </button>
-            )}
-          </div>
-        </div>
+          return mainContent;
+        })()
       ) : (
         <div className="py-24 text-center bg-white dark:bg-[#09314F]/40 border rounded-[32px] p-8">
           <p className="text-gray-400 font-bold">No questions loaded for this attempt.</p>
@@ -812,6 +776,94 @@ export default function ExamInterface({
                 className="flex-1 py-3.5 bg-[#09314F] hover:bg-[#0a3d63] text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md shadow-blue-200"
               >
                 Yes, Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Congratulations / Exam Finished Modal Overlay (with blur backdrop to keep active exam layout visible at the back) */}
+      {examFinished && (
+        <div className="fixed inset-0 z-[2500] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-500">
+          <div className="bg-white dark:bg-[#09314F] rounded-[32px] border border-[#C5A97A]/30 p-8 shadow-2xl text-center max-w-3xl w-full relative overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-green-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
+
+            <Icon icon="lucide:party-popper" className="w-20 h-20 text-[#C5A97A] mx-auto mb-6 animate-bounce" />
+            <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight mb-2">
+              Practice Completed!
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+              Excellent job completing your practice attempt. Here is your summary:
+            </p>
+
+            {/* Prominent Circular Progress Score Chart */}
+            <div className="relative w-40 h-40 mx-auto mb-8 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="68"
+                  className="stroke-gray-100 dark:stroke-[#09314F] fill-transparent"
+                  strokeWidth="10"
+                />
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="68"
+                  className="stroke-[#C5A97A] fill-transparent transition-all duration-1000 ease-out"
+                  strokeWidth="10"
+                  strokeDasharray={427}
+                  strokeDashoffset={427 - (427 * percentage) / 100}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute flex flex-col items-center">
+                <span className="text-3xl font-black text-[#09314F] dark:text-white">
+                  {percentage}%
+                </span>
+                <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mt-1">
+                  SCORE OBTAINED
+                </span>
+              </div>
+            </div>
+
+            {/* Details Section */}
+            <div className="grid grid-cols-3 gap-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-5 mb-8 border border-gray-100 dark:border-gray-800">
+              <div className="flex flex-col items-center">
+                <Icon icon="lucide:check-circle" className="w-5 h-5 text-green-500 mb-1" />
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  Correct
+                </span>
+                <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
+                  {correctVal}
+                </span>
+              </div>
+              <div className="flex flex-col items-center">
+                <Icon icon="lucide:x-circle" className="w-5 h-5 text-red-500 mb-1" />
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  Wrong
+                </span>
+                <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
+                  {wrongVal}
+                </span>
+              </div>
+              <div className="flex flex-col items-center">
+                <Icon icon="lucide:help-circle" className="w-5 h-5 text-gray-400 mb-1" />
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  Skipped
+                </span>
+                <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
+                  {skippedVal}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={onBack}
+                className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
+              >
+                Go back to Center
               </button>
             </div>
           </div>
