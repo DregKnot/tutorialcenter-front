@@ -479,13 +479,12 @@ export default function ExamInterface({
           const isScience = [
             "math",
             "mathematics",
-            "f-math",
+            "Geography",
             "fmath",
             "further math",
             "further mathematics",
             "physics",
-            "chemistry",
-            "biology"
+            "chemistry"
           ].some(keyword => subName.includes(keyword));
 
           const mainContent = (

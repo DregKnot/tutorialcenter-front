@@ -120,7 +120,13 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
                 Unanswered
               </span>
               <span className="text-base font-black text-gray-500 block mt-1">
-                {attempt.unanswered !== undefined ? attempt.unanswered : (attempt.total_questions - attempt.correct_answers - attempt.wrong_answers || 0)}
+                {(() => {
+                  const total = questions.length;
+                  const correct = Number(attempt.correct_answers || 0);
+                  const wrong = Number(attempt.wrong_answers || 0);
+                  const diff = total - (correct + wrong);
+                  return diff > 0 ? diff : 0;
+                })()}
               </span>
             </div>
           </div>
@@ -216,18 +222,20 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
                   {/* Options Grid (Matches Grid selection screen) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
                     {q.options?.map((opt) => {
-                      const isOptionCorrect = opt.is_correct;
-                      const isOptionSelected = opt.selected;
+                      // Use question-level student_answer/correct_answer for reliable mapping
+                      const isOptionCorrect = opt.is_correct || (q.correct_answer && String(q.correct_answer.id) === String(opt.id));
+                      const isOptionSelected = opt.selected || (q.student_answer && String(q.student_answer.id) === String(opt.id));
 
                       let optBorderColor = "border-gray-100 dark:border-[#09314F]";
                       let optBgColor = "bg-white dark:bg-[#09314F]/30 text-gray-700 dark:text-gray-200";
 
                       if (isOptionCorrect) {
-                        // Correct option
+                        // Correct option - always highlight green
                         optBgColor = "bg-green-500/10 dark:bg-green-950/20 text-green-600 dark:text-green-400";
                         optBorderColor = "border-green-500";
-                      } else if (isOptionSelected && !isOptionCorrect) {
-                        // User selected wrong option
+                      }
+                      if (isOptionSelected && !isOptionCorrect) {
+                        // User selected wrong option - highlight red
                         optBgColor = "bg-red-500/10 dark:bg-red-950/20 text-red-600 dark:text-red-400";
                         optBorderColor = "border-red-500";
                       }
@@ -247,8 +255,12 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
                           {/* Selection indicator icons */}
                           <div className="flex items-center gap-2">
                             {isOptionSelected && (
-                              <span className="px-2 py-0.5 bg-gray-200/50 dark:bg-gray-800 text-[8px] font-black tracking-wider uppercase rounded-md">
-                                Picked
+                              <span className={`px-2 py-0.5 text-[8px] font-black tracking-wider uppercase rounded-md ${
+                                isOptionCorrect 
+                                  ? 'bg-green-200/50 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
+                                  : 'bg-red-200/50 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                              }`}>
+                                Your Pick
                               </span>
                             )}
                             {isOptionCorrect ? (
