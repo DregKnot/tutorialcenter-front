@@ -59,14 +59,8 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
-      // Clear all student-related local storage data
-      localStorage.removeItem("student_token");
-      localStorage.removeItem("student_info");
-      localStorage.removeItem("studentBiodata");
-      localStorage.removeItem("studentdata");
-      localStorage.removeItem("studentEmail");
-      localStorage.removeItem("studentTel");
-      localStorage.removeItem("last_activity_at");
+      // Clear all local storage data
+      localStorage.clear();
 
       setToken(null);
       setStudent(null);

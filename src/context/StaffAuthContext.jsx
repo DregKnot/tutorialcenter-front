@@ -53,11 +53,8 @@ export function StaffAuthProvider({ children }) {
     } catch (error) {
       console.error("Staff logout failed:", error);
     } finally {
-      // Clear all staff-related local storage data
-      localStorage.removeItem("staff_token");
-      localStorage.removeItem("staff_info");
-      localStorage.removeItem("staff_role");
-      localStorage.removeItem("staff_last_activity_at");
+      // Clear all local storage data
+      localStorage.clear();
 
       setToken(null);
       setStaff(null);
