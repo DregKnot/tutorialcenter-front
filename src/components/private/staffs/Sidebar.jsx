@@ -150,7 +150,7 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
           <img
             src={collapsed ? collapselogo : logo}
             alt="TC Logo"
-            className={`transition-all duration-300 object-contain ${collapsed ? "w-10 h-10" : "w-28 md:w-32 lg:w-40 h-auto"
+            className={`transition-all duration-300 object-contain ${collapsed ? "w-14 h-14" : "w-36 md:w-48 lg:w-56 h-auto"
               }`}
           />
 

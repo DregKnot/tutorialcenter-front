@@ -201,15 +201,15 @@ export default function StudentPaymentDisplay() {
           </button>
           <button
             onClick={() => setActiveView("renew")}
-            className="px-6 py-5 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] rounded-3xl text-left hover:shadow-md hover:border-[#C5A97A]/40 transition-all active:scale-[0.99] group shadow-sm"
+            className="px-6 py-6 md:py-5 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] rounded-3xl text-left hover:shadow-md hover:border-[#C5A97A]/40 transition-all active:scale-[0.99] group shadow-sm"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-950/20 rounded-2xl flex items-center justify-center border border-blue-100 dark:border-blue-900/30 shrink-0">
-                <span className="text-xl text-[#C5A97A]">↻</span>
+              <div className="w-14 h-14 md:w-12 md:h-12 bg-blue-50 dark:bg-blue-950/20 rounded-2xl flex items-center justify-center border border-blue-100 dark:border-blue-900/30 shrink-0">
+                <span className="text-2xl md:text-xl text-[#C5A97A]">↻</span>
               </div>
               <div>
-                <h4 className="text-sm font-black text-[#09314F] dark:text-white uppercase tracking-tight">Renew Payment</h4>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Extend your subscription</p>
+                <h4 className="text-base md:text-sm font-black text-[#09314F] dark:text-white uppercase tracking-tight">Renew Payment</h4>
+                <p className="text-xs md:text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Extend your subscription</p>
               </div>
             </div>
           </button>
@@ -447,7 +447,7 @@ export default function StudentPaymentDisplay() {
                   </div>
                   <button
                     onClick={() => handleRenewClick(item)}
-                    className={`mt-4 w-full py-2 text-white text-xs font-bold rounded-lg transition-all shadow-md active:scale-[0.99] ${isCancelled ? 'bg-red-500 hover:bg-red-600' : 'bg-[#09314F] hover:bg-[#0a3d63]'}`}
+                    className={`mt-4 w-full py-3.5 md:py-2 text-white text-sm md:text-xs font-black rounded-xl transition-all shadow-md active:scale-[0.99] ${isCancelled ? 'bg-red-500 hover:bg-red-600' : 'bg-[#09314F] hover:bg-[#0a3d63]'}`}
                   >
                     {isCancelled ? "Re-enroll Training" : "Renew Training"}
                   </button>

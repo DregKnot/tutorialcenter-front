@@ -41,7 +41,7 @@ export default function ProgressCard({ title, end_date, subjects = [] }) {
         </div>
 
         {/* Info Row: Subjects Count & Exp Date */}
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap justify-between items-center w-full gap-y-2 gap-x-4 mb-6 md:justify-start">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-[#09314F] dark:text-gray-300">Subjects</span>
             <span className="text-sm font-black text-[#09314F] dark:text-white ml-2">{subjects.length}</span>
