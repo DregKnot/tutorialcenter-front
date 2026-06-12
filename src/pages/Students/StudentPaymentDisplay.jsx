@@ -7,6 +7,7 @@ import RemoveTraining from "../../components/private/Students/RemoveTraining.jsx
 import AddTraining from "../../components/private/Students/AddTraining.jsx";
 import PaymentMethodModal from "../../components/private/Students/PaymentMethodModal.jsx";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 
 export default function StudentPaymentDisplay() {
@@ -56,6 +57,16 @@ export default function StudentPaymentDisplay() {
   };
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("action") === "add") {
+      setActiveView("add");
+      // Clean up the URL after reading it
+      window.history.replaceState({}, '', '/student/payments');
+    }
+  }, [location.search]);
 
 
 

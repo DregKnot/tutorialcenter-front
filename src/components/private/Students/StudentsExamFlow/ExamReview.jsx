@@ -293,6 +293,21 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
           })}
         </div>
       )}
+
+      {/* Back to Top Button */}
+      <button
+        onClick={() => {
+          // If rendered inside a modal/scrollable container, we might want to scroll that container.
+          // But usually window.scrollTo works for full page. Let's scroll both window and the closest scrollable parent if necessary.
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          const scrollableParent = document.querySelector('.exam-scroll-container') || document.querySelector('.sidebar-scroll');
+          if (scrollableParent) scrollableParent.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        className="fixed bottom-6 right-6 md:bottom-10 md:right-10 bg-[#09314F] text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:bg-[#E83831] hover:-translate-y-1 transition-all z-50 group border-2 border-white/20"
+        title="Back to Top"
+      >
+        <Icon icon="lucide:arrow-up" className="w-5 h-5 group-hover:animate-bounce" />
+      </button>
     </div>
   );
 }
