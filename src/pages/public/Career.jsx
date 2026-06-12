@@ -135,13 +135,6 @@ const Career = () => {
                   >
                     Apply as Administrator
                   </button>
-
-                  <button
-                    onClick={() => navigate("/staff/login")}
-                    className="w-full bg-[#09314F] text-white font-bold py-4 rounded-xl shadow-[1px_1px_4px_0px_rgba(0,0,0,0.25)] hover:opacity-90 transition-all"
-                  >
-                    Staff Login
-                  </button>
                 </div>
               </div>
             </div>
@@ -154,6 +147,7 @@ const Career = () => {
             title="Tutor"
             position_right={true}
             fullWidth={true}
+            onClick={() => navigate("/staff/login")}
           />
 
           {/* 2. CONTENT AREA */}
@@ -232,6 +226,7 @@ const Career = () => {
             title="Course Advisor"
             position_right={false}
             fullWidth={true}
+            onClick={() => navigate("/staff/login")}
           />
 
           {/* 2. CONTENT AREA */}
@@ -296,6 +291,7 @@ const Career = () => {
             title="Administration"
             position_right={true}
             fullWidth={true}
+            onClick={() => navigate("/staff/login")}
           />
 
           {/* 2. CONTENT AREA */}
