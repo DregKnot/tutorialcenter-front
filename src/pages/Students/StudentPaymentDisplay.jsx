@@ -218,17 +218,17 @@ export default function StudentPaymentDisplay() {
         {/* Summary Stats Row */}
         {!loading && payments.length > 0 && (
           <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-5 border border-gray-100 dark:border-[#09314F] shadow-sm">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
-              <p className="text-xl font-black text-[#09314F] dark:text-white">₦{totalPaid.toLocaleString()}</p>
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-3 md:p-5 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col items-center md:items-start text-center md:text-left justify-center">
+              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
+              <p className="text-sm sm:text-lg md:text-xl font-black text-[#09314F] dark:text-white">₦{totalPaid.toLocaleString()}</p>
             </div>
-            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-5 border border-gray-100 dark:border-[#09314F] shadow-sm">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Transactions</p>
-              <p className="text-xl font-black text-[#09314F] dark:text-white">{totalTransactions}</p>
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-3 md:p-5 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col items-center md:items-start text-center md:text-left justify-center">
+              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Transactions</p>
+              <p className="text-base sm:text-lg md:text-xl font-black text-[#09314F] dark:text-white">{totalTransactions}</p>
             </div>
-            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-5 border border-gray-100 dark:border-[#09314F] shadow-sm">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Active</p>
-              <p className="text-xl font-black text-green-500">{activeCount}</p>
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-3 md:p-5 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col items-center md:items-start text-center md:text-left justify-center">
+              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Active</p>
+              <p className="text-base sm:text-lg md:text-xl font-black text-green-500">{activeCount}</p>
             </div>
           </div>
         )}

@@ -2,6 +2,7 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 
 const AntigravityInner = ({
   count = 300,
@@ -157,13 +158,32 @@ const AntigravityInner = ({
     mesh.instanceMatrix.needsUpdate = true;
   });
 
+  const colorArray = useMemo(() => {
+    // TC Colors: Dark Blue, Red, Gold
+    const baseColors = [
+      new THREE.Color('#09314F'),
+      new THREE.Color('#E83831'),
+      new THREE.Color('#BB9E7F')
+    ];
+    // Multiply by a scalar to make them brighter/glow
+    const glowingColors = baseColors.map(c => c.clone().multiplyScalar(1.5));
+
+    const colors = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const c = glowingColors[Math.floor(Math.random() * glowingColors.length)];
+      c.toArray(colors, i * 3);
+    }
+    return colors;
+  }, [count]);
+
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
       {particleShape === 'capsule' && <capsuleGeometry args={[0.1, 0.4, 4, 8]} />}
       {particleShape === 'sphere' && <sphereGeometry args={[0.2, 16, 16]} />}
       {particleShape === 'box' && <boxGeometry args={[0.3, 0.3, 0.3]} />}
       {particleShape === 'tetrahedron' && <tetrahedronGeometry args={[0.3]} />}
-      <meshBasicMaterial color={color} />
+      <meshBasicMaterial toneMapped={false} />
+      <instancedBufferAttribute attach="instanceColor" args={[colorArray, 3]} />
     </instancedMesh>
   );
 };
@@ -172,6 +192,9 @@ const Antigravity = props => {
   return (
     <Canvas camera={{ position: [0, 0, 50], fov: 35 }}>
       <AntigravityInner {...props} />
+      <EffectComposer disableNormalPass>
+        <Bloom luminanceThreshold={1} mipmapBlur intensity={2} />
+      </EffectComposer>
     </Canvas>
   );
 };

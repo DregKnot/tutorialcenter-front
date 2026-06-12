@@ -4,7 +4,7 @@ import axios from "axios";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import SectionHeading from "../../components/public/SectionHeading";
-import Career_img from "../../assets/images/Nile.University_Aerial_view.jpg";
+import Career_img from "../../assets/images/Training.png";
 import handCup from "../../assets/images/handCup.jpg";
 import jambLogo from "../../assets/images/jamb_logo.png";
 import waecLogo from "../../assets/images/waec_logo.png";
