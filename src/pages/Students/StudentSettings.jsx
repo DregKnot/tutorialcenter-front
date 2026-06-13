@@ -270,17 +270,17 @@ export default function StudentSettings() {
 function SettingsMenu({ initiateFlow, setActiveView }) {
   // Renders the list of settings categories mimicking the mockup style
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 md:space-y-4">
         {/* Profile Card */}
         <button 
            onClick={() => setActiveView("edit_profile")}
-           className="w-full flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group"
+           className="w-full flex items-center justify-between p-3 md:p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group"
         >
-           <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-blue-50 text-[#09314F] dark:bg-gray-700 dark:text-blue-400 group-hover:bg-[#09314F] group-hover:text-white transition-colors">
-                 <PencilSquareIcon className="w-6 h-6" />
+           <div className="flex items-center gap-3 md:gap-4">
+              <div className="p-2 md:p-3 rounded-full bg-blue-50 text-[#09314F] dark:bg-gray-700 dark:text-blue-400 group-hover:bg-[#09314F] group-hover:text-white transition-colors">
+                 <PencilSquareIcon className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <span className="font-bold text-gray-800 dark:text-white text-lg">Edit Profile</span>
+              <span className="font-bold text-gray-800 dark:text-white text-sm md:text-lg">Edit Profile</span>
            </div>
         </button>
 
@@ -288,26 +288,26 @@ function SettingsMenu({ initiateFlow, setActiveView }) {
         {/* Email Card */}
         <button 
            onClick={() => initiateFlow("email")}
-           className="w-full flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group"
+           className="w-full flex items-center justify-between p-3 md:p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group"
         >
-           <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-blue-50 text-[#09314F] dark:bg-gray-700 dark:text-blue-400 group-hover:bg-[#09314F] group-hover:text-white transition-colors">
-                 <EnvelopeIcon className="w-6 h-6" />
+           <div className="flex items-center gap-3 md:gap-4">
+              <div className="p-2 md:p-3 rounded-full bg-blue-50 text-[#09314F] dark:bg-gray-700 dark:text-blue-400 group-hover:bg-[#09314F] group-hover:text-white transition-colors">
+                 <EnvelopeIcon className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <span className="font-bold text-gray-800 dark:text-white text-lg">Edit Email Address</span>
+              <span className="font-bold text-gray-800 dark:text-white text-sm md:text-lg">Edit Email Address</span>
            </div>
         </button>
 
         {/* Phone Card */}
         <button 
            onClick={() => initiateFlow("phone")}
-           className="w-full flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group"
+           className="w-full flex items-center justify-between p-3 md:p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group"
         >
-           <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-blue-50 text-[#09314F] dark:bg-gray-700 dark:text-blue-400 group-hover:bg-[#09314F] group-hover:text-white transition-colors">
-                 <PhoneIcon className="w-6 h-6" />
+           <div className="flex items-center gap-3 md:gap-4">
+              <div className="p-2 md:p-3 rounded-full bg-blue-50 text-[#09314F] dark:bg-gray-700 dark:text-blue-400 group-hover:bg-[#09314F] group-hover:text-white transition-colors">
+                 <PhoneIcon className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <span className="font-bold text-gray-800 dark:text-white text-lg">Edit Phone Number</span>
+              <span className="font-bold text-gray-800 dark:text-white text-sm md:text-lg">Edit Phone Number</span>
            </div>
         </button>
     </div>

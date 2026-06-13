@@ -191,7 +191,7 @@ export default function StudentLogin() {
             <img
               src={TC_logo}
               alt="Logo"
-              className="h-[60px] md:h-[80px] w-auto object-contain cursor-pointer transition-transform hover:scale-105 active:scale-95"
+              className="h-[80px] md:h-[110px] w-auto object-contain cursor-pointer transition-transform hover:scale-105 active:scale-95"
               onClick={() => navigate("/")}
             />
           </div>

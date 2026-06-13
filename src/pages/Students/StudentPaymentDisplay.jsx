@@ -7,6 +7,7 @@ import RemoveTraining from "../../components/private/Students/RemoveTraining.jsx
 import AddTraining from "../../components/private/Students/AddTraining.jsx";
 import PaymentMethodModal from "../../components/private/Students/PaymentMethodModal.jsx";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 
 export default function StudentPaymentDisplay() {
@@ -56,6 +57,16 @@ export default function StudentPaymentDisplay() {
   };
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("action") === "add") {
+      setActiveView("add");
+      // Clean up the URL after reading it
+      window.history.replaceState({}, '', '/student/payments');
+    }
+  }, [location.search]);
 
 
 
@@ -201,15 +212,15 @@ export default function StudentPaymentDisplay() {
           </button>
           <button
             onClick={() => setActiveView("renew")}
-            className="px-6 py-5 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] rounded-3xl text-left hover:shadow-md hover:border-[#C5A97A]/40 transition-all active:scale-[0.99] group shadow-sm"
+            className="px-6 py-6 md:py-5 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] rounded-3xl text-left hover:shadow-md hover:border-[#C5A97A]/40 transition-all active:scale-[0.99] group shadow-sm"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-950/20 rounded-2xl flex items-center justify-center border border-blue-100 dark:border-blue-900/30 shrink-0">
-                <span className="text-xl text-[#C5A97A]">↻</span>
+              <div className="w-14 h-14 md:w-12 md:h-12 bg-blue-50 dark:bg-blue-950/20 rounded-2xl flex items-center justify-center border border-blue-100 dark:border-blue-900/30 shrink-0">
+                <span className="text-2xl md:text-xl text-[#C5A97A]">↻</span>
               </div>
               <div>
-                <h4 className="text-sm font-black text-[#09314F] dark:text-white uppercase tracking-tight">Renew Payment</h4>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Extend your subscription</p>
+                <h4 className="text-base md:text-sm font-black text-[#09314F] dark:text-white uppercase tracking-tight">Renew Payment</h4>
+                <p className="text-xs md:text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Extend your subscription</p>
               </div>
             </div>
           </button>
@@ -218,17 +229,17 @@ export default function StudentPaymentDisplay() {
         {/* Summary Stats Row */}
         {!loading && payments.length > 0 && (
           <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-5 border border-gray-100 dark:border-[#09314F] shadow-sm">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
-              <p className="text-xl font-black text-[#09314F] dark:text-white">₦{totalPaid.toLocaleString()}</p>
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-3 md:p-5 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col items-center md:items-start text-center md:text-left justify-center">
+              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
+              <p className="text-sm sm:text-lg md:text-xl font-black text-[#09314F] dark:text-white">₦{totalPaid.toLocaleString()}</p>
             </div>
-            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-5 border border-gray-100 dark:border-[#09314F] shadow-sm">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Transactions</p>
-              <p className="text-xl font-black text-[#09314F] dark:text-white">{totalTransactions}</p>
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-3 md:p-5 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col items-center md:items-start text-center md:text-left justify-center">
+              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Transactions</p>
+              <p className="text-base sm:text-lg md:text-xl font-black text-[#09314F] dark:text-white">{totalTransactions}</p>
             </div>
-            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-5 border border-gray-100 dark:border-[#09314F] shadow-sm">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Active</p>
-              <p className="text-xl font-black text-green-500">{activeCount}</p>
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-3 md:p-5 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col items-center md:items-start text-center md:text-left justify-center">
+              <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Active</p>
+              <p className="text-base sm:text-lg md:text-xl font-black text-green-500">{activeCount}</p>
             </div>
           </div>
         )}
@@ -447,7 +458,7 @@ export default function StudentPaymentDisplay() {
                   </div>
                   <button
                     onClick={() => handleRenewClick(item)}
-                    className={`mt-4 w-full py-2 text-white text-xs font-bold rounded-lg transition-all shadow-md active:scale-[0.99] ${isCancelled ? 'bg-red-500 hover:bg-red-600' : 'bg-[#09314F] hover:bg-[#0a3d63]'}`}
+                    className={`mt-4 w-full py-3.5 md:py-2 text-white text-sm md:text-xs font-black rounded-xl transition-all shadow-md active:scale-[0.99] ${isCancelled ? 'bg-red-500 hover:bg-red-600' : 'bg-[#09314F] hover:bg-[#0a3d63]'}`}
                   >
                     {isCancelled ? "Re-enroll Training" : "Renew Training"}
                   </button>

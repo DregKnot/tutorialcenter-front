@@ -148,21 +148,21 @@ export default function MasterClassList() {
     return (
       <div 
         onDoubleClick={() => setSelectedClassDetail(cls)}
-        className="flex items-center gap-6 py-5 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-all px-4 rounded-xl group cursor-pointer select-none"
+        className="flex items-center gap-6 py-5 border-b border-gray-100 dark:border-gray-700/30 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-all px-4 rounded-xl group cursor-pointer select-none"
       >
         
         {/* Avatar with Status Dot */}
         <div className="relative flex-shrink-0">
-          <div className="w-11 h-11 rounded-full bg-[#E5E7EB] text-[#4B5563] text-xs font-black flex items-center justify-center shadow-inner border border-white">
+          <div className="w-11 h-11 rounded-full bg-[#E5E7EB] dark:bg-gray-700 text-[#4B5563] dark:text-gray-300 text-xs font-black flex items-center justify-center shadow-inner border border-white dark:border-gray-600">
             ME
           </div>
-          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#F5A623] border-2 border-white rounded-full shadow-sm" />
+          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#F5A623] border-2 border-white dark:border-gray-800 rounded-full shadow-sm" />
         </div>
 
         {/* Info Columns */}
         <div className="flex-1 flex flex-row items-center justify-between gap-3 overflow-hidden min-w-0">
           <div className="flex-[2] min-w-0">
-             <span className="text-[15px] font-bold text-[#1F2937] truncate block" title={cls.title}>
+             <span className="text-[15px] font-bold text-[#1F2937] dark:text-white truncate block" title={cls.title}>
                 {cls.title}
              </span>
           </div>
@@ -178,15 +178,15 @@ export default function MasterClassList() {
           <div className="flex-shrink-0 flex items-center gap-4 text-center">
             <div className="flex flex-col items-center min-w-[80px] hidden lg:flex">
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Created At</span>
-              <span className="text-[11px] font-black text-[#0F2843] whitespace-nowrap">
+              <span className="text-[11px] font-black text-[#0F2843] dark:text-white whitespace-nowrap">
                 {formatDate(cls.created_at)}
               </span>
             </div>
-            <div className="w-[1px] h-6 bg-gray-100 hidden lg:block" />
-            <span className="text-sm font-bold text-gray-600 whitespace-nowrap hidden md:block">
+            <div className="w-[1px] h-6 bg-gray-100 dark:bg-gray-700 hidden lg:block" />
+            <span className="text-sm font-bold text-gray-600 dark:text-gray-300 whitespace-nowrap hidden md:block">
               {formatDate(cls.start_date)}
             </span>
-            <span className="text-sm font-bold text-[#0F2843] whitespace-nowrap min-w-[65px]">
+            <span className="text-sm font-bold text-[#0F2843] dark:text-white whitespace-nowrap min-w-[65px]">
               {startTime}
             </span>
           </div>
@@ -208,7 +208,7 @@ export default function MasterClassList() {
                      e.stopPropagation();
                      copyToClipboard(link, cls.id);
                    }}
-                   className="p-1.5 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0"
+                   className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors flex-shrink-0"
                  >
                    <Icon icon={isLinkCopied ? "mdi:check" : "mdi:content-copy"} className={`w-3.5 h-3.5 ${isLinkCopied ? "text-green-500" : "text-blue-400"}`} />
                  </button>
@@ -265,22 +265,22 @@ export default function MasterClassList() {
               placeholder="Search by date"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-14 pr-6 py-4 border border-gray-200 rounded-2xl text-[15px] font-bold text-[#1F2937] focus:ring-2 focus:ring-[#0F2843] focus:border-transparent bg-white shadow-sm transition-all placeholder:text-gray-400"
+              className="w-full pl-14 pr-6 py-4 border border-gray-200 dark:border-gray-700 rounded-2xl text-[15px] font-bold text-[#1F2937] dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 shadow-sm transition-all placeholder:text-gray-400"
             />
           </div>
 
           {/* Schedule Master Class */}
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-3 px-8 py-4 bg-[#E2E8F0] border border-transparent text-[#0F2843] font-black rounded-2xl text-[15px] hover:bg-[#CBD5E1] transition-all active:scale-95 whitespace-nowrap shadow-sm group"
+            className="flex items-center gap-3 px-8 py-4 bg-[#E2E8F0] dark:bg-blue-600/20 border border-transparent text-[#0F2843] dark:text-blue-400 font-black rounded-2xl text-[15px] hover:bg-[#CBD5E1] dark:hover:bg-blue-600/30 transition-all active:scale-95 whitespace-nowrap shadow-sm group"
           >
-            <PlusIcon className="w-5 h-5 text-[#0F2843] group-hover:scale-110 transition-transform" />
+            <PlusIcon className="w-5 h-5 text-[#0F2843] dark:text-blue-400 group-hover:scale-110 transition-transform" />
             Schedule Master Class
           </button>
 
           {/* Requests */}
-          <button className="flex items-center gap-3 px-8 py-4 bg-[#E2E8F0] border border-transparent text-[#0F2843] font-black rounded-2xl text-[15px] hover:bg-[#CBD5E1] transition-all whitespace-nowrap shadow-sm group">
-            <Icon icon="mdi:swap-horizontal" className="w-5 h-5 text-[#0F2843] rotate-90" />
+          <button className="flex items-center gap-3 px-8 py-4 bg-[#E2E8F0] dark:bg-blue-600/20 border border-transparent text-[#0F2843] dark:text-blue-400 font-black rounded-2xl text-[15px] hover:bg-[#CBD5E1] dark:hover:bg-blue-600/30 transition-all whitespace-nowrap shadow-sm group">
+            <Icon icon="mdi:swap-horizontal" className="w-5 h-5 text-[#0F2843] dark:text-blue-400 rotate-90" />
             Requests
             <span className="bg-[#E83831] text-white text-[11px] font-black px-2.5 py-1 rounded-full leading-none min-w-[24px] text-center shadow-sm">12</span>
           </button>
@@ -307,8 +307,8 @@ export default function MasterClassList() {
               {/* Today Section */}
               {todayClasses.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-bold text-gray-800 mb-3 px-2">Today</h3>
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-1">
+                  <h3 className="text-sm font-bold text-gray-800 dark:text-white mb-3 px-2">Today</h3>
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-4 py-1">
                     {todayClasses.map(cls => (
                       <ClassRow key={cls.id} cls={cls} />
                     ))}
@@ -319,8 +319,8 @@ export default function MasterClassList() {
               {/* Older Section */}
               {olderClasses.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-bold text-gray-800 mb-3 px-2">Older</h3>
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-1">
+                  <h3 className="text-sm font-bold text-gray-800 dark:text-white mb-3 px-2">Older</h3>
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-4 py-1">
                     {olderClasses.map(cls => (
                       <ClassRow key={cls.id} cls={cls} />
                     ))}
@@ -338,7 +338,7 @@ export default function MasterClassList() {
             className="absolute inset-0 bg-[#0F2843]/40 backdrop-blur-sm" 
             onClick={() => setSelectedClassDetail(null)} 
           />
-          <div className="relative bg-white rounded-[40px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+          <div className="relative bg-white dark:bg-gray-800 rounded-[40px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
             {/* Modal Header */}
             <div className="bg-[#0F2843] p-10 text-white relative">
               <button 
@@ -360,23 +360,23 @@ export default function MasterClassList() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <div className="p-10 max-h-[70vh] overflow-y-auto custom-scrollbar dark:bg-gray-800">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 {/* Left Column */}
                 <div className="space-y-8">
                   <div>
                     <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Instructor / Admin</h4>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#0F2843] font-black text-xs">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-[#0F2843] dark:text-white font-black text-xs">
                         {getStaffName(selectedClassDetail)[0]}
                       </div>
-                      <p className="text-[17px] font-black text-[#0F2843]">{getStaffName(selectedClassDetail)}</p>
+                      <p className="text-[17px] font-black text-[#0F2843] dark:text-white">{getStaffName(selectedClassDetail)}</p>
                     </div>
                   </div>
 
                   <div>
                     <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Created On</h4>
-                    <div className="flex items-center gap-3 text-[#0F2843]">
+                    <div className="flex items-center gap-3 text-[#0F2843] dark:text-white">
                       <Icon icon="mdi:calendar-clock" className="w-5 h-5 opacity-40" />
                       <p className="text-[15px] font-bold">{formatDate(selectedClassDetail.created_at)}</p>
                     </div>
@@ -384,7 +384,7 @@ export default function MasterClassList() {
 
                   <div>
                     <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Description</h4>
-                    <p className="text-gray-500 text-sm leading-relaxed font-medium">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-medium">
                       {selectedClassDetail.description || "No description provided for this master class."}
                     </p>
                   </div>
@@ -394,10 +394,10 @@ export default function MasterClassList() {
                 <div className="space-y-8">
                   <div>
                     <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Schedule Info</h4>
-                    <div className="bg-gray-50 rounded-3xl p-6 space-y-4">
-                      <div className="flex justify-between items-center pb-4 border-b border-gray-100">
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-3xl p-6 space-y-4">
+                      <div className="flex justify-between items-center pb-4 border-b border-gray-100 dark:border-gray-600/50">
                         <span className="text-xs font-bold text-gray-400">Start Date</span>
-                        <span className="text-xs font-black text-[#0F2843]">{formatDate(selectedClassDetail.start_date)}</span>
+                        <span className="text-xs font-black text-[#0F2843] dark:text-white">{formatDate(selectedClassDetail.start_date)}</span>
                       </div>
                       {selectedClassDetail.schedules?.map((s, idx) => (
                         <div key={idx} className="flex justify-between items-center py-2">
@@ -416,7 +416,7 @@ export default function MasterClassList() {
                           href={selectedClassDetail.class_link} 
                           target="_blank" 
                           rel="noreferrer"
-                          className="flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 rounded-2xl transition-all group"
+                          className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-2xl transition-all group"
                         >
                           <div className="flex items-center gap-3">
                             <Icon icon="mdi:link-variant" className="w-5 h-5 text-blue-500" />
@@ -430,7 +430,7 @@ export default function MasterClassList() {
                           href={selectedClassDetail.recording_link} 
                           target="_blank" 
                           rel="noreferrer"
-                          className="flex items-center justify-between p-4 bg-green-50 hover:bg-green-100 rounded-2xl transition-all group"
+                          className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 rounded-2xl transition-all group"
                         >
                           <div className="flex items-center gap-3">
                             <Icon icon="mdi:video" className="w-5 h-5 text-green-500" />
@@ -446,10 +446,10 @@ export default function MasterClassList() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-10 bg-gray-50 flex items-center justify-end gap-4">
+            <div className="p-10 bg-gray-50 dark:bg-gray-800/80 flex items-center justify-end gap-4 border-t dark:border-gray-700">
               <button 
                 onClick={() => setSelectedClassDetail(null)}
-                className="px-10 py-4 bg-white border border-gray-200 text-gray-500 font-black rounded-2xl text-[13px] uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95 shadow-sm"
+                className="px-10 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-300 font-black rounded-2xl text-[13px] uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95 shadow-sm"
               >
                 Close
               </button>

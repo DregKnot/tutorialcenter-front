@@ -4,6 +4,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import reportWebVitals from "./reportWebVitals.js";
 import { BrowserRouter } from "react-router-dom";
+import ScrollToTop from "./components/ScrollToTop.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
@@ -13,6 +14,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <BrowserRouter>
+      <ScrollToTop />
       <ThemeProvider>
         <AuthProvider>
           <StaffAuthProvider>

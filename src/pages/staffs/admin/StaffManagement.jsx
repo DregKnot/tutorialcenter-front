@@ -180,7 +180,7 @@ export default function StaffManagement() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, idx) => (
-            <div key={idx} className="bg-white p-6 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50 flex flex-col justify-between h-44 transition-all hover:translate-y-[-2px]">
+            <div key={idx} className="bg-white dark:bg-gray-800/80 p-6 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50 dark:border-gray-700/50 flex flex-col justify-between h-44 transition-all hover:translate-y-[-2px]">
                <div className="flex justify-between items-start">
                   <div className={`p-3.5 rounded-2xl ${stat.bg} ${stat.color}`}>
                      <stat.icon className="w-6 h-6" />
@@ -191,7 +191,7 @@ export default function StaffManagement() {
                </div>
                <div>
                   <p className="text-[13px] font-bold text-gray-400 mb-1">{stat.label}</p>
-                  <h3 className="text-4xl font-black text-[#0F2843]">{stat.value}</h3>
+                  <h3 className="text-4xl font-black text-[#0F2843] dark:text-white">{stat.value}</h3>
                </div>
             </div>
           ))}
@@ -201,7 +201,7 @@ export default function StaffManagement() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
            {/* Search and Filters */}
            <div className="flex items-center gap-4 w-full md:w-auto flex-1">
-              <button className="p-3.5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-all">
+              <button className="p-3.5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
                  <AdjustmentsHorizontalIcon className="w-6 h-6 text-gray-600" />
               </button>
               <div className="relative flex-1 max-w-lg">
@@ -211,7 +211,7 @@ export default function StaffManagement() {
                    value={searchTerm}
                    onChange={(e) => setSearchTerm(e.target.value)}
                    placeholder="Search by name" 
-                   className="w-full pl-14 pr-6 py-4 bg-white rounded-2xl border-none shadow-[0_4px_15px_rgba(0,0,0,0.02)] focus:ring-2 focus:ring-[#BB9E7F] text-sm font-medium placeholder-gray-300" 
+                   className="w-full pl-14 pr-6 py-4 bg-white dark:bg-gray-800 rounded-2xl border-none shadow-[0_4px_15px_rgba(0,0,0,0.02)] focus:ring-2 focus:ring-[#BB9E7F] text-sm font-medium text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-500" 
                  />
               </div>
            </div>
@@ -221,16 +221,16 @@ export default function StaffManagement() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-gray-50 disabled:opacity-30 transition-all hover:bg-gray-50"
+                className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-50 dark:border-gray-700 disabled:opacity-30 transition-all hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                  <ChevronLeftIcon className="w-5 h-5 text-gray-400" />
               </button>
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-gray-50 hover:bg-gray-50 disabled:opacity-30 transition-all"
+                className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 transition-all"
               >
-                 <ChevronRightIcon className="w-5 h-5 text-[#0F2843]" />
+                 <ChevronRightIcon className="w-5 h-5 text-[#0F2843] dark:text-gray-400" />
               </button>
            </div>
         </div>
@@ -257,11 +257,11 @@ export default function StaffManagement() {
                 currentStaffs.map((staff, idx) => (
                   <div 
                     key={staff.id || idx} 
-                    className="grid grid-cols-6 items-center bg-white px-8 py-5 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-gray-50 hover:shadow-xl transition-all cursor-pointer group animate-in fade-in slide-in-from-bottom-2"
+                    className="grid grid-cols-6 items-center bg-white dark:bg-gray-800 px-8 py-5 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-gray-50 dark:border-gray-700 hover:shadow-xl transition-all cursor-pointer group animate-in fade-in slide-in-from-bottom-2"
                   >
                      {/* Name Column with Avatar */}
                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all bg-gray-100 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
                            {staff.profile_picture ? (
                              <img 
                                src={`${API_BASE_URL}/storage/${staff.profile_picture}`} 
@@ -269,17 +269,17 @@ export default function StaffManagement() {
                                alt={staff.name} 
                              />
                            ) : (
-                             <span className="font-black text-[#0F2843] text-sm">
+                             <span className="font-black text-[#0F2843] dark:text-white text-sm">
                                {(staff.firstname?.[0] || "U").toUpperCase()}
                              </span>
                            )}
                         </div>
-                        <span className="font-black text-[#0F2843] text-sm truncate">{staff.name}</span>
+                        <span className="font-black text-[#0F2843] dark:text-white text-sm truncate">{staff.name}</span>
                      </div>
                      
                      {/* Data Columns */}
                      <div className="text-center text-gray-500 font-bold text-[13px]">{staff.staff_id || "N/A"}</div>
-                     <div className="text-center text-gray-900 font-black text-[13px] tracking-tight capitalize">{staff.role}</div>
+                     <div className="text-center text-gray-900 dark:text-gray-100 font-black text-[13px] tracking-tight capitalize">{staff.role}</div>
                      <div className="text-center text-gray-500 font-bold text-[13px] truncate">{staff.email}</div>
                      <div className="text-center text-[#BB9E7F] font-black text-sm">{staff.tel}</div>
                      
@@ -290,7 +290,7 @@ export default function StaffManagement() {
                             setSelectedStaffId(staff.id);
                             setIsModalOpen(true);
                           }}
-                          className="p-2.5 bg-gray-50 text-gray-400 hover:text-[#0F2843] hover:bg-gray-100 rounded-xl transition-all active:scale-95"
+                          className="p-2.5 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-[#0F2843] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-600 rounded-xl transition-all active:scale-95"
                         >
                            <EyeIcon className="w-5 h-5" />
                         </button>
@@ -299,8 +299,8 @@ export default function StaffManagement() {
                 ))
               ) : (
                 /* Awaiting Content Placeholder */
-                <div className="flex-1 flex flex-col items-center justify-center bg-white/40 rounded-[32px] border-2 border-dashed border-gray-200 p-12">
-                   <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                <div className="flex-1 flex flex-col items-center justify-center bg-white/40 dark:bg-gray-800/40 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 p-12">
+                   <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-6">
                       <UserPlusIcon className="w-10 h-10 text-gray-300" />
                    </div>
                    <h3 className="text-2xl font-black text-gray-400 mb-2">No Staff Found</h3>
@@ -319,7 +319,7 @@ export default function StaffManagement() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="w-12 h-12 flex items-center justify-center rounded-xl bg-white shadow-sm hover:translate-y-[-2px] disabled:opacity-30 transition-all border border-gray-50"
+                className="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:translate-y-[-2px] disabled:opacity-30 transition-all border border-gray-50 dark:border-gray-700"
               >
                  <ChevronLeftIcon className="w-5 h-5 text-gray-400" />
               </button>
@@ -339,7 +339,7 @@ export default function StaffManagement() {
                   className={`w-12 h-12 rounded-xl font-black text-sm transition-all hover:translate-y-[-2px] ${
                     page === currentPage 
                       ? "bg-[#BB9E7F] text-white shadow-lg scale-105" 
-                      : "bg-white text-gray-600 shadow-sm border border-gray-50 hover:border-[#BB9E7F]/30"
+                      : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 shadow-sm border border-gray-50 dark:border-gray-700 hover:border-[#BB9E7F]/30"
                   }`}
                 >
                   {page}
@@ -349,16 +349,16 @@ export default function StaffManagement() {
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="w-12 h-12 flex items-center justify-center rounded-xl bg-white shadow-sm hover:translate-y-[-2px] disabled:opacity-30 transition-all border border-gray-50"
+                className="w-12 h-12 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:translate-y-[-2px] disabled:opacity-30 transition-all border border-gray-50 dark:border-gray-700"
               >
-                 <ChevronRightIcon className="w-5 h-5 text-[#0F2843]" />
+                 <ChevronRightIcon className="w-5 h-5 text-[#0F2843] dark:text-gray-400" />
               </button>
            </div>
 
            {/* Rows per page selector */}
            <div className="flex items-center gap-4 opacity-70">
-              <div className="bg-white px-5 py-3.5 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-3 transition-all group">
-                 <span className="font-black text-[#0F2843] text-sm">10</span>
+              <div className="bg-white dark:bg-gray-800 px-5 py-3.5 rounded-2xl shadow-sm border border-gray-50 dark:border-gray-700 flex items-center gap-3 transition-all group">
+                 <span className="font-black text-[#0F2843] dark:text-white text-sm">10</span>
                  <ChevronDownIcon className="w-5 h-5 text-gray-300" />
               </div>
               <span className="text-sm font-black text-gray-400 uppercase tracking-widest">/ page</span>

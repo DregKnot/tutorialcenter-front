@@ -117,7 +117,7 @@ export default function StudentNotifications() {
           <span className="text-sm font-black uppercase tracking-wider group-hover:-translate-x-1 transition-transform">← Back</span>
         </button>
         {/* Header Controls */}
-        <div className="flex items-center justify-between mb-8 px-4 gap-4">
+        <div className="flex items-center justify-between mb-4 md:mb-8 gap-4">
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Inbox</p>
             <h2 className="text-lg sm:text-xl font-black text-[#09314F] dark:text-white mt-0.5 truncate">Your Updates</h2>
@@ -138,12 +138,12 @@ export default function StudentNotifications() {
             <div className="animate-spin w-10 h-10 border-4 border-blue-100 border-t-[#09314F] rounded-full" />
           </div>
         ) : notifications.length > 0 ? (
-          <div className="space-y-4 px-2">
+          <div className="space-y-2 md:space-y-4">
             {notifications.map((notif) => (
               <div 
                 key={notif.id}
                 onClick={() => openDetail(notif)}
-                className={`group relative p-4 sm:p-6 bg-white dark:bg-[#09314F] rounded-2xl sm:rounded-[32px] border border-gray-100 dark:border-[#1a4a75] shadow-sm transition-all hover:shadow-md cursor-pointer flex items-start gap-3 sm:gap-6 ${
+                className={`group relative p-3 sm:p-6 bg-white dark:bg-[#09314F] rounded-2xl sm:rounded-[32px] border border-gray-100 dark:border-[#1a4a75] shadow-sm transition-all hover:shadow-md cursor-pointer flex items-start gap-2.5 sm:gap-6 ${
                   !notif.read_at ? "ring-2 ring-[#09314F]/10 dark:ring-blue-500/10" : "opacity-80 hover:opacity-100"
                 }`}
               >

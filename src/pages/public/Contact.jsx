@@ -1,7 +1,7 @@
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import Map from "../../components/public/Map";
-import image from "../../assets/images/Career.jpg";
+import image from "../../assets/images/Contact.png";
 import ContactSection from "../../components/public/ContactSection";
 
 const Contact = () => {

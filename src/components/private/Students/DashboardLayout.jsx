@@ -80,39 +80,17 @@ export default function DashboardLayout({
   const RightPanelToRender = CustomRightPanel || RightPanel;
 
   return (
-    <div className="min-h-screen bg-[#E6E9EC] dark:bg-gray-900">
-      {/* ===== MOBILE LAYOUT ===== */}
+    <div className="min-h-screen bg-[#E6E9EC] dark:bg-gray-900 flex flex-col lg:block">
+      {/* ===== MOBILE HEADER ===== */}
       <div className="lg:hidden">
         <MobileHeader 
           pagetitle={pagetitle} 
           hideTitle={hideMobileTitle}
           hideBell={hideMobileBell}
         />
-
-        <main className="pt-16 pb-20 px-4">
-          {shouldShowProfileAlert && (
-            <div className="mb-6 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex items-center gap-3">
-              <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded-lg">
-                <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
-              </div>
-              <p className="text-[12px] font-bold text-[#09314F] dark:text-gray-200">
-                Please complete your profile!{" "}
-                <button 
-                  onClick={() => openVerificationModal(student?.tel && !student?.tel_verified_at ? 'phone' : 'email')}
-                  className="text-blue-500 hover:underline"
-                >
-                  {alertMessage}
-                </button>
-              </p>
-            </div>
-          )}
-          {children}
-        </main>
-
-        <MobileBottomNav />
       </div>
 
-      {/* ===== DESKTOP LAYOUT ===== */}
+      {/* ===== DESKTOP SIDEBARS ===== */}
       <div className="hidden lg:block">
         <Sidebar collapsed={isExamActive ? true : leftCollapsed} setCollapsed={handleSetLeftCollapsed} isExamActive={isExamActive} />
 
@@ -122,15 +100,21 @@ export default function DashboardLayout({
             setCollapsed={handleSetRightCollapsed}
           />
         )}
+      </div>
 
-        <main
-          className={`
-            transition-all duration-300 p-6 pt-2
-            ${isExamActive ? "ml-20" : (leftCollapsed ? "ml-20" : "ml-64")}
-            ${isExamActive ? "mr-0" : (rightCollapsed ? "mr-0" : "mr-80")}
-          `}
-        >
-          {/* Header Row */}
+      {/* ===== UNIFIED MAIN CONTENT ===== */}
+      <main
+        className={`
+          flex-1
+          pt-16 pb-20 px-4
+          lg:p-6 lg:pt-2
+          transition-all duration-300
+          ${isExamActive ? "lg:ml-20" : (leftCollapsed ? "lg:ml-20" : "lg:ml-64")}
+          ${isExamActive ? "lg:mr-0" : (rightCollapsed ? "lg:mr-0" : "lg:mr-80")}
+        `}
+      >
+        {/* Desktop Header Row (Hidden on mobile) */}
+        <div className="hidden lg:block">
           {!hideHeader && !isExamActive && (
             <div className="flex justify-between items-center mb-10 px-0 mt-2">
               <h1 className="text-[36px] font-black text-[#09314F] dark:text-white tracking-tighter leading-none uppercase">
@@ -164,31 +148,39 @@ export default function DashboardLayout({
               </div>
             </div>
           )}
+        </div>
 
-          {shouldShowProfileAlert && (
-            <div className="mb-8 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="bg-red-50 dark:bg-red-900/20 p-2.5 rounded-xl">
-                <ExclamationTriangleIcon className="w-6 h-6 text-red-500" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[14px] font-bold text-[#09314F] dark:text-gray-200">
-                  Account Verification Required
-                </p>
-                <p className="text-[12px] font-medium text-gray-500 dark:text-gray-400">
-                  To secure your account and track attendance, please{" "}
-                  <button 
-                    onClick={() => openVerificationModal(student?.tel && !student?.tel_verified_at ? 'phone' : 'email')}
-                    className="text-[#E83831] hover:underline font-black"
-                  >
-                    {alertMessage}
-                  </button>
-                </p>
-              </div>
+        {/* Profile Alert (Unified) */}
+        {shouldShowProfileAlert && (
+          <div className="mb-6 lg:mb-8 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex items-center gap-3 lg:gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="bg-red-50 dark:bg-red-900/20 p-2 lg:p-2.5 rounded-lg lg:rounded-xl">
+              <ExclamationTriangleIcon className="w-5 h-5 lg:w-6 lg:h-6 text-red-500" />
             </div>
-          )}
+            <div className="flex-1">
+              <p className="text-[12px] lg:text-[14px] font-bold text-[#09314F] dark:text-gray-200">
+                <span className="lg:hidden">Please complete your profile! </span>
+                <span className="hidden lg:inline">Account Verification Required</span>
+              </p>
+              <p className="text-[12px] font-medium text-gray-500 dark:text-gray-400">
+                <span className="hidden lg:inline">To secure your account and track attendance, please </span>
+                <button 
+                  onClick={() => openVerificationModal(student?.tel && !student?.tel_verified_at ? 'phone' : 'email')}
+                  className="text-blue-500 lg:text-[#E83831] hover:underline font-bold lg:font-black"
+                >
+                  {alertMessage}
+                </button>
+              </p>
+            </div>
+          </div>
+        )}
 
-          {children}
-        </main>
+        {/* ONLY ONE INSTANCE OF CHILDREN TO PRESERVE COMPONENT STATE ACROSS VIEWPORT CHANGES */}
+        {children}
+      </main>
+
+      {/* ===== MOBILE BOTTOM NAV ===== */}
+      <div className="lg:hidden">
+        <MobileBottomNav />
       </div>
       <InactivityModal />
       <VerificationModal />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import ReactDOM from "react-dom";
 import axios from "axios";
 import {
   BookOpenIcon,
@@ -250,13 +251,14 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
-    if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: null });
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: null }));
     }
   };
 
@@ -348,7 +350,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     console.log("Validation check - newErrors:", newErrors);
     setErrors(newErrors);
 
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   /* =============================
@@ -359,15 +361,14 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     console.log("Submit clicked, formData:", formData);
     console.log("daySchedules:", daySchedules);
 
-    if (!validateForm()) {
-      console.log("Validation failed, errors:", errors);
-      // Show alert with validation errors
-      const errorMessages = Object.entries(errors)
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      console.log("Validation failed, errors:", validationErrors);
+      const errorMessages = Object.entries(validationErrors)
         .map(([field, message]) => `${field}: ${message}`)
         .join("\n");
       console.error("Form validation errors:\n", errorMessages);
       
-      // Scroll to errors
       const scrollContainer = document.querySelector(".flex-1.overflow-y-auto");
       if (scrollContainer) {
         scrollContainer.scrollTop = 0;
@@ -477,7 +478,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
      UI
   ============================= */
 
-  return (
+  return ReactDOM.createPortal(
    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
   {/* Backdrop */}
   <div 
@@ -916,8 +917,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
         Cancel
       </button>
       <button
-        type="submit"
-        form="masterClassForm"
+        type="button"
+        onClick={handleSubmit}
         disabled={loading}
         className={`flex-1 py-3 bg-[#0a1d3a] text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 ${
           loading ? "opacity-70 cursor-not-allowed" : "hover:bg-[#081627]"
@@ -934,6 +935,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
       </button>
     </div>
   </div>
-</div>
+</div>,
+  document.body
   );
 }

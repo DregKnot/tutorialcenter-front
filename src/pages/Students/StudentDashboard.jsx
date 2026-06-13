@@ -4,14 +4,17 @@ import { useAuth } from "../../context/AuthContext";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import axios from "axios";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { useNavigate } from "react-router-dom";
 
 export default function StudentDashboard() {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const { token: authToken } = useAuth();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showNoCoursePopup, setShowNoCoursePopup] = useState(false);
 
 
   useEffect(() => {
@@ -29,7 +32,14 @@ export default function StudentDashboard() {
         console.log(res?.data?.courses);
         if (res?.status !== 200) throw new Error(res?.data?.message);
 
-        setCourses(res?.data?.courses || []);
+        const fetchedCourses = res?.data?.courses || [];
+        setCourses(fetchedCourses);
+
+        // Check if there's any course that has subjects
+        const hasSubjects = fetchedCourses.some(c => c.subjects && c.subjects.length > 0);
+        if (!hasSubjects) {
+          setShowNoCoursePopup(true);
+        }
       } catch (error) {
         console.log(error);
       } finally {
@@ -42,6 +52,29 @@ export default function StudentDashboard() {
 
   return (
     <DashboardLayout>
+      {showNoCoursePopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-300">
+            <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Icon icon="lucide:book-x" className="w-10 h-10 text-[#E83831]" />
+            </div>
+            <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase mb-3">No Active Courses</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-8 leading-relaxed">
+              It looks like you haven't enrolled in any subjects yet. You need to add a training course to access your study materials, classes, and exams.
+            </p>
+            <button
+              onClick={() => {
+                setShowNoCoursePopup(false);
+                navigate("/student/payments?action=add");
+              }}
+              className="w-full py-4 bg-gradient-to-r from-[#09314F] to-[#0a426b] hover:from-[#E83831] hover:to-[#ff473e] text-white rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
+            >
+              Add Training Now
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col xl:flex-row gap-6 w-full max-w-[1600px] mx-auto text-gray-800 dark:text-gray-100">
 
         {/* --- LEFT MAIN COLUMN --- */}

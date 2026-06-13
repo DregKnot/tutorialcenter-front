@@ -95,12 +95,12 @@ const FaqSection = () => {
                                 >
                                     <button
                                         onClick={() => toggleFaq(index)}
-                                        className="w-full h-full flex justify-between items-center p-3 relative"
+                                        className="w-full h-full flex justify-between items-center p-3 relative max-md:justify-start max-md:text-left"
                                     >
                                         <span
                                             className={`${
                                                 faq.open ? "text-[#8695A0]" : "text-primary"
-                                                } text-primary text-sm font-semibold  pr-6`}
+                                                } text-primary text-sm font-semibold pr-6 max-md:flex-1 max-md:text-left`}
                                         >
                                             {faq.questions}
                                         </span>

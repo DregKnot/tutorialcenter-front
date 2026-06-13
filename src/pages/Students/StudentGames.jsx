@@ -19,8 +19,8 @@ export default function StudentGames() {
 
   // Mobile: fewer particles for GPU performance, larger magnetRadius for touch
   const particleConfig = isMobile
-    ? { count: 120, magnetRadius: 12, particleSize: 1.2, ringRadius: 6 }
-    : { count: 300, magnetRadius: 6,  particleSize: 1.5, ringRadius: 7 };
+    ? { count: 150, magnetRadius: 12, particleSize: 1.2, ringRadius: 6 }
+    : { count: 400, magnetRadius: 6,  particleSize: 1, ringRadius: 5 };
 
   return (
     <DashboardLayout pagetitle="Games & Fun" hideMobileTitle={false}>
@@ -39,14 +39,14 @@ export default function StudentGames() {
             waveAmplitude={1}
             particleSize={particleConfig.particleSize}
             lerpSpeed={0.05}
-            color="#09314F"
+            color="#ebb92fff"
             autoAnimate
             particleVariance={1}
             rotationSpeed={0}
             depthFactor={1}
             pulseSpeed={3}
             particleShape="capsule"
-            fieldStrength={10}
+            fieldStrength={15}
           />
         </div>
 

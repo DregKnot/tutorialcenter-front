@@ -4,7 +4,7 @@ import axios from "axios";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import SectionHeading from "../../components/public/SectionHeading";
-import Career_img from "../../assets/images/Nile.University_Aerial_view.jpg";
+import Career_img from "../../assets/images/Training.png";
 import handCup from "../../assets/images/handCup.jpg";
 import jambLogo from "../../assets/images/jamb_logo.png";
 import waecLogo from "../../assets/images/waec_logo.png";
@@ -54,7 +54,7 @@ const admissionSectors = [
       "Business Administration", "Public Administration", "Sociology", "International Relations"
     ],
     jamb: ["Use of English", "Mathematics", "Economics", "+1 more subj."],
-    olevel: ["English", "Maths", "Economics", "View more..."],
+    olevel: ["English", "Maths", "Economics", "Any other subject"],
     criticalNote: null
   },
   {
@@ -67,7 +67,7 @@ const admissionSectors = [
       "Philosophy", "Religious Studies", "Theatre Arts", "Fine Arts", "Music"
     ],
     jamb: ["Use of English", "Government", "Literature-in-English", "+1 more"],
-    olevel: ["English", "Maths", "Literature", "Government", "View more..."],
+    olevel: ["English", "Maths", "Literature", "Government", "Any other subject"],
     criticalNote: "Law requires 5 Credits including English, Literature, and at least a pass in Mathematics."
   },
   {
@@ -107,6 +107,25 @@ const Training = () => {
 
   // Admission guide
   const [expandedSector, setExpandedSector] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredSectors = admissionSectors.filter((sector) => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+
+    const searchableText = [
+      sector.title,
+      sector.description,
+      ...sector.courses,
+      ...sector.jamb,
+      ...sector.olevel,
+      sector.criticalNote || "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return searchableText.includes(query);
+  });
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -407,15 +426,22 @@ const Training = () => {
                 </svg>
                 <input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search any course/department/faculty..."
-                  className="w-full pl-12 pr-6 py-4 bg-white rounded-2xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-[#09314F] focus:border-transparent text-sm font-medium placeholder-gray-400 transition-all"
+                  className="w-full pl-12 pr-6 py-3 md:py-4 bg-white rounded-2xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-[#09314F] focus:border-transparent text-sm font-medium placeholder-gray-400 transition-all"
                 />
               </div>
             </div>
 
             {/* 2-Column Card Grid */}
+            {filteredSectors.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 font-bold">No courses or departments match your search.</p>
+              </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {admissionSectors.map((sector) => {
+              {filteredSectors.map((sector) => {
                 const isOpen = expandedSector === sector.id;
 
                 return (
@@ -526,6 +552,7 @@ const Training = () => {
                 );
               })}
             </div>
+            )}
 
             {/* Pro-Tip */}
             <div className="mt-12 bg-gradient-to-r from-[#09314F] to-[#1a4971] rounded-3xl p-8 text-white text-center shadow-xl">

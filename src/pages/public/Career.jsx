@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
-import Career_img from "../../assets/images/Career.jpg";
+import Career_img from "../../assets/images/Career.png";
 import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.svg";
 import handCup from "../../assets/images/handCup.jpg";
 import SectionHeading from "../../components/public/SectionHeading";
@@ -57,58 +57,57 @@ const Career = () => {
 
               <div className="grid md:grid-cols-2 gap-8 mb-16 mt-8">
                 {/* Mission Card */}
-                <div className="bg-[#FFF5F5] rounded-[30px] p-8 flex gap-6 shadow-sm">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
-                      {/* Substitute with actual Icon */}
-                      <img
-                        src={crowd}
-                        alt="Crowd"
-                        className="brightness-0 invert text-2xl"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-[#09314F] mb-3">
-                      Mission
-                    </h3>
-                    <p className="text-xs text-gray-500 leading-loose">
-                      Our Lessons Are Crafted And Delivered By Experienced
-                      Educators Who Understand The Unique Challenges Of JAMB,
-                      WAEC, NECO, And GCE Exams. With Clear Explanations And
-                      Practical Examples, Students Gain The Knowledge And
-                      Confidence Needed To Succeed.
-                    </p>
-                  </div>
-                </div>
+           
+<div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] p-5 md:p-8 flex gap-4 md:gap-6 shadow-sm">
+  <div className="flex-shrink-0">
+    <div className="w-12 h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
+      {/* Substitute with actual Icon */}
+      <img
+        src={crowd}
+        alt="Crowd"
+        className="brightness-0 invert text-2xl"
+      />
+    </div>
+  </div>
+  <div>
+    <h3 className="text-lg md:text-xl font-bold text-[#09314F] mb-1.5 md:mb-3">
+      Mission
+    </h3>
+    <p className="text-xs text-gray-500 leading-loose">
+      Our Lessons Are Crafted And Delivered By Experienced
+      Educators Who Understand The Unique Challenges Of JAMB,
+      WAEC, NECO, And GCE Exams. With Clear Explanations And
+      Practical Examples, Students Gain The Knowledge And
+      Confidence Needed To Succeed.
+    </p>
+  </div>
+</div>
 
-                {/* Vision Card */}
-                <div className="bg-[#FFF5F5] rounded-[30px] p-8 flex gap-6 shadow-sm">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
-                      {/* Substitute with actual Icon */}
-                      {/* < className="text-white text-2xl" /> */}
-                      <img
-                        src={crowd}
-                        alt="Crowd"
-                        className="brightness-0 invert text-2xl"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-[#09314F] mb-3">
-                      Vision
-                    </h3>
-                    <p className="text-xs text-gray-500 leading-loose">
-                      Access Our Platform Anytime, Anywhere, And Learn At Your
-                      Own Pace. Whether You Prefer On-Demand Tutorials Or Live
-                      Sessions, We Provide Flexible Solutions To Fit Your
-                      Schedule And Learning Style.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
+{/* Vision Card */}
+<div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] p-5 md:p-8 flex gap-4 md:gap-6 shadow-sm">
+  <div className="flex-shrink-0">
+    <div className="w-12 h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
+      {/* Substitute with actual Icon */}
+      <img
+        src={crowd}
+        alt="Crowd"
+        className="brightness-0 invert text-2xl"
+      />
+    </div>
+  </div>
+  <div>
+    <h3 className="text-lg md:text-xl font-bold text-[#09314F] mb-1.5 md:mb-3">
+      Vision
+    </h3>
+    <p className="text-xs text-gray-500 leading-loose">
+      Access Our Platform Anytime, Anywhere, And Learn At Your
+      Own Pace. Whether You Prefer On-Demand Tutorials Or Live
+      Sessions, We Provide Flexible Solutions To Fit Your
+      Schedule And Learning Style.
+    </p>
+  </div>
+</div>
+</div>
               <div>
                 <h4 className="text-[#3B82F6] font-bold text-lg mb-6 uppercase tracking-wide">
                   Available Roles
@@ -136,13 +135,6 @@ const Career = () => {
                   >
                     Apply as Administrator
                   </button>
-
-                  <button
-                    onClick={() => navigate("/staff/login")}
-                    className="w-full bg-[#09314F] text-white font-bold py-4 rounded-xl shadow-[1px_1px_4px_0px_rgba(0,0,0,0.25)] hover:opacity-90 transition-all"
-                  >
-                    Staff Login
-                  </button>
                 </div>
               </div>
             </div>
@@ -155,6 +147,7 @@ const Career = () => {
             title="Tutor"
             position_right={true}
             fullWidth={true}
+            onClick={() => navigate("/staff/login")}
           />
 
           {/* 2. CONTENT AREA */}
@@ -233,6 +226,7 @@ const Career = () => {
             title="Course Advisor"
             position_right={false}
             fullWidth={true}
+            onClick={() => navigate("/staff/login")}
           />
 
           {/* 2. CONTENT AREA */}
@@ -297,6 +291,7 @@ const Career = () => {
             title="Administration"
             position_right={true}
             fullWidth={true}
+            onClick={() => navigate("/staff/login")}
           />
 
           {/* 2. CONTENT AREA */}

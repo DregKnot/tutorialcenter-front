@@ -301,7 +301,7 @@ export default function StudentExam() {
         </div>
       )}
 
-      <div className="w-full pb-20 px-2 lg:px-4 transition-all duration-300">
+      <div className="w-full pb-20 px-0 lg:px-4 transition-all duration-300">
         {showExamInterface && activeAttemptId ? (
           <ExamInterface
             attemptId={activeAttemptId}
@@ -452,16 +452,16 @@ export default function StudentExam() {
             {/* 3. Subject Horizontally Scrollable Row */}
             {selectedCourse && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#C5A97A]"></span>
+                <div className="flex items-center justify-between w-full gap-2 mb-4 max-md:flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-[#C5A97A] shrink-0"></span>
                     <h4 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                       2. Select Subject
                     </h4>
                   </div>
                   {/* Dynamic Device Hint Text */}
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider animate-pulse">
-                    {isDesktop ? "Scroll to select more subjects" : "Swipe to select more subjects"}
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider animate-pulse text-right shrink-0 max-md:basis-full">
+                    {isDesktop ? "Scroll to select subjects" : "Swipe to select subjects"}
                   </span>
                 </div>
 
@@ -477,7 +477,7 @@ export default function StudentExam() {
 
                     <div
                       ref={subjectRowRef}
-                      className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800 select-none cursor-grab"
+                      className="flex gap-4 overflow-x-auto py-3 pb-4 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800 select-none cursor-grab"
                       style={{ WebkitOverflowScrolling: "touch" }}
                     >
                       {selectedCourse.subjects.map((sub, idx) => {
@@ -492,7 +492,7 @@ export default function StudentExam() {
                           <div
                             key={sub.id || idx}
                             onClick={() => available && handleSubjectSelect(sub)}
-                            className={`min-w-[180px] md:min-w-[210px] p-4 rounded-3xl border flex flex-col justify-between transition-all duration-300 relative select-none group ${
+                            className={`w-[180px] md:w-[210px] shrink-0 p-4 rounded-3xl border flex flex-col justify-between transition-all duration-300 relative select-none group overflow-visible ${
                               !available
                                 ? "bg-gray-100 dark:bg-gray-900/40 border-gray-200/50 dark:border-gray-800/30 cursor-not-allowed opacity-60"
                                 : isSelected
@@ -514,9 +514,9 @@ export default function StudentExam() {
                               <img
                                 src={bannerUrl}
                                 alt={name}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                className="w-full h-full object-cover rounded-2xl transition-transform duration-700 ease-out group-hover:scale-110"
                               />
-                              <div className="absolute inset-0 bg-black/10 dark:bg-black/35"></div>
+                              <div className="absolute inset-0 bg-black/10 dark:bg-black/35 pointer-events-none transition-opacity duration-700 group-hover:bg-black/5 dark:group-hover:bg-black/20"></div>
                               {isSelected && (
                                 <div className="absolute top-2.5 right-2.5 bg-[#C5A97A] text-white p-1 rounded-full shadow-md flex items-center justify-center animate-scale-in">
                                   <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
@@ -524,11 +524,11 @@ export default function StudentExam() {
                               )}
                             </div>
 
-                            <div className="mt-1">
+                            <div className="mt-1 min-w-0 w-full">
                               <span className="text-[9px] font-black uppercase tracking-widest text-[#C5A97A] block">
                                 SUBJECT
                               </span>
-                              <h4 className="text-sm font-black uppercase tracking-tight truncate mt-1">
+                              <h4 className="text-sm font-black uppercase tracking-tight truncate mt-1 w-full">
                                 {name}
                               </h4>
                             </div>
