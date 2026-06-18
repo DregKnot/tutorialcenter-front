@@ -33,7 +33,7 @@ const adminMenuItems = [
   { label: "Calendar", icon: CalendarDaysIcon },
   { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
-  { label: "Payments", icon: CreditCardIcon },
+  { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
   { label: "Audit Log", icon: ChartBarIcon },
   { label: "Settings", icon: Cog6ToothIcon },
 ];

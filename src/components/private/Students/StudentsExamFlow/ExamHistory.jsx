@@ -180,7 +180,7 @@ const StreakFire = ({ streak }) => {
   );
 };
 
-export default function ExamHistory({ availableExams = [], onBack }) {
+export default function ExamHistory({ availableExams = [], initialExpandedAttemptId = null, onBack }) {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("student_token") || "";
@@ -189,7 +189,7 @@ export default function ExamHistory({ availableExams = [], onBack }) {
   const [attempts, setAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [expandedAttemptId, setExpandedAttemptId] = useState(null);
+  const [expandedAttemptId, setExpandedAttemptId] = useState(initialExpandedAttemptId);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -248,6 +248,11 @@ export default function ExamHistory({ availableExams = [], onBack }) {
       setAttempts(attemptsArray);
       setTotalPages(totalPagesVal);
       setCurrentPage(currentPageVal);
+
+      // If initialExpandedAttemptId is provided and we found it, keep it. 
+      // If we didn't find it on this page, it might be on another page or we might need to search for it, 
+      // but usually the newly finished exam is the very first one on page 1.
+
     } catch (err) {
       console.error("Failed to load attempt history:", err);
       setError("Unable to retrieve your practice history. Please try again.");

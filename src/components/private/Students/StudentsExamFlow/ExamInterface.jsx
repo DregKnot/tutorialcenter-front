@@ -9,6 +9,7 @@ export default function ExamInterface({
   selectedSubject,
   timer,
   onBack,
+  onReviewExam,
 }) {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -860,9 +861,15 @@ export default function ExamInterface({
             <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={onBack}
-                className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
+                className="flex-1 py-4 border-2 border-[#09314F] dark:border-gray-500 hover:bg-[#09314F] dark:hover:bg-gray-500 hover:text-white text-[#09314F] dark:text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all"
               >
                 Go back to Center
+              </button>
+              <button
+                onClick={() => onReviewExam && onReviewExam(attemptId)}
+                className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
+              >
+                Review Exam
               </button>
             </div>
           </div>

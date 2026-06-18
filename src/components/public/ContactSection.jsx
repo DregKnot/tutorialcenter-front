@@ -21,12 +21,12 @@ const ContactSection = ({ showTitle = true }) => {
                         <div className="area-wrapper ">
                             <div className="flex max-md:flex-col">
 
-                                <div className="flex-1 py-4 pr-7">
-                                    <div className="content mb-8">
-                                        <h2 className="text-primary header-title mb-2">
+                                <div className="flex-1 py-4 md:pr-7">
+                                    <div className="content mb-4 md:mb-8">
+                                        <h2 className="text-primary header-title !text-2xl md:!text-[2rem] mb-1 md:mb-2 !leading-tight">
                                             Get in touch
                                         </h2>
-                                        <p className="text-sm leading-[28px]">
+                                        <p className="text-xs md:text-sm leading-snug md:leading-[28px]">
                                             Use our contact form for all information request or contact
                                             us directly using the contact information below. All
                                             information is treated with complete confidentiality and In

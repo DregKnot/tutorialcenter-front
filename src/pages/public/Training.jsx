@@ -197,17 +197,17 @@ const Training = () => {
 
               <div className="grid md:grid-cols-2 gap-8 mb-16 mt-8">
                 {/* Why Choose Us Card */}
-                <div className="bg-[#FFF5F5] rounded-[30px] p-8 flex gap-6 shadow-sm">
+                <div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] px-3 py-4 md:p-8 flex gap-3 md:gap-6 shadow-sm">
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
+                    <div className="w-[40px] h-[40px] md:w-12 md:h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
                       <img src={crowd} alt="" className="brightness-0 invert text-2xl" />
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-[#09314F] mb-3">
+                    <h3 className="text-sm md:text-xl font-semibold md:font-bold text-[#09314F] mb-1 md:mb-3">
                       Expert–Led Tutorials
                     </h3>
-                    <p className="text-xs text-gray-500 leading-loose">
+                    <p className="text-xs text-gray-500 leading-5 md:leading-loose">
                       Our Lessons Are Crafted And Delivered By Experienced
                       Educators Who Understand The Unique Challenges Of JAMB,
                       WAEC, NECO, And GCE Exams. With Clear Explanations And
@@ -218,17 +218,17 @@ const Training = () => {
                 </div>
 
                 {/* Flexible Learning Card */}
-                <div className="bg-[#FFF5F5] rounded-[30px] p-8 flex gap-6 shadow-sm">
+                <div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] px-3 py-4 md:p-8 flex gap-3 md:gap-6 shadow-sm">
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
+                    <div className="w-[40px] h-[40px] md:w-12 md:h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
                       <img src={crowd} alt="" className="brightness-0 invert text-2xl" />
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-[#09314F] mb-3">
+                    <h3 className="text-sm md:text-xl font-semibold md:font-bold text-[#09314F] mb-1 md:mb-3">
                       Flexible Learning
                     </h3>
-                    <p className="text-xs text-gray-500 leading-loose">
+                    <p className="text-xs text-gray-500 leading-5 md:leading-loose">
                       Access Our Platform Anytime, Anywhere, And Learn At Your
                       Own Pace. Whether You Prefer On-Demand Tutorials Or Live
                       Sessions, We Provide Flexible Solutions To Fit Your

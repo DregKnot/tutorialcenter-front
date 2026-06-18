@@ -62,13 +62,13 @@ export default function BenefitSection() {
                         <div className="grid lg:grid-cols-2 gap-x-10 gap-y-5">
                             {benefitsData.map((item, index) => (
                                 <div
-                                    className="bg-[#E336290D] shadow-xl py-5 px-5 rounded-3xl border-l-[10px] border-l-[#E83831]"
+                                    className="bg-[#E336290D] shadow-xl px-3 py-4 md:py-5 md:px-5 rounded-3xl border-l-[10px] border-l-[#E83831]"
                                     key={index}
                                 >
-                                    <h4 className="text-base font-bold text-sencondary mb-3 ">
+                                    <h4 className="text-sm md:text-base font-semibold md:font-bold text-sencondary mb-1 md:mb-3 ">
                                         {item.title}
                                     </h4>
-                                    <p className="leading-6 text-[14.5px]">{item.description}</p>
+                                    <p className="leading-5 md:leading-6 text-xs md:text-[14.5px]">{item.description}</p>
                                 </div>
                             ))}
                         </div>

@@ -548,17 +548,18 @@ export default function useExamForm() {
       const qErrors = [];
 
       // Question number checks
-      if (!q.questionNumber) qErrors.push("Question number is required");
-      if (q.questionNumber && isDuplicateBatchNumber(questions.indexOf(q), q.questionNumber)) {
+      const trimmedQNum = String(q.questionNumber || "").trim();
+      if (!trimmedQNum) qErrors.push("Question number is required");
+      if (trimmedQNum && isDuplicateBatchNumber(questions.indexOf(q), trimmedQNum)) {
         qErrors.push("Duplicate question number in this batch");
       }
-      if (q.questionNumber && isDuplicateDbNumber(q.questionNumber)) {
-        qErrors.push(`Question #${q.questionNumber} already exists in this exam year`);
+      if (trimmedQNum && isDuplicateDbNumber(trimmedQNum)) {
+        qErrors.push(`Question #${trimmedQNum} already exists in this exam year`);
       }
 
       // Question text check
       const qText = stripHtml(q.questionText);
-      if (!qText) qErrors.push("Question text is required");
+      if (!qText || !String(q.questionText || "").trim()) qErrors.push("Question text is required");
 
       // Question text vs explanation check
       const expText = stripHtml(q.explanation);
@@ -568,14 +569,14 @@ export default function useExamForm() {
 
       // Option checks for MCQ and True/False
       if (q.questionType === "multiple_choice" || q.questionType === "true_false") {
-        const filledOptions = q.options.filter(o => o.option_text.trim());
-        if (filledOptions.length < 2) qErrors.push("At least 2 options are required");
+        const filledOptions = q.options.filter(o => String(o.option_text || "").trim());
+        if (filledOptions.length < 2) qErrors.push("At least 2 options are required (cannot be empty spaces)");
 
         const hasCorrect = q.options.some(o => o.is_correct);
         if (!hasCorrect) qErrors.push("You must mark one option as the correct answer");
 
         // Duplicate option text check
-        const optTexts = q.options.map(o => o.option_text.trim().toLowerCase()).filter(t => t);
+        const optTexts = q.options.map(o => String(o.option_text || "").trim().toLowerCase()).filter(t => t);
         const uniqueTexts = new Set(optTexts);
         if (optTexts.length !== uniqueTexts.size) qErrors.push("Duplicate option text detected");
       }
@@ -719,8 +720,8 @@ export default function useExamForm() {
           const questionFormData = new FormData();
           questionFormData.append("exam_year_id", examYearId);
           if (currentGroupId) questionFormData.append("past_question_group_id", currentGroupId);
-          questionFormData.append("question_number", q.questionNumber);
-          questionFormData.append("question", q.questionText);
+          questionFormData.append("question_number", String(q.questionNumber || "").trim());
+          questionFormData.append("question", String(q.questionText || "").trim());
           questionFormData.append("question_type", q.questionType);
           questionFormData.append("marks", q.marks);
           questionFormData.append("explanation", q.explanation);
@@ -729,7 +730,7 @@ export default function useExamForm() {
           // Options
           q.options.forEach((opt, index) => {
             questionFormData.append(`options[${index}][label]`, opt.label);
-            questionFormData.append(`options[${index}][option_text]`, opt.option_text);
+            questionFormData.append(`options[${index}][option_text]`, String(opt.option_text || "").trim());
             questionFormData.append(`options[${index}][is_correct]`, opt.is_correct ? 1 : 0);
             questionFormData.append(`options[${index}][sort_order]`, opt.sort_order);
           });
@@ -806,8 +807,8 @@ export default function useExamForm() {
         const questionFormData = new FormData();
         questionFormData.append("exam_year_id", examYearId);
         if (currentGroupId) questionFormData.append("past_question_group_id", currentGroupId);
-        questionFormData.append("question_number", q.questionNumber);
-        questionFormData.append("question", q.questionText);
+        questionFormData.append("question_number", String(q.questionNumber || "").trim());
+        questionFormData.append("question", String(q.questionText || "").trim());
         questionFormData.append("question_type", q.questionType);
         questionFormData.append("marks", q.marks);
         questionFormData.append("explanation", q.explanation);
@@ -815,7 +816,7 @@ export default function useExamForm() {
 
         q.options.forEach((opt, index) => {
           questionFormData.append(`options[${index}][label]`, opt.label);
-          questionFormData.append(`options[${index}][option_text]`, opt.option_text);
+          questionFormData.append(`options[${index}][option_text]`, String(opt.option_text || "").trim());
           questionFormData.append(`options[${index}][is_correct]`, opt.is_correct ? 1 : 0);
           questionFormData.append(`options[${index}][sort_order]`, opt.sort_order);
         });

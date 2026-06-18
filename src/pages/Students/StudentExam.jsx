@@ -30,6 +30,7 @@ export default function StudentExam() {
   const [showExamInterface, setShowExamInterface] = useState(false);
   const [activeAttemptId, setActiveAttemptId] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [historyAttemptIdToOpen, setHistoryAttemptIdToOpen] = useState(null);
 
   // Clock picker modal state
   const [isClockModalOpen, setIsClockModalOpen] = useState(false);
@@ -312,11 +313,21 @@ export default function StudentExam() {
               setShowExamInterface(false);
               setActiveAttemptId(null);
             }}
+            onReviewExam={(attemptId) => {
+              setShowExamInterface(false);
+              setActiveAttemptId(null);
+              setHistoryAttemptIdToOpen(attemptId);
+              setShowHistory(true);
+            }}
           />
         ) : showHistory ? (
           <ExamHistory
             availableExams={availableExams}
-            onBack={() => setShowHistory(false)}
+            initialExpandedAttemptId={historyAttemptIdToOpen}
+            onBack={() => {
+              setShowHistory(false);
+              setHistoryAttemptIdToOpen(null);
+            }}
           />
         ) : loading ? (
           <div className="py-24 flex flex-col items-center justify-center gap-4">
@@ -345,7 +356,10 @@ export default function StudentExam() {
                 {/* Practice Center title removed - header handles this */}
               </div>
               <button
-                onClick={() => setShowHistory(true)}
+                onClick={() => {
+                  setHistoryAttemptIdToOpen(null);
+                  setShowHistory(true);
+                }}
                 className="px-5 py-2.5 bg-[#09314F]/5 dark:bg-white/5 hover:bg-[#09314F]/10 border border-[#C5A97A]/30 hover:border-[#C5A97A] text-[#09314F] dark:text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all"
               >
                 <Icon icon="lucide:history" className="w-4 h-4 text-[#C5A97A]" />
@@ -364,14 +378,29 @@ export default function StudentExam() {
                   <h3 className="text-lg font-black text-[#09314F] dark:text-white uppercase tracking-tight mb-2">
                     Exam Practice Center
                   </h3>
-                  <div className="text-sm font-medium text-gray-600 dark:text-gray-300 space-y-2 leading-relaxed">
-                    <p>Welcome to your customized practice portal. Standard instructions:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li>Choose your enrolled course and preferred subject from the lists.</li>
-                      <li>Select the target past question year to fetch relevant datasets.</li>
-                      <li>
-                        Configure your timer between{" "}
-                        <span className="font-bold">10 and 120 minutes</span> to fit your preferred schedule.
+                  <div className="text-sm font-medium text-gray-600 dark:text-gray-300 space-y-3 leading-relaxed">
+                    <p>Welcome to your customized practice portal. Here is how to get started:</p>
+                    <ul className="space-y-2 mt-2">
+                      <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
+                        <span>Choose your enrolled course and preferred subject from the lists below.</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
+                        <span>Select the target past question year to fetch relevant datasets.</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
+                        <span>
+                          Configure your timer between{" "}
+                          <span className="font-bold text-[#09314F] dark:text-white">10 and 120 minutes</span> to fit your preferred schedule.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
+                        <span>
+                          Click the <span className="font-bold text-[#09314F] dark:text-white">Practice History</span> button above to review your past performances and explanations.
+                        </span>
                       </li>
                     </ul>
                   </div>
