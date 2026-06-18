@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import logo1 from "../../assets/images/TC 1.png";
-import student_image from "../../assets/images/childLearning.png";
+import student_image from "../../assets/images/Hero_mobile.png";
 import hero_image from "../../assets/images/Hero.png";
 // import dotted_box from "../../assets/svg/dots.svg";
 // import SignUp from "../../pages/public/SignUp.jsx";
@@ -17,8 +17,8 @@ export default function Hero() {
                 </p>
             </div>
 
-            {/* Hero Section for extra large screen */}
-            <div className="relative pt-2 pb-10 max-[1279px]:p-0 h-[600px] flex items-center max-xl:hidden">
+            {/* Hero Section for laptop and above (matches navbar lg breakpoint) */}
+            <div className="relative pt-2 pb-10 max-[1023px]:p-0 h-[600px] flex items-center max-lg:hidden">
                 <div 
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                     style={{ backgroundImage: `url(${hero_image})` }}
@@ -85,14 +85,14 @@ export default function Hero() {
 export const MobileHero = () => {
     return (
         <>
-            <div className="max-xl:block hidden w-full">
+            <div className="max-lg:block hidden w-full">
                 <div className=" relative w-full h-[450px]">
                     {/* background color cover */}
                     <div className="bg-[rgba(0,0,0,0.288)] z-10 w-full h-full absolute top-0 left-0 bottom-0" />
 
                     {/* background image */}
                     <div
-                        className="w-full h-full bg-contain max-[602px]:bg-cover bg-no-repeat bg-center absolute top-0 left-0 bottom-0"
+                        className="w-full h-full bg-cover bg-no-repeat bg-center absolute top-0 left-0 bottom-0"
                         style={{ backgroundImage: `url(${student_image})` }}
                     />
 
