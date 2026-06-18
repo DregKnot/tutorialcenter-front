@@ -98,7 +98,7 @@ const About = () => {
                       </div>
                     </div>
                     <div className="">
-                      <h4 className="font-semibold mb-3">{item.title}</h4>
+                      <h4 className="font-semibold mb-1 md:mb-3">{item.title}</h4>
                       <p className=" text-xs leading-5">{item.desc}</p>
                     </div>
                   </div>

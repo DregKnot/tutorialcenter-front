@@ -77,11 +77,11 @@ const FaqSection = () => {
             <div className="w-full">
                 <div className="Container !overflow-visible">
                     <div className="area-wrapper !pt-16 !pb-0">
-                        <div className="text-center mb-10">
-                            <h2 className="header-title text-primary mb-2">
+                        <div className="text-center mb-5 md:mb-10">
+                            <h2 className="header-title text-primary !text-2xl md:!text-[2rem] mb-1 md:mb-2 !leading-tight">
                                 Frequently Asked Questions
                             </h2>
-                            <p className="text-sm">
+                            <p className="text-xs md:text-sm">
                                 Here are the most frequently asked questions
                             </p>
                         </div>
@@ -126,11 +126,11 @@ const FaqSection = () => {
                                 </div>
                             ))}
                         </div>
-                        <div className="text-center mb-3 mt-10 max-w-[650px] mx-auto">
-                            <h2 className="header-title text-primary mb-2">
+                        <div className="text-center mb-3 mt-6 md:mt-10 max-w-[650px] mx-auto">
+                            <h2 className="header-title text-primary !text-2xl md:!text-[2rem] mb-1 md:mb-2 !leading-tight">
                                 Still have questions?
                             </h2>
-                            <p className="text-sm ">
+                            <p className="text-xs md:text-sm">
                                 If you cannot find answers to your questions in our FAQs, you can
                                 always contact us. We will answer you shortly.{" "}
                             </p>
