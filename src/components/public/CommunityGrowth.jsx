@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import image from "../../assets/images/handshake.png"
+import officeImage from "../../assets/images/work_with_us.jpg"
 import CommunityGrowthLayout from "./CommunityGrowthLayout.jsx";
 
 export default function CommunityGrowth() {
@@ -14,18 +15,17 @@ export default function CommunityGrowth() {
                 Sdesc: "Be present for your future!",
                 btnTitle: "Apply Now",
                 btnPath: "/register",
-                imgPath:
-                image,
+                imgPath: image,
             },
             {
-                title: "Join our growing community",
-                semititle: "Attend classes with your pairs",
-                desc: "We invite you to enroll in our online Master Class, where you can immerse yourself in advanced learning and gain valuable insights from our tutors.",
-                Sdesc: "Be present for your future!",
+                title: "Work with us",
+                semititle: "Join our team of educators & professionals",
+                desc: "We are always looking for passionate tutors, content creators, and administrators to join our mission of empowering Nigerian students.",
+                Sdesc: "Grow your career while building the future!",
                 btnTitle: "Apply Now",
-                btnPath: "/register",
-                imgPath:
-                image,
+                btnPath: "/career",
+                imgPath: officeImage,
+                isAccentTheme: true,
             },
         ]
 
@@ -64,6 +64,11 @@ export default function CommunityGrowth() {
                         btnTitle={item.btnTitle}
                         btnPath={item.btnPath}
                         imgPath={item.imgPath}
+                        bgColor={item.isAccentTheme ? "bg-[#bb9e7f]" : "bg-[#09314F]"}
+                        overlayGradient={item.isAccentTheme ? "from-[#bb9e7f] via-[#bb9e7f]/40" : "from-[#09314F] via-[#09314F]/40"}
+                        btnBgColor={item.isAccentTheme ? "bg-[#09314F]" : "bg-sencondary"}
+                        semititleColor={item.isAccentTheme ? "text-[#09314F]" : "text-ascent"}
+                        SdescColor={item.isAccentTheme ? "text-[#09314F]" : "text-ascent"}
                     />
                 ))}
             </div>

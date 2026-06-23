@@ -3,19 +3,23 @@ import icon from "../../assets/svg/tc_icon.svg";
 const SectionHeading = ({ title, position_right, fullWidth = false, onClick }) => {
     return (
         <div 
-            className={`bg-primary py-3 relative ${fullWidth ? "w-full left-0 right-0" : "xl:max-w-[1300px] mx-auto w-full"} mb-10 md:mb-20 transition-all duration-300 ${onClick ? "cursor-pointer" : ""}`}
+            className={`relative ${fullWidth ? "w-full left-0 right-0" : "xl:max-w-[1300px] mx-auto w-full"} mb-10 md:mb-20 transition-all duration-300 ${onClick ? "cursor-pointer" : ""}`}
             onClick={onClick}
         >
-            <div className={`${fullWidth ? "w-full" : "xl:max-w-[1200px] mx-auto"} relative px-5 lg:px-8 2xl:px-9`}>
-                <h1 className="semi-title text-center text-white uppercase tracking-wider">{title}</h1>
-                <img 
-                    src={icon} 
-                    alt="Tutorial center" 
-                    className={`absolute bottom-0 translate-y-full ${position_right ? "right-2 md:right-10" : "left-2 md:left-10"} w-[80px] lg:w-[100px] z-20 transition-all`} 
-                />
+            <div className="bg-primary py-3 relative z-10 w-full">
+                <div className={`${fullWidth ? "w-full" : "xl:max-w-[1200px] mx-auto"} px-5 lg:px-8 2xl:px-9`}>
+                    <h1 className="semi-title text-center text-white uppercase tracking-wider">{title}</h1>
+                </div>
             </div>
+            
+            {/* Hanging Medallion - the SVG already contains the full design */}
+            <img 
+                src={icon} 
+                alt="Tutorial center" 
+                className={`absolute top-[calc(100%-8px)] ${position_right ? "right-2 md:right-10" : "left-2 md:left-10"} w-[80px] lg:w-[100px] z-0 transition-all`} 
+            />
         </div>
     );
 }
- 
+
 export default SectionHeading;

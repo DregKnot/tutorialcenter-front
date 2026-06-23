@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import logo1 from "../../assets/images/TC 1.png";
 import student_image from "../../assets/images/Hero_mobile.png";
-import hero_image from "../../assets/images/Hero.png";
+import hero_image from "../../assets/images/tutorial_center_split_screen_filled (1).png";
 // import dotted_box from "../../assets/svg/dots.svg";
 // import SignUp from "../../pages/public/SignUp.jsx";
 
@@ -20,36 +20,39 @@ export default function Hero() {
             {/* Hero Section for laptop and above (matches navbar lg breakpoint) */}
             <div className="relative pt-2 pb-10 max-[1023px]:p-0 h-[600px] flex items-center max-lg:hidden">
                 <div 
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                    style={{ backgroundImage: `url(${hero_image})` }}
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-gray-600 bg-blend-overlay"
+                    style={{ backgroundImage: `url("${hero_image}")` }}
                 />
                 
+                {/* Center Blended Seam Effect */}
+                <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-16 bg-gradient-to-r from-transparent via-[#bb9e7f]/40 to-transparent backdrop-blur-[3px] pointer-events-none z-10" />
+                
                 {/* Overlay to ensure text readability */}
-                <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-white/10 to-transparent" />
+                <div className="absolute inset-0 bg-black/30" />
 
-                <div className="Container relative z-10 w-full">
-                    <div className="max-w-2xl">
-                        <h1 className="font-bold text-[40px] mb-3 uppercase">
+                <div className="Container relative z-10 w-full flex justify-center text-center">
+                    <div className="max-w-2xl flex flex-col items-center">
+                        <h1 className="font-bold text-[40px] mb-3 uppercase text-white">
                             <span className="text-ascent">Ace</span> Your{" "}
                             <span className="text-ascent">Exams</span> , <br /> Secure Your
                             Future!
                         </h1>
-                        <p className="text-base font-medium leading-7 mb-9">
+                        <p className="text-base font-medium leading-7 mb-9 text-white/90">
                             Your Ultimate Guide to{" "}
                             <span className="text-ascent">JAMB, WAEC,</span> <br />{" "}
                             <span className="text-ascent">NECO</span> And{" "}
                             <span className="text-ascent">GCE</span> Success.
                         </p>
-                        <div className="flex items-center gap-3 [&_a]:px-10 [&_a]:py-2 [&_a]:rounded-2xl [&_a]:whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-3 [&_a]:px-10 [&_a]:py-2 [&_a]:rounded-2xl [&_a]:whitespace-nowrap">
                             <Link
                                 to="/training"
-                                className="bg-gradient-to-r from-[#09314F] to-[#E83831] border-[2px] border-solid border-x-[#E83831] border-y-[#09314F] bg-clip-text text-transparent"
+                                className="bg-gradient-to-r from-[#09314F] to-[#E83831] border-[2px] border-solid border-x-[#E83831] border-y-[#09314F] bg-clip-text text-transparent font-bold"
                             >
                                 View Training
                             </Link>
                             <Link
                                 to="/register"
-                                className="bg-gradient-to-r from-[#09314F] to-[#E83831] text-white"
+                                className="bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-bold"
                             >
                                 Apply Now{" "}
                             </Link>
@@ -87,17 +90,17 @@ export const MobileHero = () => {
         <>
             <div className="max-lg:block hidden w-full">
                 <div className=" relative w-full h-[450px]">
-                    {/* background color cover */}
-                    <div className="bg-[rgba(0,0,0,0.288)] z-10 w-full h-full absolute top-0 left-0 bottom-0" />
-
-                    {/* background image */}
+                    {/* background image with grey blend */}
                     <div
-                        className="w-full h-full bg-cover bg-no-repeat bg-center absolute top-0 left-0 bottom-0"
-                        style={{ backgroundImage: `url(${student_image})` }}
+                        className="w-full h-full bg-cover bg-no-repeat bg-center absolute top-0 left-0 bottom-0 bg-gray-600 bg-blend-overlay"
+                        style={{ backgroundImage: `url("${student_image}")` }}
                     />
 
+                    {/* Overlay to ensure text readability */}
+                    <div className="bg-black/30 z-10 w-full h-full absolute top-0 left-0 bottom-0" />
+
                     {/* background content */}
-                    <div className="flex-1 absolute top-8 left-0 z-50 px-7">
+                    <div className="flex-1 absolute top-1/2 -translate-y-1/2 left-0 z-50 px-5">
                         <h1 className="font-bold sm:text-[32px] text-2xl text-white  mb-3 uppercase leading-[1.47]">
                             <span className="text-ascent">Ace</span> Your <br />
                             <span className="text-ascent">Exams</span> , Secure <br /> Your

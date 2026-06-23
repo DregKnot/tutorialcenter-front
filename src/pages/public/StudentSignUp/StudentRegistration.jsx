@@ -18,7 +18,8 @@ import {
   UserCircleIcon,
   MapIcon,
   PhoneIcon,
-  TicketIcon
+  TicketIcon,
+  LockClosedIcon
 } from "@heroicons/react/24/outline";
 
 const isIOS = () =>
@@ -411,9 +412,7 @@ export default function StudentRegistration() {
               <div className="space-y-2">
                 <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1 text-left block">Password</label>
                 <div className={getInputStyles("password").container}>
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="mr-3">
-                    {showPassword ? <EyeSlashIcon className="h-5 w-5 text-gray-400" /> : <EyeIcon className="h-5 w-5 text-gray-400" />}
-                  </button>
+                  <LockClosedIcon className={getInputStyles("password").icon} />
                   <input
                     name="password"
                     type={showPassword ? "text" : "password"}
@@ -423,6 +422,9 @@ export default function StudentRegistration() {
                     onBlur={() => setFocusedField(null)}
                     className={getInputStyles("password").input}
                   />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="ml-2 focus:outline-none">
+                    {showPassword ? <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-[#09314F] transition-colors" /> : <EyeIcon className="h-5 w-5 text-gray-400 hover:text-[#09314F] transition-colors" />}
+                  </button>
                 </div>
                 {errors.password && <p className="text-xs text-red-500 font-bold px-1">{errors.password}</p>}
               </div>
@@ -431,9 +433,7 @@ export default function StudentRegistration() {
               <div className="space-y-2">
                 <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1 text-left block">Confirm Password</label>
                 <div className={getInputStyles("confirmPassword").container}>
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="mr-3">
-                    {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5 text-gray-400" /> : <EyeIcon className="h-5 w-5 text-gray-400" />}
-                  </button>
+                  <LockClosedIcon className={getInputStyles("confirmPassword").icon} />
                   <input
                     name="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
@@ -443,6 +443,9 @@ export default function StudentRegistration() {
                     onBlur={() => setFocusedField(null)}
                     className={getInputStyles("confirmPassword").input}
                   />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="ml-2 focus:outline-none">
+                    {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-[#09314F] transition-colors" /> : <EyeIcon className="h-5 w-5 text-gray-400 hover:text-[#09314F] transition-colors" />}
+                  </button>
                 </div>
                 {errors.confirmPassword && <p className="text-xs text-red-500 font-bold px-1">{errors.confirmPassword}</p>}
               </div>

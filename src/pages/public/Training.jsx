@@ -174,7 +174,7 @@ const Training = () => {
         {/* ──────────────────────────────────────────
             SECTION 1b — INTRO + MISSION / VISION
             ────────────────────────────────────────── */}
-        <div className="w-full bg-white py-16">
+        <div className="w-full bg-white py-10">
           <div className="Container">
             <div className="text-sm">
               <h2 className="text-2xl md:text-4xl font-bold text-primary leading-tight mb-8 max-w-lg uppercase">
@@ -195,7 +195,7 @@ const Training = () => {
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-8 mb-16 mt-8">
+              <div className="grid md:grid-cols-2 gap-4 mb-5 mt-8">
                 {/* Why Choose Us Card */}
                 <div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] px-3 py-4 md:p-8 flex gap-3 md:gap-6 shadow-sm">
                   <div className="flex-shrink-0">
@@ -244,11 +244,11 @@ const Training = () => {
         {/* ──────────────────────────────────────────
             SECTION 2 — OUR PROGRAMS (FROM API)
             ────────────────────────────────────────── */}
-        <section className="w-full bg-white font-sans pb-20">
+        <section className="w-full bg-white font-sans pb-10 md:pb-20">
           <SectionHeading title="Our Programs" position_right={true} fullWidth={true} />
 
           <div className="Container mt-16">
-            <p className="text-center text-gray-500 text-sm md:text-base mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-gray-500 text-sm md:text-base mb-8 max-w-2xl mx-auto">
               Select your exam body to view pricing. Click any card below to reveal full duration and pricing details.
             </p>
 
@@ -261,7 +261,7 @@ const Training = () => {
                 <p className="text-gray-400 font-bold text-lg">No programs available at this time.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 lg:gap-x-8 gap-y-3 lg:gap-y-4 items-start">
                 {courses.map((course) => {
                   const isExpanded = expandedCard === course.id;
                   const bannerUrl = course.banner
@@ -409,11 +409,11 @@ const Training = () => {
         {/* ──────────────────────────────────────────
             SECTION 3 — ADMISSION GUIDE
             ────────────────────────────────────────── */}
-        <section className="w-full bg-white rounded-b-[80px] md:rounded-b-[100px] overflow-hidden pb-24 font-sans">
+        <section className="w-full bg-white rounded-b-[80px] md:rounded-b-[100px] overflow-hidden pb-12 md:pb-24 font-sans">
           <SectionHeading title="Admission Guide" position_right={false} fullWidth={true} />
 
           <div className="Container mt-16">
-            <p className="text-center text-gray-500 text-sm md:text-base mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-gray-500 text-sm md:text-base mb-10 max-w-2xl mx-auto">
               2025 Admission Guide — Use this resource to understand the JAMB and O'Level subject
               requirements for your desired course and faculty.
             </p>
@@ -428,7 +428,7 @@ const Training = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search any course/department/faculty..."
+                  placeholder="Search any faculty..."
                   className="w-full pl-12 pr-6 py-3 md:py-4 bg-white rounded-2xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-[#09314F] focus:border-transparent text-sm font-medium placeholder-gray-400 transition-all"
                 />
               </div>
@@ -440,7 +440,7 @@ const Training = () => {
                 <p className="text-gray-400 font-bold">No courses or departments match your search.</p>
               </div>
             ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-8 gap-y-3 md:gap-y-4">
               {filteredSectors.map((sector) => {
                 const isOpen = expandedSector === sector.id;
 
