@@ -114,11 +114,11 @@ export default function StudentLogin() {
       
       await axios.post(`${API_BASE_URL}/api/students/forget-password`, { [payloadKey]: target }, {
           headers: { Accept: "application/json" } // No token, they are not logged in!
-      }).catch(err => console.log("Forgot Password API Request Triggered:", err));
+      });
 
       setModalType("otp");
     } catch (err) {
-      alert("Failed to request reset code. Please check your credentials and try again.");
+      alert(err.response?.data?.message || "Failed to request reset code. Please check your credentials and try again.");
     } finally {
       setModalLoading(false);
     }

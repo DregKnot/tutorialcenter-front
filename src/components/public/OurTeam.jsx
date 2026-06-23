@@ -8,19 +8,19 @@ const OurTeam = () => {
     // List of team departments
     const [listallTeams, setListAllTeams] = useState([
         {
-            developers: "Development team",
+            developers: "Development",
             open: true,
         },
         {
-            developers: "EDUCATION team",
+            developers: "Education",
             open: false,
         },
         {
-            developers: "marketing / operations",
+            developers: "marketing",
             open: false,
         },
         {
-            developers: "Advisory team",
+            developers: "Advisory",
             open: false,
         },
     ]);
@@ -99,7 +99,7 @@ const OurTeam = () => {
     return (
         <>
             <SectionHeading title="Meet the team" position_right={false} fullWidth={true} />
-            <div className="Container py-14 lg:py-16">
+            <div className="Container py-14 lg:py-14">
                 <div className="area-wrapper">
                     
                     {/* Team category tabs */}
@@ -129,7 +129,7 @@ const OurTeam = () => {
                     
                     {/* Custom carousel implementation */}
                     {filteredTeam.length > 0 ? (
-                        <div className="mt-20 relative">
+                        <div className="mt-12 relative">
                             <div className="overflow-hidden">
                                 <div 
                                     className="flex transition-transform duration-500 ease-in-out"
@@ -189,7 +189,7 @@ const OurTeam = () => {
                         </div>
                     ) : (
                         // Show message when no team members in category
-                        <div className="mt-20 text-center text-gray-500">
+                        <div className="mt-18 text-center text-gray-500">
                             <p>No team members in this category yet.</p>
                         </div>
                     )}

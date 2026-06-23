@@ -76,8 +76,8 @@ const FaqSection = () => {
             <SectionHeading title={"faq"} position_right={false} fullWidth={true} />
             <div className="w-full">
                 <div className="Container !overflow-visible">
-                    <div className="area-wrapper !pt-16 !pb-0">
-                        <div className="text-center mb-5 md:mb-10">
+                    <div className="area-wrapper !pt-6 md:!pt-16 !pb-0">
+                        <div className="text-center mb-4 md:mb-10">
                             <h2 className="header-title text-primary !text-2xl md:!text-[2rem] mb-1 md:mb-2 !leading-tight">
                                 Frequently Asked Questions
                             </h2>
@@ -85,7 +85,7 @@ const FaqSection = () => {
                                 Here are the most frequently asked questions
                             </p>
                         </div>
-                        <div className="faqs space-y-3">
+                        <div className="faqs space-y-2 md:space-y-3">
                             {faqs.map((faq, index) => (
                                 <div
                                     className={`w-full text-start  ${
@@ -95,7 +95,7 @@ const FaqSection = () => {
                                 >
                                     <button
                                         onClick={() => toggleFaq(index)}
-                                        className="w-full h-full flex justify-between items-center p-3 relative max-md:justify-start max-md:text-left"
+                                        className="w-full h-full flex justify-between items-center py-2 px-3 md:p-3 relative max-md:justify-start max-md:text-left"
                                     >
                                         <span
                                             className={`${
@@ -126,7 +126,7 @@ const FaqSection = () => {
                                 </div>
                             ))}
                         </div>
-                        <div className="text-center mb-3 mt-6 md:mt-10 max-w-[650px] mx-auto">
+                        <div className="text-center mb-3 mt-4 md:mt-10 max-w-[650px] mx-auto">
                             <h2 className="header-title text-primary !text-2xl md:!text-[2rem] mb-1 md:mb-2 !leading-tight">
                                 Still have questions?
                             </h2>

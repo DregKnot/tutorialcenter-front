@@ -59,10 +59,10 @@ export default function BenefitSection() {
                         <h3 className="text-sencondary text-center text-base font-semibold mb-8">
                             Here’s why Tutorial Center is your ultimate e-learning partner:
                         </h3>
-                        <div className="grid lg:grid-cols-2 gap-x-10 gap-y-5">
+                        <div className="grid lg:grid-cols-2 gap-x-6 lg:gap-x-8 gap-y-3 lg:gap-y-4">
                             {benefitsData.map((item, index) => (
                                 <div
-                                    className="bg-[#E336290D] shadow-xl px-3 py-4 md:py-5 md:px-5 rounded-3xl border-l-[10px] border-l-[#E83831]"
+                                    className="bg-[#E336290D] shadow-xl px-3 pt-4 pb-2 md:py-5 md:px-5 rounded-3xl border-l-[10px] border-l-[#E83831]"
                                     key={index}
                                 >
                                     <h4 className="text-sm md:text-base font-semibold md:font-bold text-sencondary mb-1 md:mb-3 ">

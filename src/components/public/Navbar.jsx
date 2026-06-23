@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import logo from "../../assets/images/TC 1.png";
+import logo from "../../assets/images/tutorial_logo.png";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
@@ -31,13 +31,13 @@ export default function Navbar() {
   return (
     <>
       <div
-        className={`bg-white shadow-custom-1 animate-header py-3.5 sticky top-0 z-[80]  w-full  h-[85px] flex items-center justify-center scroll`}
+        className={`bg-white shadow-custom-1 animate-header py-2.5 sticky top-0 z-[80]  w-full  h-[85px] flex items-center justify-center scroll`}
       >
         <div className="Container">
           <div className="flex items-center justify-between">
             {/* Tutotrial Logo */}
             <Link to="/">
-              <img src={logo} alt="Tutorial Center Logo" className="max-w-[90px] md:max-w-[100px] lg:max-w-[110px] h-auto cursor-pointer" />
+              <img src={logo} alt="Tutorial Center Logo" className="max-w-[120px] md:max-w-[130px] lg:max-w-[140px] h-auto cursor-pointer" />
             </Link>
             {/* navigation Links */}
             <div className="hidden lg:block">

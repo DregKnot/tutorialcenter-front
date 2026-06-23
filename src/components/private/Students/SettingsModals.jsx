@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 // --- Generic Modal Wrapper ---
 export function ModalWrapper({ isOpen, onClose, children }) {
@@ -15,9 +16,16 @@ export function ModalWrapper({ isOpen, onClose, children }) {
   );
 }
 
+
 // --- Contact Input Modal ---
 export function ContactInputModal({ isOpen, onClose, type, onSubmit, loading }) {
   const [value, setValue] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setValue("");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -207,6 +215,17 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
 export function PasswordChangeModal({ isOpen, onClose, onSave, loading }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPassword("");
+      setConfirmPassword("");
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+    }
+  }, [isOpen]);
 
   const isMatch = password.length >= 8 && password === confirmPassword;
 
@@ -222,25 +241,47 @@ export function PasswordChangeModal({ isOpen, onClose, onSave, loading }) {
       </p>
 
       <div className="space-y-4 mb-8">
-        <div>
+        <div className="relative">
            <input
-             type="password"
+             type={showPassword ? "text" : "password"}
              placeholder="New Password"
              value={password}
              onChange={(e) => setPassword(e.target.value)}
-             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#09314F] transition-all"
+             className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#09314F] transition-all"
            />
+           <button
+             type="button"
+             onClick={() => setShowPassword(!showPassword)}
+             className="absolute right-3 top-3.5 text-gray-400 hover:text-[#09314F] transition-colors"
+           >
+             {showPassword ? (
+               <EyeSlashIcon className="h-5 w-5" />
+             ) : (
+               <EyeIcon className="h-5 w-5" />
+             )}
+           </button>
         </div>
-        <div>
+        <div className="relative">
            <input
-             type="password"
+             type={showConfirmPassword ? "text" : "password"}
              placeholder="Confirm New Password"
              value={confirmPassword}
              onChange={(e) => setConfirmPassword(e.target.value)}
-             className={`w-full px-4 py-3 rounded-xl border bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none transition-all ${
+             className={`w-full pl-4 pr-10 py-3 rounded-xl border bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none transition-all ${
                confirmPassword && !isMatch ? "border-red-500 focus:ring-red-500" : "border-gray-200 dark:border-gray-700 focus:ring-[#09314F]"
              }`}
            />
+           <button
+             type="button"
+             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+             className="absolute right-3 top-3.5 text-gray-400 hover:text-[#09314F] transition-colors"
+           >
+             {showConfirmPassword ? (
+               <EyeSlashIcon className="h-5 w-5" />
+             ) : (
+               <EyeIcon className="h-5 w-5" />
+             )}
+           </button>
            {confirmPassword && !isMatch && (
               <p className="text-red-500 text-xs mt-1">Passwords do not match.</p>
            )}
@@ -296,6 +337,12 @@ export function SuccessModal({ isOpen, onClose, title, message }) {
 // --- Forgot Password Input Modal ---
 export function ForgotInputModal({ isOpen, onClose, onSubmit, loading }) {
   const [value, setValue] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setValue("");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

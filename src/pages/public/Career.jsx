@@ -32,7 +32,7 @@ const Career = () => {
 
       {/* --- GLOBAL GRADIENT BACKGROUND WRAPPER --- */}
       <div className="bg-gradient-to-r from-[#09314F] to-[#E83831]">
-        <div className="w-full bg-white py-16">
+        <div className="w-full bg-white py-12">
           <div className="Container">
             <div className="text-sm">
               <h2 className="text-2xl md:text-4xl font-bold text-primary leading-tight mb-8 max-w-sm uppercase">
@@ -55,7 +55,7 @@ const Career = () => {
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-8 mb-16 mt-8">
+              <div className="grid md:grid-cols-2 gap-4 mb-10 mt-8">
                 {/* Mission Card */}
            
 <div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] px-3 py-4 md:p-8 flex gap-3 md:gap-6 shadow-sm">
@@ -113,7 +113,7 @@ const Career = () => {
                   Available Roles
                 </h4>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   
                   <button
                     onClick={() => window.open("https://forms.gle/bCaEdo4yMhsHFBca6", "_blank", "noopener,noreferrer")}
@@ -167,7 +167,7 @@ const Career = () => {
                 </p>
               </div>
 
-              <div className="mb-12">
+              <div className="mb-10">
                 <h4 className="text-[#3B82F6] font-extrabold text-base mb-6 uppercase tracking-wider">
                   Available Position
                 </h4>
@@ -196,7 +196,7 @@ const Career = () => {
 
               <button
                 onClick={() => window.open("https://forms.gle/bCaEdo4yMhsHFBca6", "_blank", "noopener,noreferrer")}
-                className="px-14 py-4 text-white font-bold text-lg rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
+                className="px-14 py-4 text-white font-bold rounded-xl shadow-lg hover:brightness-110 transition-all active:scale-95"
                 style={{
                   background:
                     "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)",
@@ -208,7 +208,7 @@ const Career = () => {
 
             {/* Right Side: Featured Image */}
             <div className="w-full md:w-1/2 flex justify-end">
-              <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-2xl border-[2px] border-white ring-1 ring-gray-100">
+              <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-md border-[2px] border-white ring-1 ring-gray-100">
                 <img
                   src={handCup}
                   alt="Success Trophy"
@@ -233,7 +233,7 @@ const Career = () => {
           <div className="Container mt-20 flex flex-col md:flex-row items-center gap-16">
             {/* Featured Image */}
             <div className="w-full md:w-1/2 order-2 md:order-1">
-              <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-2xl  border-white ring-1 ring-gray-100">
+              <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-md border-[2px] border-white ring-1 ring-gray-100">
                 <img
                   src={handCup}
                   alt="Course Advisor Success"
@@ -244,7 +244,7 @@ const Career = () => {
 
             {/* Content */}
             <div className="w-full md:w-1/2 order-1 md:order-2">
-              <div className="mb-10">
+              <div className="mb-8">
                 <h4 className="text-[#3B82F6] font-extrabold text-base mb-4 uppercase tracking-wider">
                   Role Requirement
                 </h4>
@@ -257,7 +257,7 @@ const Career = () => {
                 </p>
               </div>
 
-              <div className="mb-12">
+              <div className="mb-8">
                 <h4 className="text-[#3B82F6] font-extrabold text-base mb-6 uppercase tracking-wider">
                   Available Position
                 </h4>
@@ -270,7 +270,7 @@ const Career = () => {
 
               <button
                 onClick={() => alert("Course Advisor applications are currently closed. Please check back later!")}
-                className="px-14 py-4 text-white font-bold text-lg rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
+                className="px-14 py-4 text-white font-bold rounded-xl shadow-lg hover:brightness-110 transition-all active:scale-95"
                 style={{
                   background:
                     "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)",
@@ -295,10 +295,10 @@ const Career = () => {
           />
 
           {/* 2. CONTENT AREA */}
-          <div className="Container mt-20 flex flex-col md:flex-row items-center gap-16">
+          <div className="Container mt-20 flex flex-col md:flex-row items-center gap-12">
             {/* Left Side: Text */}
             <div className="w-full md:w-1/2">
-              <div className="mb-10">
+              <div className="mb-8">
                 <h4 className="text-[#3B82F6] font-extrabold text-base mb-4 uppercase tracking-wider">
                   Role Requirement
                 </h4>
@@ -311,7 +311,7 @@ const Career = () => {
                 </p>
               </div>
 
-              <div className="mb-12">
+              <div className="mb-8">
                 <h4 className="text-[#3B82F6] font-extrabold text-base mb-6 uppercase tracking-wider">
                   Available Position
                 </h4>
@@ -346,7 +346,7 @@ const Career = () => {
 
             {/* Right Side: Image */}
             <div className="w-full md:w-1/2 flex justify-end">
-              <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-2xl border-[2px] border-white">
+              <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-md border-[2px] border-white ring-1 ring-gray-100">
                 <img
                   src={handCup}
                   alt="Administration Success"
