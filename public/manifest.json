@@ -1,26 +1,37 @@
 {
+  "id": "/?utm_source=pwa&utm_medium=desktop_mobile",
   "short_name": "Tutorial Center",
-  "name": "Tutorial Center App",
-  "description": "Tutorial Center is an educational platform for exam preparation and learning support.",
+  "name": "Tutorial Center",
+  "description": "An interactive educational platform offering exam preparation, curriculum guides, and learning support.",
+  "categories": ["education", "books", "utilities"],
+  "start_url": "/?utm_source=pwa&utm_medium=desktop_mobile",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
   "icons": [
     {
-      "src": "tc_icon.png",
+      "src": "/public/TC 1.png",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/png"
     },
     {
-      "src": "tc_icon.png",
+      "src": "/public/TC 1.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
-      "src": "tc_icon.png",
+      "src": "/public/TC 1.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/public/TC 1.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#1E3A5F",
-  "background_color": "#ffffff"
+  ]
 }

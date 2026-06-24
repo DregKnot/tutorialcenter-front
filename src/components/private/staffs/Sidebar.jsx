@@ -57,6 +57,10 @@ const courseAdvisorMenuItems = [
   { label: "Settings", icon: Cog6ToothIcon, destination: "/staffs/course-advisor/settings" },
 ];
 
+const moderatorMenuItems = [
+  { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
+];
+
 export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose }) {
   const { theme, setTheme } = useTheme();
   const { logout } = useStaffAuth();
@@ -119,6 +123,7 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
   const getMenuItems = () => {
     const roleLower = staffRole.toLowerCase();
     if (roleLower === "tutor") return tutorMenuItems;
+    if (roleLower === "moderator") return moderatorMenuItems;
     if (roleLower === "course advisor" || roleLower === "advisor") return courseAdvisorMenuItems;
     return adminMenuItems;
   };

@@ -40,16 +40,16 @@ const ContactSection = ({ showTitle = true }) => {
                                         </p>
                                         <div className="flex sm:flex-row flex-col gap-3 sm:gap-6 mt-3">
                                             <Link
-                                                to=""
+                                                to="mailto:[EMAIL_ADDRESS]"
                                                 className="text-sencondary font-semibold text-sm"
                                             >
-                                                tutorialcenter@gmail.com
+                                                info@tutorialcenter.gmail
                                             </Link>
                                             <Link
                                                 to=""
                                                 className="text-sencondary font-semibold text-sm"
                                             >
-                                                +234XXXXXXXXXX
+                                                08029606405
                                             </Link>
                                         </div>
                                     </div>
