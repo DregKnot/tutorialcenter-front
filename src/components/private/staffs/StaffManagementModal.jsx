@@ -384,7 +384,8 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
               options={[
                 { label: "Admin", value: "admin" },
                 { label: "Tutor", value: "tutor" },
-                { label: "Advisor", value: "advisor" }
+                { label: "Advisor", value: "advisor" },
+                {label: "Moderator", Value: "moderator"}
               ]}
             />
 
