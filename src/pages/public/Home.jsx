@@ -1,4 +1,5 @@
 import BenefitSection from "../../components/public/BenefitSection";
+import LearningSection from "../../components/public/LearningSection";
 import CommunityGrowth from "../../components/public/CommunityGrowth";
 import ContactSection from "../../components/public/ContactSection";
 import FaqSection from "../../components/public/FaqSection";
@@ -16,6 +17,7 @@ const Home = () => {
             <Navbar />
             <Hero />
             <BenefitSection />
+            <LearningSection />
             <CommunityGrowth />
             <ProgramSection />
             <TestimonialSection />

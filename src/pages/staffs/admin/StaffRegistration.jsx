@@ -383,6 +383,9 @@ export default function StaffRegistration() {
                         <option value="admin">Admin</option>
                         <option value="tutor">Tutor</option>
                         <option value="advisor">Advisor</option>
+                        <option value ="moderator">Moderator</option>
+                        {/* <option value ="accountant">Accountant</option> */}
+                        {/* <option value ="superadmin">Super Admin</option> */}
                       </select>
                       <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     </div>
