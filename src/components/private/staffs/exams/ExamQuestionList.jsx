@@ -32,10 +32,9 @@ export default function ExamQuestionList() {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
       // Fetch Context Details
-      console.log("[ExamQuestionList] Fetching Meta Data (Bodies, Courses, Years)");
-      const [bodiesRes, subjectsRes, yearsRes] = await Promise.all([
+      console.log("[ExamQuestionList] Fetching Meta Data (Bodies, Years)");
+      const [bodiesRes, yearsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/admin/exam-bodies/all`, config),
-        axios.get(`${API_BASE_URL}/api/courses`, config),
         axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config)
       ]);
 
@@ -44,24 +43,24 @@ export default function ExamQuestionList() {
       const bodies = bodiesRes.data?.exam_bodies || bodiesRes.data?.data || bodiesRes.data || [];
       const currentBody = bodies.find(b => String(b.id) === String(bodyId));
       
-      const fetchedCourses = subjectsRes.data?.data || subjectsRes.data?.courses || [];
-      const matchingCourse = fetchedCourses.find(c => String(c.id) === String(currentBody?.course_id));
+      const years = yearsRes.data?.data || yearsRes.data?.exam_years || [];
+      const currentYear = years.find(y => String(y.id) === String(yearId));
+      setYear(currentYear);
+
+      // Extract subject from the year data
+      const yearWithSubject = years.find(y => String(y.subject_id) === String(subjectId) && y.subject);
+      const currentSubject = yearWithSubject?.subject || null;
+      setSubject(currentSubject);
       
-      let bannerUrl = matchingCourse?.banner || matchingCourse?.image;
-      if (bannerUrl && !bannerUrl.startsWith('http')) {
-        bannerUrl = `${API_BASE_URL}/storage/${bannerUrl}`;
+      let subjectImage = currentSubject?.image || currentSubject?.banner;
+      if (subjectImage && !subjectImage.startsWith('http')) {
+        subjectImage = `${API_BASE_URL}/storage/${subjectImage}`;
       }
 
       setExamBody({
         ...currentBody,
-        image: bannerUrl || currentBody?.image
+        image: subjectImage || currentBody?.image
       });
-
-      const subjects = fetchedCourses;
-      setSubject(subjects.find(s => String(s.id) === String(subjectId)));
-
-      const years = yearsRes.data?.data || yearsRes.data?.exam_years || [];
-      setYear(years.find(y => String(y.id) === String(yearId)));
 
       // Fetch Questions for this context
       console.log("[ExamQuestionList] Fetching All Past Questions:", `${API_BASE_URL}/api/admin/past-questions/all`);
@@ -95,7 +94,7 @@ export default function ExamQuestionList() {
             <ChevronRightIcon className="w-3 h-3" />
             <Link to={`/staffs/manage-exams/${bodyId}/subjects`} className="hover:text-[#0F2843] transition-colors">{examBody?.name || "BODY"}</Link>
             <ChevronRightIcon className="w-3 h-3" />
-            <Link to={`/staffs/manage-exams/${bodyId}/subjects/${subjectId}/years`} className="hover:text-[#0F2843] transition-colors uppercase">{subject?.title || "SUBJECT"}</Link>
+            <Link to={`/staffs/manage-exams/${bodyId}/subjects/${subjectId}/years`} className="hover:text-[#0F2843] transition-colors uppercase">{subject?.title || subject?.name || "SUBJECT"}</Link>
             <ChevronRightIcon className="w-3 h-3" />
             <span className="text-[#0F2843] dark:text-white uppercase font-black">{year?.year || "YEAR"}</span>
           </div>

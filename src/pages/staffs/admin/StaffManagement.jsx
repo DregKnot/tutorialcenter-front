@@ -99,6 +99,8 @@ export default function StaffManagement() {
       
       // The active staffs endpoint returns an array of staff in the 'staffs' property
       const activeStaffsData = Array.isArray(activeRes.data) ? activeRes.data : (activeRes.data?.staffs || activeRes.data?.data || []);
+      
+      console.log("🎯 PARSED ACTIVE STAFFS:", activeStaffsData);
 
       setStaffs(staffsArray);
       calculateStats(staffsArray, activeStaffsData);

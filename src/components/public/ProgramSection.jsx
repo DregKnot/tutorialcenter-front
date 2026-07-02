@@ -54,20 +54,24 @@ const ProgramSection = () => {
 
     //next slide function
     const nextSlide = useCallback(() => {
-        if (isTransitioning) return;
+        if (isTransitioning || programDatas.length === 0) return;
+
+        const maxIndex = Math.max(0, programDatas.length - slidesToShow);
 
         setIsTransitioning(true);
-        setCurrentIndex((prev) => (prev + 1) % programDatas.length);
+        setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
 
         setTimeout(() => setIsTransitioning(false), 500);
-    }, [isTransitioning, programDatas.length]);
+    }, [isTransitioning, programDatas.length, slidesToShow]);
 
     //previous slide function
     const prevSlide = () => {
-        if (isTransitioning) return;
+        if (isTransitioning || programDatas.length === 0) return;
+
+        const maxIndex = Math.max(0, programDatas.length - slidesToShow);
 
         setIsTransitioning(true);
-        setCurrentIndex((prev) => (prev - 1 + programDatas.length) % programDatas.length);
+        setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
 
         setTimeout(() => setIsTransitioning(false), 500);
     };

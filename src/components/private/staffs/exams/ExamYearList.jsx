@@ -27,34 +27,32 @@ export default function ExamYearList() {
       
       // Fetch Context Details
       console.log("[ExamYearList] Fetching Exam Bodies:", `${API_BASE_URL}/api/admin/exam-bodies/all`);
-      console.log("[ExamYearList] Fetching Courses:", `${API_BASE_URL}/api/courses`);
       console.log("[ExamYearList] Fetching Exam Years:", `${API_BASE_URL}/api/admin/exam-years/all`);
       
-      const [bodiesRes, subjectsRes, yearsRes, questionsRes] = await Promise.all([
+      const [bodiesRes, yearsRes, questionsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/admin/exam-bodies/all`, config),
-        axios.get(`${API_BASE_URL}/api/courses`, config),
         axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config),
         axios.get(`${API_BASE_URL}/api/admin/past-questions/all`, config)
       ]);
 
       console.log("[ExamYearList] Exam Bodies Response:", bodiesRes.data);
-      console.log("[ExamYearList] Subjects Response:", subjectsRes.data);
       console.log("[ExamYearList] Exam Years Response:", yearsRes.data);
 
       const bodies = bodiesRes.data?.exam_bodies || bodiesRes.data?.data || bodiesRes.data || [];
       setExamBody(bodies.find(b => String(b.id) === String(bodyId)));
 
-      const subjects = subjectsRes.data?.data || subjectsRes.data?.courses || [];
-      const currentSubject = subjects.find(s => String(s.id) === String(subjectId));
+      const allYears = yearsRes.data?.data || yearsRes.data?.exam_years || [];
+      const allQuestions = questionsRes.data?.questions?.data || questionsRes.data?.data || questionsRes.data?.questions || [];
+
+      // Extract subject from the year data
+      const yearWithSubject = allYears.find(y => String(y.subject_id) === String(subjectId) && y.subject);
+      const currentSubject = yearWithSubject?.subject || null;
       setSubject(currentSubject);
 
       let subjectImage = currentSubject?.image || currentSubject?.banner;
       if (subjectImage && !subjectImage.startsWith('http')) {
         subjectImage = `${API_BASE_URL}/storage/${subjectImage}`;
       }
-
-      const allYears = yearsRes.data?.data || yearsRes.data?.exam_years || [];
-      const allQuestions = questionsRes.data?.questions?.data || questionsRes.data?.data || questionsRes.data?.questions || [];
 
       const filteredYears = allYears.filter(y => 
         String(y.exam_body_id) === String(bodyId) && 
@@ -101,7 +99,7 @@ export default function ExamYearList() {
           <ChevronRightIcon className="w-3 h-3" />
           <Link to={`/staffs/manage-exams/${bodyId}/subjects`} className="hover:text-[#0F2843] transition-colors">{examBody?.name || "BODY"}</Link>
           <ChevronRightIcon className="w-3 h-3" />
-          <span className="text-[#0F2843] dark:text-white uppercase">{subject?.title || "SUBJECT"}</span>
+          <span className="text-[#0F2843] dark:text-white uppercase">{subject?.title || subject?.name || "SUBJECT"}</span>
         </div>
 
         {/* Header Card */}

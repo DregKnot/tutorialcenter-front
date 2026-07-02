@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const navigate = useNavigate();
   const [token, setToken] = useState(null);
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -10,6 +12,7 @@ export function AuthProvider({ children }) {
   const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [verificationType, setVerificationType] = useState(null); // 'phone' or 'email'
+  const [isSplashing, setIsSplashing] = useState(false);
 
   // Load from localStorage on app start
   useEffect(() => {
@@ -33,6 +36,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback((token, studentData) => {
+    setIsSplashing(true);
     localStorage.setItem("student_token", token);
     localStorage.setItem("student_info", JSON.stringify(studentData));
     localStorage.setItem("studentdata", JSON.stringify({ data: studentData }));
@@ -41,9 +45,12 @@ export function AuthProvider({ children }) {
 
     setToken(token);
     setStudent(studentData);
+    
+    setTimeout(() => setIsSplashing(false), 2500); // Allow video to play
   }, []);
 
   const logout = useCallback(async () => {
+    setIsSplashing(true);
     try {
       const currentToken = localStorage.getItem("student_token");
       if (currentToken) {
@@ -67,10 +74,13 @@ export function AuthProvider({ children }) {
       setIsInactiveModalOpen(false);
       setIsClassActive(false);
 
-      // Redirect to student login
-      window.location.href = "/student/login";
+      // Redirect to student login with slight delay for splash screen
+      setTimeout(() => {
+        setIsSplashing(false);
+        navigate("/student/login");
+      }, 2500);
     }
-  }, []);
+  }, [navigate]);
 
   const resetActivity = useCallback(() => {
     localStorage.setItem("last_activity_at", Date.now().toString());
@@ -202,7 +212,9 @@ export function AuthProvider({ children }) {
         isVerificationModalOpen,
         verificationType,
         openVerificationModal,
-        closeVerificationModal
+        closeVerificationModal,
+        isSplashing,
+        setIsSplashing
       }}
     >
       {children}

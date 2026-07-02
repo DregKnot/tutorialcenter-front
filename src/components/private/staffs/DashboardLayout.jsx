@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar.jsx";
-import RightPanel from "./RightPanel.jsx";
 import MobileHeader from "./MobileHeader.jsx";
 import MobileBottomNav from "./MobileBottomNav.jsx";
 import { BellIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
@@ -14,7 +13,6 @@ export default function StaffDashboardLayout({
   children,
   pagetitle,
   hideHeader = false,
-  RightPanelComponent: CustomRightPanel,
   hideMobileTitle = false,
   hideMobileBell = false,
   backPath = null,
@@ -25,20 +23,14 @@ export default function StaffDashboardLayout({
     const saved = localStorage.getItem("staff_left_collapsed");
     return saved !== null ? JSON.parse(saved) : false;
   });
-  const [rightCollapsed, setRightCollapsed] = useState(() => {
-    const saved = localStorage.getItem("staff_right_collapsed");
-    return saved !== null ? JSON.parse(saved) : false;
-  });
+
 
   const handleSetLeftCollapsed = (val) => {
     setLeftCollapsed(val);
     localStorage.setItem("staff_left_collapsed", JSON.stringify(val));
   };
 
-  const handleSetRightCollapsed = (val) => {
-    setRightCollapsed(val);
-    localStorage.setItem("staff_right_collapsed", JSON.stringify(val));
-  };
+
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -71,8 +63,7 @@ export default function StaffDashboardLayout({
     };
   }, [fetchUnreadCount]);
 
-  // Default to the standard RightPanel if no custom one is provided
-  const RightPanelToRender = CustomRightPanel || RightPanel;
+
 
   return (
     <div className="min-h-screen bg-[#E6E9EC] dark:bg-gray-900">
@@ -92,22 +83,27 @@ export default function StaffDashboardLayout({
         </main>
 
         <MobileBottomNav />
+
+        {/* Mobile notification dropdown — rendered at root level so it overlays properly */}
+        <StaffNotificationDropdown
+          isOpen={isNotificationsOpen}
+          onClose={() => setIsNotificationsOpen(false)}
+          onUpdate={fetchUnreadCount}
+          token={token}
+          viewAllLink="/staffs/notifications"
+        />
       </div>
 
       {/* ===== DESKTOP LAYOUT ===== */}
       <div className="hidden lg:block">
         <Sidebar collapsed={leftCollapsed} setCollapsed={handleSetLeftCollapsed} />
 
-        <RightPanelToRender
-          collapsed={rightCollapsed}
-          setCollapsed={handleSetRightCollapsed}
-        />
+
 
         <main
           className={`
             transition-all duration-300 p-6 pt-2
             ${leftCollapsed ? "ml-20" : "ml-64"}
-            ${rightCollapsed ? "mr-0" : "mr-80"}
           `}
         >
           {/* Header Row */}

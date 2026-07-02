@@ -64,8 +64,8 @@ export default function CommunityGrowth() {
                         btnTitle={item.btnTitle}
                         btnPath={item.btnPath}
                         imgPath={item.imgPath}
-                        bgColor={item.isAccentTheme ? "bg-[#bb9e7f]" : "bg-[#09314F]"}
-                        overlayGradient={item.isAccentTheme ? "from-[#bb9e7f] via-[#bb9e7f]/40" : "from-[#09314F] via-[#09314F]/40"}
+                        bgColor={item.isAccentTheme ? "bg-[#e83831]" : "bg-[#09314F]"}
+                        overlayGradient={item.isAccentTheme ? "from-[#e83831] via-[#e83831]/40" : "from-[#09314F] via-[#09314F]/40"}
                         btnBgColor={item.isAccentTheme ? "bg-[#09314F]" : "bg-sencondary"}
                         semititleColor={item.isAccentTheme ? "text-[#09314F]" : "text-ascent"}
                         SdescColor={item.isAccentTheme ? "text-[#09314F]" : "text-ascent"}

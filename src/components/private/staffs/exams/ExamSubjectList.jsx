@@ -140,7 +140,7 @@ export default function ExamSubjectList() {
 
                 <div className="p-6 flex flex-col flex-1">
                   <div className="mb-4">
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-900 text-gray-400 text-[9px] font-black uppercase tracking-widest rounded-lg">COURSE</span>
+                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-900 text-gray-400 text-[9px] font-black uppercase tracking-widest rounded-lg">SUBJECT</span>
                   </div>
                   <h3 className="text-lg font-black text-[#0F2843] dark:text-white uppercase tracking-tight mb-2 group-hover:text-[#BB9E7F] transition-colors">
                     {subject.title || subject.name}

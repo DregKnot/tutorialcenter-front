@@ -244,7 +244,7 @@ export default function CourseCreate({ isOpen, onClose, onSuccess, showToast }) 
             {/* Description Area — WYSIWYG */}
             <div className="space-y-3">
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Academic Overview & Description</label>
-              <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-[24px] border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-sm [&_.ql-editor]:min-h-[200px] [&_.ql-editor]:text-base">
+              <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-[24px] border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-sm [&_.ql-editor]:min-h-[200px] [&_.ql-editor]:text-base [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white">
                 <ReactQuill
                   theme="snow"
                   value={description}

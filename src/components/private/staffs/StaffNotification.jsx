@@ -7,11 +7,14 @@ import {
   CheckCircleIcon, 
   InformationCircleIcon, 
   EyeIcon,
-  CheckBadgeIcon
+  CheckBadgeIcon,
+  ChevronLeftIcon
 } from "@heroicons/react/24/outline";
+import { useNavigate } from "react-router-dom";
 import StaffNotificationDetailModal from "./StaffNotificationDetailModal.jsx";
 
 export default function StaffNotification() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNotif, setSelectedNotif] = useState(null);
@@ -117,7 +120,16 @@ export default function StaffNotification() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto py-4">
+      <div className="w-full py-4">
+        {/* Back Button */}
+        <button 
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-[#0F2843] dark:hover:text-white transition-colors group mb-6 px-4"
+        >
+          <ChevronLeftIcon className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          <span className="text-[13px] font-bold">Back</span>
+        </button>
+
         {/* Header Controls */}
         <div className="flex items-center justify-between mb-8 px-4">
           <div>

@@ -7,6 +7,7 @@ export function StaffAuthProvider({ children }) {
   const [staff, setStaff] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSplashing, setIsSplashing] = useState(false);
   const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
 
   // Load from localStorage on app start
@@ -26,6 +27,7 @@ export function StaffAuthProvider({ children }) {
   }, []);
 
   const login = useCallback((token, staffData, staffRole) => {
+    setIsSplashing(true);
     localStorage.setItem("staff_token", token);
     localStorage.setItem("staff_info", JSON.stringify(staffData));
     localStorage.setItem("staff_role", staffRole);
@@ -35,9 +37,12 @@ export function StaffAuthProvider({ children }) {
     setToken(token);
     setStaff(staffData);
     setRole(staffRole);
+
+    setTimeout(() => setIsSplashing(false), 2500);
   }, []);
 
   const logout = useCallback(async () => {
+    setIsSplashing(true);
     try {
       const currentToken = localStorage.getItem("staff_token");
       if (currentToken) {
@@ -62,7 +67,10 @@ export function StaffAuthProvider({ children }) {
       setIsInactiveModalOpen(false);
 
       // Redirect to staff login
-      window.location.href = "/staff/login";
+      setTimeout(() => {
+        setIsSplashing(false);
+        window.location.href = "/staff/login";
+      }, 2500);
     }
   }, []);
 
@@ -126,6 +134,8 @@ export function StaffAuthProvider({ children }) {
         logout,
         isAuthenticated: Boolean(token),
         loading,
+        isSplashing,
+        setIsSplashing,
         isInactiveModalOpen,
         resetActivity
       }}
