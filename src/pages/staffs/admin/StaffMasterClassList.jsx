@@ -278,12 +278,12 @@ export default function MasterClassList() {
             Schedule Master Class
           </button>
 
-          {/* Requests */}
+          {/* Requests
           <button className="flex items-center gap-3 px-8 py-4 bg-[#E2E8F0] dark:bg-blue-600/20 border border-transparent text-[#0F2843] dark:text-blue-400 font-black rounded-2xl text-[15px] hover:bg-[#CBD5E1] dark:hover:bg-blue-600/30 transition-all whitespace-nowrap shadow-sm group">
             <Icon icon="mdi:swap-horizontal" className="w-5 h-5 text-[#0F2843] dark:text-blue-400 rotate-90" />
             Requests
             <span className="bg-[#E83831] text-white text-[11px] font-black px-2.5 py-1 rounded-full leading-none min-w-[24px] text-center shadow-sm">12</span>
-          </button>
+          </button> */}
         </div>
 
           {/* Classes List */}

@@ -1,25 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CheckCircleIcon, InformationCircleIcon, XMarkIcon, BellIcon } from "@heroicons/react/24/outline";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function StaffNotificationDropdown({ isOpen, onClose, onUpdate, token, viewAllLink = "/staffs/notifications" }) {
-  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Close when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        onClose();
-      }
-    }
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen, onClose]);
+  const handleNavigateToAll = (e) => {
+    e.stopPropagation();
+    navigate(viewAllLink);
+    onClose();
+  };
 
   // Fetch from API when modal opens
   useEffect(() => {
@@ -65,10 +58,13 @@ export default function StaffNotificationDropdown({ isOpen, onClose, onUpdate, t
   if (!isOpen) return null;
 
   return (
-    <div 
-      ref={dropdownRef}
-      className="absolute top-16 right-0 sm:right-6 w-[340px] sm:w-[380px] bg-white dark:bg-[#09314F] rounded-3xl shadow-[0_20px_60px_rgb(0,0,0,0.15)] dark:shadow-[0_20px_60px_rgb(0,0,0,0.4)] border border-gray-100 dark:border-[#1a4a75] overflow-hidden z-[999] animate-in fade-in slide-in-from-top-4 duration-300 origin-top-right flex flex-col max-h-[85vh]"
-    >
+    <>
+      {/* Invisible backdrop — closes dropdown when tapped */}
+      <div className="fixed inset-0 z-[998]" onClick={onClose} />
+
+      <div 
+        className="fixed top-14 right-0 sm:right-4 lg:absolute lg:top-16 lg:right-0 w-full sm:w-[380px] bg-white dark:bg-[#09314F] rounded-none sm:rounded-3xl shadow-[0_20px_60px_rgb(0,0,0,0.15)] dark:shadow-[0_20px_60px_rgb(0,0,0,0.4)] border border-gray-100 dark:border-[#1a4a75] overflow-hidden z-[999] animate-in fade-in slide-in-from-top-4 duration-300 origin-top-right flex flex-col max-h-[85vh]"
+      >
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-[#1a4a75] bg-gray-50 dark:bg-[#06243A]">
         <div>
@@ -90,11 +86,10 @@ export default function StaffNotificationDropdown({ isOpen, onClose, onUpdate, t
           </div>
         ) : notifications.length > 0 ? (
           notifications.slice(0, 5).map((notif) => (
-            <Link 
-              to={viewAllLink}
+            <div
               key={notif.id} 
-              onClick={onClose}
-              className={`p-4 mx-2 my-2 rounded-2xl flex gap-4 transition-colors cursor-pointer block ${
+              onClick={handleNavigateToAll}
+              className={`p-4 mx-2 my-2 rounded-2xl flex gap-4 transition-colors cursor-pointer ${
                 notif.read_at 
                   ? "bg-transparent hover:bg-gray-50 dark:hover:bg-[#1a4a75]/30" 
                   : "bg-blue-50/50 dark:bg-[#1a4a75] hover:bg-blue-50 dark:hover:bg-[#205280]"
@@ -124,7 +119,7 @@ export default function StaffNotificationDropdown({ isOpen, onClose, onUpdate, t
                   })}
                 </span>
               </div>
-            </Link>
+            </div>
           ))
         ) : (
           <div className="px-6 py-12 text-center text-gray-400">
@@ -136,14 +131,14 @@ export default function StaffNotificationDropdown({ isOpen, onClose, onUpdate, t
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-100 dark:border-[#1a4a75] bg-gray-50/50 dark:bg-[#06243A]/50 text-center">
-        <Link 
-          to={viewAllLink} 
-          onClick={onClose}
+        <button 
+          onClick={handleNavigateToAll}
           className="text-sm font-bold text-[#09314F] dark:text-blue-400 hover:underline"
         >
           See all notifications
-        </Link>
+        </button>
       </div>
     </div>
+    </>
   );
 }

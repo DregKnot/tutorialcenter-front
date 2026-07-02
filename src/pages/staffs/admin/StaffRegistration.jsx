@@ -487,7 +487,7 @@ export default function StaffRegistration() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full rounded-2xl font-black py-4.5 text-xs uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${
+                className={`w-full rounded-2xl font-black py-5 min-h-[60px] text-sm uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${
                   loading 
                     ? "bg-gray-400 dark:bg-gray-700 cursor-not-allowed text-white" 
                     : "bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white"

@@ -27,7 +27,7 @@ const ModalInput = ({
     <div className={`flex flex-col gap-1.5 w-full ${className}`}>
       <label className="text-[11px] font-bold text-gray-400 ml-1">{label}</label>
       <div className="relative group/input">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-900 z-10">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-900 dark:text-gray-300 z-10">
           <Icon icon={icon} className="w-5 h-5" />
         </div>
         
@@ -37,7 +37,7 @@ const ModalInput = ({
             value={value || ""}
             onChange={onChange}
             disabled={disabled}
-            className="w-full bg-[#fcfcfc] border border-gray-200 rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-[#0F2843]/10 focus:border-[#0F2843] transition-all appearance-none disabled:bg-gray-50/50"
+            className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all appearance-none disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50"
           >
             <option value="" disabled>{placeholder || `Select ${label}`}</option>
             {options.map(opt => (
@@ -52,7 +52,7 @@ const ModalInput = ({
             onChange={onChange}
             disabled={disabled}
             placeholder={placeholder}
-            className="w-full bg-[#fcfcfc] border border-gray-200 rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-[#0F2843]/10 focus:border-[#0F2843] transition-all disabled:bg-gray-50/50"
+            className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50"
           />
         )}
 
@@ -213,9 +213,9 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
 
   if (loading) return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-      <div className="bg-white rounded-3xl p-12 text-center shadow-2xl">
-        <div className="w-12 h-12 border-4 border-[#0F2843]/20 border-t-[#0F2843] rounded-full animate-spin mx-auto mb-4" />
-        <p className="font-bold text-gray-500">Loading profile...</p>
+      <div className="bg-white dark:bg-[#131320] rounded-3xl p-12 text-center shadow-2xl">
+        <div className="w-12 h-12 border-4 border-[#0F2843]/20 dark:border-white/20 border-t-[#0F2843] dark:border-t-white rounded-full animate-spin mx-auto mb-4" />
+        <p className="font-bold text-gray-500 dark:text-gray-400">Loading profile...</p>
       </div>
     </div>
   );
@@ -241,14 +241,14 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
         </div>
       )}
 
-      <div className="bg-white w-full max-w-[650px] rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] relative text-[#0F2843] font-sans">
+      <div className="bg-white dark:bg-[#131320] w-full max-w-[800px] rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] relative text-[#0F2843] dark:text-gray-100 font-sans">
         
         {/* Main Content Scrollable Area */}
         <div className={`flex-1 overflow-y-auto p-8 md:p-10 ${isSuspended ? "opacity-60 grayscale-[0.2]" : ""}`}>
           
           {/* Header */}
           <h1 className="text-xl md:text-2xl font-black mb-8 uppercase tracking-tight">
-            STAFF PROFILE [{staff.firstname} {staff.middlename} {staff.surname}]
+            STAFF PROFILE: {staff.firstname} {staff.middlename} {staff.surname}
           </h1>
 
           {/* Top Section: Avatar + Primary Fields */}
@@ -258,7 +258,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
               className="w-44 h-44 shrink-0 relative cursor-pointer group"
               onClick={() => isEditing && document.getElementById('modalStaffImage').click()}
             >
-              <div className="w-full h-full rounded-[20px] overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center relative">
+              <div className="w-full h-full rounded-[20px] overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center relative">
                 {imagePreview ? (
                   <img 
                     src={imagePreview}
@@ -266,7 +266,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                     alt="Profile" 
                   />
                 ) : (
-                  <div className="w-full h-full bg-[#0F2843] text-white flex items-center justify-center text-5xl font-black">
+                  <div className="w-full h-full bg-[#0F2843] dark:bg-gray-700 text-white flex items-center justify-center text-5xl font-black">
                     {(staff.firstname?.[0] || "U").toUpperCase()}
                   </div>
                 )}
@@ -444,7 +444,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 disabled={!isEditing}
                 rows={1}
                 placeholder="Full Home Address"
-                className="w-full bg-[#fcfcfc] border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-[#0F2843]/10 focus:border-[#0F2843] transition-all disabled:bg-gray-50/50 resize-none"
+                className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50 resize-none"
               />
             </div>
           </div>
@@ -471,7 +471,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
               }
             }}
             disabled={submitting}
-            className="flex-1 py-4 bg-[#0F2843] text-white font-black text-sm uppercase tracking-widest rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-4 bg-[#0F2843] dark:bg-white text-white dark:text-[#0F2843] font-black text-sm uppercase tracking-widest rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             {submitting ? (
               <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -481,13 +481,17 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Suspend/Restore Logic (Floating or separate button if needed) */}
+        {/* Suspend/Restore Logic (Floating Button Overlay) */}
         {!isEditing && (
             <button 
                 onClick={isSuspended ? handleRestore : handleSuspend}
-                className={`absolute top-10 right-10 text-[10px] font-bold uppercase tracking-widest text-gray-400 transition-colors ${isSuspended ? "hover:text-green-500" : "hover:text-red-500"}`}
+                className={`absolute top-8 right-8 px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg shadow-sm transition-all active:scale-95 ${
+                  isSuspended 
+                    ? "bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 hover:shadow-md" 
+                    : "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:shadow-md"
+                }`}
             >
-                {isSuspended ? "Restore" : "Suspend Staff"}
+                {isSuspended ? "Restore Staff" : "Suspend Staff"}
             </button>
         )}
       </div>
