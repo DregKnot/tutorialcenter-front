@@ -14,7 +14,6 @@ const Paystack = ({
     process.env.REACT_APP_PAYSTACK_PUBLIC_KEY ||
     "pk_live_f1017d3c645e69b33b1f8cc538b306088b655244";
     // "pk_test_d810e0935d60a336bea860384aabbc753cdd78ff";
-    // "pk_test_baecdbe89b4c293f6a4564d49843b1fcd8c937f9";
 
   useEffect(() => {
     if (window.PaystackPop) {
