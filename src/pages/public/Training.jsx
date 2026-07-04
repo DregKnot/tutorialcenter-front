@@ -5,10 +5,16 @@ import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import SectionHeading from "../../components/public/SectionHeading";
 import Career_img from "../../assets/images/Training.png";
-import handCup from "../../assets/images/handCup.jpg";
+// import handCup from "../../assets/images/handCup.jpg";
+import medicalFaculty from "../../assets/images/volodymyr-hryshchenko-e8YFkjN2CzY-unsplash.jpg"
+import lawFaculty from "../../assets/images/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg"
+import accountingFaculty from "../../assets/images/olga-delawrence-5616whx5NdQ-unsplash.jpg"
+import engineerFaculty from "../../assets/images/ej-yao-D46mXLsQRJw-unsplash.jpg"
+import environmentFalculty from "../../assets/images/danist-soh-dqXiw7nCb9Q-unsplash.jpg"
 import jambLogo from "../../assets/images/jamb_logo.png";
 import waecLogo from "../../assets/images/waec_logo.png";
 import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.svg";
+import ScrollReveal from "../../components/public/ScrollReveal";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
@@ -20,7 +26,7 @@ const admissionSectors = [
     id: 1,
     title: "MEDICAL & HEALTH SCIENCE SECTOR",
     description: "This sector covers professional clinical practice, allied health support, and research.",
-    image: handCup,
+    image: medicalFaculty,
     courses: [
       "Medicine & Surgery (MBBS)", "Dentistry", "Pharmacy", "Nursing Science", "Optometry",
       "Veterinary Medicine", "Medical Lab Science", "Physiotherapy", "Radiography",
@@ -34,7 +40,7 @@ const admissionSectors = [
     id: 2,
     title: "ENGINEERING & TECHNOLOGY SECTOR",
     description: "Focuses on design, construction, and technical innovation.",
-    image: handCup,
+    image: engineerFaculty,
     courses: [
       "Civil Engineering", "Mechanical Engineering", "Electrical Engineering",
       "Electronic Engineering", "Computer Engineering", "Software Engineering",
@@ -48,7 +54,7 @@ const admissionSectors = [
     id: 3,
     title: "SOCIAL & MANAGEMENT SCIENCES",
     description: "Focuses on business, governance, and societal structures.",
-    image: handCup,
+    image: accountingFaculty,
     courses: [
       "Accounting / Finance", "Economics", "Political Science", "Mass Communication",
       "Business Administration", "Public Administration", "Sociology", "International Relations"
@@ -61,7 +67,7 @@ const admissionSectors = [
     id: 4,
     title: "ARTS & HUMANITIES",
     description: "Focuses on culture, law, languages, and creative expression.",
-    image: handCup,
+    image: lawFaculty,
     courses: [
       "Law (Common / Civil / Islamic)", "English Language", "History",
       "Philosophy", "Religious Studies", "Theatre Arts", "Fine Arts", "Music"
@@ -74,7 +80,7 @@ const admissionSectors = [
     id: 5,
     title: "AGRICULTURAL & ENVIRONMENTAL SCIENCES",
     description: "Covers food production and the built environment.",
-    image: handCup,
+    image: environmentFalculty,
     courses: [
       "Agriculture", "Architecture", "Estate Management", "Urban & Regional Planning",
       "Building Technology", "Quantity Surveying", "Forestry", "Fisheries"
@@ -160,9 +166,11 @@ const Training = () => {
         />
         <div className="overlay absolute w-full h-full bg-black opacity-30" />
         <div className="w-full h-full flex items-center justify-center relative z-50">
-          <h1 className="uppercase text-white text-3xl font-bold tracking-wider">
-            Training / Tuition
-          </h1>
+          <ScrollReveal delay={0.1} direction="up" distance={20}>
+            <h1 className="uppercase text-white text-3xl font-bold tracking-wider">
+              Training / Tuition
+            </h1>
+          </ScrollReveal>
         </div>
       </div>
 
@@ -177,65 +185,73 @@ const Training = () => {
         <div className="w-full bg-white py-10">
           <div className="Container">
             <div className="text-sm">
-              <h2 className="text-2xl md:text-4xl font-bold text-primary leading-tight mb-8 max-w-lg uppercase">
-                Empowering Students for Academic Excellence
-              </h2>
+              <ScrollReveal delay={0.2} direction="up" distance={20}>
+                <h2 className="text-2xl md:text-4xl font-bold text-primary leading-tight mb-8 max-w-lg uppercase">
+                  Empowering Students for Academic Excellence
+                </h2>
+              </ScrollReveal>
 
-              <div className="space-y-6 text-gray-600 leading-relaxed max-w-6xl text-sm md:text-base">
-                <p>
-                  The Tutorial Center offers comprehensive academic training programs
-                  designed to help students excel in their JAMB, WAEC, NECO, and GCE
-                  examinations. Our curriculum combines expert tutoring, interactive
-                  masterclasses, and structured learning paths tailored to each
-                  student's needs.
-                </p>
-                <p>
-                  We bridge the gap between classroom learning and exam readiness,
-                  ensuring every student has the tools to achieve outstanding results.
-                </p>
-              </div>
+              <ScrollReveal delay={0.3} direction="up" distance={20}>
+                <div className="space-y-6 text-gray-600 leading-relaxed max-w-6xl text-sm md:text-base">
+                  <p>
+                    The Tutorial Center offers comprehensive academic training programs
+                    designed to help students excel in their JAMB, WAEC, NECO, and GCE
+                    examinations. Our curriculum combines expert tutoring, interactive
+                    masterclasses, and structured learning paths tailored to each
+                    student's needs.
+                  </p>
+                  <p>
+                    We bridge the gap between classroom learning and exam readiness,
+                    ensuring every student has the tools to achieve outstanding results.
+                  </p>
+                </div>
+              </ScrollReveal>
 
               <div className="grid md:grid-cols-2 gap-4 mb-5 mt-8">
                 {/* Why Choose Us Card */}
-                <div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] px-3 py-4 md:p-8 flex gap-3 md:gap-6 shadow-sm">
-                  <div className="flex-shrink-0">
-                    <div className="w-[40px] h-[40px] md:w-12 md:h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
-                      <img src={crowd} alt="" className="brightness-0 invert text-2xl" />
+                <ScrollReveal delay={0.4} direction="up" distance={30}>
+                  <div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] px-3 py-4 md:p-8 flex gap-3 md:gap-6 shadow-sm h-full">
+                    <div className="flex-shrink-0">
+                      <div className="w-[40px] h-[40px] md:w-12 md:h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
+                        <img src={crowd} alt="" className="brightness-0 invert text-2xl" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm md:text-xl font-semibold md:font-bold text-[#09314F] mb-1 md:mb-3">
+                        Expert–Led Tutorials
+                      </h3>
+                      <p className="text-xs text-gray-500 leading-5 md:leading-loose">
+                        Our Lessons Are Crafted And Delivered By Experienced
+                        Educators Who Understand The Unique Challenges Of JAMB,
+                        WAEC, NECO, And GCE Exams. With Clear Explanations And
+                        Practical Examples, Students Gain The Knowledge And
+                        Confidence Needed To Succeed.
+                      </p>
                     </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm md:text-xl font-semibold md:font-bold text-[#09314F] mb-1 md:mb-3">
-                      Expert–Led Tutorials
-                    </h3>
-                    <p className="text-xs text-gray-500 leading-5 md:leading-loose">
-                      Our Lessons Are Crafted And Delivered By Experienced
-                      Educators Who Understand The Unique Challenges Of JAMB,
-                      WAEC, NECO, And GCE Exams. With Clear Explanations And
-                      Practical Examples, Students Gain The Knowledge And
-                      Confidence Needed To Succeed.
-                    </p>
-                  </div>
-                </div>
+                </ScrollReveal>
 
                 {/* Flexible Learning Card */}
-                <div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] px-3 py-4 md:p-8 flex gap-3 md:gap-6 shadow-sm">
-                  <div className="flex-shrink-0">
-                    <div className="w-[40px] h-[40px] md:w-12 md:h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
-                      <img src={crowd} alt="" className="brightness-0 invert text-2xl" />
+                <ScrollReveal delay={0.5} direction="up" distance={30}>
+                  <div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] px-3 py-4 md:p-8 flex gap-3 md:gap-6 shadow-sm h-full">
+                    <div className="flex-shrink-0">
+                      <div className="w-[40px] h-[40px] md:w-12 md:h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
+                        <img src={crowd} alt="" className="brightness-0 invert text-2xl" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm md:text-xl font-semibold md:font-bold text-[#09314F] mb-1 md:mb-3">
+                        Flexible Learning
+                      </h3>
+                      <p className="text-xs text-gray-500 leading-5 md:leading-loose">
+                        Access Our Platform Anytime, Anywhere, And Learn At Your
+                        Own Pace. Whether You Prefer On-Demand Tutorials Or Live
+                        Sessions, We Provide Flexible Solutions To Fit Your
+                        Schedule And Learning Style.
+                      </p>
                     </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm md:text-xl font-semibold md:font-bold text-[#09314F] mb-1 md:mb-3">
-                      Flexible Learning
-                    </h3>
-                    <p className="text-xs text-gray-500 leading-5 md:leading-loose">
-                      Access Our Platform Anytime, Anywhere, And Learn At Your
-                      Own Pace. Whether You Prefer On-Demand Tutorials Or Live
-                      Sessions, We Provide Flexible Solutions To Fit Your
-                      Schedule And Learning Style.
-                    </p>
-                  </div>
-                </div>
+                </ScrollReveal>
               </div>
             </div>
           </div>
@@ -248,9 +264,11 @@ const Training = () => {
           <SectionHeading title="Our Programs" position_right={true} fullWidth={true} />
 
           <div className="Container mt-16">
-            <p className="text-center text-gray-500 text-sm md:text-base mb-8 max-w-2xl mx-auto">
-              Select your exam body to view pricing. Click any card below to reveal full duration and pricing details.
-            </p>
+            <ScrollReveal delay={0.1} direction="up" distance={20}>
+              <p className="text-center text-gray-500 text-sm md:text-base mb-8 max-w-2xl mx-auto">
+                Select your exam body to view pricing. Click any card below to reveal full duration and pricing details.
+              </p>
+            </ScrollReveal>
 
             {loadingCourses ? (
               <div className="flex justify-center items-center py-20">
@@ -262,7 +280,7 @@ const Training = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 lg:gap-x-8 gap-y-3 lg:gap-y-4 items-start">
-                {courses.map((course) => {
+                {courses.map((course, index) => {
                   const isExpanded = expandedCard === course.id;
                   const bannerUrl = course.banner
                     ? `${API_BASE_URL}/storage/${course.banner}`
@@ -276,129 +294,130 @@ const Training = () => {
                   const annually = Math.round(basePrice * 12 * 0.95);
 
                   return (
-                    <div
-                      key={course.id}
-                      onClick={() => toggleProgramCard(course.id)}
-                      className={`
-                        relative bg-white rounded-[24px] overflow-hidden cursor-pointer
-                        border-2 transition-all duration-500 group
-                        shadow-[0_8px_30px_rgba(0,0,0,0.06)]
-                        hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)]
-                        hover:-translate-y-1
-                        ${isExpanded
-                          ? "border-[#09314F] shadow-[0_12px_40px_rgba(9,49,79,0.15)]"
-                          : "border-gray-100 hover:border-[#BB9E7F]/50"
-                        }
-                      `}
-                    >
-                      {/* Top Area with Banner or Logo */}
-                      <div className="bg-[#FFF0F0] flex items-center justify-center relative overflow-hidden" style={{ height: hasBanner ? '180px' : undefined, paddingTop: hasBanner ? 0 : '2rem', paddingBottom: hasBanner ? 0 : '2rem' }}>
-                        <img
-                          src={bannerUrl}
-                          alt={course.title}
-                          className={hasBanner
-                            ? "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            : "h-24 w-24 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500"
+                    <ScrollReveal key={course.id} delay={0.1 * index} direction="up" distance={30}>
+                      <div
+                        onClick={() => toggleProgramCard(course.id)}
+                        className={`
+                          relative bg-white rounded-[24px] overflow-hidden cursor-pointer
+                          border-2 transition-all duration-500 group
+                          shadow-[0_8px_30px_rgba(0,0,0,0.06)]
+                          hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)]
+                          hover:-translate-y-1
+                          ${isExpanded
+                            ? "border-[#09314F] shadow-[0_12px_40px_rgba(9,49,79,0.15)]"
+                            : "border-gray-100 hover:border-[#BB9E7F]/50"
                           }
-                        />
-                        {/* Red icon badge */}
-                        <div className="absolute bottom-4 right-4 w-10 h-10 bg-[#E83831] rounded-xl flex items-center justify-center shadow-lg">
-                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Card Content */}
-                      <div className="p-6 pb-8">
-                        {/* Subject count badge */}
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-red-400 text-sm">📚</span>
-                          <span className="text-xs font-bold text-gray-400">
-                            {course.title?.toLowerCase().includes("jamb") ? "4 Subjects" : "8-9 Subjects"}
-                          </span>
-                        </div>
-
-                        <h3 className="text-xl font-black text-[#09314F] uppercase tracking-tight mb-4">
-                          {course.title}
-                        </h3>
-
-                        {/* Pricing Section — always visible but expands */}
-                        <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
-                          {/* Duration Pricing */}
-                          <div className="mb-4">
-                            <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Duration:</p>
-                            <div className="space-y-2">
-                              <div className="flex justify-between">
-                                <span className="text-xs font-bold text-gray-500">Monthly:</span>
-                                <span className="text-xs font-black text-[#09314F]">₦{monthly.toLocaleString()}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-xs font-bold text-gray-500">Quarterly:</span>
-                                <span className="text-xs font-black text-[#09314F]">₦{quarterly.toLocaleString()}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-xs font-bold text-gray-500">Annually:</span>
-                                <span className="text-xs font-black text-[#09314F]">₦{annually.toLocaleString()}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Includes */}
-                          <div className="mb-5">
-                            <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Includes:</p>
-                            <ul className="space-y-1.5">
-                              <li className="text-xs text-gray-500 flex items-start gap-2">
-                                <span className="text-green-500 mt-0.5">✓</span> Comprehensive tutorials
-                              </li>
-                              <li className="text-xs text-gray-500 flex items-start gap-2">
-                                <span className="text-green-500 mt-0.5">✓</span> Weekly masterclasses
-                              </li>
-                              <li className="text-xs text-gray-500 flex items-start gap-2">
-                                <span className="text-green-500 mt-0.5">✓</span> Mock tests & practice questions
-                              </li>
-                              <li className="text-xs text-gray-500 flex items-start gap-2">
-                                <span className="text-green-500 mt-0.5">✓</span> Live Q&A sessions with experts
-                              </li>
-                            </ul>
-                          </div>
-
-                          {/* Savings callout */}
-                          <div className="bg-gray-50 rounded-xl p-3 mb-5">
-                            <p className="text-[9px] font-black text-[#09314F] uppercase tracking-widest mb-1">
-                              Save up to 5% on multi-month plans
-                            </p>
-                            <div className="flex justify-between">
-                              <span className="text-[10px] text-gray-500 font-bold">Quarterly savings:</span>
-                              <span className="text-[10px] font-black text-green-600">₦{Math.round(basePrice * 3 * 0.05).toLocaleString()}</span>
-                            </div>
-                          </div>
-
-                          {/* Apply Now */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate("/register");
-                            }}
-                            className="w-full py-3.5 text-white font-bold text-sm rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
-                            style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
-                          >
-                            Apply Now
-                          </button>
-                        </div>
-
-                        {/* "Learn more" CTA when collapsed */}
-                        {!isExpanded && (
-                          <div className="flex items-center gap-1 text-[#09314F] font-bold text-sm mt-2 group-hover:gap-2 transition-all">
-                            Learn more
-                            <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        `}
+                      >
+                        {/* Top Area with Banner or Logo */}
+                        <div className="bg-[#FFF0F0] flex items-center justify-center relative overflow-hidden" style={{ height: hasBanner ? '180px' : undefined, paddingTop: hasBanner ? 0 : '2rem', paddingBottom: hasBanner ? 0 : '2rem' }}>
+                          <img
+                            src={bannerUrl}
+                            alt={course.title}
+                            className={hasBanner
+                              ? "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              : "h-24 w-24 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500"
+                            }
+                          />
+                          {/* Red icon badge */}
+                          <div className="absolute bottom-4 right-4 w-10 h-10 bg-[#E83831] rounded-xl flex items-center justify-center shadow-lg">
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
                           </div>
-                        )}
+                        </div>
+
+                        {/* Card Content */}
+                        <div className="p-6 pb-8">
+                          {/* Subject count badge */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-red-400 text-sm">📚</span>
+                            <span className="text-xs font-bold text-gray-400">
+                              {course.title?.toLowerCase().includes("jamb") ? "4 Subjects" : "8-9 Subjects"}
+                            </span>
+                          </div>
+
+                          <h3 className="text-xl font-black text-[#09314F] uppercase tracking-tight mb-4">
+                            {course.title}
+                          </h3>
+
+                          {/* Pricing Section — always visible but expands */}
+                          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
+                            {/* Duration Pricing */}
+                            <div className="mb-4">
+                              <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Duration:</p>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-xs font-bold text-gray-500">Monthly:</span>
+                                  <span className="text-xs font-black text-[#09314F]">₦{monthly.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs font-bold text-gray-500">Quarterly:</span>
+                                  <span className="text-xs font-black text-[#09314F]">₦{quarterly.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs font-bold text-gray-500">Annually:</span>
+                                  <span className="text-xs font-black text-[#09314F]">₦{annually.toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Includes */}
+                            <div className="mb-5">
+                              <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Includes:</p>
+                              <ul className="space-y-1.5">
+                                <li className="text-xs text-gray-500 flex items-start gap-2">
+                                  <span className="text-green-500 mt-0.5">✓</span> Comprehensive tutorials
+                                </li>
+                                <li className="text-xs text-gray-500 flex items-start gap-2">
+                                  <span className="text-green-500 mt-0.5">✓</span> Weekly masterclasses
+                                </li>
+                                <li className="text-xs text-gray-500 flex items-start gap-2">
+                                  <span className="text-green-500 mt-0.5">✓</span> Mock tests & practice questions
+                                </li>
+                                <li className="text-xs text-gray-500 flex items-start gap-2">
+                                  <span className="text-green-500 mt-0.5">✓</span> Live Q&A sessions with experts
+                                </li>
+                              </ul>
+                            </div>
+
+                            {/* Savings callout */}
+                            <div className="bg-gray-50 rounded-xl p-3 mb-5">
+                              <p className="text-[9px] font-black text-[#09314F] uppercase tracking-widest mb-1">
+                                Save up to 5% on multi-month plans
+                              </p>
+                              <div className="flex justify-between">
+                                <span className="text-[10px] text-gray-500 font-bold">Quarterly savings:</span>
+                                <span className="text-[10px] font-black text-green-600">₦{Math.round(basePrice * 3 * 0.05).toLocaleString()}</span>
+                              </div>
+                            </div>
+
+                            {/* Apply Now */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate("/register");
+                              }}
+                              className="w-full py-3.5 text-white font-bold text-sm rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
+                              style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
+                            >
+                              Apply Now
+                            </button>
+                          </div>
+
+                          {/* "Learn more" CTA when collapsed */}
+                          {!isExpanded && (
+                            <div className="flex items-center gap-1 text-[#09314F] font-bold text-sm mt-2 group-hover:gap-2 transition-all">
+                              Learn more
+                              <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    </ScrollReveal>
                   );
                 })}
               </div>
@@ -413,26 +432,30 @@ const Training = () => {
           <SectionHeading title="Admission Guide" position_right={false} fullWidth={true} />
 
           <div className="Container mt-16">
-            <p className="text-center text-gray-500 text-sm md:text-base mb-10 max-w-2xl mx-auto">
-              2025 Admission Guide — Use this resource to understand the JAMB and O'Level subject
-              requirements for your desired course and faculty.
-            </p>
+            <ScrollReveal delay={0.2} direction="up" distance={20}>
+              <p className="text-center text-gray-500 text-sm md:text-base mb-10 max-w-2xl mx-auto">
+                2025 Admission Guide — Use this resource to understand the JAMB and O'Level subject
+                requirements for your desired course and faculty.
+              </p>
+            </ScrollReveal>
 
             {/* Search Bar */}
-            <div className="max-w-lg mx-auto mb-12">
-              <div className="relative">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search any faculty..."
-                  className="w-full pl-12 pr-6 py-3 md:py-4 bg-white rounded-2xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-[#09314F] focus:border-transparent text-sm font-medium placeholder-gray-400 transition-all"
-                />
+            <ScrollReveal delay={0.3} direction="up" distance={20}>
+              <div className="max-w-lg mx-auto mb-12">
+                <div className="relative">
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search any faculty..."
+                    className="w-full pl-12 pr-6 py-3 md:py-4 bg-white rounded-2xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-[#09314F] focus:border-transparent text-sm font-medium placeholder-gray-400 transition-all"
+                  />
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
 
             {/* 2-Column Card Grid */}
             {filteredSectors.length === 0 ? (
@@ -441,128 +464,131 @@ const Training = () => {
               </div>
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-8 gap-y-3 md:gap-y-4">
-              {filteredSectors.map((sector) => {
+              {filteredSectors.map((sector, index) => {
                 const isOpen = expandedSector === sector.id;
 
                 return (
-                  <div
-                    key={sector.id}
-                    className={`
-                      bg-white rounded-[24px] overflow-hidden border-2 transition-all duration-300
-                      shadow-[0_6px_24px_rgba(0,0,0,0.06)]
-                      hover:shadow-[0_10px_36px_rgba(0,0,0,0.1)]
-                      ${isOpen ? "border-[#09314F]" : "border-gray-100"}
-                    `}
-                  >
-                    {/* Card Image */}
-                    <div className="relative h-[180px] overflow-hidden">
-                      <img
-                        src={sector.image}
-                        alt={sector.title}
-                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    </div>
-
-                    {/* Card Content */}
-                    <div className="p-6">
-                      <h3 className="text-sm font-black text-[#09314F] uppercase tracking-wide mb-2 leading-snug">
-                        {sector.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 leading-relaxed mb-4">
-                        {sector.description}
-                      </p>
-
-                      {/* Subjects Required */}
-                      <p className="text-[10px] font-black text-[#3B82F6] uppercase tracking-wider mb-3">
-                        Subjects Required
-                      </p>
-
-                      <div className="space-y-3 mb-4">
-                        {/* JAMB */}
-                        <div>
-                          <span className="text-[10px] font-black text-[#09314F] uppercase mr-2">JAMB</span>
-                          <div className="flex flex-wrap gap-1.5 mt-1">
-                            {sector.jamb.map((subj, i) => (
-                              <span
-                                key={i}
-                                className="bg-[#BEE3F8] text-[#09314F] px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm"
-                              >
-                                {subj}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* O'Level */}
-                        <div>
-                          <span className="text-[10px] font-black text-[#09314F] uppercase mr-2">O'Level</span>
-                          <div className="flex flex-wrap gap-1.5 mt-1">
-                            {sector.olevel.map((subj, i) => (
-                              <span
-                                key={i}
-                                className="bg-[#E2E8F0] text-[#334155] px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm"
-                              >
-                                {subj}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
+                  <ScrollReveal key={sector.id} delay={0.1 * index} direction="up" distance={30}>
+                    <div
+                      className={`
+                        bg-white rounded-[24px] overflow-hidden border-2 transition-all duration-300
+                        shadow-[0_6px_24px_rgba(0,0,0,0.06)]
+                        hover:shadow-[0_10px_36px_rgba(0,0,0,0.1)]
+                        ${isOpen ? "border-[#09314F]" : "border-gray-100"}
+                      `}
+                    >
+                      {/* Card Image */}
+                      <div className="relative h-[180px] overflow-hidden">
+                        <img
+                          src={sector.image}
+                          alt={sector.title}
+                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                       </div>
 
-                      {/* Expandable: Available Courses + Critical Note */}
-                      <button
-                        onClick={() => setExpandedSector(isOpen ? null : sector.id)}
-                        className="flex items-center gap-1 text-[#09314F] font-bold text-xs hover:text-[#3B82F6] transition-colors mb-3"
-                      >
-                        {isOpen ? "Show less" : "View available courses"}
-                        <svg
-                          className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
+                      {/* Card Content */}
+                      <div className="p-6">
+                        <h3 className="text-sm font-black text-[#09314F] uppercase tracking-wide mb-2 leading-snug">
+                          {sector.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                          {sector.description}
+                        </p>
 
-                      <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
-                        <div className="pt-3 border-t border-gray-100">
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Available Courses</p>
-                          <div className="flex flex-wrap gap-1.5 mb-4">
-                            {sector.courses.map((c, i) => (
-                              <span key={i} className="bg-gray-50 text-gray-600 px-2.5 py-1 rounded-md text-[10px] font-bold border border-gray-100">
-                                {c}
-                              </span>
-                            ))}
-                          </div>
+                        {/* Subjects Required */}
+                        <p className="text-[10px] font-black text-[#3B82F6] uppercase tracking-wider mb-3">
+                          Subjects Required
+                        </p>
 
-                          {sector.criticalNote && (
-                            <div className="bg-[#FFF5F5] border border-red-100 rounded-xl p-3 mt-2">
-                              <p className="text-[10px] font-black text-red-600 uppercase tracking-wider mb-1">⚠ Critical Note</p>
-                              <p className="text-[10px] text-red-500 leading-relaxed font-medium">
-                                {sector.criticalNote}
-                              </p>
+                        <div className="space-y-3 mb-4">
+                          {/* JAMB */}
+                          <div>
+                            <span className="text-[10px] font-black text-[#09314F] uppercase mr-2">JAMB</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {sector.jamb.map((subj, i) => (
+                                <span
+                                  key={i}
+                                  className="bg-[#BEE3F8] text-[#09314F] px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm"
+                                >
+                                  {subj}
+                                </span>
+                              ))}
                             </div>
-                          )}
+                          </div>
+
+                          {/* O'Level */}
+                          <div>
+                            <span className="text-[10px] font-black text-[#09314F] uppercase mr-2">O'Level</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {sector.olevel.map((subj, i) => (
+                                <span
+                                  key={i}
+                                  className="bg-[#E2E8F0] text-[#334155] px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm"
+                                >
+                                  {subj}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expandable: Available Courses + Critical Note */}
+                        <button
+                          onClick={() => setExpandedSector(isOpen ? null : sector.id)}
+                          className="flex items-center gap-1 text-[#09314F] font-bold text-xs hover:text-[#3B82F6] transition-colors mb-3"
+                        >
+                          {isOpen ? "Show less" : "View available courses"}
+                          <svg
+                            className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+
+                        <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
+                          <div className="pt-3 border-t border-gray-100">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Available Courses</p>
+                            <div className="flex flex-wrap gap-1.5 mb-4">
+                              {sector.courses.map((c, i) => (
+                                <span key={i} className="bg-gray-50 text-gray-600 px-2.5 py-1 rounded-md text-[10px] font-bold border border-gray-100">
+                                  {c}
+                                </span>
+                              ))}
+                            </div>
+
+                            {sector.criticalNote && (
+                              <div className="bg-[#FFF5F5] border border-red-100 rounded-xl p-3 mt-2">
+                                <p className="text-[10px] font-black text-red-600 uppercase tracking-wider mb-1">⚠ Critical Note</p>
+                                <p className="text-[10px] text-red-500 leading-relaxed font-medium">
+                                  {sector.criticalNote}
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </ScrollReveal>
                 );
               })}
             </div>
             )}
 
             {/* Pro-Tip */}
-            <div className="mt-12 bg-gradient-to-r from-[#09314F] to-[#1a4971] rounded-3xl p-8 text-white text-center shadow-xl">
-              <p className="text-xs font-black uppercase tracking-[0.2em] mb-2 text-[#BB9E7F]">Pro Tip</p>
-              <p className="text-sm leading-relaxed max-w-2xl mx-auto">
-                Always cross-check the <span className="font-black">JAMB Brochure</span> for "Special Waivers."
-                Some universities may accept alternative subjects for certain courses.
-                Visit <span className="underline font-bold">jamb.gov.ng</span> for the latest information.
-              </p>
-            </div>
+            <ScrollReveal delay={0.4} direction="up" distance={30}>
+              <div className="mt-12 bg-gradient-to-r from-[#09314F] to-[#1a4971] rounded-3xl p-8 text-white text-center shadow-xl">
+                <p className="text-xs font-black uppercase tracking-[0.2em] mb-2 text-[#BB9E7F]">Pro Tip</p>
+                <p className="text-sm leading-relaxed max-w-2xl mx-auto">
+                  Always cross-check the <span className="font-black">JAMB Brochure</span> for "Special Waivers."
+                  Some universities may accept alternative subjects for certain courses.
+                  Visit <span className="underline font-bold">jamb.gov.ng</span> for the latest information.
+                </p>
+              </div>
+            </ScrollReveal>
           </div>
         </section>
       </div>

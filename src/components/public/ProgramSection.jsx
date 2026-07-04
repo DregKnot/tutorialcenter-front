@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import ProgramCard from "./ProgramCard.jsx";
 import SectionHeading from "./SectionHeading.jsx";
+import ScrollReveal from "./ScrollReveal";
 // import jamb from "../../assets/images/jamb_logo.png";
 // import waec from "../../assets/images/waec_logo.png";
 
@@ -100,18 +101,21 @@ const ProgramSection = () => {
                 <div className="programs Container !overflow-visible">
                     <div className="py-10">
                         <div className="mb-9">
-                            <p className="text-sm leading-6">
-                                At Tutorial Center, we understand the challenges faced by Nigerian
-                                students preparing for critical exams like JAMB, WAEC, NECO, and
-                                GCE. That's why we've built a platform that not only addresses
-                                these challenges but empowers you to achieve your academic goals
-                                with confidence and ease
-                            </p>
+                            <ScrollReveal delay={0.2} direction="up" distance={20}>
+                                <p className="text-sm leading-6">
+                                    At Tutorial Center, we understand the challenges faced by Nigerian
+                                    students preparing for critical exams like JAMB, WAEC, NECO, and
+                                    GCE. That's why we've built a platform that not only addresses
+                                    these challenges but empowers you to achieve your academic goals
+                                    with confidence and ease
+                                </p>
+                            </ScrollReveal>
                         </div>
 
-                        <div className="relative">
+                        <ScrollReveal delay={0.4} direction="up" distance={30}>
+                            <div className="relative">
 
-                            {/* Slider Container */}
+                                {/* Slider Container */}
                             <div className="overflow-hidden">
                                 {/* Main sliding container with all cards */}
                                 <div
@@ -197,6 +201,7 @@ const ProgramSection = () => {
                                 ))}
                             </div>
                         </div>
+                    </ScrollReveal>
                     </div>
                 </div>
             </div>

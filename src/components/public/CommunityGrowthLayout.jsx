@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import ScrollReveal from "./ScrollReveal";
 
 export default function CommunityGrowthLayout({
     title,
@@ -21,19 +22,29 @@ export default function CommunityGrowthLayout({
                 <div className="flex justify-end items-center py-12 md:py-16">
                     <div className="w-full max-w-[600px] px-5 lg:px-8 2xl:px-9">
                         <div className="blockContent mb-14">
-                            <h2 className="text-white text-2xl md:text-3xl font-extrabold uppercase mb-5 leading-tight">{title}</h2>
-                            <h4 className={`${semititleColor} text-sm md:text-base font-bold mb-4 uppercase tracking-wider`}>
-                                {semititle}
-                            </h4>
-                            <p className="text-white text-sm md:text-base leading-relaxed mb-6 opacity-90">{desc}</p>
-                            <p className={`text-xs md:text-sm ${SdescColor} font-medium italic`}>{Sdesc}</p>
+                            <ScrollReveal delay={0.1} direction="up" distance={20}>
+                                <h2 className="text-white text-2xl md:text-3xl font-extrabold uppercase mb-5 leading-tight">{title}</h2>
+                            </ScrollReveal>
+                            <ScrollReveal delay={0.2} direction="up" distance={20}>
+                                <h4 className={`${semititleColor} text-sm md:text-base font-bold mb-4 uppercase tracking-wider`}>
+                                    {semititle}
+                                </h4>
+                            </ScrollReveal>
+                            <ScrollReveal delay={0.3} direction="up" distance={20}>
+                                <p className="text-white text-sm md:text-base leading-relaxed mb-6 opacity-90">{desc}</p>
+                            </ScrollReveal>
+                            <ScrollReveal delay={0.4} direction="up" distance={20}>
+                                <p className={`text-xs md:text-sm ${SdescColor} font-medium italic`}>{Sdesc}</p>
+                            </ScrollReveal>
                         </div>
-                        <Link
-                            className={`inline-block text-white text-sm font-bold ${btnBgColor} px-10 py-4 rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95`}
-                            to={btnPath}
-                        >
-                            {btnTitle}
-                        </Link>
+                        <ScrollReveal delay={0.5} direction="up" distance={20}>
+                            <Link
+                                className={`inline-block text-white text-sm font-bold ${btnBgColor} px-10 py-4 rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95`}
+                                to={btnPath}
+                            >
+                                {btnTitle}
+                            </Link>
+                        </ScrollReveal>
                     </div>
                 </div>
                 <div className="w-full h-full relative overflow-hidden">

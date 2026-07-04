@@ -1,10 +1,10 @@
 {
-  "id": "/?utm_source=pwa&utm_medium=desktop_mobile",
+  "id": "https://www.tutorialcenter.africa/?utm_source=pwa&utm_medium=desktop_mobile",
   "short_name": "Tutorial Center",
   "name": "Tutorial Center",
   "description": "An interactive educational platform offering exam preparation, curriculum guides, and learning support.",
   "categories": ["education", "books", "utilities"],
-  "start_url": "/?utm_source=pwa&utm_medium=desktop_mobile",
+  "start_url": "https://www.tutorialcenter.africa/?utm_source=pwa&utm_medium=desktop_mobile",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#ffffff",
