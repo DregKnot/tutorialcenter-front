@@ -18,7 +18,9 @@ export default function DashboardLayout({
   hideMobileTitle = false,
   hideMobileBell = false,
   hideHeaderBell = false,
-  isExamActive = false
+  isExamActive = false,
+  hideSidebar = false,
+  hideRightPanel = false,
 }) {
   const [leftCollapsed, setLeftCollapsed] = useState(() => {
     const saved = localStorage.getItem("student_left_collapsed");
@@ -92,9 +94,11 @@ export default function DashboardLayout({
 
       {/* ===== DESKTOP SIDEBARS ===== */}
       <div className="hidden lg:block">
-        <Sidebar collapsed={isExamActive ? true : leftCollapsed} setCollapsed={handleSetLeftCollapsed} isExamActive={isExamActive} />
+        {!hideSidebar && (
+          <Sidebar collapsed={isExamActive ? true : leftCollapsed} setCollapsed={handleSetLeftCollapsed} isExamActive={isExamActive} />
+        )}
 
-        {!isExamActive && (
+        {!isExamActive && !hideRightPanel && (
           <RightPanelToRender
             collapsed={rightCollapsed}
             setCollapsed={handleSetRightCollapsed}
@@ -109,8 +113,8 @@ export default function DashboardLayout({
           pt-16 pb-20 px-4
           lg:p-6 lg:pt-2
           transition-all duration-300
-          ${isExamActive ? "lg:ml-20" : (leftCollapsed ? "lg:ml-20" : "lg:ml-64")}
-          ${isExamActive ? "lg:mr-0" : (rightCollapsed ? "lg:mr-0" : "lg:mr-80")}
+          ${hideSidebar ? "lg:ml-0" : (isExamActive ? "lg:ml-20" : (leftCollapsed ? "lg:ml-20" : "lg:ml-64"))}
+          ${(hideRightPanel || isExamActive) ? "lg:mr-0" : (rightCollapsed ? "lg:mr-0" : "lg:mr-80")}
         `}
       >
         {/* Desktop Header Row (Hidden on mobile) */}

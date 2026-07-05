@@ -39,7 +39,7 @@ export default function StaffLogin() {
     } else if (countdown === 0) {
       const role = localStorage.getItem("staff_role");
       if (role === "admin") {
-        navigate("/staffs/manage-staffs");
+        navigate("/staffs/dashboard");
       } else if (role === "moderator") {
         navigate("/staffs/manage-exams");
       } else if (role === "course advisor" || role === "advisor") {

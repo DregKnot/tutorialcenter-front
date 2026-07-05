@@ -23,7 +23,7 @@ export default function StudentGames() {
     : { count: 400, magnetRadius: 6,  particleSize: 1, ringRadius: 5 };
 
   return (
-    <DashboardLayout pagetitle="Games & Fun" hideMobileTitle={false}>
+    <DashboardLayout pagetitle="Games & Fun" hideMobileTitle={false} hideRightPanel={true}>
       <div
         className="relative w-full rounded-2xl overflow-hidden bg-white dark:bg-gray-900 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 dark:border-gray-800"
         style={{ minHeight: isMobile ? "60vh" : "85vh" }}

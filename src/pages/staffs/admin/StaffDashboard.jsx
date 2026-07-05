@@ -1,189 +1,183 @@
-import React from "react";
+import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
-
-
-
-
-
-import {
-  UserIcon,
-  EnvelopeIcon,
-  CalendarIcon,
-  MapPinIcon,
-  PencilIcon,
-  UserGroupIcon,
-  DocumentTextIcon
-} from "@heroicons/react/24/outline";
+import SummaryCards from "../../../components/private/staffs/dashboard/SummaryCards.jsx";
+import RevenueChart from "../../../components/private/staffs/dashboard/RevenueChart.jsx";
+import SiteTrafficPlaceholder from "../../../components/private/staffs/dashboard/SiteTrafficPlaceholder.jsx";
+import MockExamAnalytics from "../../../components/private/staffs/dashboard/MockExamAnalytics.jsx";
+import LocationAnalysis from "../../../components/private/staffs/dashboard/LocationAnalysis.jsx";
+import { useStaffAuth } from "../../../context/StaffAuthContext";
+import { Icon } from "@iconify/react";
 
 export default function StaffDashboard() {
+  const { staff } = useStaffAuth();
+
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const API_BASE_URL =
+    process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+
+  // ─── Fetch Payments ─────────────────────────────────────────────────────
+  const fetchPayments = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("staff_token");
+
+      const response = await axios.get(
+        `${API_BASE_URL}/api/admin/payments/all`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      let paymentData = [];
+      if (Array.isArray(response.data)) {
+        paymentData = response.data;
+      } else if (Array.isArray(response.data?.data)) {
+        paymentData = response.data.data;
+      } else if (Array.isArray(response.data?.payments)) {
+        paymentData = response.data.payments;
+      } else if (Array.isArray(response.data?.payments?.data)) {
+        paymentData = response.data.payments.data;
+      } else if (response.data && typeof response.data === "object") {
+        const possibleArray = Object.values(response.data).find((val) =>
+          Array.isArray(val)
+        );
+        if (possibleArray) paymentData = possibleArray;
+      }
+
+      setPayments(paymentData);
+      setError("");
+    } catch (err) {
+      console.error("Dashboard payment fetch error:", err);
+      setError("Failed to load dashboard data.");
+      setPayments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [API_BASE_URL]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
+
+  // ─── Greeting based on time of day ────────────────────────────────────
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
+
   return (
-    <StaffDashboardLayout 
-      pagetitle="Add Staff" 
-      backPath="/staffs/manage-staffs"
-      backLabel="Add Staff"
-    >
-      <div className="max-w-4xl mx-auto p-4 lg:p-6">
+    <StaffDashboardLayout pagetitle="Dashboard" hideHeader={false}>
+      <div className="max-w-[1400px] mx-auto space-y-6">
+        {/* ─── Greeting Header ───────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-black text-gray-900 dark:text-white">
+              {getGreeting()},{" "}
+              <span className="text-mainBlue dark:text-blue-400">
+                {staff?.firstname || "Admin"}
+              </span>{" "}
+              👋
+            </h2>
+            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mt-0.5">
+              Here's what's happening with your tutorial center today.
+            </p>
+          </div>
 
-        <section className="bg-gray-50 dark:bg-gray-800 rounded-xl">
-          <form className="space-y-4">
-            
-            {/* Top Section: Image Upload + First 4 Inputs */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* Image Upload Box */}
-              <div className="lg:col-span-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl h-48 lg:h-full relative overflow-hidden"
-                style={{
-                  backgroundImage: `linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%)`,
-                  backgroundSize: `20px 20px`,
-                  backgroundPosition: `0 0, 0 10px, 10px -10px, -10px 0px`
-                }}
-              >
-                <div className="bg-white px-4 py-2 rounded-lg border border-gray-200 text-xs text-center text-gray-600 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
-                  Click/drag and<br />drop to upload
-                </div>
+          {/* Refresh Button */}
+          <button
+            onClick={fetchPayments}
+            disabled={loading}
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 
+                       text-xs font-bold text-gray-600 dark:text-gray-300
+                       hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600
+                       transition-all duration-200 shadow-sm self-start"
+          >
+            <Icon
+              icon="heroicons:arrow-path-20-solid"
+              className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+            />
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+
+        {/* ─── Error Banner ──────────────────────────────────────────── */}
+        {error && (
+          <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">
+            <Icon
+              icon="heroicons:exclamation-triangle-20-solid"
+              className="w-5 h-5 text-mainRed flex-shrink-0"
+            />
+            <p className="text-sm text-red-700 dark:text-red-300 font-medium">
+              {error}
+            </p>
+            <button
+              onClick={fetchPayments}
+              className="ml-auto text-xs font-bold text-mainRed hover:underline"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* ─── Summary Cards ─────────────────────────────────────────── */}
+        <SummaryCards payments={payments} loading={loading} />
+
+        {/* ─── Middle Section: Revenue & Traffic ──────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            <RevenueChart payments={payments} loading={loading} />
+          </div>
+          <div className="lg:col-span-1">
+            <SiteTrafficPlaceholder />
+          </div>
+        </div>
+
+        {/* ─── Bottom Section: Analytics & Leaderboard ───────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-1">
+            <MockExamAnalytics />
+          </div>
+          
+          <div className="lg:col-span-1">
+            <LocationAnalysis />
+          </div>
+
+          {/* Leaderboard Placeholder */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
+                <Icon
+                  icon="heroicons:trophy-20-solid"
+                  className="w-4 h-4 text-purple-600 dark:text-purple-400"
+                />
               </div>
-
-              {/* Name & Contact Inputs */}
-              <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* First Name */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">First Name</label>
-                  <div className="relative">
-                    <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                    <input type="text" placeholder="first name" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-
-                {/* Last Name */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Last Name</label>
-                  <div className="relative">
-                    <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                    <input type="text" placeholder="last name" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Email</label>
-                  <div className="relative">
-                    <EnvelopeIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                    <input type="email" placeholder="you@example.com" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-
-                {/* Phone Number */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Email / Phone Number</label>
-                  <div className="relative">
-                    <EnvelopeIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                    <input type="tel" placeholder="+234 XXX XXXX XXXX" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
-                </div>
-              </div>
+              <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wide">
+                Leaderboard
+              </h3>
+              <span className="ml-auto text-[10px] font-black text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-full px-2.5 py-0.5 uppercase">
+                Coming July 14
+              </span>
             </div>
-
-            {/* Middle Section: 2-Column Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              {/* Gender */}
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Gender</label>
-                <div className="relative">
-                  <PencilIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                  <select className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-500">
-                    <option value="">select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* DOB */}
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Date of Birth</label>
-                <div className="relative">
-                  <CalendarIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                  <input type="text" placeholder="-- / -- / ----" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500" onFocus={(e) => e.target.type = 'date'} onBlur={(e) => e.target.value === '' ? e.target.type = 'text' : null} />
-                </div>
-              </div>
-
-              {/* Role (Full Width) */}
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Role</label>
-                <div className="relative">
-                  <UserGroupIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                  <select className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-500">
-                    <option value="">select role</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Status</label>
-                <div className="relative">
-                  <UserGroupIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                  <select className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-500">
-                    <option value="">select status</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Class Title */}
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">
-                  Class Title <span className="font-normal text-gray-400">(optional)</span>
-                </label>
-                <div className="relative">
-                  <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                  <input type="text" placeholder="enter class title" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Location</label>
-                <div className="relative">
-                  <MapPinIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                  <select className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-500">
-                    <option value="">select location</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Home Address */}
-              <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Home Address</label>
-                <div className="relative">
-                  <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-700" />
-                  <input type="text" placeholder="enter home address" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">
-                  Description <span className="font-normal text-gray-400">(optional)</span>
-                </label>
-                <div className="relative">
-                  <DocumentTextIcon className="w-4 h-4 absolute left-3 top-3 text-gray-700" />
-                  <textarea rows="4" placeholder="type in your description" className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
-                </div>
-              </div>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Icon
+                icon="heroicons:star-20-solid"
+                className="w-12 h-12 text-gray-200 dark:text-gray-700 mb-3"
+              />
+              <p className="text-sm font-bold text-gray-400 dark:text-gray-500">
+                Student leaderboard coming soon
+              </p>
+              <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">
+                Top scorers, streaks & achievements
+              </p>
             </div>
-
-            {/* Submit Button */}
-            <div className="mt-6">
-              <button
-                type="submit"
-                className="w-full rounded-lg bg-[#09314F] hover:bg-[#051b2b] text-white font-semibold py-3.5 text-sm transition-colors shadow-md"
-              >
-                Register
-              </button>
-            </div>
-
-          </form>
-        </section>
+          </div>
+        </div>
       </div>
     </StaffDashboardLayout>
   );

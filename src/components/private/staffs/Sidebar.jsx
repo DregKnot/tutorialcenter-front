@@ -25,7 +25,7 @@ import collapselogo from "../../../assets/images/TC 1.png";
 import { useStaffAuth } from "../../../context/StaffAuthContext";
 
 const adminMenuItems = [
-  { label: "Dashboard", icon: HomeIcon },
+  { label: "Dashboard", icon: HomeIcon, destination: "/staffs/dashboard" },
   { label: "Manage Staffs", icon: UsersIcon, destination: "/staffs/manage-staffs" },
   { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
   { label: "Manage Guardian", icon: ShieldCheckIcon },

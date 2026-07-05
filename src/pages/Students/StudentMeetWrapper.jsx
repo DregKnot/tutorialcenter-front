@@ -55,7 +55,7 @@ export default function StudentMeetWrapper() {
   }
 
   return (
-    <DashboardLayout pagetitle="Live Class Session">
+    <DashboardLayout pagetitle="Live Class Session" hideRightPanel={true}>
       <div className="flex items-center justify-center min-h-[60vh]">
         <GoogleMeetSessions 
           class_link={sessionDetails.class_link}

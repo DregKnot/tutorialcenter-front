@@ -7,7 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 const tabs = [
-  { label: "Dashboard", icon: HomeIcon, to: "/staffs/manage-staffs" },
+  { label: "Dashboard", icon: HomeIcon, to: "/staffs/dashboard" },
   { label: "Staffs", icon: UsersIcon, to: "/staffs/manage-staffs" },
   { label: "Students", icon: UserGroupIcon, to: "/staffs/manage-students" },
   { label: "Calendar", icon: CalendarDaysIcon, to: "/staffs/calendar" },
