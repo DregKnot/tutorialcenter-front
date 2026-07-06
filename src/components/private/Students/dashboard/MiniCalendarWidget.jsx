@@ -215,7 +215,6 @@ export default function MiniCalendarWidget() {
 
   // Month label from the middle of the strip (index 2)
   const monthLabel = MONTHS[weekStrip[2]?.getMonth()] || "";
-  const yearLabel = weekStrip[2]?.getFullYear() || "";
 
   // Sessions for selected day
   const daysSessions = useMemo(() =>
