@@ -263,7 +263,7 @@ export default function StudentExam() {
   })();
 
   return (
-    <DashboardLayout pagetitle="Exam Practice" isExamActive={showExamInterface && !!activeAttemptId}>
+    <DashboardLayout pagetitle="Exam Practice" isExamActive={showExamInterface && !!activeAttemptId} hideRightPanel={true}>
       {/* Toast Alert */}
       {toast && (
         <div

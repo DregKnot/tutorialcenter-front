@@ -99,7 +99,7 @@ export default function StudentNotifications() {
   };
 
   return (
-    <DashboardLayout pagetitle="Notifications" hideHeaderBell={true}>
+    <DashboardLayout pagetitle="Notifications" hideHeaderBell={true} hideRightPanel={true}>
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[2000] px-8 py-4 bg-[#09314F] text-white rounded-2xl shadow-2xl animate-in slide-in-from-bottom-5 duration-300 flex items-center gap-3">

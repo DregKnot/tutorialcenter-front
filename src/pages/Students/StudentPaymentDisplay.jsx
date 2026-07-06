@@ -510,7 +510,7 @@ export default function StudentPaymentDisplay() {
 
 
   return (
-    <DashboardLayout pagetitle="Payment">
+    <DashboardLayout pagetitle="Payment" hideRightPanel={true}>
       {toast && (
         <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[120] px-6 py-4 rounded-2xl shadow-2xl text-white ${toast.type === "success" ? "bg-[#76D287]" : "bg-[#E83831] transition-all"}`}>
           <p className="font-bold text-sm">{toast.message}</p>

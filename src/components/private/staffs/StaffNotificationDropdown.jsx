@@ -3,6 +3,7 @@ import { CheckCircleIcon, InformationCircleIcon, XMarkIcon, BellIcon } from "@he
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+
 export default function StaffNotificationDropdown({ isOpen, onClose, onUpdate, token, viewAllLink = "/staffs/notifications" }) {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);

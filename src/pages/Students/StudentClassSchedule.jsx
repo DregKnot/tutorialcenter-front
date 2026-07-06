@@ -395,6 +395,7 @@ export default function StudentClassSchedule() {
       hideHeader={false}
       hideMobileTitle={false}
       hideMobileBell={false}
+      hideRightPanel={true}
     >
       <div className="max-w-[1600px] xl:px-10 mx-auto w-full min-h-screen">
         

@@ -21,7 +21,7 @@ export default function StudentScholarship() {
     : { count: 300, magnetRadius: 6, particleSize: 1.5, ringRadius: 7 };
 
   return (
-    <DashboardLayout pagetitle="Scholarship" hideMobileTitle={false}>
+    <DashboardLayout pagetitle="Scholarship" hideMobileTitle={false} hideRightPanel={true}>
       <div
         className="relative w-full rounded-2xl overflow-hidden bg-white dark:bg-gray-900 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 dark:border-gray-800"
         style={{ minHeight: isMobile ? "60vh" : "85vh" }}

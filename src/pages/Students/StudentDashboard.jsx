@@ -1,10 +1,44 @@
 import { useEffect, useState } from "react";
-import ProgressCard from "../../components/private/Students/ProgressCard";
 import { useAuth } from "../../context/AuthContext";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import axios from "axios";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
+
+// ── New dashboard components ─────────────────────────────────────────────────
+import StudentStatsBar from "../../components/private/Students/dashboard/StudentStatsBar.jsx";
+import CourseCardGrid from "../../components/private/Students/dashboard/CourseCardGrid.jsx";
+import StudentActivityChart from "../../components/private/Students/dashboard/StudentActivityChart.jsx";
+import AchievementsPanel from "../../components/private/Students/dashboard/AchievementsPanel.jsx";
+import MiniCalendarWidget from "../../components/private/Students/dashboard/MiniCalendarWidget.jsx";
+import RecommendedExamPractice from "../../components/private/Students/dashboard/RecommendedExamPractice.jsx";
+
+// ── Welcome header ─────────────────────────────────────────────────────────────
+function WelcomeHeader() {
+  const { student } = useAuth();
+  const firstName = student?.firstname || "Student";
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const dateStr = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-4">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-black text-[#09314F] dark:text-white tracking-tight">
+          {greeting}, <span className="text-[#E83831]">{firstName}</span> 👋
+        </h1>
+        <p className="text-sm text-gray-400 dark:text-gray-500 font-semibold mt-0.5">
+          {dateStr} · Here's your learning overview
+        </p>
+      </div>
+      <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl px-4 py-2.5 shadow-sm self-start">
+        <Icon icon="lucide:zap" className="w-4 h-4 text-amber-400" />
+        <span className="text-xs font-black text-gray-600 dark:text-gray-300 uppercase tracking-wide">Keep it up!</span>
+      </div>
+    </div>
+  );
+}
 
 export default function StudentDashboard() {
   const API_BASE_URL =
@@ -16,51 +50,44 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [showNoCoursePopup, setShowNoCoursePopup] = useState(false);
 
-
   useEffect(() => {
     const fetchActiveCourses = async () => {
       try {
-        const res = await axios.get(
-          `${API_BASE_URL}/api/students/courses`,
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-              Accept: "application/json",
-            },
-          }
-        );
-        console.log(res?.data?.courses);
+        const res = await axios.get(`${API_BASE_URL}/api/students/courses`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            Accept: "application/json",
+          },
+        });
         if (res?.status !== 200) throw new Error(res?.data?.message);
-
         const fetchedCourses = res?.data?.courses || [];
         setCourses(fetchedCourses);
-
-        // Check if there's any course that has subjects
-        const hasSubjects = fetchedCourses.some(c => c.subjects && c.subjects.length > 0);
-        if (!hasSubjects) {
-          setShowNoCoursePopup(true);
-        }
+        const hasSubjects = fetchedCourses.some((c) => c.subjects && c.subjects.length > 0);
+        if (!hasSubjects) setShowNoCoursePopup(true);
       } catch (error) {
         console.log(error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchActiveCourses();
   }, [API_BASE_URL, authToken]);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout hideRightPanel={true} hideHeader={true}>
+      {/* ── No Course Popup ─────────────────────────────────────────────── */}
       {showNoCoursePopup && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full shadow-2xl text-center border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-300">
             <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <Icon icon="lucide:book-x" className="w-10 h-10 text-[#E83831]" />
             </div>
-            <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase mb-3">No Active Courses</h2>
+            <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase mb-3">
+              No Active Courses
+            </h2>
             <p className="text-gray-500 dark:text-gray-400 text-sm mb-8 leading-relaxed">
-              It looks like you haven't enrolled in any subjects yet. You need to add a training course to access your study materials, classes, and exams.
+              You haven't enrolled in any subjects yet. Add a training course to access your
+              study materials, classes, and exams.
             </p>
             <button
               onClick={() => {
@@ -75,80 +102,58 @@ export default function StudentDashboard() {
         </div>
       )}
 
-      <div className="flex flex-col xl:flex-row gap-6 w-full max-w-[1600px] mx-auto text-gray-800 dark:text-gray-100">
+      <div className="flex flex-col gap-6 w-full max-w-[1600px] mx-auto text-gray-800 dark:text-gray-100 pb-10">
 
-        {/* --- LEFT MAIN COLUMN --- */}
-        <div className="flex-1 flex flex-col space-y-6">
+        {/* ── Welcome header ────────────────────────────────────────────────── */}
+        <WelcomeHeader />
 
-          {/* Header Row */}
-          {/* <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <h1 className="text-2xl font-bold uppercase tracking-wide text-gray-800 dark:text-white">
-              Dashboard
-            </h1>
-            <button className="relative p-2 bg-white dark:bg-gray-700 rounded-full shadow-sm border border-gray-100 dark:border-gray-600 hover:bg-gray-50 transition">
-              <BellIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-blue-900 rounded-full border border-white"></span>
-            </button>
-          </div> */}
+        {/* ── Stats Bar ─────────────────────────────────────────────────── */}
+        <StudentStatsBar />
 
+        {/* ── Main 2-column grid ────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
 
-          {/* Assessment Notification */}
-          <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-xl p-2 border border-[#C5A97A]/40 shadow-[0_8px_30px_rgb(0,0,0,0.03)]">
-            <div className="bg-[#E6E9EC]/60 dark:bg-[#09314F]/80 p-5 rounded-lg relative min-h-[100px] flex flex-col justify-between">
-              <p className="text-[14px] font-bold text-[#09314F] dark:text-gray-200">
-                You have English and Mathematics assessment
-              </p>
-              <div className="flex justify-end">
-                <span className="text-[11px] font-black text-[#09314F] dark:text-gray-400">10:15am</span>
-              </div>
+          {/* ── LEFT COLUMN ────────────────────────────────────────────── */}
+          <div className="flex flex-col gap-6 h-full">
+
+            {/* Section label */}
+            <div className="flex items-center gap-2">
+              <Icon icon="lucide:layout-grid" className="w-4 h-4 text-[#09314F] dark:text-blue-300" />
+              <h2 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                My Courses
+              </h2>
+            </div>
+
+            {/* Course Cards grid — up to 4, responsive */}
+            <CourseCardGrid courses={courses} loading={loading} />
+
+            {/* Student Activity Chart */}
+            <div className="flex-1 flex flex-col min-h-[250px]">
+              <StudentActivityChart />
+            </div>
+
+          </div>
+
+          {/* ── RIGHT COLUMN ───────────────────────────────────────────── */}
+          <div className="flex flex-col gap-6 h-full">
+            {/* Invisible spacer to align tops perfectly with left column */}
+            <div className="flex items-center gap-2 invisible" aria-hidden="true">
+              <Icon icon="lucide:layout-grid" className="w-4 h-4" />
+              <h2 className="text-xs font-black uppercase tracking-widest">Spacer</h2>
+            </div>
+            
+            <div className="flex-none">
+              <AchievementsPanel />
+            </div>
+            <div className="flex-none">
+              <MiniCalendarWidget />
             </div>
           </div>
 
-          {/* Overall Progress Section */}
-          <div className="pt-4">
-            <div className="flex justify-between items-end mb-3 border-b border-gray-200 dark:border-[#09314F]/50 pb-2">
-              <div className="flex items-center gap-2">
-                <Icon icon="game-icons:progression" className="w-6 h-6 text-[#09314F] dark:text-blue-300" />
-                <h2 className="text-lg font-bold dark:text-white">Progress Level</h2>
-              </div>
-              <span className="text-sm font-bold text-gray-600 dark:text-gray-300">
-                Courses {courses.length || 4}
-              </span>
-            </div>
-
-            <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
-              <span>Start</span>
-              <span>Finish</span>
-            </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700/50 rounded-full h-2.5 mb-6 shadow-inner">
-              <div
-                className="bg-[#1e3a8a] dark:bg-blue-400 h-2.5 rounded-full"
-                style={{ width: '15%' }}
-              ></div>
-            </div>
-          </div>
-
-          {/* Dynamic Courses Grid */}
-          {loading ? (
-            <div className="flex justify-center items-center py-10">
-              <p className="text-sm text-gray-500 animate-pulse">Loading active courses...</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10 items-start">
-              {courses.map((course, index) => (
-                <ProgressCard
-                  key={`course-${course.enrollment_id || index}`}
-                  title={course.course?.title}
-                  subjects={course.subjects}
-                  end_date={course.end_date}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
-
-
+        {/* ── Recommended Exam Practice — full width ─────────────────────── */}
+        <RecommendedExamPractice />
 
       </div>
     </DashboardLayout>

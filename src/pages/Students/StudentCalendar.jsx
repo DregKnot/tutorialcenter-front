@@ -281,6 +281,7 @@ export default function StudentCalendar() {
       hideHeader={false}
       hideMobileTitle={false}
       hideMobileBell={false}
+      hideRightPanel={true}
     >
       <div className="max-w-7xl mx-auto w-full min-h-screen px-4 md:px-0 py-6">
         <div className="flex flex-col lg:flex-row gap-6 items-start">
