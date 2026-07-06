@@ -1,3 +1,16 @@
 # https://www.robotstxt.org/robotstxt.html
+
+# Allow all major search engines and AI crawlers
 User-agent: *
-Disallow:
+Allow: /
+
+# Block crawlers from trying to index private dashboard pages
+# This saves your "crawl budget" so search engines focus on your public pages
+Disallow: /student/
+Disallow: /staff/
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+
+# Tell crawlers where your sitemap is (if you generate one later)
+Sitemap: https://tutorialcenterafrica.com/sitemap.xml
