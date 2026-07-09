@@ -69,6 +69,7 @@ import ExamSubjectList from "./components/private/staffs/exams/ExamSubjectList.j
 import ExamYearList from "./components/private/staffs/exams/ExamYearList.jsx";
 import ExamQuestionList from "./components/private/staffs/exams/ExamQuestionList.jsx";
 import Training from "./pages/public/Training.jsx";
+import CourseDetails from "./pages/public/CourseDetails.jsx";
 // import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
 
 function App() {
@@ -87,6 +88,7 @@ function App() {
         <Route path="/career" element={<Career />} />
         <Route path="/career" element={<Career />} />
         <Route path="/training" element={<Training />} />
+        <Route path="/program/:id" element={<CourseDetails />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/register" element={<SignUp />} />
         <Route path="/comingsoon" element={<ComingSoon />} />

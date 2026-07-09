@@ -128,6 +128,7 @@ const ProgramSection = () => {
 
                                         const monthly = basePrice;
                                         const quarterly = Math.round(basePrice * 3 * 0.95);
+                                        const semiAnnually = Math.round(basePrice * 6 * 0.95);
                                         const annually = Math.round(basePrice * 12 * 0.95);
 
                                         const bannerUrl = item.banner
@@ -146,12 +147,14 @@ const ProgramSection = () => {
                                                     logo={bannerUrl}
                                                     month={monthly}
                                                     quarter={quarterly}
+                                                    semiAnnual={semiAnnually}
                                                     year={annually}
                                                     topic1="Comprehensive tutorials"
                                                     topic2="Weekly masterclasses"
                                                     topic3="Mock tests and practice questions"
                                                     topic4="Live Q&A sessions with experts"
-                                                    path="/training"
+                                                    path={`/program/${item.id}`}
+                                                    state={{ course: item }}
                                                 />
                                             </div>
                                         );

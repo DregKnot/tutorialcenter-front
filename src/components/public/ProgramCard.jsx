@@ -3,7 +3,7 @@ import BookIcon from "../../assets/images/emojione_books.png";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
-const ProgramCard = ({ subject, title, month, quarter, year, topic1, topic2, topic3, topic4, path, logo }) => {
+const ProgramCard = ({ subject, title, month, quarter, semiAnnual, year, topic1, topic2, topic3, topic4, path, logo, state }) => {
     return (
         <>
             <div className="md:mr-14 mr-5">
@@ -48,13 +48,16 @@ const ProgramCard = ({ subject, title, month, quarter, year, topic1, topic2, top
                                 </p>
                                 <ul className="[&_li]:text-nowrap [&_span]:text-ascent [&_span]:font-semibold [&_span]:pl-3 flex flex-col">
                                     <li>
-                                        Monthly: <span>₦{Number(month).toLocaleString()}</span>
+                                        Monthly: <span>₦{Number(month).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                     </li>
                                     <li>
-                                        Quarterly: <span>₦{Number(quarter).toLocaleString()}</span>
+                                        Quarterly: <span>₦{Number(quarter).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                     </li>
                                     <li>
-                                        Annualy: <span>₦{Number(year).toLocaleString()}</span>
+                                        Semi-Annually: <span>₦{Number(semiAnnual).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                    </li>
+                                    <li>
+                                        Annualy: <span>₦{Number(year).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                     </li>
                                 </ul>
                             </div>
@@ -80,6 +83,7 @@ const ProgramCard = ({ subject, title, month, quarter, year, topic1, topic2, top
                         </div>
                         <Link
                             to={path}
+                            state={state}
                             className="flex justify-end gap-1 text-sencondary font-semibold text-sm"
                         >
                             <span>Learn More</span>{" "}

@@ -22,6 +22,10 @@ export default function ExamQuestionList() {
   const [year, setYear] = useState(null);
   const [loading, setLoading] = useState(true);
   
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
   // Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
@@ -63,10 +67,14 @@ export default function ExamQuestionList() {
       });
 
       // Fetch Questions for this context
-      console.log("[ExamQuestionList] Fetching All Past Questions:", `${API_BASE_URL}/api/admin/past-questions/all`);
-      const questionsRes = await axios.get(`${API_BASE_URL}/api/admin/past-questions/all`, config);
+      console.log("[ExamQuestionList] Fetching Past Questions:", `${API_BASE_URL}/api/admin/past-questions/all?page=${page}`);
+      const questionsRes = await axios.get(`${API_BASE_URL}/api/admin/past-questions/all?page=${page}`, config);
       console.log("[ExamQuestionList] Past Questions Response:", questionsRes.data);
-      const allQuestions = questionsRes.data?.questions?.data || questionsRes.data?.data || questionsRes.data?.questions || [];
+      
+      const allQuestions = questionsRes.data?.questions?.data || questionsRes.data?.data?.data || questionsRes.data?.data || questionsRes.data?.questions || [];
+      const lastPage = questionsRes.data?.questions?.last_page || questionsRes.data?.data?.last_page || questionsRes.data?.last_page || 1;
+      
+      setTotalPages(lastPage);
       
       // Filter by body, subject (if available in payload), and year
       const filtered = allQuestions.filter(q => String(q.exam_year_id) === String(yearId));
@@ -77,7 +85,7 @@ export default function ExamQuestionList() {
     } finally {
       setLoading(false);
     }
-  }, [bodyId, subjectId, yearId, API_BASE_URL, token]);
+  }, [bodyId, subjectId, yearId, page, API_BASE_URL, token]);
 
   useEffect(() => {
     fetchData();
@@ -261,6 +269,29 @@ export default function ExamQuestionList() {
                   className="mt-8 px-8 py-4 bg-[#0F2843] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl"
                 >
                   Create New Question
+                </button>
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-12 flex items-center justify-center gap-4">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1 || loading}
+                  className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-[#0F2843] dark:text-white font-black text-[10px] uppercase tracking-widest shadow-sm transition-all"
+                >
+                  Previous
+                </button>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages || loading}
+                  className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-[#0F2843] dark:text-white font-black text-[10px] uppercase tracking-widest shadow-sm transition-all"
+                >
+                  Next
                 </button>
               </div>
             )}
