@@ -72,7 +72,7 @@ export default function ExamQuestionList() {
       console.log("[ExamQuestionList] Past Questions Response:", questionsRes.data);
       
       const allQuestions = questionsRes.data?.questions?.data || questionsRes.data?.data?.data || questionsRes.data?.data || questionsRes.data?.questions || [];
-      const lastPage = questionsRes.data?.questions?.last_page || questionsRes.data?.data?.last_page || questionsRes.data?.last_page || 1;
+      const lastPage = questionsRes.data?.meta?.last_page || questionsRes.data?.questions?.last_page || questionsRes.data?.data?.last_page || questionsRes.data?.last_page || 1;
       
       setTotalPages(lastPage);
       
@@ -274,7 +274,7 @@ export default function ExamQuestionList() {
             )}
 
             {/* Pagination Controls */}
-            {totalPages > 1 && (
+            {(totalPages > 1 || page > 1 || questions.length > 0) && (
               <div className="mt-12 flex items-center justify-center gap-4">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
