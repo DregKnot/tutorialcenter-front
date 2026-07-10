@@ -174,11 +174,11 @@ export const GuardianRegistration = () => {
 
         {/* Registration Card */}
         <div className="w-full max-w-sm bg-white rounded-[24px] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] p-8 border border-gray-50 mb-10">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
             {/* Entry: Email / Phone */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-[#444444] px-1 text-left block">
-                Email / Phone Number
+                Email / Phone Number {errors.entry && <span className="text-red-500 font-bold">*</span>}
               </label>
               <div className={`flex items-center bg-[#F7EFEF] rounded-2xl px-4 py-4 border-2 transition-all ${errors.entry ? "border-red-400" : "border-transparent focus-within:border-[#09314F]"}`}>
                 <EnvelopeIcon className="h-5 w-5 text-gray-600 mr-3" />
@@ -189,6 +189,7 @@ export const GuardianRegistration = () => {
                   onChange={handleChange}
                   placeholder="you@example.com or +234xxxxxxxxxx"
                   className="bg-transparent w-full outline-none text-[#333333] font-semibold placeholder:text-gray-400"
+                  autoComplete="off"
                 />
               </div>
               {errors.entry && <p className="text-xs text-red-500 font-bold px-1">{errors.entry}</p>}
@@ -197,7 +198,7 @@ export const GuardianRegistration = () => {
             {/* Password */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-[#444444] px-1 text-left block">
-                Password
+                Password {errors.password && <span className="text-red-500 font-bold">*</span>}
               </label>
               <div className={`flex items-center bg-[#F7EFEF] rounded-2xl px-4 py-4 border-2 transition-all ${errors.password ? "border-red-400" : "border-transparent focus-within:border-[#09314F]"}`}>
                 <div className="relative w-full flex items-center">
@@ -218,16 +219,20 @@ export const GuardianRegistration = () => {
                     value={formData.password}
                     onChange={handleChange}
                     className="bg-transparent w-full outline-none text-[#333333] font-semibold"
+                    autoComplete="new-password"
                   />
                 </div>
               </div>
+              <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider leading-relaxed px-1">
+                Allowed symbols: ! @ # $ % ^ & * ( ) , . ? " : { } | &lt; &gt;
+              </p>
               {errors.password && <p className="text-xs text-red-500 font-bold px-1">{errors.password}</p>}
             </div>
 
             {/* Confirm Password */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-[#444444] px-1 text-left block">
-                Confirm Password
+                Confirm Password {errors.confirmPassword && <span className="text-red-500 font-bold">*</span>}
               </label>
               <div className={`flex items-center bg-[#F7EFEF] rounded-2xl px-4 py-4 border-2 transition-all ${errors.confirmPassword ? "border-red-400" : "border-transparent focus-within:border-[#09314F]"}`}>
                 <div className="relative w-full flex items-center">
@@ -248,6 +253,7 @@ export const GuardianRegistration = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     className="bg-transparent w-full outline-none text-[#333333] font-semibold"
+                    autoComplete="new-password"
                   />
                 </div>
               </div>

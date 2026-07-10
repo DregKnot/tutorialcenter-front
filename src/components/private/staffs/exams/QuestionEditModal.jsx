@@ -79,9 +79,28 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             Accept: "application/json"
           } 
         };
-        const res = await axios.get(`${API_BASE_URL}/api/admin/past-question-groups/all`, config);
-        const fetchedGroups = res.data?.groups?.data || res.data?.data || res.data || [];
-        setAllGroups(Array.isArray(fetchedGroups) ? fetchedGroups : []);
+        let page = 1;
+        let allFetchedGroups = [];
+        let hasMore = true;
+        
+        while (hasMore) {
+          const res = await axios.get(`${API_BASE_URL}/api/admin/past-question-groups/all?page=${page}`, config);
+          const responseObj = res.data?.groups || res.data;
+          const fetchedGroups = responseObj?.data || res.data?.data || res.data || [];
+          
+          if (Array.isArray(fetchedGroups) && fetchedGroups.length > 0) {
+            allFetchedGroups = [...allFetchedGroups, ...fetchedGroups];
+            const lastPage = responseObj?.last_page || res.data?.last_page || 1;
+            if (page >= lastPage) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+        setAllGroups(allFetchedGroups);
       } catch (err) {
         console.error("Failed to fetch groups:", err);
       }

@@ -173,14 +173,14 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
         ))}
       </div>
 
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-[240px]">
-        If you didn't get verification code yet.{" "}
+      <div className="text-sm text-gray-500 dark:text-gray-400 mb-8 flex flex-wrap items-center gap-1.5">
+        <span>Request new code in</span>
         {timeLeft > 0 ? (
-          <span className="text-[#C1A58A]">Resend code in {timeLeft} seconds</span>
+          <span className="text-[#C1A58A] font-bold">{timeLeft}s</span>
         ) : (
           <button 
             onClick={() => { onResend(); setTimeLeft(59); }}
-            className="text-[#C1A58A] hover:underline cursor-pointer"
+            className="text-[#C1A58A] hover:underline cursor-pointer font-bold"
           >
             Resend now
           </button>
