@@ -30,6 +30,31 @@ export default function ExamQuestionList() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
 
+  const renderPagination = (className = "") => {
+    if (!(totalPages > 1 || page > 1 || questions.length > 0)) return null;
+    return (
+      <div className={`flex items-center justify-center gap-4 ${className}`}>
+        <button
+          onClick={() => setPage(p => Math.max(1, p - 1))}
+          disabled={page === 1 || loading}
+          className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-[#0F2843] dark:text-white font-black text-[10px] uppercase tracking-widest shadow-sm transition-all"
+        >
+          Previous
+        </button>
+        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          Page {page} of {totalPages}
+        </span>
+        <button
+          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages || loading}
+          className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-[#0F2843] dark:text-white font-black text-[10px] uppercase tracking-widest shadow-sm transition-all"
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -150,6 +175,8 @@ export default function ExamQuestionList() {
           </div>
         ) : (
           <div className="space-y-10">
+            {renderPagination("pb-4 border-b border-gray-200 dark:border-gray-800")}
+            
             {questions.map((q, idx) => (
               <div key={q.id} className="bg-[#EDF0F3] dark:bg-gray-800/40 rounded-[32px] p-6 border border-transparent shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
                 {/* Question Card Header */}
@@ -273,28 +300,7 @@ export default function ExamQuestionList() {
               </div>
             )}
 
-            {/* Pagination Controls */}
-            {(totalPages > 1 || page > 1 || questions.length > 0) && (
-              <div className="mt-12 flex items-center justify-center gap-4">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1 || loading}
-                  className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-[#0F2843] dark:text-white font-black text-[10px] uppercase tracking-widest shadow-sm transition-all"
-                >
-                  Previous
-                </button>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages || loading}
-                  className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-[#0F2843] dark:text-white font-black text-[10px] uppercase tracking-widest shadow-sm transition-all"
-                >
-                  Next
-                </button>
-              </div>
-            )}
+            {renderPagination("mt-12")}
           </div>
         )}
       </div>
