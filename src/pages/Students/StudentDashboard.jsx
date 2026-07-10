@@ -40,7 +40,7 @@ function WelcomeHeader() {
   );
 }
 
-export default function StudentDashboard() {
+export default function StudentDashboard({ blogs = [] }) {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
@@ -49,6 +49,7 @@ export default function StudentDashboard() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNoCoursePopup, setShowNoCoursePopup] = useState(false);
+  const [attempts, setAttempts] = useState([]);
 
   useEffect(() => {
     const fetchActiveCourses = async () => {
@@ -70,8 +71,170 @@ export default function StudentDashboard() {
         setLoading(false);
       }
     };
+
+    const fetchHistory = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/students/exams/results/history`, {
+          headers: { Authorization: `Bearer ${authToken}`, Accept: "application/json" },
+        });
+        const responseData = res?.data || [];
+        let attemptsArray = [];
+        if (Array.isArray(responseData)) attemptsArray = responseData;
+        else if (Array.isArray(responseData.data)) attemptsArray = responseData.data;
+        else if (responseData.attempts && Array.isArray(responseData.attempts.data)) attemptsArray = responseData.attempts.data;
+        else if (responseData.history && Array.isArray(responseData.history)) attemptsArray = responseData.history;
+        else if (responseData.data && Array.isArray(responseData.data.data)) attemptsArray = responseData.data.data;
+
+        setAttempts(attemptsArray);
+      } catch (err) {
+        console.error("Failed to load exam history for stats:", err);
+      }
+    };
+
     fetchActiveCourses();
+    fetchHistory();
   }, [API_BASE_URL, authToken]);
+
+  // Compute average score from history
+  const avgScore = attempts.length > 0
+    ? Math.round(attempts.reduce((sum, attempt) => {
+        const scoreVal = attempt.score !== undefined ? Number(attempt.score) : (attempt.correct_answers !== undefined ? Number(attempt.correct_answers) : 0);
+        const totalQ = attempt.total_questions !== undefined ? Number(attempt.total_questions) : (attempt.questions_count !== undefined ? Number(attempt.questions_count) : 0);
+        const percentage = attempt.percentage !== undefined ? Math.round(Number(attempt.percentage)) : (totalQ ? Math.round((scoreVal / totalQ) * 100) : 0);
+        return sum + (isNaN(percentage) ? 0 : percentage);
+      }, 0) / attempts.length)
+    : 0;
+
+  // Calculate Streak
+  const getStreak = (allAttempts) => {
+    if (!allAttempts || allAttempts.length === 0) return 0;
+    const dates = allAttempts
+      .map((a) => {
+        const dateStr = a.started_at || a.created_at;
+        return dateStr ? new Date(dateStr).toDateString() : null;
+      })
+      .filter((value, index, self) => value && self.indexOf(value) === index)
+      .map((d) => new Date(d));
+
+    if (dates.length === 0) return 0;
+    dates.sort((a, b) => b - a);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    let currentStreak = 0;
+    let expectedDate = new Date(today);
+    const firstDate = new Date(dates[0]);
+    firstDate.setHours(0, 0, 0, 0);
+    if (firstDate.getTime() === today.getTime()) {
+      currentStreak = 1;
+      expectedDate = yesterday;
+    } else if (firstDate.getTime() === yesterday.getTime()) {
+      currentStreak = 1;
+      expectedDate = new Date(yesterday);
+      expectedDate.setDate(expectedDate.getDate() - 1);
+    } else {
+      return 0; 
+    }
+    for (let i = 1; i < dates.length; i++) {
+      const d = new Date(dates[i]);
+      d.setHours(0, 0, 0, 0);
+      if (d.getTime() === expectedDate.getTime()) {
+        currentStreak++;
+        expectedDate.setDate(expectedDate.getDate() - 1);
+      } else if (d.getTime() < expectedDate.getTime()) {
+        break;
+      }
+    }
+    return currentStreak;
+  };
+
+  const actualStreak = getStreak(attempts);
+
+  // Generate highlights
+  const highlights = [];
+  
+  // 1. Payment expirations
+  courses.forEach(course => {
+    const status = course.status?.toLowerCase();
+    if (status === 'cancelled' || status === 'removed' || status === 'inactive') return;
+    
+    let expiry = null;
+    if (course.end_date) {
+      expiry = new Date(course.end_date);
+    } else if (course.start_date && course.billing_cycle) {
+      const start = new Date(course.start_date);
+      if (!isNaN(start.getTime())) {
+        const monthsMap = { monthly: 1, quarterly: 3, semi_annual: 6, annual: 12 };
+        const months = monthsMap[course.billing_cycle] || 1;
+        expiry = new Date(start);
+        expiry.setMonth(expiry.getMonth() + months);
+      }
+    }
+
+    if (expiry) {
+      const diffTime = expiry.getTime() - Date.now();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays <= 7 && diffDays >= 0) {
+        const title = course.course?.title || course.course_name || "your course";
+        highlights.push({
+          type: "payment",
+          text: `Subscription for ${title} expires in ${diffDays} day${diffDays !== 1 ? 's' : ''}.`,
+          actionLabel: "Renew Now",
+          actionUrl: "/student/payments?action=renew"
+        });
+      } else if (diffDays < 0) {
+        const title = course.course?.title || course.course_name || "your course";
+        highlights.push({
+          type: "payment",
+          text: `Subscription for ${title} has expired!`,
+          actionLabel: "Renew Now",
+          actionUrl: "/student/payments?action=renew"
+        });
+      }
+    }
+  });
+
+  // 2. Add blogs
+  blogs.forEach(blog => {
+    highlights.push({
+      type: "blog",
+      text: blog.title || "New blog post available!",
+      actionLabel: "Read",
+      actionUrl: blog.url || "#"
+    });
+  });
+
+  // 3. Live class & Merit info updates to load up the slot machine
+  highlights.push({
+    type: "liveclass",
+    text: "Live Class: Master Mathematics begins in 190 minutes!",
+    actionLabel: "Join",
+    actionUrl: "/student/classes"
+  });
+
+  highlights.push({
+    type: "merit",
+    text: "New Merit unlocked: Exam Streak Champion!",
+    actionLabel: "View",
+    actionUrl: "/student/achievements"
+  });
+
+  // 4. General fallbacks if empty or small pool
+  if (highlights.length <= 2) {
+    highlights.push({
+      type: "info",
+      text: "You are all caught up on your courses!",
+      actionLabel: "Practice",
+      actionUrl: "/student/exams"
+    });
+    highlights.push({
+      type: "info",
+      text: "Check out the latest exam tips in the community.",
+      actionLabel: "Community",
+      actionUrl: "/community"
+    });
+  }
 
   return (
     <DashboardLayout hideRightPanel={true} hideHeader={true}>
@@ -108,7 +271,7 @@ export default function StudentDashboard() {
         <WelcomeHeader />
 
         {/* ── Stats Bar ─────────────────────────────────────────────────── */}
-        <StudentStatsBar />
+        <StudentStatsBar avgScore={avgScore} streak={actualStreak} highlights={highlights} />
 
         {/* ── Main 2-column grid ────────────────────────────────────────── */}
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
