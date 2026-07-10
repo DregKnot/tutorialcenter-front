@@ -95,10 +95,15 @@ export default function StaffLogin() {
     setLoading(true);
     setErrors({});
 
+    const submitData = {
+      ...formData,
+      login: formData.login.trim(),
+    };
+
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/staffs/login`,
-        formData
+        submitData
       );
 
       if (response.status === 200) {

@@ -291,6 +291,7 @@ const Training = () => {
                   // calculated durations with 5% discount for multi-month
                   const monthly = basePrice;
                   const quarterly = Math.round(basePrice * 3 * 0.95);
+                  const semiAnnually = Math.round(basePrice * 6 * 0.95);
                   const annually = Math.round(basePrice * 12 * 0.95);
 
                   return (
@@ -349,16 +350,20 @@ const Training = () => {
                               <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Duration:</p>
                               <div className="space-y-2">
                                 <div className="flex justify-between">
-                                  <span className="text-xs font-bold text-gray-500">Monthly:</span>
-                                  <span className="text-xs font-black text-[#09314F]">₦{monthly.toLocaleString()}</span>
+                                  <span className="text-xs font-bold text-gray-500">Monthly (1 month):</span>
+                                  <span className="text-xs font-black text-[#09314F]">₦{monthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-xs font-bold text-gray-500">Quarterly:</span>
-                                  <span className="text-xs font-black text-[#09314F]">₦{quarterly.toLocaleString()}</span>
+                                  <span className="text-xs font-bold text-gray-500">Quarterly (3 months):</span>
+                                  <span className="text-xs font-black text-[#09314F]">₦{quarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-xs font-bold text-gray-500">Annually:</span>
-                                  <span className="text-xs font-black text-[#09314F]">₦{annually.toLocaleString()}</span>
+                                  <span className="text-xs font-bold text-gray-500">Semi-Annually (6 months):</span>
+                                  <span className="text-xs font-black text-[#09314F]">₦{semiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs font-bold text-gray-500">Annually (1 year):</span>
+                                  <span className="text-xs font-black text-[#09314F]">₦{annually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                 </div>
                               </div>
                             </div>

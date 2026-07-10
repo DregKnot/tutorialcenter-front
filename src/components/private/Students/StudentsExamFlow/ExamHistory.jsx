@@ -2,182 +2,22 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import ExamReview from "./ExamReview.jsx";
+import ExamMerits from "./ExamMerits.jsx";
+import { StreakFire, getStreakFlameStyles } from "./StreakFire.jsx";
 
-// Helper to calculate flame visual styles and characteristics based on daily streak
-const getStreakFlameStyles = (streak) => {
-  if (streak === 0) {
-    return {
-      outer: ["#4A5568", "#718096"],
-      middle: ["#718096", "#A0AEC0"],
-      inner: ["#A0AEC0", "#E2E8F0"],
-      glow: "rgba(113, 128, 150, 0.2)",
-      scale: 0.8,
-      speed: "3s",
-      sparks: false,
-      title: "Inactive",
-      bgClass: "bg-gray-50 dark:bg-gray-900/30",
-    };
-  }
+const calculateTimeDiff = (start, end) => {
+  if (!start || !end) return null;
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const diffInMs = endDate - startDate;
+  if (diffInMs <= 0 || isNaN(diffInMs)) return null;
 
-  let level = 1; // 1 = yellow, 2 = orange, 3 = red, 4 = blue
-  let progress = 1; // 1 to 7
+  const diffInSecs = Math.floor(diffInMs / 1000);
+  const mins = Math.floor(diffInSecs / 60);
+  const secs = diffInSecs % 60;
 
-  if (streak <= 7) {
-    level = 1;
-    progress = streak;
-  } else if (streak <= 14) {
-    level = 2;
-    progress = streak - 7;
-  } else if (streak <= 21) {
-    level = 3;
-    progress = streak - 14;
-  } else {
-    level = 4;
-    progress = Math.min(7, streak - 21);
-  }
-
-  const scale = 0.85 + (progress / 7) * 0.4; // Scale grows from 0.85 to ~1.25 within level
-  const speed = `${1.6 - (progress / 7) * 0.9}s`; // Burns faster (1.6s down to 0.7s)
-
-  let outer, middle, inner, glow, title, sparkColor, bgClass;
-
-  if (level === 1) {
-    outer = ["#FF5722", "#FF9800"]; // Deep orange to gold
-    middle = ["#FF9800", "#FFC107"]; // Gold to yellow
-    inner = ["#FFEB3B", "#FFFFFF"]; // Light yellow to white
-    glow = `rgba(255, 152, 0, ${0.4 + (progress / 7) * 0.3})`;
-    sparkColor = "#FF9800";
-    title = "Bronze Spark";
-    bgClass = "bg-amber-50 dark:bg-amber-950/20";
-  } else if (level === 2) {
-    outer = ["#E64A19", "#FF5722"]; // Dark orange-red to bright orange-red
-    middle = ["#FF5722", "#FF9800"]; // Bright orange-red to deep orange
-    inner = ["#FFCC80", "#FFF3E0"]; // Pale peach to warm light yellow
-    glow = `rgba(230, 74, 25, ${0.4 + (progress / 7) * 0.4})`;
-    sparkColor = "#FF5722";
-    title = "Silver Ember";
-    bgClass = "bg-orange-50 dark:bg-orange-950/20";
-  } else if (level === 3) {
-    outer = ["#B71C1C", "#D32F2F"]; // Deep maroon to crimson red
-    middle = ["#D32F2F", "#F44336"]; // Crimson to vibrant red
-    inner = ["#FF8A80", "#FFEBEE"]; // Bright neon red to soft white-pink
-    glow = `rgba(211, 47, 47, ${0.5 + (progress / 7) * 0.4})`;
-    sparkColor = "#F44336";
-    title = "Golden Blaze";
-    bgClass = "bg-red-50 dark:bg-red-950/20";
-  } else {
-    outer = ["#0D47A1", "#1976D2"]; // Deep blue to royal blue
-    middle = ["#1976D2", "#00BCD4"]; // Royal blue to cyan
-    inner = ["#80DEEA", "#E0F7FA"]; // Electric cyan to bright icy white
-    glow = `rgba(0, 188, 212, ${0.6 + (progress / 7) * 0.4})`;
-    sparkColor = "#00BCD4";
-    title = "Icy Singularity";
-    bgClass = "bg-cyan-50 dark:bg-cyan-950/20";
-  }
-
-  return {
-    outer,
-    middle,
-    inner,
-    glow,
-    scale,
-    speed,
-    sparks: true,
-    sparkColor,
-    title,
-    bgClass,
-  };
-};
-
-// Custom Procedural Animated SVG Flame Component with keyframes, SMIL morph paths and rising sparks
-const StreakFire = ({ streak }) => {
-  const styles = getStreakFlameStyles(streak);
-  
-  // Outer flame keyframes paths for native fluid morphing
-  const outerPaths = "M30 85 C15 75 10 50 25 25 C30 15 35 5 35 5 C35 5 40 18 45 28 C55 15 65 0 65 0 C65 0 65 15 60 30 C75 55 70 75 55 85 C48 90 38 90 30 85 Z;M32 84 C18 76 13 47 28 22 C32 16 36 8 36 8 C36 8 38 19 43 31 C52 18 63 6 63 6 C63 6 62 17 58 32 C71 57 67 76 53 84 C46 88 38 88 32 84 Z;M28 86 C12 74 8 52 23 27 C28 14 34 2 34 2 C34 2 41 17 47 26 C57 12 67 3 67 3 C67 3 67 13 61 28 C77 53 72 73 57 86 C50 91 40 91 28 86 Z;M30 85 C15 75 10 50 25 25 C30 15 35 5 35 5 C35 5 40 18 45 28 C55 15 65 0 65 0 C65 0 65 15 60 30 C75 55 70 75 55 85 C48 90 38 90 30 85 Z";
-
-  // Middle flame keyframes paths for native fluid morphing
-  const middlePaths = "M33 80 C23 72 20 53 30 35 C33 28 37 20 37 20 C37 20 40 30 44 38 C51 28 58 17 58 17 C58 17 58 29 54 40 C64 59 60 74 49 80 C44 84 37 84 33 80 Z;M35 79 C26 73 22 51 31 33 C34 29 38 23 38 23 C38 23 39 31 43 40 C49 30 56 22 56 22 C56 22 56 31 52 42 C62 60 58 75 47 79 C42 82 36 82 35 79 Z;M31 81 C20 70 18 55 28 37 C31 27 35 17 35 17 C35 17 41 29 45 36 C53 26 60 13 60 13 C60 13 60 27 56 38 C66 57 62 72 51 81 C46 85 39 85 31 81 Z;M33 80 C23 72 20 53 30 35 C33 28 37 20 37 20 C37 20 40 30 44 38 C51 28 58 17 58 17 C58 17 58 29 54 40 C64 59 60 74 49 80 C44 84 37 84 33 80 Z";
-
-  // Inner flame keyframes paths for native fluid morphing
-  const innerPaths = "M37 75 C30 68 28 55 35 43 C37 38 40 32 40 32 C40 32 42 38 45 44 C50 37 54 29 54 29 C54 29 54 38 51 46 C57 60 54 71 46 75 C42 78 38 78 37 75 Z;M38 74 C32 69 30 53 36 41 C38 37 41 33 41 33 C41 33 42 39 44 45 C48 39 52 31 52 31 C52 31 52 39 49 47 C55 61 52 72 45 74 C41 76 38 76 38 74 Z;M35 76 C28 66 26 57 33 44 C35 39 38 30 38 30 C38 30 43 37 46 43 C51 35 56 26 56 26 C56 26 55 37 52 45 C58 59 55 70 47 76 C43 79 38 79 35 76 Z;M37 75 C30 68 28 55 35 43 C37 38 40 32 40 32 C40 32 42 38 45 44 C50 37 54 29 54 29 C54 29 54 38 51 46 C57 60 54 71 46 75 C42 78 38 78 37 75 Z";
-
-  const glowColor = styles.glow;
-
-  return (
-    <div className="relative flex items-center justify-center shrink-0" style={{ width: "64px", height: "64px", overflow: "visible" }}>
-      {/* Styles inject keyframes animations directly */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes flame-pulse-${streak} {
-          0%, 100% { filter: drop-shadow(0 0 6px ${glowColor}) drop-shadow(0 0 16px ${glowColor}); }
-          50% { filter: drop-shadow(0 0 10px ${glowColor}) drop-shadow(0 0 24px ${glowColor}); }
-        }
-        @keyframes spark-float-1-${streak} {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.9; }
-          100% { transform: translate(-8px, -45px) scale(0); opacity: 0; }
-        }
-        @keyframes spark-float-2-${streak} {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.9; }
-          100% { transform: translate(12px, -35px) scale(0); opacity: 0; }
-        }
-        @keyframes spark-float-3-${streak} {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.9; }
-          100% { transform: translate(2px, -50px) scale(0); opacity: 0; }
-        }
-        .flame-streak-anim-${streak} {
-          animation: flame-pulse-${streak} 1.8s infinite ease-in-out;
-          transform: scale(${styles.scale});
-          transform-origin: center 80%;
-          transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .spark-streak-1-${streak} { animation: spark-float-1-${streak} 1.4s infinite ease-out; }
-        .spark-streak-2-${streak} { animation: spark-float-2-${streak} 1.9s infinite ease-out 0.4s; }
-        .spark-streak-3-${streak} { animation: spark-float-3-${streak} 1.6s infinite ease-out 0.8s; }
-      ` }} />
-
-      <svg 
-        viewBox="-10 -10 120 120" 
-        className={`w-full h-full flame-streak-anim-${streak}`}
-        style={{ overflow: "visible" }}
-      >
-        {/* Outer Flame Layer */}
-        <path 
-          d="M30 85 C15 75 10 50 25 25 C30 15 35 5 35 5 C35 5 40 18 45 28 C55 15 65 0 65 0 C65 0 65 15 60 30 C75 55 70 75 55 85 C48 90 38 90 30 85 Z" 
-          fill={styles.outer[0]} 
-          fillOpacity="0.65"
-        >
-          <animate attributeName="d" dur={styles.speed} repeatCount="indefinite" values={outerPaths} />
-        </path>
-
-        {/* Middle Flame Layer */}
-        <path 
-          d="M33 80 C23 72 20 53 30 35 C33 28 37 20 37 20 C37 20 40 30 44 38 C51 28 58 17 58 17 C58 17 58 29 54 40 C64 59 60 74 49 80 C44 84 37 84 33 80 Z" 
-          fill={styles.middle[0]} 
-          fillOpacity="0.8"
-        >
-          <animate attributeName="d" dur={styles.speed} repeatCount="indefinite" values={middlePaths} />
-        </path>
-
-        {/* Inner Flame Layer */}
-        <path 
-          d="M37 75 C30 68 28 55 35 43 C37 38 40 32 40 32 C40 32 42 38 45 44 C50 37 54 29 54 29 C54 29 54 38 51 46 C57 60 54 71 46 75 C42 78 38 78 37 75 Z" 
-          fill={styles.inner[0]} 
-          fillOpacity="1.0"
-        >
-          <animate attributeName="d" dur={styles.speed} repeatCount="indefinite" values={innerPaths} />
-        </path>
-
-        {/* Dynamic Sparks */}
-        {styles.sparks && (
-          <g fill={styles.sparkColor}>
-            <circle cx="35" cy="50" r="2.5" className={`spark-streak-1-${streak}`} />
-            <circle cx="65" cy="45" r="2" className={`spark-streak-2-${streak}`} />
-            <circle cx="50" cy="55" r="3" className={`spark-streak-3-${streak}`} />
-          </g>
-        )}
-      </svg>
-    </div>
-  );
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
 };
 
 export default function ExamHistory({ availableExams = [], initialExpandedAttemptId = null, onBack }) {
@@ -190,6 +30,8 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedAttemptId, setExpandedAttemptId] = useState(initialExpandedAttemptId);
+  const [meritsAttempt, setMeritsAttempt] = useState(null);
+  const [isStreakHovered, setIsStreakHovered] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -439,6 +281,80 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
 
   const activeStreak = getStreak(attempts);
 
+  const sortedCompleted = [...completedAttempts].sort((a, b) => {
+    const dateA = new Date(a.started_at || a.created_at).getTime();
+    const dateB = new Date(b.started_at || b.created_at).getTime();
+    return dateB - dateA;
+  });
+
+  let recentInsights = null;
+  if (sortedCompleted.length > 0) {
+    const recent = sortedCompleted[0];
+    const rStats = getAttemptStats(recent);
+    const rStart = recent.started_at || recent.created_at;
+    const rEnd = recent.submitted_at || recent.updated_at || recent.ended_at;
+    const rTimeStr = calculateTimeDiff(rStart, rEnd) || "N/A";
+    
+    let rAvgTime = "N/A";
+    const totalAns = rStats.correct + rStats.wrong;
+    if (rStart && rEnd && totalAns > 0) {
+      const diffMs = new Date(rEnd) - new Date(rStart);
+      if (diffMs > 0) {
+        const avgSecs = Math.floor((diffMs / totalAns) / 1000);
+        const m = Math.floor(avgSecs / 60);
+        const s = avgSecs % 60;
+        rAvgTime = m > 0 ? `${m}m ${s}s` : `${s}s`;
+      }
+    }
+
+    let fastestMs = Infinity;
+    const sameExams = sortedCompleted.filter(a => {
+      const aStats = getAttemptStats(a);
+      return aStats.subjectName === rStats.subjectName && String(aStats.yearValue) === String(rStats.yearValue);
+    });
+    
+    sameExams.forEach(a => {
+      const s = a.started_at || a.created_at;
+      const e = a.submitted_at || a.updated_at || a.ended_at;
+      if (s && e) {
+        const d = new Date(e) - new Date(s);
+        if (d > 0 && d < fastestMs) fastestMs = d;
+      }
+    });
+
+    let rFastest = "N/A";
+    if (fastestMs !== Infinity) {
+      const fs = Math.floor(fastestMs / 1000);
+      const m = Math.floor(fs / 60);
+      const s = fs % 60;
+      rFastest = m > 0 ? `${m}m ${s}s` : `${s}s`;
+    }
+
+    const historyData = sameExams.map(a => {
+      const s = a.started_at || a.created_at;
+      const e = a.submitted_at || a.updated_at || a.ended_at;
+      const t = calculateTimeDiff(s, e) || "N/A";
+      const stats = getAttemptStats(a);
+      const isFastest = (s && e && (new Date(e) - new Date(s)) === fastestMs);
+      return {
+        id: a.id,
+        date: new Date(s).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        score: stats.percentage,
+        time: t,
+        isFastest
+      };
+    });
+
+    recentInsights = {
+      subject: rStats.subjectName,
+      year: rStats.yearValue,
+      timeSpent: rTimeStr,
+      avgTime: rAvgTime,
+      fastest: rFastest,
+      history: historyData
+    };
+  }
+
   // Filters & Sorting logic (executed client-side on current page or entire fetched set)
   const filteredAttempts = attempts
     .filter((a) => {
@@ -536,7 +452,14 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
         </div>
 
         {/* Metric Card 3: Daily Streak */}
-        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex items-center text-left gap-4">
+        <div 
+          className="bg-white dark:bg-[radial-gradient(circle_at_center,_#000000_20%,_#09314F_150%)] rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] flex items-center text-left gap-4 transition-shadow duration-300 cursor-pointer z-20"
+          style={{
+            boxShadow: isStreakHovered ? `0 0 25px ${getStreakFlameStyles(activeStreak).glow}` : undefined
+          }}
+          onMouseEnter={() => setIsStreakHovered(true)}
+          onMouseLeave={() => setIsStreakHovered(false)}
+        >
           <div className={`${getStreakFlameStyles(activeStreak).bgClass} rounded-2xl shrink-0 relative w-16 h-16 flex items-center justify-center`}>
             <StreakFire streak={activeStreak} />
           </div>
@@ -550,6 +473,54 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
           </div>
         </div>
       </div>
+
+      {/* Recent Exam Insights Banner */}
+      {recentInsights && (
+        <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm mb-8 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex flex-col md:flex-row items-center gap-6 justify-between">
+            <div className="w-full md:w-auto text-center md:text-left">
+              <span className="text-[10px] font-black uppercase text-[#C5A97A] tracking-wider block">Recent Activity Insights</span>
+              <h3 className="text-lg md:text-xl font-black text-[#09314F] dark:text-white uppercase tracking-tight mt-1 truncate">
+                {recentInsights.subject} - {recentInsights.year}
+              </h3>
+            </div>
+            <div className="flex flex-wrap md:flex-nowrap gap-4 w-full md:w-auto">
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-800 text-center flex-1 min-w-[100px]">
+                <span className="text-[9px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 block mb-1">Time Spent</span>
+                <span className="text-base md:text-lg font-black text-[#09314F] dark:text-white block">{recentInsights.timeSpent}</span>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-800 text-center flex-1 min-w-[100px]">
+                <span className="text-[9px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 block mb-1">Avg Time/Q</span>
+                <span className="text-base md:text-lg font-black text-[#09314F] dark:text-white block">{recentInsights.avgTime}</span>
+              </div>
+              <div className="bg-[#76D287]/10 dark:bg-[#76D287]/5 rounded-2xl px-4 py-3 border border-[#76D287]/30 text-center flex-1 min-w-[100px]">
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#76D287] block mb-1">Fastest Time</span>
+                <span className="text-base md:text-lg font-black text-[#09314F] dark:text-white block">{recentInsights.fastest}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* History Row */}
+          {recentInsights.history.length > 0 && (
+            <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
+               <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest block mb-4">Historical Attempts</span>
+               <div className="flex flex-wrap gap-3">
+                 {recentInsights.history.map((h, i) => (
+                   <div key={h.id || i} className="flex items-center gap-3 px-4 py-2.5 bg-gray-50 dark:bg-[#06243A] border border-gray-200 dark:border-gray-800 rounded-full relative overflow-hidden group">
+                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${h.isFastest ? 'bg-[#76D287]' : 'bg-[#3b82f6]'}`}></div>
+                     <span className="text-xs font-black text-[#09314F] dark:text-white pr-2 border-r border-gray-200 dark:border-gray-700 whitespace-nowrap flex-shrink-0">{h.date}</span>
+                     <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest whitespace-nowrap flex-shrink-0">{h.time}</span>
+                     <div className="ml-2 w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
+                       <div className="h-full bg-blue-500 rounded-full" style={{ width: `${h.score}%` }}></div>
+                     </div>
+                     <span className="text-[10px] font-black text-[#09314F] dark:text-gray-300 ml-1 flex-shrink-0">{h.score}%</span>
+                   </div>
+                 ))}
+               </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 2. Sort & Filter Row */}
       <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-5 border border-gray-100 dark:border-[#09314F] shadow-sm mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -813,6 +784,19 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
                   </div>
                 </div>
 
+                {/* Check Merits Action Row */}
+                <div className="w-full pt-4 mt-2 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMeritsAttempt(attempt);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800/50 hover:bg-[#C5A97A]/10 text-gray-500 dark:text-gray-400 hover:text-[#C5A97A] border border-gray-200 dark:border-gray-700 hover:border-[#C5A97A] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    <Icon icon="lucide:bar-chart-2" className="w-3.5 h-3.5" />
+                    Check Merits
+                  </button>
+                </div>
                 
               </div>
             );
@@ -921,6 +905,15 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
           </div>
         );
       })()}
+
+      {/* Merits Overlay */}
+      {meritsAttempt && (
+        <ExamMerits 
+          attempt={meritsAttempt} 
+          allAttempts={attempts} 
+          onClose={() => setMeritsAttempt(null)} 
+        />
+      )}
     </div>
   );
 }
