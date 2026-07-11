@@ -299,7 +299,7 @@ export default function StudentRegistration() {
 
         {/* Registration Card */}
         <div className="w-full max-w-lg bg-white rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.04)] p-8 md:p-10 border border-gray-100 flex flex-col items-center">
-          <form onSubmit={handleSubmit} className="w-full space-y-6">
+          <form onSubmit={handleSubmit} className="w-full space-y-6" autoComplete="off">
             
             {/* Profile Picture Upload - THE CIRCLE BUBBLE */}
             <div className="flex flex-col items-center py-6 w-full border-y border-gray-50">
@@ -331,7 +331,9 @@ export default function StudentRegistration() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
               {/* First Name */}
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">First Name</label>
+                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">
+                  First Name {errors.firstname && <span className="text-red-500 font-bold">*</span>}
+                </label>
                 <div className={getInputStyles("firstname").container}>
                   <UserIcon className={getInputStyles("firstname").icon} />
                   <input
@@ -343,6 +345,7 @@ export default function StudentRegistration() {
                     onBlur={() => setFocusedField(null)}
                     placeholder="first name"
                     className={getInputStyles("firstname").input}
+                    autoComplete="off"
                   />
                 </div>
                 {errors.firstname && <p className="text-xs text-red-500 font-bold px-1">{errors.firstname}</p>}
@@ -350,7 +353,9 @@ export default function StudentRegistration() {
 
               {/* Last Name */}
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Last Name</label>
+                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">
+                  Last Name {errors.surname && <span className="text-red-500 font-bold">*</span>}
+                </label>
                 <div className={getInputStyles("surname").container}>
                   <UserIcon className={getInputStyles("surname").icon} />
                   <input
@@ -362,6 +367,7 @@ export default function StudentRegistration() {
                     onBlur={() => setFocusedField(null)}
                     placeholder="last name"
                     className={getInputStyles("surname").input}
+                    autoComplete="off"
                   />
                 </div>
                 {errors.surname && <p className="text-xs text-red-500 font-bold px-1">{errors.surname}</p>}
@@ -371,7 +377,9 @@ export default function StudentRegistration() {
             {/* Email & Phone Number - SIDE BY SIDE */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Email</label>
+                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">
+                  Email {errors.email && <span className="text-red-500 font-bold">*</span>}
+                </label>
                 <div className={getInputStyles("email").container}>
                   <EnvelopeIcon className={getInputStyles("email").icon} />
                   <input
@@ -383,13 +391,16 @@ export default function StudentRegistration() {
                     onBlur={() => setFocusedField(null)}
                     placeholder="you@email.com"
                     className={getInputStyles("email").input}
+                    autoComplete="off"
                   />
                 </div>
                 {errors.email && <p className="text-xs text-red-500 font-bold px-1">{errors.email}</p>}
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Phone Number</label>
+                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">
+                  Phone Number {errors.tel && <span className="text-red-500 font-bold">*</span>}
+                </label>
                 <div className={getInputStyles("tel").container}>
                   <PhoneIcon className={getInputStyles("tel").icon} />
                   <input
@@ -401,6 +412,7 @@ export default function StudentRegistration() {
                     onBlur={() => setFocusedField(null)}
                     placeholder="+234..."
                     className={getInputStyles("tel").input}
+                    autoComplete="off"
                   />
                 </div>
                 {errors.tel && <p className="text-xs text-red-500 font-bold px-1">{errors.tel}</p>}
@@ -410,7 +422,9 @@ export default function StudentRegistration() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Password */}
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1 text-left block">Password</label>
+                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1 text-left block">
+                  Password {errors.password && <span className="text-red-500 font-bold">*</span>}
+                </label>
                 <div className={getInputStyles("password").container}>
                   <LockClosedIcon className={getInputStyles("password").icon} />
                   <input
@@ -421,17 +435,23 @@ export default function StudentRegistration() {
                     onFocus={() => setFocusedField("password")}
                     onBlur={() => setFocusedField(null)}
                     className={getInputStyles("password").input}
+                    autoComplete="new-password"
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="ml-2 focus:outline-none">
                     {showPassword ? <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-[#09314F] transition-colors" /> : <EyeIcon className="h-5 w-5 text-gray-400 hover:text-[#09314F] transition-colors" />}
                   </button>
                 </div>
+                <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-wider leading-relaxed px-1">
+                  Allowed symbols: ! @ # $ % ^ & * ( ) , . ? " : { } | &lt; &gt;
+                </p>
                 {errors.password && <p className="text-xs text-red-500 font-bold px-1">{errors.password}</p>}
               </div>
 
               {/* Confirm Password */}
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1 text-left block">Confirm Password</label>
+                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1 text-left block">
+                  Confirm Password {errors.confirmPassword && <span className="text-red-500 font-bold">*</span>}
+                </label>
                 <div className={getInputStyles("confirmPassword").container}>
                   <LockClosedIcon className={getInputStyles("confirmPassword").icon} />
                   <input
@@ -442,6 +462,7 @@ export default function StudentRegistration() {
                     onFocus={() => setFocusedField("confirmPassword")}
                     onBlur={() => setFocusedField(null)}
                     className={getInputStyles("confirmPassword").input}
+                    autoComplete="new-password"
                   />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="ml-2 focus:outline-none">
                     {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5 text-gray-400 hover:text-[#09314F] transition-colors" /> : <EyeIcon className="h-5 w-5 text-gray-400 hover:text-[#09314F] transition-colors" />}
@@ -456,7 +477,9 @@ export default function StudentRegistration() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Date of Birth */}
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Date of Birth</label>
+                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">
+                  Date of Birth {errors.date_of_birth && <span className="text-red-500 font-bold">*</span>}
+                </label>
                 <div ref={dateContainerRef} className={getInputStyles("date_of_birth").container} style={{ position: "relative" }}>
                   <CalendarIcon 
                     className={`${getInputStyles("date_of_birth").icon} pointer-events-none hover:text-[#09314F] transition-colors relative z-10`} 
@@ -514,7 +537,9 @@ export default function StudentRegistration() {
 
               {/* Gender */}
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Gender</label>
+                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">
+                  Gender {errors.gender && <span className="text-red-500 font-bold">*</span>}
+                </label>
                 <div className={getInputStyles("gender").container}>
                   <UserCircleIcon className={getInputStyles("gender").icon} />
                   <div className="relative w-full flex items-center" ref={genderRef}>
@@ -544,7 +569,9 @@ export default function StudentRegistration() {
 
               {/* Department */}
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Department</label>
+                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">
+                  Department {errors.department && <span className="text-red-500 font-bold">*</span>}
+                </label>
                 <div className={getInputStyles("department").container}>
                   <AcademicCapIcon className={getInputStyles("department").icon} />
                   <div className="relative w-full flex items-center" ref={departmentRef}>
@@ -574,7 +601,9 @@ export default function StudentRegistration() {
 
               {/* Location */}
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Location</label>
+                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">
+                  Location {errors.location && <span className="text-red-500 font-bold">*</span>}
+                </label>
                 <div className={getInputStyles("location").container}>
                   <MapPinIcon className={getInputStyles("location").icon} />
                   <input
@@ -586,6 +615,7 @@ export default function StudentRegistration() {
                     onBlur={() => setFocusedField(null)}
                     placeholder="select location"
                     className={getInputStyles("location").input}
+                    autoComplete="off"
                   />
                   <datalist id="locations-list">
                     {location.map(loc => <option key={loc.code} value={`${loc.state}, ${loc.country}`} />)}
@@ -609,6 +639,7 @@ export default function StudentRegistration() {
                   onBlur={() => setFocusedField(null)}
                   placeholder="input home address"
                   className={`${getInputStyles("address").input} resize-none`}
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -627,6 +658,7 @@ export default function StudentRegistration() {
                   onBlur={() => setFocusedField(null)}
                   placeholder="enter referral code"
                   className={getInputStyles("referral_code").input}
+                  autoComplete="off"
                 />
               </div>
             </div>

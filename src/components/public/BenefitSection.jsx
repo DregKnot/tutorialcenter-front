@@ -46,9 +46,9 @@ export default function BenefitSection() {
                 <div className="Container !overflow-visible">
                     <div className="mb-4 area-wrapper">
                         <ScrollReveal delay={0.1} direction="up" distance={20}>
-                            <h3 className="header-title uppercase text-center mb-4">
+                            <h2 className="header-title uppercase text-center mb-4">
                                 Our Core Benefits
-                            </h3>
+                            </h2>
                         </ScrollReveal>
                         <ScrollReveal delay={0.2} direction="up" distance={20}>
                             <p className="text-sm leading-6 text-center">

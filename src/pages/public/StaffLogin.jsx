@@ -260,7 +260,6 @@ export default function StaffLogin() {
 
           <div className="bg-white shadow-lg border border-gray-100 rounded-2xl p-8 w-full max-w-md">
             <form
-              autoComplete="off"
               onSubmit={handleSubmit}
               className="space-y-5"
             >
@@ -280,6 +279,7 @@ export default function StaffLogin() {
                       ? "border-red-500 focus:ring-red-500" 
                       : "border-gray-300 focus:ring-[#09314F]"
                   } focus:ring-2 focus:border-transparent`}
+                  autoComplete="username"
                 />
                 {errors.login && (
                   <p className="mt-2 text-sm text-red-500 font-semibold">
@@ -305,6 +305,7 @@ export default function StaffLogin() {
                         ? "border-red-500 focus:ring-red-500"
                         : "border-gray-300 focus:ring-[#09314F]"
                     } focus:ring-2 focus:border-transparent`}
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"

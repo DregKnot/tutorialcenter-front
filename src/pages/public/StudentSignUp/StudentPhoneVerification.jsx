@@ -266,21 +266,21 @@ export default function StudentPhoneVerification() {
 
             {msg && <p className="text-sm text-red-500 font-bold animate-pulse">{msg}</p>}
             <div className="space-y-4">
-              <div className="py-2">
-                <p className="text-sm font-bold text-gray-400">
-                  If you didn’t get verification code yet. Resend code in{" "}
-                  {count > 0 ? (
-                    <span className="text-[#BB9E7F]">{count}s</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResend}
-                      className="text-[#09314F] hover:underline"
-                    >
-                      Resend OTP
-                    </button>
-                  )}
-                </p>
+              <div className="bg-[#F8F9FA] py-4 px-6 rounded-2xl border border-gray-100 flex flex-wrap items-center justify-center gap-1.5">
+                <span className="text-sm font-bold text-gray-400">
+                  Request new code in
+                </span>
+                {count > 0 ? (
+                  <span className="text-[#09314F] font-black">{count}s</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    className="text-sm font-black text-[#E83831] hover:underline transition-all"
+                  >
+                    Resend Code
+                  </button>
+                )}
               </div>
 
               <button

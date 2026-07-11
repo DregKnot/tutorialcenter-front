@@ -231,7 +231,6 @@ export default function StudentLogin() {
               </div>
               <div className="md:block w-full mt-auto">
                 <form
-                  autoComplete="off"
                   action=""
                   method="post"
                   onSubmit={handleSubmit}
@@ -251,6 +250,7 @@ export default function StudentLogin() {
                       className={`w-full px-4 py-2 border rounded-lg ${
                         errors.entry ? "border-red-500" : "border-gray-300"
                       } focus:ring-2 focus:ring-blue-900 focus:border-transparent`}
+                      autoComplete="username"
                     />
                     {(errors.entry || errors.tel || errors.email) && (
                       <p className="mt-1 text-sm text-red-500">
@@ -277,6 +277,7 @@ export default function StudentLogin() {
                             ? "border-red-500 focus:ring-red-500"
                             : "border-gray-300 focus:ring-blue-900"
                         }`}
+                        autoComplete="current-password"
                       />
                       <span
                         className="absolute right-3 top-3.5 text-gray-400 hover:text-blue-500 transition-colors cursor-pointer"

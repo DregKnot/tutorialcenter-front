@@ -8,7 +8,7 @@ const SectionHeading = ({ title, position_right, fullWidth = false, onClick }) =
         >
             <div className="bg-primary py-3 relative z-10 w-full">
                 <div className={`${fullWidth ? "w-full" : "xl:max-w-[1200px] mx-auto"} px-5 lg:px-8 2xl:px-9`}>
-                    <h1 className="semi-title text-center text-white uppercase tracking-wider">{title}</h1>
+                    <h2 className="semi-title text-center text-white uppercase tracking-wider">{title}</h2>
                 </div>
             </div>
             

@@ -94,9 +94,29 @@ export default function useExamForm() {
             Accept: "application/json"
           }
         };
-        const res = await axios.get(`${API_BASE_URL}/api/admin/past-questions/all`, config);
-        const allQuestions = res.data?.questions?.data || res.data?.data || res.data?.questions || [];
-        const filtered = allQuestions.filter(q => String(q.exam_year_id) === String(examYearId));
+        let page = 1;
+        let allFetchedQuestions = [];
+        let hasMore = true;
+
+        while (hasMore) {
+          const res = await axios.get(`${API_BASE_URL}/api/admin/past-questions/all?page=${page}&exam_year_id=${examYearId}`, config);
+          const responseObj = res.data?.questions || res.data;
+          const fetchedQuestions = responseObj?.data || res.data?.data || res.data || [];
+
+          if (Array.isArray(fetchedQuestions) && fetchedQuestions.length > 0) {
+            allFetchedQuestions = [...allFetchedQuestions, ...fetchedQuestions];
+            const lastPage = responseObj?.last_page || res.data?.last_page || 1;
+            if (page >= lastPage) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+
+        const filtered = allFetchedQuestions.filter(q => String(q.exam_year_id) === String(examYearId));
         
         // Sort by question number
         filtered.sort((a, b) => {
@@ -128,14 +148,33 @@ export default function useExamForm() {
           Accept: "application/json"
         } 
       };
-      const res = await axios.get(`${API_BASE_URL}/api/admin/past-question-groups/all`, config);
-      console.log("[ExamQuestion] All Past Question Groups Response:", res.data);
-      const fetchedGroups = res.data?.groups?.data || res.data?.data || res.data || [];
-      setAllGroups(Array.isArray(fetchedGroups) ? fetchedGroups : []);
+      let page = 1;
+      let allFetchedGroups = [];
+      let hasMore = true;
+      const urlParams = examYearId ? `&exam_year_id=${examYearId}` : "";
+      
+      while (hasMore) {
+        const res = await axios.get(`${API_BASE_URL}/api/admin/past-question-groups/all?page=${page}${urlParams}`, config);
+        const responseObj = res.data?.groups || res.data;
+        const fetchedGroups = responseObj?.data || res.data?.data || res.data || [];
+        
+        if (Array.isArray(fetchedGroups) && fetchedGroups.length > 0) {
+          allFetchedGroups = [...allFetchedGroups, ...fetchedGroups];
+          const lastPage = responseObj?.last_page || res.data?.last_page || 1;
+          if (page >= lastPage) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      setAllGroups(allFetchedGroups);
     } catch (err) {
       console.error("Failed to fetch groups:", err);
     }
-  }, [API_BASE_URL, token]);
+  }, [API_BASE_URL, token, examYearId]);
 
   const fetchInitialData = useCallback(async () => {
     setFetchingData(true);

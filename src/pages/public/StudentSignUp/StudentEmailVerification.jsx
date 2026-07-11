@@ -262,15 +262,17 @@ export default function StudentEmailVerification() {
             {msg && <p className="text-sm text-[#E83831] font-black italic">{msg}</p>}
 
             <div className="space-y-6">
-              <div className="bg-[#F8F9FA] py-4 px-6 rounded-2xl border border-gray-100">
-                <p className="text-sm font-bold text-[#888888]">
-                  Code expires in <span className="text-[#09314F] font-black">{formatTime(count)}</span>
-                </p>
-                {count === 0 && (
+              <div className="bg-[#F8F9FA] py-4 px-6 rounded-2xl border border-gray-100 flex flex-wrap items-center justify-center gap-1.5">
+                <span className="text-sm font-bold text-[#888888]">
+                  Request new code in
+                </span>
+                {count > 0 ? (
+                  <span className="text-[#09314F] font-black">{formatTime(count)}</span>
+                ) : (
                   <button
                     type="button"
                     onClick={handleResend}
-                    className="mt-2 text-sm font-black text-[#E83831] hover:underline"
+                    className="text-sm font-black text-[#E83831] hover:underline transition-all"
                   >
                     Resend Code
                   </button>
