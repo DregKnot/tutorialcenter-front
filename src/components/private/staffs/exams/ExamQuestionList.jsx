@@ -92,8 +92,8 @@ export default function ExamQuestionList() {
       });
 
       // Fetch Questions for this context
-      console.log("[ExamQuestionList] Fetching Past Questions:", `${API_BASE_URL}/api/admin/past-questions/all?page=${page}`);
-      const questionsRes = await axios.get(`${API_BASE_URL}/api/admin/past-questions/all?page=${page}`, config);
+      console.log("[ExamQuestionList] Fetching Past Questions:", `${API_BASE_URL}/api/admin/past-questions/all?page=${page}&exam_year_id=${yearId}`);
+      const questionsRes = await axios.get(`${API_BASE_URL}/api/admin/past-questions/all?page=${page}&exam_year_id=${yearId}`, config);
       console.log("[ExamQuestionList] Past Questions Response:", questionsRes.data);
       
       const allQuestions = questionsRes.data?.questions?.data || questionsRes.data?.data?.data || questionsRes.data?.data || questionsRes.data?.questions || [];
@@ -101,7 +101,7 @@ export default function ExamQuestionList() {
       
       setTotalPages(lastPage);
       
-      // Filter by body, subject (if available in payload), and year
+      // Keep safety filter but allQuestions is already correctly filtered on DB level now!
       const filtered = allQuestions.filter(q => String(q.exam_year_id) === String(yearId));
       setQuestions(filtered);
       

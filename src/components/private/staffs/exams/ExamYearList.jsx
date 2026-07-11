@@ -29,10 +29,9 @@ export default function ExamYearList() {
       console.log("[ExamYearList] Fetching Exam Bodies:", `${API_BASE_URL}/api/admin/exam-bodies/all`);
       console.log("[ExamYearList] Fetching Exam Years:", `${API_BASE_URL}/api/admin/exam-years/all`);
       
-      const [bodiesRes, yearsRes, questionsRes] = await Promise.all([
+      const [bodiesRes, yearsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/admin/exam-bodies/all`, config),
-        axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config),
-        axios.get(`${API_BASE_URL}/api/admin/past-questions/all`, config)
+        axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config)
       ]);
 
       console.log("[ExamYearList] Exam Bodies Response:", bodiesRes.data);
@@ -42,7 +41,6 @@ export default function ExamYearList() {
       setExamBody(bodies.find(b => String(b.id) === String(bodyId)));
 
       const allYears = yearsRes.data?.data || yearsRes.data?.exam_years || [];
-      const allQuestions = questionsRes.data?.questions?.data || questionsRes.data?.data || questionsRes.data?.questions || [];
 
       // Extract subject from the year data
       const yearWithSubject = allYears.find(y => String(y.subject_id) === String(subjectId) && y.subject);
@@ -54,21 +52,38 @@ export default function ExamYearList() {
         subjectImage = `${API_BASE_URL}/storage/${subjectImage}`;
       }
 
-      const filteredYears = allYears.filter(y => 
+      const filteredYearsRaw = allYears.filter(y => 
         String(y.exam_body_id) === String(bodyId) && 
         String(y.subject_id) === String(subjectId)
-      ).map(y => {
-        let yearImage = subjectImage || y.image || y.banner;
-        if (yearImage && !yearImage.startsWith('http')) {
-          yearImage = `${API_BASE_URL}/storage/${yearImage}`;
-        }
-        
-        // Count questions for this year
-        const questionCount = allQuestions.filter(q => String(q.exam_year_id) === String(y.id)).length;
-        
-        return { ...y, image: yearImage, questionCount };
-      });
-      console.log("[ExamYearList] Filtered & Prefixed Years:", { bodyId, subjectId }, filteredYears);
+      );
+
+      const filteredYears = await Promise.all(
+        filteredYearsRaw.map(async (y) => {
+          let yearImage = subjectImage || y.image || y.banner;
+          if (yearImage && !yearImage.startsWith('http')) {
+            yearImage = `${API_BASE_URL}/storage/${yearImage}`;
+          }
+
+          try {
+            const countRes = await axios.get(
+              `${API_BASE_URL}/api/admin/past-questions/all?exam_year_id=${y.id}&per_page=1`,
+              config
+            );
+            const totalCount = 
+              countRes.data?.questions?.total || 
+              countRes.data?.total || 
+              countRes.data?.questions?.data?.length || 
+              countRes.data?.data?.length || 
+              0;
+            return { ...y, image: yearImage, questionCount: totalCount };
+          } catch (e) {
+            console.error(`Failed to fetch count for year ${y.id}:`, e);
+            return { ...y, image: yearImage, questionCount: 0 };
+          }
+        })
+      );
+
+      console.log("[ExamYearList] Filtered & Prefixed Years with Counts:", { bodyId, subjectId }, filteredYears);
       setYears(filteredYears);
       
     } catch (err) {

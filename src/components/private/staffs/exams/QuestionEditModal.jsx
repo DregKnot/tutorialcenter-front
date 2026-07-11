@@ -82,9 +82,11 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
         let page = 1;
         let allFetchedGroups = [];
         let hasMore = true;
+        const examYearId = question?.exam_year_id;
+        const urlParams = examYearId ? `&exam_year_id=${examYearId}` : "";
         
         while (hasMore) {
-          const res = await axios.get(`${API_BASE_URL}/api/admin/past-question-groups/all?page=${page}`, config);
+          const res = await axios.get(`${API_BASE_URL}/api/admin/past-question-groups/all?page=${page}${urlParams}`, config);
           const responseObj = res.data?.groups || res.data;
           const fetchedGroups = responseObj?.data || res.data?.data || res.data || [];
           
@@ -106,7 +108,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       }
     };
     fetchGroups();
-  }, [isOpen, API_BASE_URL, token]);
+  }, [isOpen, API_BASE_URL, token, question?.exam_year_id]);
 
   useEffect(() => {
     if (question) {

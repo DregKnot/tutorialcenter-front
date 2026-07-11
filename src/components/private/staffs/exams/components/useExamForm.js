@@ -99,7 +99,7 @@ export default function useExamForm() {
         let hasMore = true;
 
         while (hasMore) {
-          const res = await axios.get(`${API_BASE_URL}/api/admin/past-questions/all?page=${page}`, config);
+          const res = await axios.get(`${API_BASE_URL}/api/admin/past-questions/all?page=${page}&exam_year_id=${examYearId}`, config);
           const responseObj = res.data?.questions || res.data;
           const fetchedQuestions = responseObj?.data || res.data?.data || res.data || [];
 
@@ -151,9 +151,10 @@ export default function useExamForm() {
       let page = 1;
       let allFetchedGroups = [];
       let hasMore = true;
+      const urlParams = examYearId ? `&exam_year_id=${examYearId}` : "";
       
       while (hasMore) {
-        const res = await axios.get(`${API_BASE_URL}/api/admin/past-question-groups/all?page=${page}`, config);
+        const res = await axios.get(`${API_BASE_URL}/api/admin/past-question-groups/all?page=${page}${urlParams}`, config);
         const responseObj = res.data?.groups || res.data;
         const fetchedGroups = responseObj?.data || res.data?.data || res.data || [];
         
@@ -173,7 +174,7 @@ export default function useExamForm() {
     } catch (err) {
       console.error("Failed to fetch groups:", err);
     }
-  }, [API_BASE_URL, token]);
+  }, [API_BASE_URL, token, examYearId]);
 
   const fetchInitialData = useCallback(async () => {
     setFetchingData(true);

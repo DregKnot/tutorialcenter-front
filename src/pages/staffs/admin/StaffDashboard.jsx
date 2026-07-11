@@ -6,6 +6,7 @@ import RevenueChart from "../../../components/private/staffs/dashboard/RevenueCh
 import SiteTrafficPlaceholder from "../../../components/private/staffs/dashboard/SiteTrafficPlaceholder.jsx";
 import MockExamAnalytics from "../../../components/private/staffs/dashboard/MockExamAnalytics.jsx";
 import LocationAnalysis from "../../../components/private/staffs/dashboard/LocationAnalysis.jsx";
+import LeaderboardWidget from "../../../components/private/staffs/dashboard/LeaderboardWidget.jsx";
 import { useStaffAuth } from "../../../context/StaffAuthContext";
 import { Icon } from "@iconify/react";
 
@@ -148,34 +149,9 @@ export default function StaffDashboard() {
             <LocationAnalysis />
           </div>
 
-          {/* Leaderboard Placeholder */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
-                <Icon
-                  icon="heroicons:trophy-20-solid"
-                  className="w-4 h-4 text-purple-600 dark:text-purple-400"
-                />
-              </div>
-              <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wide">
-                Leaderboard
-              </h3>
-              <span className="ml-auto text-[10px] font-black text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-full px-2.5 py-0.5 uppercase">
-                Coming July 14
-              </span>
-            </div>
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Icon
-                icon="heroicons:star-20-solid"
-                className="w-12 h-12 text-gray-200 dark:text-gray-700 mb-3"
-              />
-              <p className="text-sm font-bold text-gray-400 dark:text-gray-500">
-                Student leaderboard coming soon
-              </p>
-              <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">
-                Top scorers, streaks & achievements
-              </p>
-            </div>
+          {/* Leaderboard Widget */}
+          <div className="lg:col-span-1">
+            <LeaderboardWidget />
           </div>
         </div>
       </div>
