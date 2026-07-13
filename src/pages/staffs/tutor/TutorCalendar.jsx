@@ -1,0 +1,790 @@
+import { useEffect, useLayoutEffect, useState, useMemo, useCallback, useRef } from "react";
+import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
+import axios from "axios";
+import { Icon } from "@iconify/react";
+
+// SVG Icons to match premium look
+const ChevronLeftIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+  </svg>
+);
+
+const ChevronRightIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+  </svg>
+);
+
+const ChevronDownIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+  </svg>
+);
+
+const BackIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+  </svg>
+);
+
+const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+
+const COLORS = [
+  { bg: "bg-emerald-50 dark:bg-emerald-950/30", border: "border-emerald-200 dark:border-emerald-800/50", text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
+  { bg: "bg-indigo-50 dark:bg-indigo-950/30", border: "border-indigo-200 dark:border-indigo-800/50", text: "text-indigo-700 dark:text-indigo-300", dot: "bg-indigo-500" },
+  { bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800/50", text: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
+  { bg: "bg-pink-50 dark:bg-pink-950/30", border: "border-pink-200 dark:border-pink-800/50", text: "text-pink-700 dark:text-pink-300", dot: "bg-pink-500" },
+  { bg: "bg-cyan-50 dark:bg-cyan-950/30", border: "border-cyan-200 dark:border-cyan-800/50", text: "text-cyan-700 dark:text-cyan-300", dot: "bg-cyan-500" },
+  { bg: "bg-purple-50 dark:bg-purple-950/30", border: "border-purple-200 dark:border-purple-800/50", text: "text-purple-700 dark:text-purple-300", dot: "bg-purple-500" },
+];
+
+const getClassColor = (title) => {
+  if (!title) return COLORS[0];
+  let hash = 0;
+  for (let i = 0; i < title.length; i++) {
+    hash = title.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % COLORS.length;
+  return COLORS[index];
+};
+
+export default function TutorCalendar() {
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+  const token = localStorage.getItem("staff_token");
+
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState("month");
+  const [currentDate, setCurrentDate] = useState(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+  const [selectedMobileDate, setSelectedMobileDate] = useState(null);
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const calendarScrollRef = useRef(null);
+
+  // Helper to flatten tiered schedule API response
+  const getFlatSessions = (data) => {
+    const list = [];
+    if (data.next_class) {
+      list.push(data.next_class);
+    }
+    if (Array.isArray(data.today_classes)) {
+      data.today_classes.forEach(s => {
+        if (!list.some(item => item.id === s.id)) {
+          list.push(s);
+        }
+      });
+    }
+    if (data.week_schedule) {
+      Object.values(data.week_schedule).forEach(sessionsArray => {
+        if (Array.isArray(sessionsArray)) {
+          sessionsArray.forEach(s => {
+            if (!list.some(item => item.id === s.id)) {
+              list.push(s);
+            }
+          });
+        }
+      });
+    }
+    if (Array.isArray(data.upcoming_sessions)) {
+      data.upcoming_sessions.forEach(s => {
+        if (!list.some(item => item.id === s.id)) {
+          list.push(s);
+        }
+      });
+    }
+    return list;
+  };
+
+  // Fetch schedule data
+  const fetchSchedule = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/tutor/classes/schedule`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      const flatList = getFlatSessions(res.data || {});
+      setSessions(flatList);
+    } catch (error) {
+      console.error("Failed to fetch tutor calendar schedule:", error);
+      setSessions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [API_BASE_URL, token]);
+
+  useEffect(() => {
+    fetchSchedule();
+  }, [fetchSchedule]);
+
+  // Scroll active hour into view for Week/Day views
+  useLayoutEffect(() => {
+    if (loading || viewMode === "month") return;
+    const currentHour = new Date().getHours();
+    requestAnimationFrame(() => {
+      const container = calendarScrollRef.current;
+      const rowElement = document.getElementById(`hour-row-${currentHour}`);
+      if (container && rowElement) {
+        container.scrollTop = Math.max(0, rowElement.offsetTop - 60);
+      }
+    });
+  }, [loading, viewMode, currentDate]);
+
+  const isToday = (d) => {
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  };
+
+  const isSameDay = (d1, d2) => {
+    if (!d1 || !d2) return false;
+    return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+  };
+
+  // Generate Month Grid Days (42 cells)
+  const generateMonthDays = useCallback((baseDate) => {
+    const year = baseDate.getFullYear();
+    const month = baseDate.getMonth();
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    const days = [];
+
+    // Prev Month lead days
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const d = new Date(year, month - 1, daysInPrevMonth - i);
+      d.setHours(0, 0, 0, 0);
+      days.push({ date: d, isCurrentMonth: false });
+    }
+
+    // Current Month days
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = new Date(year, month, i);
+      d.setHours(0, 0, 0, 0);
+      days.push({ date: d, isCurrentMonth: true });
+    }
+
+    // Next Month trail days
+    const remaining = 42 - days.length;
+    for (let i = 1; i <= remaining; i++) {
+      const d = new Date(year, month + 1, i);
+      d.setHours(0, 0, 0, 0);
+      days.push({ date: d, isCurrentMonth: false });
+    }
+
+    return days;
+  }, []);
+
+  const monthDays = useMemo(() => generateMonthDays(currentDate), [currentDate, generateMonthDays]);
+
+  // Generate Week Days (7 days)
+  const weekDays = useMemo(() => {
+    const start = new Date(currentDate);
+    const day = start.getDay();
+    start.setDate(start.getDate() - day);
+    start.setHours(0, 0, 0, 0);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+  }, [currentDate]);
+
+  // Sessions Filtering
+  const getSessionsForDate = useCallback((date) => {
+    return sessions.filter((s) => {
+      const sDate = new Date(s.session_date);
+      return (
+        sDate.getFullYear() === date.getFullYear() &&
+        sDate.getMonth() === date.getMonth() &&
+        sDate.getDate() === date.getDate()
+      );
+    });
+  }, [sessions]);
+
+  const getSessionsForDateAndHour = useCallback((date, hour) => {
+    return sessions.filter((s) => {
+      const sDate = new Date(s.session_date);
+      const sameDay = (
+        sDate.getFullYear() === date.getFullYear() &&
+        sDate.getMonth() === date.getMonth() &&
+        sDate.getDate() === date.getDate()
+      );
+      if (!sameDay) return false;
+      const startHour = parseInt((s.starts_at || "00:00").split(":")[0], 10);
+      return startHour === hour;
+    });
+  }, [sessions]);
+
+  const handlePrev = () => {
+    if (viewMode === "month") {
+      setCurrentDate(prev => {
+        const d = new Date(prev);
+        d.setMonth(d.getMonth() - 1);
+        return d;
+      });
+    } else if (viewMode === "week") {
+      setCurrentDate(prev => {
+        const d = new Date(prev);
+        d.setDate(d.getDate() - 7);
+        return d;
+      });
+    } else {
+      setCurrentDate(prev => {
+        const d = new Date(prev);
+        d.setDate(d.getDate() - 1);
+        return d;
+      });
+    }
+  };
+
+  const handleNext = () => {
+    if (viewMode === "month") {
+      setCurrentDate(prev => {
+        const d = new Date(prev);
+        d.setMonth(d.getMonth() + 1);
+        return d;
+      });
+    } else if (viewMode === "week") {
+      setCurrentDate(prev => {
+        const d = new Date(prev);
+        d.setDate(d.getDate() + 7);
+        return d;
+      });
+    } else {
+      setCurrentDate(prev => {
+        const d = new Date(prev);
+        d.setDate(d.getDate() + 1);
+        return d;
+      });
+    }
+  };
+
+  const handleToday = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    setCurrentDate(today);
+  };
+
+  const formatHour = (h) => {
+    const suffix = h >= 12 ? "PM" : "AM";
+    const hr = h % 12 === 0 ? 12 : h % 12;
+    return `${hr} ${suffix}`;
+  };
+
+  const formatTimeRange = (start, end) => {
+    if (!start) return "";
+    const format = (t) => {
+      const [h, m] = t.split(":");
+      const hour = parseInt(h, 10);
+      const suffix = hour >= 12 ? "PM" : "AM";
+      const hr = hour % 12 === 0 ? 12 : hour % 12;
+      return `${hr}:${m} ${suffix}`;
+    };
+    return `${format(start)}${end ? ` - ${format(end)}` : ""}`;
+  };
+
+  const formatFullDate = (d) => {
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  };
+
+  return (
+    <StaffDashboardLayout pagetitle="Calendar">
+      <div className="max-w-[1600px] xl:px-10 mx-auto w-full min-h-screen px-4 md:px-0 py-6">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          
+          {/* ====== MAIN CALENDAR CONTAINER ====== */}
+          <div className="flex-1 w-full bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-2xl md:rounded-3xl border border-gray-100 dark:border-[#1a4a75]/30 shadow-sm overflow-hidden flex flex-col min-h-[75vh]">
+            
+            {/* ====== DESKTOP HEADER & VIEW SWITCHER ====== */}
+            <div className="hidden lg:flex items-center justify-between p-4 border-b border-gray-100 dark:border-[#1a4a75]/30">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-extrabold text-[#09314F] dark:text-white capitalize">
+                  {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                </h2>
+                <div className="flex items-center gap-1 bg-gray-50 dark:bg-black/20 p-1 rounded-xl border border-gray-100 dark:border-[#1a4a75]/30">
+                  <button
+                    onClick={handlePrev}
+                    className="p-1.5 hover:bg-white dark:hover:bg-white/10 rounded-lg text-gray-500 dark:text-gray-300 transition-all shadow-sm border border-transparent"
+                  >
+                    <ChevronLeftIcon />
+                  </button>
+                  <button
+                    onClick={handleToday}
+                    className="px-3 py-1 text-[10px] font-black uppercase text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 rounded-lg transition-all"
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="p-1.5 hover:bg-white dark:hover:bg-white/10 rounded-lg text-gray-500 dark:text-gray-300 transition-all shadow-sm border border-transparent"
+                  >
+                    <ChevronRightIcon />
+                  </button>
+                </div>
+              </div>
+
+              {/* View Dropdown Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-[#1a4a75]/50 transition-all"
+                >
+                  <span className="capitalize">{viewMode}</span>
+                  <ChevronDownIcon />
+                </button>
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] rounded-xl shadow-lg z-30 overflow-hidden py-1">
+                    {["month", "week", "day"].map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => {
+                          setViewMode(mode);
+                          setDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-xs font-bold capitalize transition-colors ${
+                          viewMode === mode 
+                            ? "bg-gray-100 dark:bg-[#1a4a75] text-[#09314F] dark:text-white" 
+                            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
+                        }`}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ====== MOBILE HEADER ====== */}
+            {!selectedMobileDate ? (
+              <div className="flex lg:hidden items-center justify-between p-4 border-b border-gray-100 dark:border-[#1a4a75]/30">
+                <h2 className="text-base font-extrabold text-[#09314F] dark:text-white capitalize">
+                  {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                </h2>
+                <div className="flex items-center gap-1 bg-gray-50 dark:bg-black/20 p-1 rounded-xl border border-gray-100 dark:border-[#1a4a75]/30">
+                  <button
+                    onClick={handlePrev}
+                    className="p-1.5 hover:bg-white dark:hover:bg-white/10 rounded-lg text-gray-500 dark:text-gray-300"
+                  >
+                    <ChevronLeftIcon />
+                  </button>
+                  <button
+                    onClick={handleToday}
+                    className="px-2 py-1 text-[9px] font-black uppercase text-gray-650 dark:text-gray-300 hover:bg-white dark:hover:bg-white/10 rounded-lg transition-all"
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="p-1.5 hover:bg-white dark:hover:bg-white/10 rounded-lg text-gray-500 dark:text-gray-300"
+                  >
+                    <ChevronRightIcon />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex lg:hidden items-center gap-3 p-4 border-b border-gray-100 dark:border-[#1a4a75]/30 bg-gray-50/50 dark:bg-black/10">
+                <button
+                  onClick={() => setSelectedMobileDate(null)}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-300 transition-all active:scale-95"
+                >
+                  <BackIcon />
+                </button>
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#09314F] dark:text-white">
+                    {formatFullDate(selectedMobileDate)}
+                  </h3>
+                  <span className="text-[10px] text-gray-400 dark:text-blue-300 font-bold uppercase tracking-wide">
+                    Day Timeline
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* ====== DESKTOP VIEWS ====== */}
+            <div className="hidden lg:flex flex-col flex-1">
+              
+              {/* DESKTOP MONTH VIEW */}
+              {viewMode === "month" && (
+                <div className="flex flex-col flex-1">
+                  <div className="grid grid-cols-7 border-b border-gray-100 dark:border-[#1a4a75]/30 bg-gray-50/50 dark:bg-black/10">
+                    {DAYS_OF_WEEK.map((d, i) => (
+                      <div key={i} className="py-2.5 text-center text-xs font-extrabold text-gray-500 dark:text-blue-200">
+                        {d}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 grid-rows-6 flex-1 divide-x divide-y divide-gray-100 dark:divide-[#1a4a75]/20 border-l border-t-0 border-gray-100 dark:border-[#1a4a75]/20 min-h-[500px]">
+                    {monthDays.map(({ date, isCurrentMonth }, idx) => {
+                      const daySessions = getSessionsForDate(date);
+                      const isCurToday = isToday(date);
+                      const isFocused = isSameDay(date, currentDate);
+
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => setCurrentDate(date)}
+                          className={`p-2 flex flex-col gap-1 min-h-[90px] transition-all cursor-pointer relative group ${
+                            !isCurrentMonth ? "bg-gray-50/30 dark:bg-black/5" : ""
+                          } ${isFocused ? "bg-blue-50/20 dark:bg-blue-950/10" : "hover:bg-gray-50/50 dark:hover:bg-white/5"}`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span
+                              className={`text-xs font-bold h-6 w-6 flex items-center justify-center rounded-full ${
+                                isCurToday 
+                                  ? "bg-[#C5A97A] text-white font-extrabold" 
+                                  : isCurrentMonth
+                                    ? "text-gray-700 dark:text-gray-200"
+                                    : "text-gray-300 dark:text-gray-650"
+                              }`}
+                            >
+                              {date.getDate()}
+                            </span>
+                            {daySessions.length > 0 && (
+                              <span className="text-[10px] text-gray-400 dark:text-blue-300 font-bold">
+                                {daySessions.length} {daySessions.length === 1 ? "class" : "classes"}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col gap-1 overflow-y-auto max-h-[80px] pr-0.5 animate-fade-in">
+                            {daySessions.slice(0, 3).map((s, sIdx) => {
+                              const colors = getClassColor(s.class?.title || s.title);
+                              return (
+                                <button
+                                  key={s.id || sIdx}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedSession(s);
+                                  }}
+                                  className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border ${colors.bg} ${colors.border} ${colors.text} truncate hover:opacity-85 transition-opacity active:scale-[0.98]`}
+                                >
+                                  {s.class?.title || s.title}
+                                </button>
+                              );
+                            })}
+                            {daySessions.length > 3 && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCurrentDate(date);
+                                  setViewMode("day");
+                                }}
+                                className="text-[9px] font-bold text-gray-400 dark:text-blue-400 hover:underline text-left mt-0.5 pl-1"
+                              >
+                                +{daySessions.length - 3} more
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* DESKTOP WEEK & DAY VIEWS */}
+              {(viewMode === "week" || viewMode === "day") && (
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <div className={`grid ${viewMode === "day" ? "grid-cols-[80px_1fr]" : "grid-cols-[80px_repeat(7,1fr)]"} border-b border-gray-100 dark:border-[#1a4a75]/30 bg-gray-50/50 dark:bg-black/10`}>
+                    <div className="py-3 text-center text-[10px] font-black uppercase text-gray-400 dark:text-blue-300 border-r border-gray-100 dark:border-[#1a4a75]/30">
+                      Time
+                    </div>
+                    {viewMode === "day" ? (
+                      <div className="p-3 text-center transition-all bg-[#09314F]/10 dark:bg-[#09314F]/40">
+                        <div className="text-xs font-extrabold text-[#09314F] dark:text-white uppercase">
+                          {currentDate.toLocaleDateString("en-US", { weekday: "long" })}
+                        </div>
+                        <div className="text-lg font-black text-[#09314F] dark:text-white mt-0.5">
+                          {currentDate.getDate()} {currentDate.toLocaleDateString("default", { month: "long" })}
+                        </div>
+                      </div>
+                    ) : (
+                      weekDays.map((date, idx) => {
+                        const curToday = isToday(date);
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => setCurrentDate(date)}
+                            className={`p-2.5 text-center border-r border-gray-100 dark:border-[#1a4a75]/30 last:border-0 cursor-pointer hover:bg-gray-100/30 transition-all ${
+                              curToday ? "bg-[#09314F]/5 dark:bg-[#09314F]/30" : ""
+                            }`}
+                          >
+                            <div className="text-[10px] font-bold text-gray-400 dark:text-blue-200 uppercase">
+                              {DAYS_OF_WEEK[date.getDay()]}
+                            </div>
+                            <div className={`text-sm font-extrabold mt-0.5 ${
+                              curToday ? "text-[#C5A97A] dark:text-blue-400" : "text-gray-700 dark:text-gray-200"
+                            }`}>
+                              {date.getDate()}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  <div ref={calendarScrollRef} className="flex-1 overflow-y-auto max-h-[60vh] divide-y divide-gray-100 dark:divide-[#1a4a75]/10">
+                    {HOURS.map((hour) => (
+                      <div key={hour} id={`hour-row-${hour}`} className={`grid ${viewMode === "day" ? "grid-cols-[80px_1fr]" : "grid-cols-[80px_repeat(7,1fr)]"} min-h-[64px]`}>
+                        <div className="p-2 text-[10px] font-bold text-gray-400 dark:text-blue-300 uppercase flex items-start justify-center pt-3 border-r border-gray-100 dark:border-[#1a4a75]/30 bg-gray-50/10 dark:bg-black/5">
+                          {formatHour(hour)}
+                        </div>
+
+                        {viewMode === "day" ? (
+                          <div className="p-1 relative border-r border-gray-100 dark:border-[#1a4a75]/10 bg-white dark:bg-transparent flex flex-col gap-1">
+                            {getSessionsForDateAndHour(currentDate, hour).map((s, sIdx) => {
+                              const colors = getClassColor(s.class?.title || s.title);
+                              return (
+                                <button
+                                  key={s.id || sIdx}
+                                  onClick={() => setSelectedSession(s)}
+                                  className={`w-full text-left p-2.5 rounded-xl border ${colors.bg} ${colors.border} ${colors.text} shadow-sm transition-all hover:scale-[1.01] hover:shadow-md cursor-pointer`}
+                                >
+                                  <div className="text-xs font-extrabold">{s.class?.title || s.title}</div>
+                                  {s.starts_at && (
+                                    <div className="text-[9px] opacity-80 mt-1 font-semibold">
+                                      {formatTimeRange(s.starts_at, s.ends_at)}
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          weekDays.map((date, idx) => {
+                            const curToday = isToday(date);
+                            const cellSessions = getSessionsForDateAndHour(date, hour);
+                            return (
+                              <div
+                                key={idx}
+                                className={`p-0.5 relative border-r border-gray-100 dark:border-[#1a4a75]/10 last:border-0 flex flex-col gap-1 ${
+                                  curToday ? "bg-blue-50/10 dark:bg-white/5" : ""
+                                }`}
+                              >
+                                {cellSessions.map((s, sIdx) => {
+                                  const colors = getClassColor(s.class?.title || s.title);
+                                  return (
+                                    <button
+                                      key={s.id || sIdx}
+                                      onClick={() => setSelectedSession(s)}
+                                      className={`w-full text-left p-1 text-[9px] font-bold rounded border ${colors.bg} ${colors.border} ${colors.text} truncate hover:opacity-90 active:scale-[0.98] transition-all`}
+                                    >
+                                      {s.class?.title || s.title}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ====== MOBILE VIEWS ====== */}
+            <div className="flex lg:hidden flex-col flex-1">
+              {!selectedMobileDate ? (
+                <div className="flex flex-col flex-1">
+                  <div className="grid grid-cols-7 border-b border-gray-100 dark:border-[#1a4a75]/30 bg-gray-50/50 dark:bg-black/10">
+                    {DAYS_OF_WEEK.map((d, i) => (
+                      <div key={i} className="py-2 text-center text-[10px] font-bold text-gray-500 dark:text-blue-200">
+                        {d[0]}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-7 grid-rows-6 flex-1 divide-x divide-y divide-gray-100 dark:divide-[#1a4a75]/10 border-l border-t-0 border-gray-100 dark:border-[#1a4a75]/10 min-h-[380px]">
+                    {monthDays.map(({ date, isCurrentMonth }, idx) => {
+                      const daySessions = getSessionsForDate(date);
+                      const curToday = isToday(date);
+                      const isFocused = isSameDay(date, currentDate);
+
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setCurrentDate(date);
+                            setSelectedMobileDate(date);
+                          }}
+                          className={`p-1 flex flex-col justify-between items-center min-h-[65px] transition-all relative ${
+                            !isCurrentMonth ? "bg-gray-50/20 dark:bg-black/5" : ""
+                          } ${isFocused ? "bg-blue-50/30 dark:bg-blue-950/20" : ""}`}
+                        >
+                          <span
+                            className={`text-xs font-bold h-6 w-6 flex items-center justify-center rounded-full mt-0.5 ${
+                              curToday 
+                                ? "bg-[#C5A97A] text-white font-extrabold" 
+                                : isCurrentMonth
+                                  ? "text-gray-700 dark:text-gray-200"
+                                  : "text-gray-300 dark:text-gray-650"
+                            }`}
+                          >
+                            {date.getDate()}
+                          </span>
+
+                          <div className="flex gap-0.5 justify-center flex-wrap max-w-full pb-1">
+                            {daySessions.slice(0, 3).map((s, sIdx) => {
+                              const colors = getClassColor(s.class?.title || s.title);
+                              return (
+                                <span
+                                  key={sIdx}
+                                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`}
+                                />
+                              );
+                            })}
+                            {daySessions.length > 3 && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0" />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col bg-white dark:bg-transparent min-h-[400px]">
+                  {loading ? (
+                    <div className="flex flex-col items-center justify-center py-16 flex-1">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#09314F] dark:border-white" />
+                    </div>
+                  ) : (
+                    <div className="flex-1 overflow-y-auto max-h-[55vh] p-4 space-y-4">
+                      {getSessionsForDate(selectedMobileDate).length > 0 ? (
+                        getSessionsForDate(selectedMobileDate).map((s, sIdx) => {
+                          const colors = getClassColor(s.class?.title || s.title);
+                          return (
+                            <div
+                              key={s.id || sIdx}
+                              onClick={() => setSelectedSession(s)}
+                              className={`flex flex-col p-4 rounded-2xl border ${colors.bg} ${colors.border} ${colors.text} shadow-sm transition-all active:scale-[0.98] cursor-pointer`}
+                            >
+                              <h4 className="text-sm font-extrabold leading-snug">
+                                {s.class?.title || s.title || "Master Class"}
+                              </h4>
+                              {s.starts_at && (
+                                <p className="text-xs font-semibold opacity-95 mt-1.5 flex items-center gap-1.5">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                                  {formatTimeRange(s.starts_at, s.ends_at)}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                          <p className="text-sm font-bold text-gray-400 dark:text-gray-500">
+                            No classes scheduled for this day
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* ====== DETAIL MODAL (Tutor View - Join links only) ====== */}
+      {selectedSession && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedSession(null)} />
+          <div className="relative bg-white dark:bg-[#092238] rounded-[32px] p-8 md:p-10 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5">
+            <h2 className="text-2xl font-black text-[#0F2843] dark:text-white mb-8">Session Details</h2>
+            
+            <div className="space-y-6">
+              <div className="bg-slate-50 dark:bg-black/25 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
+                <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Class Title</p>
+                <p className="text-[15px] font-black text-slate-800 dark:text-white">
+                  {selectedSession.class?.title || selectedSession.title || "Master Class"}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4 text-slate-650 dark:text-slate-350">
+                <Icon icon="mdi:calendar" className="w-5 h-5 shrink-0 text-[#C5A97A]" />
+                <span className="text-[14px] font-bold">
+                  {new Date(selectedSession.session_date).toLocaleDateString("en-US", { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-4 text-slate-650 dark:text-slate-350">
+                <Icon icon="mdi:clock" className="w-5 h-5 shrink-0 text-[#C5A97A]" />
+                <span className="text-[14px] font-bold">
+                  {formatTimeRange(selectedSession.starts_at, selectedSession.ends_at)}
+                </span>
+              </div>
+
+              {/* Class Join Link */}
+              <div className="flex items-center gap-4 text-slate-650 dark:text-slate-350 pb-2 border-b border-slate-100 dark:border-white/5">
+                <Icon icon="mdi:link" className="w-5 h-5 shrink-0 text-[#C5A97A]" />
+                {selectedSession.class_link ? (
+                  <a
+                    href={selectedSession.class_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[14px] font-bold text-blue-500 hover:text-blue-600 underline truncate max-w-[280px]"
+                  >
+                    {selectedSession.class_link.replace(/^https?:\/\//, '')}
+                  </a>
+                ) : (
+                  <span className="text-[14px] font-bold text-slate-300 dark:text-slate-600 italic">No link assigned</span>
+                )}
+              </div>
+
+              {/* Class Video Recording Link */}
+              <div className="flex items-center gap-4 text-slate-650 dark:text-slate-350">
+                <Icon icon="mdi:video" className="w-5 h-5 shrink-0 text-[#C5A97A]" />
+                {selectedSession.recording_link ? (
+                  <a
+                    href={selectedSession.recording_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[14px] font-bold text-blue-500 hover:text-blue-600 underline truncate max-w-[280px]"
+                  >
+                    Recorded Session link
+                  </a>
+                ) : (
+                  <span className="text-[14px] font-bold text-slate-300 dark:text-slate-600 italic">No recording uploaded</span>
+                )}
+              </div>
+
+              {/* Action Button: Join Now */}
+              {selectedSession.class_link && (
+                <div className="pt-4 border-t border-slate-100 dark:border-white/5">
+                  <a
+                    href={selectedSession.class_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full bg-[#0F2843] hover:bg-[#E83831] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center block shadow-lg shadow-slate-200 dark:shadow-none hover:shadow-xl transition-all active:scale-98"
+                  >
+                    Join Class Now
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setSelectedSession(null)}
+              className="mt-6 w-full py-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-white font-extrabold rounded-2xl transition-all text-xs uppercase tracking-wider"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </StaffDashboardLayout>
+  );
+}

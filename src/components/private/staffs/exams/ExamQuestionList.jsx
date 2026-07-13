@@ -25,6 +25,7 @@ export default function ExamQuestionList() {
   // Pagination State
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [perPage, setPerPage] = useState(50);
   
   // Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -98,8 +99,10 @@ export default function ExamQuestionList() {
       
       const allQuestions = questionsRes.data?.questions?.data || questionsRes.data?.data?.data || questionsRes.data?.data || questionsRes.data?.questions || [];
       const lastPage = questionsRes.data?.meta?.last_page || questionsRes.data?.questions?.last_page || questionsRes.data?.data?.last_page || questionsRes.data?.last_page || 1;
+      const limit = questionsRes.data?.meta?.per_page || questionsRes.data?.questions?.per_page || questionsRes.data?.data?.per_page || 50;
       
       setTotalPages(lastPage);
+      setPerPage(limit);
       
       // Keep safety filter but allQuestions is already correctly filtered on DB level now!
       const filtered = allQuestions.filter(q => String(q.exam_year_id) === String(yearId));
@@ -181,7 +184,7 @@ export default function ExamQuestionList() {
               <div key={q.id} className="bg-[#EDF0F3] dark:bg-gray-800/40 rounded-[32px] p-6 border border-transparent shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
                 {/* Question Card Header */}
                 <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-300 dark:border-gray-700">
-                  <h3 className="text-xs font-black text-[#0F2843] dark:text-white uppercase tracking-[0.2em]">Question {idx + 1}</h3>
+                  <h3 className="text-xs font-black text-[#0F2843] dark:text-white uppercase tracking-[0.2em]">Question {(page - 1) * perPage + idx + 1}</h3>
                   <div className="flex items-center gap-6">
                     <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest opacity-80">
                       Answer: <span className="font-black text-[#0F2843] dark:text-white">{q.options?.find(o => o.is_correct)?.label || "N/A"}</span>

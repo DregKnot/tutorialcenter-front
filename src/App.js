@@ -52,6 +52,8 @@ import CourseAdvisorStudentManagement from "./pages/staffs/courseadvisor/CourseA
 import CourseAdvisorGuardianManagement from "./pages/staffs/courseadvisor/CourseAdvisorGuardianManagement.jsx";
 import CourseAdvisorComingSoon from "./pages/staffs/courseadvisor/CourseAdvisorComingSoon.jsx";
 import CourseAdvisorMasterClass from "./pages/staffs/courseadvisor/CourseAdvisorMasterClass.jsx";
+import CourseAdvisorCalendar from "./pages/staffs/courseadvisor/CourseAdvisorCalendar.jsx";
+import TutorCalendar from "./pages/staffs/tutor/TutorCalendar.jsx";
 import StaffMasterClassList from "./pages/staffs/admin/StaffMasterClassList.jsx";
 import CoursesManagement from "./pages/staffs/admin/CoursesManagement.jsx";
 import StudentPaymentHistory from "./pages/Students/StudentPaymentDisplay.jsx";
@@ -144,11 +146,12 @@ function App() {
           <Route path="/staffs/notifications" element={<StaffNotification />} />
           <Route path="/staffs/tutor/dashboard" element={<TutorDashboard />} />
           <Route path="/staffs/tutor/master-class" element={<TutorMasterClass />} />
+          <Route path="/staffs/tutor/calendar" element={<TutorCalendar />} />
           <Route path="/staffs/course-advisor/dashboard" element={<CourseAdvisorDashboard />} />
           <Route path="/staffs/course-advisor/students" element={<CourseAdvisorStudentManagement />} />
           <Route path="/staffs/course-advisor/guardians" element={<CourseAdvisorGuardianManagement />} />
           <Route path="/staffs/course-advisor/master-class" element={<CourseAdvisorMasterClass />} />
-          <Route path="/staffs/course-advisor/calendar" element={<CourseAdvisorComingSoon title="Calendar" />} />
+          <Route path="/staffs/course-advisor/calendar" element={<CourseAdvisorCalendar />} />
           <Route path="/staffs/course-advisor/exams" element={<CourseAdvisorComingSoon title="Exams" />} />
           <Route path="/staffs/course-advisor/settings" element={<CourseAdvisorComingSoon title="Settings" />} />
           <Route path="/staffs/staff-registration" element={<StaffRegistration />} />
