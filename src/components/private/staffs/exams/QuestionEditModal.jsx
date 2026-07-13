@@ -258,8 +258,6 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     setOptions(options.filter((_, i) => i !== index));
   };
 
-  const groupData = question ? (question.group || question.past_question_group) : null;
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -309,7 +307,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     try {
       
       // 1. Create or Update Group details if group title is filled
-      let groupId = selectedGroupId || question.past_question_group_id || (groupData?.id);
+      let groupId = selectedGroupId;
       
       if (groupTitle.trim()) {
         const groupFormData = new FormData();
@@ -342,11 +340,12 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
         }
       }
 
-      // 2. Update Question details using FormData to support file uploads
       const questionFormData = new FormData();
       questionFormData.append("_method", "PUT");
       questionFormData.append("exam_year_id", question.exam_year_id);
-      questionFormData.append("past_question_group_id", groupId || "");
+      if (groupId) {
+        questionFormData.append("past_question_group_id", groupId);
+      }
       questionFormData.append("question_number", String(questionNumber));
       questionFormData.append("question", plainQuestion);
       questionFormData.append("question_type", questionType);

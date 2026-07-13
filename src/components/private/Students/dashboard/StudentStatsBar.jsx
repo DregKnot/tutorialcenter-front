@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../../../context/AuthContext";
-import gsap from "gsap";
+// import gsap from "gsap";
 import { Icon } from "@iconify/react";
 
 // ── Mock data (swap with real API when available) ────────────────────────────
@@ -72,288 +72,108 @@ function StatCell({ label, children }) {
   );
 }
 
-const ANGLE_STEP = 36; // degrees between each slot item
-const RADIUS = 90; // tighter 3D radius for in-place cylinder translation
-
-// ── Highlight Pill (Auto-scroll & GSAP 3D Slot Machine Popup) ────────────────
-function HighlightPill({ highlights, onToggleExpand }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+// ── Smart Assistant Widget (3D Roulette Liquid Glass Carousel) ───────────────
+function SmartAssistantWidget() {
   const [activeIndex, setActiveIndex] = useState(0);
-  
-  const containerRef = useRef(null);
-  const wrapperRef = useRef(null);
-  const wheelRef = useRef(null);
-  const cardsRef = useRef([]);
 
-  // Notify parent of expansion state to manage overflow/z-index
-  useEffect(() => {
-    if (onToggleExpand) {
-      onToggleExpand(isExpanded);
+  const messages = [
+    {
+      title: "Streak reset?",
+      desc: "Let's check your progress.",
+      icon: "lucide:history",
+      color: "text-orange-400",
+      bg: "bg-orange-500/20 border-orange-500/30",
+      action: "Review",
+      actionBg: "bg-orange-500 hover:bg-orange-600"
+    },
+    {
+      title: "Merit unlocked",
+      desc: "Fulfill this challenge.",
+      icon: "lucide:award",
+      color: "text-emerald-400",
+      bg: "bg-emerald-500/20 border-emerald-500/30",
+      action: "Start",
+      actionBg: "bg-emerald-500 hover:bg-emerald-600"
+    },
+    {
+      title: "Biology 101",
+      desc: "Score 45% to restore!",
+      icon: "lucide:microscope",
+      color: "text-blue-400",
+      bg: "bg-blue-500/20 border-blue-500/30",
+      action: "Practice",
+      actionBg: "bg-blue-500 hover:bg-blue-600"
     }
-  }, [isExpanded, onToggleExpand]);
+  ];
 
-  // Auto-scroll logic (closed state)
+  // 3D Roulette Rotation logic (CSS-based)
   useEffect(() => {
-    const currentWrapper = wrapperRef.current;
-    if (isExpanded || !highlights || highlights.length <= 1) {
-      if (currentWrapper) gsap.killTweensOf(currentWrapper);
-      return;
-    }
-    
-    let currentIndex = 0;
     const interval = setInterval(() => {
-      currentIndex = (currentIndex + 1) % highlights.length;
-      gsap.to(currentWrapper, {
-        y: -currentIndex * 68,
-        duration: 0.6,
-        ease: "power3.inOut"
-      });
-    }, 4500);
+      setActiveIndex((prev) => (prev + 1) % messages.length);
+    }, 3000); // 3 seconds
 
-    return () => {
-      clearInterval(interval);
-      if (currentWrapper) gsap.killTweensOf(currentWrapper);
-    };
-  }, [isExpanded, highlights]);
-
-  // Initial spin animation when the slot machine expands
-  useEffect(() => {
-    if (isExpanded && wheelRef.current) {
-      gsap.fromTo(
-        wheelRef.current,
-        { rotateX: -720 },
-        {
-          rotateX: -activeIndex * ANGLE_STEP,
-          duration: 1.8,
-          ease: "power4.out"
-        }
-      );
-    }
-  }, [isExpanded, activeIndex]);
-
-  // Smooth rotation update helper
-  const rotateTo = (index) => {
-    let target = Math.max(0, Math.min(highlights.length - 1, index));
-    setActiveIndex(target);
-    if (wheelRef.current) {
-      gsap.to(wheelRef.current, {
-        rotateX: -target * ANGLE_STEP,
-        duration: 0.4,
-        ease: "power3.out"
-      });
-    }
-  };
-
-  // Drag / Swipe controls to rotate the slot machine wheel
-  const dragStart = useRef(0);
-  const isDragging = useRef(false);
-
-  const handlePointerDown = (e) => {
-    isDragging.current = true;
-    dragStart.current = e.clientY;
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e) => {
-    if (!isDragging.current) return;
-    const deltaY = e.clientY - dragStart.current;
-    if (Math.abs(deltaY) > 20) {
-      if (deltaY > 0) {
-        rotateTo(activeIndex - 1);
-      } else {
-        rotateTo(activeIndex + 1);
-      }
-      dragStart.current = e.clientY;
-    }
-  };
-
-  const handlePointerUp = () => {
-    isDragging.current = false;
-  };
-
-  const handleDoubleClick = (e) => {
-    e.stopPropagation();
-    if (!highlights || highlights.length === 0) return;
-    setIsExpanded(!isExpanded);
-  };
-
-  // Wheel scroll event to rotate drum
-  const handleWheel = (e) => {
-    e.preventDefault();
-    if (e.deltaY > 0) {
-      rotateTo(activeIndex + 1);
-    } else {
-      rotateTo(activeIndex - 1);
-    }
-  };
-
-  if (!highlights || highlights.length === 0) return null;
+    return () => clearInterval(interval);
+  }, [messages.length]);
 
   return (
-    <>
-      {/* Absolute Screen Backdrop Blur */}
-      {isExpanded && (
-        <div 
-          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md transition-all duration-300"
-          onDoubleClick={handleDoubleClick}
-        />
-      )}
-      
-      <div 
-        ref={containerRef}
-        onDoubleClick={handleDoubleClick}
-        className={`transition-all duration-300 ${
-          isExpanded 
-            ? 'absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[260px] rounded-3xl bg-gradient-to-br from-[#0c2238] to-[#120a1c] border border-white/20 p-4 shadow-2xl z-[102] flex flex-col justify-between cursor-grab active:cursor-grabbing select-none'
-            : 'relative w-full h-[68px] overflow-hidden rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hidden lg:block transition-colors'
-        }`}
-        onPointerDown={isExpanded ? handlePointerDown : undefined}
-        onPointerMove={isExpanded ? handlePointerMove : undefined}
-        onPointerUp={isExpanded ? handlePointerUp : undefined}
-        onWheel={isExpanded ? handleWheel : undefined}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {isExpanded ? (
-          /* Expanded View: In-place 3D Slot Machine Drum */
-          <>
-            <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-1 shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
-                <h3 className="text-white font-black text-[9px] uppercase tracking-[0.25em]">Highlights</h3>
-              </div>
-              <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Double-click to close</span>
-            </div>
+    <div 
+      className="w-full xl:w-[300px] shrink-0 h-[80px] xl:h-auto relative rounded-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] overflow-hidden"
+      style={{
+        background: "rgba(255, 255, 255, 0.02)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        perspective: "1000px"
+      }}
+    >
+      {/* Decorative glass glare */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-30 pointer-events-none z-10" />
 
-            {/* Viewport for the 3D Drum */}
+      {/* 3D Roulette Cylinder Container */}
+      <div className="w-full h-full relative" style={{ transformStyle: "preserve-3d" }}>
+        {messages.map((msg, i) => {
+          const isCurrent = i === activeIndex;
+          const isPrev = i === (activeIndex - 1 + messages.length) % messages.length;
+
+          return (
             <div 
-              className="relative w-full flex-1 flex items-center justify-center overflow-hidden my-2"
-              style={{ height: "150px", perspective: "1000px" }}
+              key={i} 
+              className="absolute inset-0 w-full px-4 flex items-center justify-between gap-3 shrink-0"
+              style={{
+                transform: isCurrent 
+                  ? "translateY(0) rotateX(0deg)" 
+                  : isPrev 
+                    ? "translateY(-100%) rotateX(-90deg)" 
+                    : "translateY(100%) rotateX(90deg)",
+                transformOrigin: "center center -30px",
+                backfaceVisibility: "hidden",
+                transition: "transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.8s ease",
+                opacity: isCurrent ? 1 : 0,
+                transformStyle: "preserve-3d"
+              }}
             >
-              {/* Highlight window frame */}
-              <div 
-                className="absolute left-0 right-0 h-[54px] bg-white/[0.02] border-y border-white/10 rounded-xl pointer-events-none z-10"
-                style={{
-                  background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0) 100%)"
-                }}
-              />
-
-              {/* 3D Cylinder Container */}
-              <div 
-                ref={wheelRef}
-                className="relative w-full h-[54px] transition-transform duration-100 ease-out"
-                style={{ transformStyle: "preserve-3d" }}
-              >
-                {highlights.map((h, i) => {
-                  const angle = i * ANGLE_STEP;
-                  const isCurrent = i === activeIndex;
-                  
-                  let icon = "lucide:info";
-                  let badgeColor = "text-blue-300 bg-blue-500/10 border-blue-500/20";
-                  if (h.type === 'payment') {
-                    icon = "lucide:credit-card";
-                    badgeColor = "text-red-400 bg-red-500/10 border-red-500/20";
-                  } else if (h.type === 'liveclass') {
-                    icon = "lucide:video";
-                    badgeColor = "text-amber-400 bg-amber-500/10 border-amber-500/20";
-                  } else if (h.type === 'merit') {
-                    icon = "lucide:award";
-                    badgeColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
-                  } else if (h.type === 'blog') {
-                    icon = "lucide:book-open";
-                    badgeColor = "text-purple-400 bg-purple-500/10 border-purple-500/20";
-                  }
-
-                  return (
-                    <div 
-                      key={i}
-                      ref={el => cardsRef.current[i] = el}
-                      className={`absolute left-2 right-2 h-[54px] border rounded-xl px-3 py-2 shadow-md flex items-center justify-between gap-3 transition-all duration-300 ${
-                        isCurrent 
-                          ? 'bg-[#09314F] border-white/20 opacity-100 scale-100 shadow-[0_6px_15px_-3px_rgba(0,0,0,0.3)]' 
-                          : 'bg-[#0a1829]/60 border-white/5 opacity-30 scale-90 pointer-events-none'
-                      }`}
-                      style={{ 
-                        transform: `rotateX(${angle}deg) translateZ(${RADIUS}px)`,
-                        transformStyle: "preserve-3d",
-                        backfaceVisibility: "hidden",
-                        top: 0
-                      }}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center border shrink-0 ${badgeColor}`}>
-                          <Icon icon={icon} className="w-4 h-4" />
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className={`text-[7px] font-black uppercase tracking-widest ${isCurrent ? 'opacity-80' : 'opacity-40'}`}>
-                            {h.type}
-                          </span>
-                          <span className="text-white font-bold text-[11px] truncate leading-tight">{h.text}</span>
-                        </div>
-                      </div>
-                      
-                      {isCurrent && (
-                        <a 
-                          href={h.actionUrl} 
-                          className="shrink-0 px-3 py-1 bg-[#C5A97A] hover:bg-[#b09465] active:scale-95 text-[#0a1829] rounded-lg text-[9px] font-black uppercase tracking-wider transition-all shadow-sm"
-                        >
-                          {h.actionLabel}
-                        </a>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Navigation drum controllers */}
-            <div className="flex items-center justify-between pt-2 border-t border-white/5 shrink-0 text-[9px] font-bold text-gray-500 uppercase tracking-widest">
-              <span>
-                {activeIndex + 1} / {highlights.length}
-              </span>
-              <div className="flex gap-1.5">
-                <button 
-                  onClick={() => rotateTo(activeIndex - 1)}
-                  disabled={activeIndex === 0}
-                  className="w-6 h-6 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 flex items-center justify-center transition-all disabled:opacity-30 disabled:pointer-events-none text-white text-[8px]"
-                >
-                  ▲
-                </button>
-                <button 
-                  onClick={() => rotateTo(activeIndex + 1)}
-                  disabled={activeIndex === highlights.length - 1}
-                  className="w-6 h-6 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 flex items-center justify-center transition-all disabled:opacity-30 disabled:pointer-events-none text-white text-[8px]"
-                >
-                  ▼
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          /* Closed View: Auto-scrolling pill */
-          <div ref={wrapperRef} className="absolute top-0 left-0 w-full">
-            {highlights.map((h, i) => (
-              <div 
-                key={i}
-                className="absolute left-0 right-0 w-full h-[68px] px-6 py-4 flex items-center justify-between gap-4"
-                style={{ top: i * 68 }}
-              >
-                <div className="flex flex-col overflow-hidden">
-                  <span className={`text-[8px] font-black uppercase tracking-widest ${h.type === 'payment' ? 'text-red-400' : 'text-blue-300'}`}>
-                    {h.type}
-                  </span>
-                  <span className="text-white font-bold text-[13px] truncate leading-tight">{h.text}</span>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center border shadow-inner ${msg.bg}`}>
+                  <Icon icon={msg.icon} className={`${msg.color} w-4 h-4`} />
                 </div>
-                <span className="shrink-0 px-3.5 py-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-wider transition-colors shadow-sm">
-                  {h.actionLabel}
-                </span>
+                <div className="min-w-0">
+                  <p className="text-white font-bold text-[12px] leading-tight truncate">{msg.title}</p>
+                  <p className={`${msg.color} text-[9px] font-semibold uppercase tracking-wider truncate mt-0.5`}>{msg.desc}</p>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
+
+              {/* Action Button */}
+              <button className={`shrink-0 px-3.5 py-1.5 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all hover:scale-105 active:scale-95 shadow-md ${msg.actionBg}`}>
+                {msg.action}
+              </button>
+            </div>
+          );
+        })}
       </div>
-    </>
+    </div>
   );
 }
+
+
 
 // ── Main Stats Bar ────────────────────────────────────────────────────────────
 export default function StudentStatsBar({
@@ -367,73 +187,82 @@ export default function StudentStatsBar({
   const firstName = student?.firstname || "Student";
   const lastName = student?.surname || "";
   const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase();
-  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div
-      className={`w-full rounded-2xl shadow-xl transition-all duration-300 ${isExpanded ? 'relative z-[101]' : 'overflow-hidden'}`}
-      style={{ background: "linear-gradient(135deg, #0c2238 0%, #1a3a5c 55%, #241530 100%)" }}
+    // Grandparent container spanning the entire stats area with dark radial gradient
+    <div 
+      className="w-full rounded-2xl shadow-2xl p-1.5 flex flex-col xl:flex-row gap-1 items-stretch relative overflow-hidden"
+      style={{
+        background: "radial-gradient(circle at center, #000000 20%, #09314F 150%)"
+      }}
     >
-      <div className="flex flex-wrap items-center gap-6 md:gap-10 px-6 py-5 md:px-10 md:py-6">
+      {/* Decorative inner wrapper border to match premium feel */}
+      <div className="absolute inset-0 border border-white/5 rounded-2xl pointer-events-none animate-pulse" style={{ animationDuration: '4s' }} />
 
-        {/* ── Avatar + Name ─────────────────────────────────────────────── */}
-        <div className="flex items-center gap-4">
-          <div className="relative w-[60px] h-[60px] flex-shrink-0">
-            <RingProgress value={streak} max={MAX_STREAK} color="#bb9e7f" size={60} stroke={4} />
-            <div className="absolute inset-[6px] rounded-full bg-[#09314F]/80 flex items-center justify-center text-white font-black text-base shadow-inner backdrop-blur-sm overflow-hidden">
-              {student?.profile_picture ? (
-                <img src={`${API_BASE_URL}/storage/${student.profile_picture}`} alt="avatar" className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <span>{initials}</span>
-              )}
+      {/* Main Stats Container (Parent) */}
+      <div
+        className="flex-1 rounded-xl overflow-hidden relative"
+        style={{ background: "linear-gradient(135deg, #0c2238 0%, #1a3a5c 55%, #241530 100%)" }}
+      >
+        <div className="flex flex-wrap items-center justify-between xl:justify-start gap-4 md:gap-6 xl:gap-8 px-6 py-4 md:px-10 h-full">
+
+          {/* ── Avatar + Name ─────────────────────────────────────────────── */}
+          <div className="flex items-center gap-4">
+            <div className="relative w-[50px] h-[50px] flex-shrink-0">
+              <RingProgress value={streak} max={MAX_STREAK} color="#bb9e7f" size={50} stroke={4.5} />
+              <div className="absolute inset-[5px] rounded-full bg-[#09314F]/80 flex items-center justify-center text-white font-black text-xs shadow-inner backdrop-blur-sm overflow-hidden">
+                {student?.profile_picture ? (
+                  <img src={`${API_BASE_URL}/storage/${student.profile_picture}`} alt="avatar" className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  <span>{initials}</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-white font-black text-sm leading-tight">
+                {firstName} {lastName}
+              </p>
+              <p className="text-white/45 text-[11px] font-semibold mt-0.5">Student</p>
             </div>
           </div>
-          <div>
-            <p className="text-white font-black text-base leading-tight">
-              {firstName} {lastName}
-            </p>
-            <p className="text-white/45 text-[12px] font-semibold mt-0.5">Student</p>
-          </div>
-        </div>
 
-        <Divider />
+          <Divider />
 
-        {/* ── Average Score ─────────────────────────────────────────────── */}
-        <StatCell label="Avg Score">
-          <span
-            className="text-[38px] font-black leading-none"
-            style={{ color: "#E83831", textShadow: "0 0 24px rgba(232,56,49,0.45)" }}
-          >
-            {avgScore}
-          </span>
-        </StatCell>
+          {/* ── Average Score ─────────────────────────────────────────────── */}
+          <StatCell label="Avg Score">
+            <span
+              className="text-[32px] font-black leading-none"
+              style={{ color: "#E83831", textShadow: "0 0 24px rgba(232,56,49,0.45)" }}
+            >
+              {avgScore}
+            </span>
+          </StatCell>
 
-        <Divider />
+          <Divider />
 
-        {/* ── Attendance ────────────────────────────────────────────────── */}
-        <StatCell label="Attendance">
-          <AttendanceBars data={attendance} />
-        </StatCell>
+          {/* ── Attendance ────────────────────────────────────────────────── */}
+          <StatCell label="Attendance">
+            <AttendanceBars data={attendance} />
+          </StatCell>
 
-        <Divider />
+          <Divider />
 
-        {/* ── Streaks ───────────────────────────────────────────────────── */}
-        <StatCell label="Streaks">
-          <div className="relative w-[54px] h-[54px]">
-            <RingProgress value={streak} max={MAX_STREAK} color="#bb9e7f" size={54} stroke={4} />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xl font-black text-white">{streak}</span>
+          {/* ── Streaks ───────────────────────────────────────────────────── */}
+          <StatCell label="Streaks">
+            <div className="relative w-[48px] h-[48px]">
+              <RingProgress value={streak} max={MAX_STREAK} color="#bb9e7f" size={48} stroke={4.5} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-black text-white">{streak}</span>
+              </div>
             </div>
-          </div>
-        </StatCell>
+          </StatCell>
 
-        {/* ── Highlight Section Demarcation & Pill ──────────────────────── */}
-        <div className="hidden lg:block w-px self-stretch bg-white/20 my-1" />
-        <div className="flex-1 min-w-[280px] relative h-[68px]">
-          <HighlightPill highlights={highlights} onToggleExpand={setIsExpanded} />
         </div>
-
       </div>
+
+      {/* ── Cut-out Highlight Pill (Sits on Grandparent Gradient background) ───── */}
+      <SmartAssistantWidget streak={streak} />
+      
     </div>
   );
 }

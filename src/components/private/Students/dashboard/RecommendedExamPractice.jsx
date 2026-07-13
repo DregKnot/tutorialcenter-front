@@ -1,51 +1,60 @@
 import { Icon } from "@iconify/react";
+import { useNavigate } from "react-router-dom";
 
+// Mock data representing 2 Weaknesses and 1 Strength
 const EXAMS = [
   {
     id: 1,
+    type: "weakness",
     subject: "Biology",
-    level: "Intermediate",
-    modules: 12,
-    topics: "Cells · Genetics · Ecology",
+    label: "Focus Area",
+    message: "Review your weakest topics",
     icon: "noto:dna",
+    gradient: "from-orange-400/20 to-orange-600/10",
+    accent: "#F97316",
+    borderColor: "border-orange-200/60 dark:border-orange-800/40",
+  },
+  {
+    id: 2,
+    type: "weakness",
+    subject: "Physics",
+    label: "Needs Improvement",
+    message: "Practice makes perfect",
+    icon: "noto:atom-symbol",
+    gradient: "from-amber-400/20 to-amber-600/10",
+    accent: "#F59E0B",
+    borderColor: "border-amber-200/60 dark:border-amber-800/40",
+  },
+  {
+    id: 3,
+    type: "strength",
+    subject: "Further Maths",
+    label: "Challenge",
+    message: "Do you still got it?",
+    icon: "noto:abacus",
     gradient: "from-emerald-400/20 to-emerald-600/10",
     accent: "#10B981",
     borderColor: "border-emerald-200/60 dark:border-emerald-800/40",
   },
-  {
-    id: 2,
-    subject: "Physics",
-    level: "Advanced",
-    modules: 15,
-    topics: "Mechanics · Waves · Electricity",
-    icon: "noto:atom-symbol",
-    gradient: "from-blue-400/20 to-blue-600/10",
-    accent: "#3B82F6",
-    borderColor: "border-blue-200/60 dark:border-blue-800/40",
-  },
-  {
-    id: 3,
-    subject: "Further Maths",
-    level: "Advanced",
-    modules: 18,
-    topics: "Calculus · Vectors · Statistics",
-    icon: "noto:abacus",
-    gradient: "from-violet-400/20 to-violet-600/10",
-    accent: "#8B5CF6",
-    borderColor: "border-violet-200/60 dark:border-violet-800/40",
-  },
 ];
 
 export default function RecommendedExamPractice() {
+  const navigate = useNavigate();
+
+  const handleExamClick = (exam) => {
+    // Navigate to exam practice, passing the subject along via state
+    navigate("/student/exams", { state: { prefillSubject: exam.subject } });
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wide">
-            Recommended Exam Practice
+            Recommended Practice
           </h3>
-          <p className="text-xs text-gray-400 mt-0.5">Sharpen your skills with targeted practice</p>
+          <p className="text-xs text-gray-400 mt-0.5">Customized for your performance</p>
         </div>
         <button className="text-[11px] font-black text-[#09314F] dark:text-blue-300 hover:underline flex items-center gap-1">
           View all <Icon icon="lucide:arrow-right" className="w-3 h-3" />
@@ -57,6 +66,7 @@ export default function RecommendedExamPractice() {
         {EXAMS.map((exam) => (
           <div
             key={exam.id}
+            onClick={() => handleExamClick(exam)}
             className={`relative overflow-hidden rounded-2xl border ${exam.borderColor} bg-gradient-to-br ${exam.gradient} p-5 flex flex-col gap-4 cursor-pointer group hover:-translate-y-0.5 transition-all duration-200 shadow-sm hover:shadow-md`}
           >
             {/* ── Icon ───────────────────────────────────────────────── */}
@@ -68,10 +78,10 @@ export default function RecommendedExamPractice() {
                 <Icon icon={exam.icon} className="w-6 h-6" />
               </div>
               <span
-                className="text-[10px] font-black px-2.5 py-1 rounded-full"
+                className="text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider"
                 style={{ backgroundColor: `${exam.accent}20`, color: exam.accent }}
               >
-                {exam.level}
+                {exam.label}
               </span>
             </div>
 
@@ -81,11 +91,7 @@ export default function RecommendedExamPractice() {
                 {exam.subject}
               </h4>
               <p className="text-[11px] text-gray-500 dark:text-gray-400 font-semibold mb-1">
-                {exam.topics}
-              </p>
-              <p className="text-[11px] text-gray-400 font-bold flex items-center gap-1">
-                <Icon icon="lucide:layers" className="w-3 h-3" />
-                {exam.modules} Modules
+                {exam.message}
               </p>
             </div>
 

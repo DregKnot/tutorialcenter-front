@@ -19,9 +19,9 @@ export default function CommunityGrowth() {
             },
             {
                 title: "Work with us",
-                semititle: "Join our team of educators & professionals",
-                desc: "We are always looking for passionate tutors, content creators, and administrators to join our mission of empowering Nigerian students.",
-                Sdesc: "Grow your career while building the future!",
+                semititle: "Join our team of educators, professionals, & students",
+                desc: "We are always looking for passionate tutors, content creators, administrators, and student affiliates to join our mission of empowering Nigerian students.",
+                Sdesc: "Earn and grow your career while building the future!",
                 btnTitle: "Apply Now",
                 btnPath: "/career",
                 imgPath: officeImage,

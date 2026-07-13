@@ -5,6 +5,7 @@ import Footer from "../../components/public/Footer";
 import Career_img from "../../assets/images/Career.png";
 import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.svg";
 import handCup from "../../assets/images/handCup.jpg";
+import studentAffiliateImg from "../../assets/images/student_affiliate.png";
 import SectionHeading from "../../components/public/SectionHeading";
 
 const Career = () => {
@@ -285,7 +286,7 @@ const Career = () => {
         {/* --- ADMINISTRATION SECTION (Final Section) --- */}
         {/* OUTER WRAPPER: This is an external background in this section alone*/}
         {/* --- ADMINISTRATION SECTION --- */}
-        <section className="w-full bg-white rounded-b-[80px] md:rounded-b-[100px] overflow-hidden pb-24 font-sans">
+        <section className="w-full bg-white overflow-hidden pb-16 font-sans">
           {/* 1. FULL-WIDTH BANNER */}
           <SectionHeading
             title="Administration"
@@ -353,6 +354,71 @@ const Career = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* --- STUDENT AFFILIATE SECTION --- */}
+        <section className="w-full bg-gradient-to-br from-[#0F2C45] via-[#A92429] to-[#BB9E7F] text-white relative -mb-7 z-50 rounded-b-[40px] overflow-hidden pb-24 font-sans">
+          {/* Decorative Background Elements */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-[#BB9E7F] rounded-full mix-blend-overlay filter blur-2xl"></div>
+          </div>
+
+          {/* 1. FULL-WIDTH BANNER */}
+          <SectionHeading
+            title="Student Affiliates"
+            position_right={false}
+            fullWidth={true}
+          />
+
+          {/* 2. CONTENT AREA */}
+          <div className="Container mt-20 flex flex-col md:flex-row items-center gap-16 relative z-10">
+            {/* Featured Image */}
+            <div className="w-full md:w-1/2 order-2 md:order-1">
+              <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-2xl border-[4px] border-white/20 ring-4 ring-[#BB9E7F]/30 transform hover:scale-[1.02] transition-transform duration-500">
+                <img
+                  src={studentAffiliateImg}
+                  alt="Student Affiliate Dashboard"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="w-full md:w-1/2 order-1 md:order-2">
+              <div className="mb-10 bg-black/20 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-xl">
+                <h4 className="text-[#BB9E7F] font-black text-xl mb-4 uppercase tracking-[0.2em] drop-shadow-md">
+                  Role Requirement
+                </h4>
+                <p className="text-white text-3xl md:text-5xl font-black uppercase leading-tight italic drop-shadow-lg">
+                  No requirement needed!!
+                </p>
+                <p className="text-gray-200 text-base md:text-lg mt-6 leading-relaxed">
+                  Earn while you learn! We believe students should have the opportunity to build their network and earn rewards by referring their peers. As a Student Affiliate, you can be an ambassador for Tutorial Center, spreading the word about our comprehensive learning solutions.
+                </p>
+              </div>
+
+              <div className="mb-10">
+                <h4 className="text-[#BB9E7F] font-black text-sm mb-4 uppercase tracking-widest drop-shadow-md">
+                  Available Position
+                </h4>
+                <div className="flex flex-wrap gap-3">
+                  <span className="bg-white text-[#A92429] px-8 py-3.5 rounded-2xl text-[14px] font-black uppercase tracking-wider shadow-[0_4px_15px_rgba(0,0,0,0.2)]">
+                    Student Affiliate / Ambassador
+                  </span>
+                </div>
+              </div>
+
+              <a
+                href="https://affiliates.tutorialcenter.africa/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block px-14 py-5 text-[#0F2C45] font-black text-lg bg-gradient-to-r from-[#BB9E7F] to-[#f3dca6] rounded-2xl shadow-[0_10px_25px_rgba(187,158,127,0.4)] hover:shadow-[0_15px_35px_rgba(187,158,127,0.6)] hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-wider"
+              >
+                Join Now
+              </a>
             </div>
           </div>
         </section>

@@ -10,12 +10,12 @@ export default function BenefitSection() {
             {
                 title: `Personalized Learning at Your Convenience`,
                 description:
-                "We provide flexible, on-demand tutorials that allow you to learn at your own pace, from anywhere and at any time. Whether you're revising late at night or catching up over the weekend, our platform fits seamlessly into your schedule.",
+                " We provide on-demand bite-sized video courses that allow you to learn at your own pace, from anywhere and at any time. Whether you're revising late at night or catching up over the weekend, our platform fits seamlessly into your schedule.",
             },
             {
                 title: "Expert-Led Weekly Masterclasses",
                 description:
-                "Every week, you’ll have access to live sessions where experienced teachers and subject matter experts break down complex topics, share tips, and answer your questions directly. This interactive experience ensures you gain deep insights and clarity on challenging subjects.",
+                " Every week, you’ll have access to live online sessions where experienced teachers and subject matter experts break down complex topics, share tips, and answer your questions directly. These sessions will also be recorded so you can access them at your convenience.",
             },
             {
                 title: "Comprehensive Study Resources",
@@ -47,7 +47,7 @@ export default function BenefitSection() {
                     <div className="mb-4 area-wrapper">
                         <ScrollReveal delay={0.1} direction="up" distance={20}>
                             <h2 className="header-title uppercase text-center mb-4">
-                                Our Core Benefits
+                                Why Us?
                             </h2>
                         </ScrollReveal>
                         <ScrollReveal delay={0.2} direction="up" distance={20}>

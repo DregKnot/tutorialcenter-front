@@ -614,10 +614,10 @@ export default function useExamForm() {
         const hasCorrect = q.options.some(o => o.is_correct);
         if (!hasCorrect) qErrors.push("You must mark one option as the correct answer");
 
-        // Duplicate option text check
-        const optTexts = q.options.map(o => String(o.option_text || "").trim().toLowerCase()).filter(t => t);
-        const uniqueTexts = new Set(optTexts);
-        if (optTexts.length !== uniqueTexts.size) qErrors.push("Duplicate option text detected");
+        // Duplicate option text check (deactivated for now)
+        // const optTexts = q.options.map(o => String(o.option_text || "").trim().toLowerCase()).filter(t => t);
+        // const uniqueTexts = new Set(optTexts);
+        // if (optTexts.length !== uniqueTexts.size) qErrors.push("Duplicate option text detected");
       }
 
       if (qErrors.length > 0) errors[q.tempId] = qErrors;
@@ -699,6 +699,23 @@ export default function useExamForm() {
       return;
     }
     setValidationErrors({});
+
+    // Warning validation: check for duplicate options (non-blocking confirm dialog)
+    let hasDuplicates = false;
+    questions.forEach(q => {
+      if (!q.isSaved && (q.questionType === "multiple_choice" || q.questionType === "true_false")) {
+        const optTexts = q.options.map(o => String(o.option_text || "").trim().toLowerCase()).filter(t => t);
+        const uniqueTexts = new Set(optTexts);
+        if (optTexts.length !== uniqueTexts.size) {
+          hasDuplicates = true;
+        }
+      }
+    });
+
+    if (hasDuplicates) {
+      const proceed = window.confirm("Duplicate options detected in one or more questions. Are you sure you want to proceed?");
+      if (!proceed) return;
+    }
 
     setLoading(true);
 
