@@ -1,4 +1,4 @@
-import icon from "../../assets/svg/tc_icon.svg";
+import icon from "../../assets/images/Group 1000001505.png";
 
 const SectionHeading = ({ title, position_right, fullWidth = false, onClick }) => {
     return (

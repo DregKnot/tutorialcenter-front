@@ -1,4 +1,5 @@
 import studyImage from "../../assets/images/Study_that_stays (2).png";
+import { Link } from "react-router-dom";
 import {
     LightBulbIcon,
     BookOpenIcon,
@@ -121,9 +122,20 @@ export default function LearningSection() {
                                     By transforming learning from a passive activity into an interactive experience, students are better equipped not only to succeed in examinations, but also to develop a deeper and more lasting understanding of what they learn.
                                 </p>
 
-                                <p className="text-sm md:text-[15px] leading-7 text-gray-700 font-semibold italic">
+                                <p className="text-sm md:text-[15px] leading-7 text-gray-700 font-semibold italic mb-8">
                                     Because true academic success is not measured by how long a student studies, but by how much they understand, retain, and confidently apply.
                                 </p>
+                            </ScrollReveal>
+
+                            <ScrollReveal delay={1.3} direction="up" distance={20}>
+                                <div>
+                                    <Link
+                                        to="/register"
+                                        className="inline-block bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-bold px-8 py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 text-sm md:text-base"
+                                    >
+                                        Experience Active Learning For Free
+                                    </Link>
+                                </div>
                             </ScrollReveal>
                         </div>
                     </div>

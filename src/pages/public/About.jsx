@@ -4,7 +4,7 @@ import vector from "../../assets/images/Vector.png";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import OurTeam from "../../components/public/OurTeam";
-import handCup from "../../assets/images/handCup.jpg";
+import handCup from "../../assets/images/Rectangle 669.png";
 import image from "../../assets/images/handshake.png";
 import conversation from "../../assets/images/conversations.jpg";
 import SectionHeading from "../../components/public/SectionHeading";
@@ -106,16 +106,18 @@ const About = () => {
               </div>
               <div className="relative my-20">
                 <div
-                  style={{ backgroundImage: `url(${handCup})` }}
+                  style={{ backgroundImage: `url('${handCup}')` }}
                   className="w-[650px] h-[400px] max-w-full rounded-2xl bg-center bg-cover bg-no-repeat"
                 ></div>
                 <div className="lg:absolute top-11 right-4">
-                  <video
-                    className="w-[500px] h-[300px] bg-no-repeat bg-cover bg-center rounded-2xl relative border-[3px] border-white border-solid "
-                    src="https://youtu.be/-O8t__3Vu9I"
-                    controls
-                    autoPlay
-                  ></video>
+                  <iframe
+                    className="w-[500px] h-[300px] max-w-full bg-black rounded-2xl relative border-[3px] border-white border-solid shadow-xl"
+                    src="https://www.youtube.com/embed/OdBVxoFVJVk?autoplay=1&rel=0"
+                    title="YouTube video"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
                 </div>
               </div>
             </div>
@@ -157,7 +159,7 @@ const About = () => {
         </div>
 
         {/* Our Team Section */}
-        <section className="w-full bg-white rounded-b-[80px] md:rounded-b-[100px] overflow-hidden pb-24 font-sans">
+        <section className="w-full bg-white relative -mb-7 z-50 rounded-b-[40px] overflow-hidden pb-24 font-sans">
           <OurTeam />
         </section>
 

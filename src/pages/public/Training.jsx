@@ -433,7 +433,7 @@ const Training = () => {
         {/* ──────────────────────────────────────────
             SECTION 3 — ADMISSION GUIDE
             ────────────────────────────────────────── */}
-        <section className="w-full bg-white rounded-b-[80px] md:rounded-b-[100px] overflow-hidden pb-12 md:pb-24 font-sans">
+        <section className="w-full bg-white relative -mb-7 z-50 rounded-b-[40px] overflow-hidden pb-12 md:pb-24 font-sans">
           <SectionHeading title="Admission Guide" position_right={false} fullWidth={true} />
 
           <div className="Container mt-16">

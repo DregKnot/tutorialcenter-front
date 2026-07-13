@@ -23,6 +23,8 @@ export default function MockExamAnalytics() {
         }
       );
 
+      console.log("Mock Exam Analytics API Response:", response.data);
+
       setData(response.data?.data || response.data);
       setError("");
     } catch (err) {

@@ -5,11 +5,11 @@ const Footer = () => {
 
     // social links array
     const socialLinks = [
-        { path: "", icon: "mage:facebook" },
-        { path: "", icon: "ri:twitter-fill" },
+        { path: "https://www.facebook.com/share/17uGJzdYoD/", icon: "mage:facebook" },
+        { path: "https://www.tiktok.com/@tutorial_center?_r=1&_t=ZS-97fRYZWF9aC", icon: "ri:tiktok-fill" },
+        { path: "https://www.snapchat.com/add/tutorialcentera?share_id=s0fDtHHsg-c&locale=en-US", icon: "ri:snapchat-fill" },
         { path: "", icon: "mingcute:instagram-fill" },
-        { path: "", icon: "ri:linkedin-fill" },
-        { path: "", icon: "line-md:youtube-filled" },
+        { path: "https://www.youtube.com/@TutorialCenterAfrica", icon: "line-md:youtube-filled" },
     ];
 
     return (
@@ -57,10 +57,12 @@ const Footer = () => {
                             </p>
                             <div className="Social_links flex justify-center items-center gap-3 mb-6">
                                 {socialLinks.map((link, i) => (
-                                    <Link
+                                    <a
                                         key={i}
-                                        to={link.path}
-                                        className="w-9 h-9 flex justify-center items-center rounded-xl bg-white "
+                                        href={link.path || "#"}
+                                        target={link.path ? "_blank" : undefined}
+                                        rel={link.path ? "noopener noreferrer" : undefined}
+                                        className="w-9 h-9 flex justify-center items-center rounded-xl bg-white transition-transform hover:scale-110"
                                     >
                                         <Icon
                                             icon={link.icon}
@@ -68,7 +70,7 @@ const Footer = () => {
                                             height="24"
                                             className="text-ascent"
                                         />
-                                    </Link>
+                                    </a>
                                 ))}
                             </div>
                             <div className="download_app text-[12px]">

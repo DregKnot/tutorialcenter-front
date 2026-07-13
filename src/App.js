@@ -3,6 +3,7 @@ import Home from "./pages/public/Home.jsx";
 import Contact from "./pages/public/Contact.jsx";
 import Career from "./pages/public/Career.jsx";
 import Blog from "./pages/public/Blog.jsx";
+import StudentBlog from "./components/private/Students/StudentBlog.jsx";
 import Login from "./pages/public/StudentLogin.jsx";
 import SignUp from "./pages/public/SignUp.jsx";
 import StickyButtons from "./components/public/StickyButtons.jsx";
@@ -136,6 +137,7 @@ function App() {
           <Route path="/student/games" element={<StudentGames />} />
           <Route path="/student/exams" element={<StudentExam />} />
           <Route path="/student/scholarship" element={<StudentScholarship />} />
+          <Route path="/student/blog" element={<StudentBlog />} />
 
           {/* Staff Routes */}
           <Route path="/staffs/dashboard" element={<StaffDashboard />} />

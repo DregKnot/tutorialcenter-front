@@ -10,50 +10,51 @@ const FaqSection = () => {
         {
             questions: "What is Tutorial Center?",
             answers:
-                " Tutorial Center is an online e-learning platform designed to help Nigerian students prepare for major exams like JAMB,  WAEC, NECO, and GCE through interactive tutorials, live  classes, and exam-focused resources.",
+                "Tutorial center is an online exam preparation platform designed to help Nigerian students prepare for major exams like JAMB, WAEC, NECO, and GCE through live virtual tutorials, practice questions and other exam resources",
             open: true,
         },
         {
             questions: "What subjects are covered on Tutorial Center?",
             answers:
-                " Tutorial Center is an online e-learning platform designed to help Nigerian students prepare for major exams like JAMB,  WAEC, NECO, and GCE through interactive tutorials, live  classes, and exam-focused resources.",
+                " All Subjects under GCE, WAEC, NECO and JAMB are covered in Tutorial Center.",
             open: false,
         },
         {
-            questions: "How much does it cost to enroll in a program?",
+            questions: "How does Tutorial Center help students stay accountable while preparing for exams?",
             answers:
-                " Tutorial Center is an online e-learning platform designed to help Nigerian students prepare for major exams like JAMB,  WAEC, NECO, and GCE through interactive tutorials, live  classes, and exam-focused resources.",
+                " We do this through our team of qualified tutors and course advisers who are on ground to check in and follow up on student’s progress.",
             open: false,
         },
         {
             questions: "How do I register for classes? ",
-            answers:
-                " Tutorial Center is an online e-learning platform designed to help Nigerian students prepare for major exams like JAMB,  WAEC, NECO, and GCE through interactive tutorials, live  classes, and exam-focused resources.",
+            answers: (
+                <>You can start by clicking the <strong className="text-red-600">Apply Now</strong> button on our homepage and follow the registration process.</>
+            ),
 
             open: false,
         },
         {
             questions: "Can I attend classes at my convenience?",
             answers:
-                " Tutorial Center is an online e-learning platform designed to help Nigerian students prepare for major exams like JAMB,  WAEC, NECO, and GCE through interactive tutorials, live  classes, and exam-focused resources.",
+                "Not quite, but we've made it as convenient as possible. Our live classes are held at scheduled times to ensure you get direct interaction with our expert tutors. However, we record all sessions so you can catch up at your own time if you miss a class.",
             open: false,
         },
         {
             questions: "Are the classes taught by qualified teachers?",
             answers:
-                " Tutorial Center is an online e-learning platform designed to help Nigerian students prepare for major exams like JAMB,  WAEC, NECO, and GCE through interactive tutorials, live  classes, and exam-focused resources.",
+                " Yes, all our tutors are vetted and bring decades of combined teaching experience and techniques.",
             open: false,
         },
         {
             questions: "What happens if I miss a live class?",
             answers:
-                " Tutorial Center is an online e-learning platform designed to help Nigerian students prepare for major exams like JAMB,  WAEC, NECO, and GCE through interactive tutorials, live  classes, and exam-focused resources.",
+                "You’ll find the recording on your dashboard which you can watch at your convenience.",
             open: false,
         },
         {
             questions: "How do I make payments?",
             answers:
-                " Tutorial Center is an online e-learning platform designed to help Nigerian students prepare for major exams like JAMB,  WAEC, NECO, and GCE through interactive tutorials, live  classes, and exam-focused resources.",
+                "You can pay online using your debit or credit card, or through a bank transfer. Details will be provided during registration.",
             open: false,
         },
     ]);
