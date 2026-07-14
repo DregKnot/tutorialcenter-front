@@ -110,32 +110,32 @@ export default function TutorMasterClass() {
   const SessionRow = ({ session, isNext = false }) => (
     <div 
       onClick={() => openModal(session)}
-      className={`flex items-center gap-4 md:gap-8 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/80 transition-all px-4 rounded-xl cursor-pointer group ${isNext ? "bg-amber-50/50 hover:bg-amber-50" : ""}`}
+      className={`flex items-center gap-4 md:gap-8 py-4 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-all px-4 rounded-xl cursor-pointer group ${isNext ? "bg-amber-50/50 hover:bg-amber-50 dark:bg-amber-500/10 dark:hover:bg-amber-500/20" : ""}`}
     >
-      <div className={`w-10 h-10 rounded-full text-[10px] font-black flex items-center justify-center border border-white shadow-sm shrink-0 ${isNext ? "bg-amber-500 text-white" : "bg-slate-200 text-slate-600"}`}>
+      <div className={`w-10 h-10 rounded-full text-[10px] font-black flex items-center justify-center border border-white dark:border-gray-700 shadow-sm shrink-0 ${isNext ? "bg-amber-500 text-white" : "bg-slate-200 dark:bg-gray-700 text-slate-600 dark:text-gray-300"}`}>
         {getInitials(session.class?.title)}
       </div>
       
       <div className="flex-1 grid grid-cols-1 md:grid-cols-4 items-center gap-2 md:gap-4 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
            {isNext && <span className="text-[10px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded leading-none">NEXT</span>}
-           <span className="text-[14px] font-bold text-[#374151] truncate" title={session.class?.title}>
+           <span className="text-[14px] font-bold text-[#374151] dark:text-white truncate" title={session.class?.title}>
              {session.class?.title || "Master Class"}
            </span>
         </div>
-        <span className="text-[13px] font-medium text-slate-500 md:text-center">
+        <span className="text-[13px] font-medium text-slate-500 dark:text-gray-400 md:text-center">
           {formatDate(session.session_date)}
         </span>
-        <span className="text-[13px] font-medium text-slate-500 md:text-center">
+        <span className="text-[13px] font-medium text-slate-500 dark:text-gray-400 md:text-center">
           {formatTime(session.starts_at)}
         </span>
         <div className="truncate text-right hidden md:block">
            {session.class_link ? (
-             <span className="text-[13px] text-blue-400 font-medium underline underline-offset-4 decoration-dotted">
+             <span className="text-[13px] text-blue-400 dark:text-blue-300 font-medium underline underline-offset-4 decoration-dotted">
                {session.class_link.replace(/^https?:\/\//, '')}
              </span>
            ) : (
-             <span className="text-xs text-slate-300 italic">No link</span>
+             <span className="text-xs text-slate-300 dark:text-gray-600 italic">No link</span>
            )}
         </div>
       </div>
@@ -146,8 +146,8 @@ export default function TutorMasterClass() {
     if (isEmpty || (Array.isArray(sessions) && sessions.length === 0)) return null;
     return (
       <div className="mb-10">
-        <h3 className="text-[11px] font-black text-slate-400 mb-5 px-4 uppercase tracking-[0.25em]">{title}</h3>
-        <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+        <h3 className="text-[11px] font-black text-slate-400 dark:text-gray-500 mb-5 px-4 uppercase tracking-[0.25em]">{title}</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-[32px] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
           {Array.isArray(sessions) ? (
             sessions.map(s => <SessionRow key={s.id} session={s} />)
           ) : (
@@ -175,21 +175,21 @@ export default function TutorMasterClass() {
 
         <div className="mb-10 max-w-sm">
           <div className="relative group">
-            <MagnifyingGlassIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#0F2843] transition-colors" />
+            <MagnifyingGlassIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#0F2843] dark:group-focus-within:text-blue-500 transition-colors" />
             <input
               type="text"
               placeholder="Search by date"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-14 pr-6 py-4 border border-gray-200 rounded-[24px] text-[15px] font-bold text-[#1F2937] focus:ring-4 focus:ring-[#0F2843]/5 focus:border-[#0F2843] bg-white shadow-sm transition-all"
+              className="w-full pl-14 pr-6 py-4 border border-gray-200 dark:border-gray-700 rounded-[24px] text-[15px] font-bold text-[#1F2937] dark:text-white focus:ring-4 focus:ring-[#0F2843]/5 dark:focus:ring-blue-500/10 focus:border-[#0F2843] dark:focus:border-blue-500 bg-white dark:bg-gray-800 shadow-sm transition-all"
             />
           </div>
         </div>
 
         {loading ? (
           <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#0F2843] mx-auto" />
-            <p className="mt-4 text-slate-400 font-bold">Refining your schedule...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#0F2843] dark:border-blue-500 mx-auto" />
+            <p className="mt-4 text-slate-400 dark:text-gray-500 font-bold">Refining your schedule...</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -197,7 +197,7 @@ export default function TutorMasterClass() {
             {filteredData.next_class && (
               <div className="mb-12">
                 <h3 className="text-[11px] font-black text-amber-500 mb-5 px-4 uppercase tracking-[0.25em]">Next Up</h3>
-                <div className="bg-white rounded-[32px] border border-amber-100 shadow-lg shadow-amber-50 overflow-hidden ring-2 ring-amber-500/10">
+                <div className="bg-white dark:bg-gray-800 rounded-[32px] border border-amber-100 dark:border-amber-500/20 shadow-lg shadow-amber-50/20 dark:shadow-none overflow-hidden ring-2 ring-amber-500/10">
                   <SessionRow session={filteredData.next_class} isNext={true} />
                 </div>
               </div>
@@ -212,9 +212,9 @@ export default function TutorMasterClass() {
              filteredData.today_classes.length === 0 && 
              Object.keys(filteredData.week_schedule).length === 0 && 
              filteredData.upcoming_sessions.length === 0 && (
-              <div className="text-center py-24 bg-gray-50/50 rounded-[48px] border-2 border-dashed border-gray-200 mx-4">
-                <Icon icon="mdi:calendar-blank" className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                <p className="text-slate-400 text-lg font-bold">Your agenda is clear.</p>
+              <div className="text-center py-24 bg-gray-50/50 dark:bg-gray-800/20 rounded-[48px] border-2 border-dashed border-gray-200 dark:border-gray-700 mx-4">
+                <Icon icon="mdi:calendar-blank" className="w-16 h-16 text-gray-200 dark:text-gray-700 mx-auto mb-4" />
+                <p className="text-slate-400 dark:text-gray-500 text-lg font-bold">Your agenda is clear.</p>
               </div>
             )}
           </div>
@@ -224,33 +224,33 @@ export default function TutorMasterClass() {
       {/* Details Modal */}
       {selectedSession && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSelectedSession(null)} />
-          <div className="relative bg-white rounded-[32px] p-8 md:p-10 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-2xl font-black text-[#0F2843] mb-8">Details</h2>
+          <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm" onClick={() => setSelectedSession(null)} />
+          <div className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[32px] p-8 md:p-10 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-2xl font-black text-[#0F2843] dark:text-white mb-8">Details</h2>
             
             <div className="space-y-6">
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                <p className="text-[15px] font-bold text-slate-700">
+              <div className="bg-slate-50 dark:bg-gray-900/50 rounded-2xl p-4 border border-slate-100 dark:border-gray-700">
+                <p className="text-[15px] font-bold text-slate-700 dark:text-gray-300">
                   {staffRole} - {staffName}
                 </p>
               </div>
 
-              <div className="flex items-center gap-4 text-slate-600">
-                <CalendarIcon className="w-5 h-5 shrink-0" />
+              <div className="flex items-center gap-4 text-slate-600 dark:text-gray-300">
+                <CalendarIcon className="w-5 h-5 shrink-0 text-slate-400 dark:text-gray-500" />
                 <span className="text-[14px] font-bold uppercase tracking-tight">
                   {new Date(selectedSession.session_date).toLocaleDateString("en-US", { weekday: 'short' })}, {formatDate(selectedSession.session_date)} / {formatTime(selectedSession.starts_at).toUpperCase()}
                 </span>
               </div>
 
-              <div className="flex items-center gap-4 text-slate-600">
+              <div className="flex items-center gap-4 text-slate-600 dark:text-gray-300">
                 <div className="w-5 h-5 bg-[#C5A97A] rounded shrink-0" />
                 <span className="text-[14px] font-bold">
                   {selectedSession.class?.title}
                 </span>
               </div>
 
-              <div className="flex items-center gap-4 text-blue-500">
-                <LinkIcon className="w-5 h-5 shrink-0" />
+              <div className="flex items-center gap-4 text-blue-500 dark:text-blue-300">
+                <LinkIcon className="w-5 h-5 text-blue-400 dark:text-blue-500 shrink-0" />
                 <a 
                   href={selectedSession.class_link} 
                   target="_blank" 
@@ -262,19 +262,19 @@ export default function TutorMasterClass() {
               </div>
 
               <div className="flex items-center gap-4">
-                <VideoCameraIcon className="w-5 h-5 text-slate-400 shrink-0" />
+                <VideoCameraIcon className="w-5 h-5 text-slate-400 dark:text-gray-500 shrink-0" />
                 <div className="flex-1">
                   {selectedSession.recording_link ? (
                     <a 
                       href={selectedSession.recording_link} 
                       target="_blank" 
                       rel="noreferrer"
-                      className="text-[14px] font-bold text-green-500 underline underline-offset-4 decoration-dotted truncate"
+                      className="text-[14px] font-bold text-green-500 dark:text-green-400 underline underline-offset-4 decoration-dotted truncate"
                     >
                       Watch Recording
                     </a>
                   ) : (
-                    <span className="text-[14px] font-medium text-slate-300 italic">No recording available</span>
+                    <span className="text-[14px] font-medium text-slate-300 dark:text-gray-600 italic">No recording available</span>
                   )}
                 </div>
               </div>
@@ -283,7 +283,7 @@ export default function TutorMasterClass() {
             <div className="mt-10">
               <button 
                 onClick={() => setSelectedSession(null)}
-                className="w-full py-4 bg-[#0F2843] text-white font-bold rounded-2xl hover:bg-[#1a3d5c] transition-all active:scale-95 shadow-lg shadow-slate-200 uppercase text-[11px] tracking-widest"
+                className="w-full py-4 bg-[#0F2843] dark:bg-blue-600 text-white font-bold rounded-2xl hover:bg-[#1a3d5c] dark:hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-slate-200 dark:shadow-none uppercase text-[11px] tracking-widest"
               >
                 Close
               </button>

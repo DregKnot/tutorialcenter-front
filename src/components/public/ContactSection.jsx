@@ -49,7 +49,7 @@ const ContactSection = ({ showTitle = true }) => {
                                                     to="mailto:[EMAIL_ADDRESS]"
                                                     className="text-sencondary font-semibold text-sm"
                                                 >
-                                                    info@tutorialcenter.gmail
+                                                    info@tutorialcenter.africa
                                                 </Link>
                                                 <Link
                                                     to=""

@@ -41,7 +41,7 @@ const adminMenuItems = [
 const tutorMenuItems = [
   { label: "Dashboard", icon: HomeIcon, destination: "/staffs/tutor/dashboard" },
   { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/tutor/master-class" },
-  { label: "Calendar", icon: CalendarDaysIcon },
+  { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/tutor/calendar" },
   { label: "Assessment", icon: ClipboardDocumentListIcon, destination: "/staffs/tutor/assessment" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/tutor/exams" },
   { label: "Settings", icon: Cog6ToothIcon, destination: "/staffs/tutor/settings" },

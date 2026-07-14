@@ -20,6 +20,9 @@ export default function StaffNotification() {
   const [selectedNotif, setSelectedNotif] = useState(null);
   const [toast, setToast] = useState(null);
   
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
   const token = localStorage.getItem("staff_token");
   const staffRole = localStorage.getItem("staff_role");
   
@@ -41,22 +44,24 @@ export default function StaffNotification() {
     if (!token) return;
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/api/${apiPrefix}/notifications`, {
+      const response = await axios.get(`${API_BASE_URL}/api/${apiPrefix}/notifications?page=${page}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const resData = response.data;
       const notificationList = resData?.data && Array.isArray(resData.data) 
         ? resData.data 
         : (Array.isArray(resData) ? resData : []);
+      const lastPage = resData?.last_page || 1;
       console.log(`StaffNotification API (${apiPrefix}) response:`, resData);
       console.log(`StaffNotification List parsed:`, notificationList);
       setNotifications(notificationList);
+      setTotalPages(lastPage);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, token, apiPrefix]);
+  }, [API_BASE_URL, token, apiPrefix, page]);
 
   useEffect(() => {
     fetchNotifications();
@@ -205,6 +210,29 @@ export default function StaffNotification() {
                 )}
               </div>
             ))}
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-8 pb-4">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1 || loading}
+                  className="px-6 py-3 bg-white dark:bg-[#06243A] border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#1a4a75] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-[#09314F] dark:text-white font-black text-[10px] uppercase tracking-widest shadow-sm transition-all"
+                >
+                  Previous
+                </button>
+                <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages || loading}
+                  className="px-6 py-3 bg-white dark:bg-[#06243A] border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#1a4a75] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-[#09314F] dark:text-white font-black text-[10px] uppercase tracking-widest shadow-sm transition-all"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="py-24 text-center bg-white dark:bg-[#09314F]/40 rounded-[48px] border-2 border-dashed border-gray-200 dark:border-[#1a4a75] mx-4 shadow-inner">
