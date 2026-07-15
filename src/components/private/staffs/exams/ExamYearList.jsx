@@ -83,8 +83,11 @@ export default function ExamYearList() {
         })
       );
 
-      console.log("[ExamYearList] Filtered & Prefixed Years with Counts:", { bodyId, subjectId }, filteredYears);
-      setYears(filteredYears);
+      // Sort descending so newest year (e.g. 2025) comes first
+      const sortedYears = filteredYears.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+
+      console.log("[ExamYearList] Filtered & Prefixed Years with Counts:", { bodyId, subjectId }, sortedYears);
+      setYears(sortedYears);
       
     } catch (err) {
       console.error("Failed to fetch years:", err);

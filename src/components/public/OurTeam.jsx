@@ -1,4 +1,4 @@
-import TeamCard from "./TeamCard.jsx";
+import ProfileCard from "./ProfileCard.jsx";
 import { AllTeams } from "../../data/data.js";
 import SectionHeading from "./SectionHeading.jsx";
 import { Icon } from "@iconify/react/dist/iconify.js";
@@ -8,8 +8,12 @@ const OurTeam = () => {
     // List of team departments
     const [listallTeams, setListAllTeams] = useState([
         {
-            developers: "Development",
+            developers: "Leadership",
             open: true,
+        },
+        {
+            developers: "Development",
+            open: false,
         },
         {
             developers: "Education",
@@ -42,10 +46,14 @@ const OurTeam = () => {
     };
 
     // Determine slides to show based on screen size
+    // Card math:
+    //   Container usable width at md (768px): 768 - 40px padding = 728px
+    //   2-card slot: 728/2 = 364px per slot → ~344px card width → ~479px height (capped at 440px max) ✓
     const getSlidesToShow = () => {
         if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 1024) return 3;
-            return 1;
+            if (window.innerWidth >= 1024) return 3;  // desktop: 3 cards
+            if (window.innerWidth >= 768)  return 2;  // tablet:  2 cards
+            return 1;                                  // mobile:  1 card
         }
         return 3;
     };
@@ -139,17 +147,24 @@ const OurTeam = () => {
                                     onMouseEnter={() => setIsAutoPlaying(false)}
                                     onMouseLeave={() => setIsAutoPlaying(true)}
                                 >
-                                    {filteredTeam.map((items, i) => (
-                                        <div 
-                                            key={i} 
-                                            style={{ 
-                                                minWidth: `${100 / slidesToShow}%`,
-                                                padding: '0 10px'
-                                            }}
-                                        >
-                                            <TeamCard name={items.name} role={items.role} />
-                                        </div>
-                                    ))}
+                                    {filteredTeam.map((items, i) => {
+                                        return (
+                                            <div
+                                                key={i}
+                                                style={{
+                                                    minWidth: `${100 / slidesToShow}%`,
+                                                    padding: '0 10px'
+                                                }}
+                                            >
+                                                <ProfileCard
+                                                    name={items.name}
+                                                    title={items.role}
+                                                    avatarUrl={items.avatarUrl || ""}
+                                                    linkedinUrl={items.linkedinUrl || ""}
+                                                />
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 

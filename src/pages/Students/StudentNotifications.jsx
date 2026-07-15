@@ -102,6 +102,31 @@ export default function StudentNotifications() {
     }
   };
 
+  // Returns a human-readable relative time + formatted absolute date
+  const formatTimeAgo = (dateStr) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    let relative;
+    if (diffMins < 1)        relative = 'Just now';
+    else if (diffMins < 60) relative = `${diffMins} min${diffMins === 1 ? '' : 's'} ago`;
+    else if (diffHours < 24) relative = `${diffHours} hr${diffHours === 1 ? '' : 's'} ago`;
+    else if (diffDays < 7)  relative = `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+    else                    relative = null;
+
+    const absolute = date.toLocaleDateString(undefined, {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    return { relative, absolute };
+  };
+
   return (
     <DashboardLayout pagetitle="Notifications" hideHeaderBell={true} hideRightPanel={true}>
       {/* Toast Notification */}
@@ -164,9 +189,24 @@ export default function StudentNotifications() {
                     <h3 className={`text-sm sm:text-[17px] font-black tracking-tight capitalize truncate ${!notif.read_at ? "text-[#09314F] dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
                       {notif.data?.type || "Notification"}
                     </h3>
-                    <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase whitespace-nowrap pt-1">
-                      {new Date(notif.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
-                    </span>
+                    {/* Timestamp: relative + absolute date */}
+                    <div className="flex flex-col items-end shrink-0 pt-0.5">
+                      {(() => {
+                        const { relative, absolute } = formatTimeAgo(notif.created_at);
+                        return (
+                          <>
+                            {relative && (
+                              <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase whitespace-nowrap">
+                                {relative}
+                              </span>
+                            )}
+                            <span className="text-[8px] sm:text-[9px] font-bold text-gray-300 dark:text-gray-600 uppercase whitespace-nowrap mt-0.5">
+                              {absolute}
+                            </span>
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
                   <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 line-clamp-2">
                     {notif.data?.message}

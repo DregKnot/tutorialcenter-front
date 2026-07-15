@@ -1,50 +1,83 @@
+import calebImg from "../assets/images/Team/Caleb.png";
+import nnemekaImg from "../assets/images/Team/Isaac Nnemeka.jpg";
+import oladeindeImg from "../assets/images/Team/Oladeinde.jpg";
 
 // ==================  exports all team members data ================== //
 export const AllTeams = [
     {
-        name: "JOHN DOE",
-        role: "software engineer",
-        category: "development",
+        name: "Olugbenga Raymond",
+        role: "CEO & Founder",
+        subRole: "Lead Backend Developer",
+        handle: "gbenga_raymond",
+        category: "leadership",
+        linkedinUrl: "", // TODO: supply real LinkedIn URL
     },
     {
-        name: "samuel",
-        role: "frontend developer",
-        category: "development",
+        name: "Samuel Olawale",
+        role: "CTO",
+        subRole: "Lead Frontend Developer",
+        handle: "samuel_olawale",
+        category: "leadership",
+        linkedinUrl: "", // TODO: supply real LinkedIn URL
     },
     {
         name: "Nnemeka Isaac",
-        role: "ui/ux designer",
-        category: "development",
+        role: "CSA",
+        subRole: "Lead UI/UX Designer",
+        handle: "nnemeka_isaac",
+        category: "leadership",
+        avatarUrl: nnemekaImg,
+        linkedinUrl: "", // TODO: supply real LinkedIn URL
     },
     {
-        name: "JOHN DOE",
-        role: "marketing manager",
-        category: "development",
+        name: "Caleb Ndubuisi",
+        role: "CSO",
+        subRole: "Lead Cyber Security Expert",
+        handle: "johndoe_mktg",
+        category: "leadership",
+        avatarUrl: calebImg,
+        linkedinUrl: "", // TODO: supply real LinkedIn URL
     },
     {
-        name: "JOHN DOE",
-        role: "backend developer",
-        category: "development",
+        name: "Olayiwola Oladeinde",
+        role: "COO",
+        subRole: "Chief Operating Officer",
+        handle: "johndoe_backend",
+        category: "leadership",
+        avatarUrl: oladeindeImg,
+        linkedinUrl: "", // TODO: supply real LinkedIn URL
     },
     {
         name: "JOHN DOE",
         role: "course adviser",
+        subRole: "Academic Counselor",
+        handle: "johndoe_advisory",
         category: "advisory",
+        linkedinUrl: "",
     },
     {
         name: "JOHN DOE",
         role: "influencer",
+        subRole: "Brand Ambassador",
+        handle: "johndoe_influencer",
         category: "marketing",
+        linkedinUrl: "",
     },
     {
         name: "JOHN DOE",
         role: "influencer manager",
+        subRole: "Talent Manager",
+        handle: "johndoe_mgmt",
         category: "advisory",
+        linkedinUrl: "",
     },
     {
         name: "JOHN DOE",
         role: "content writer",
+        subRole: "Copywriter & SEO Specialist",
+        handle: "johndoe_writer",
         category: "marketing",
+        linkedinUrl: "",
     }
 ];
 
