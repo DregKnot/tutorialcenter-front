@@ -5,6 +5,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import signup_img from "../../../assets/images/Student_sign_up.jpg";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 
+
+
 export default function StaffEmailVerification() {
   const navigate = useNavigate();
   const [msg, setMsg] = useState("");

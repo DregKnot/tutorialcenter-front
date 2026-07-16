@@ -1,6 +1,7 @@
 import calebImg from "../assets/images/Team/Caleb.png";
 import nnemekaImg from "../assets/images/Team/Isaac Nnemeka.jpg";
 import oladeindeImg from "../assets/images/Team/Oladeinde.jpg";
+import blessingImg from "../assets/images/Team/Blessing.jpg";
 
 // ==================  exports all team members data ================== //
 export const AllTeams = [
@@ -21,6 +22,15 @@ export const AllTeams = [
         linkedinUrl: "", // TODO: supply real LinkedIn URL
     },
     {
+         name: "Olayiwola Oladeinde",
+        role: "COO",
+        subRole: "Chief Operating Officer",
+        handle: "johndoe_backend",
+        category: "leadership",
+        avatarUrl: oladeindeImg,
+        linkedinUrl: "https://www.linkedin.com/in/olayiwola-oladeinde-409a5717b", 
+    },
+    {
         name: "Nnemeka Isaac",
         role: "CSA",
         subRole: "Lead UI/UX Designer",
@@ -30,22 +40,13 @@ export const AllTeams = [
         linkedinUrl: "", // TODO: supply real LinkedIn URL
     },
     {
-        name: "Caleb Ndubuisi",
-        role: "CSO",
+         name: "Caleb Ndubuisi",
+        role: "CSE",
         subRole: "Lead Cyber Security Expert",
         handle: "johndoe_mktg",
-        category: "leadership",
+        category: "development",
         avatarUrl: calebImg,
-        linkedinUrl: "", // TODO: supply real LinkedIn URL
-    },
-    {
-        name: "Olayiwola Oladeinde",
-        role: "COO",
-        subRole: "Chief Operating Officer",
-        handle: "johndoe_backend",
-        category: "leadership",
-        avatarUrl: oladeindeImg,
-        linkedinUrl: "", // TODO: supply real LinkedIn URL
+        linkedinUrl: "", // TODO: supply real LinkedIn URL // TODO: supply real LinkedIn URL
     },
     {
         name: "JOHN DOE",
@@ -72,12 +73,13 @@ export const AllTeams = [
         linkedinUrl: "",
     },
     {
-        name: "JOHN DOE",
-        role: "content writer",
-        subRole: "Copywriter & SEO Specialist",
+        name: "Blessing Samuel",
+        role: "Content Marketing Manager",
+        subRole: "Content Writer & SEO Specialist",
         handle: "johndoe_writer",
         category: "marketing",
-        linkedinUrl: "",
+        avatarUrl: blessingImg,
+        linkedinUrl: "https://www.linkedin.com/in/blessing-onyegbula/",
     }
 ];
 

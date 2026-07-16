@@ -103,7 +103,7 @@ const Blog = () => {
       <Navbar />
 
       {/* ── HERO ── */}
-      <div className="relative z-30 w-full h-[273px]">
+      <div className="relative z-30 w-full h-[373px]">
         <div
           className="absolute w-full h-full bg-cover bg-no-repeat bg-center"
           style={{ backgroundImage: `url(${BlogHero})` }}

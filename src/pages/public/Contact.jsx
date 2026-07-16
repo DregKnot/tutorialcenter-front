@@ -1,7 +1,7 @@
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import Map from "../../components/public/Map";
-import image from "../../assets/images/Contact.png";
+import image from "../../assets/images/Contact us.png";
 import ContactSection from "../../components/public/ContactSection";
 
 const Contact = () => {
@@ -10,7 +10,7 @@ const Contact = () => {
       <Navbar />
 
       {/* Hero */}
-      <div className="relative z-30 w-full h-[273px]">
+      <div className="relative z-30 w-full h-[373px]">
         <div
           className="absolute w-full h-full bg-cover bg-no-repeat bg-[center_70%]"
           style={{ backgroundImage: `url(${image})` }}

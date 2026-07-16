@@ -15,10 +15,10 @@ const Home = () => {
     return (
         <>
             <Helmet>
-                <title>Tutorial Center | Empowering Minds, Acheiving Excellence</title>
-                <meta name="description" content="Tutorial Center is an interactive educational platform offering exam preparation, curriculum guides, and learning support for students across Africa." />
-                <meta property="og:title" content="Tutorial Center | Empowering Minds" />
-                <meta property="og:description" content="Prepare for WAEC, JAMB, and more with our interactive educational platform and foundational programs." />
+                <title>Tutorial Center | Digital Tutorial Center, Exam preparation platform for O'levels and JAMB</title>
+                <meta name="description" content="Tutorial Center is the leading digital tutorial center offering comprehensive online lessons for O-levels, JAMB, WAEC, NECO, GCE, and more. Join our online tutoring center to achieve academic excellence across Africa." />
+                <meta property="og:title" content="Tutorial Center | Digital Tutorial Center for O'levels and JAMB" />
+                <meta property="og:description" content="Tutorial Center is the leading digital tutorial center offering comprehensive online lessons for O-levels, JAMB, WAEC, NECO, GCE, and more. Join our online tutoring center to achieve academic excellence across Africa." />
                 <meta property="og:image" content="https://www.tutorialcenter.africa/TC%201.png" />
                 <meta property="og:url" content="https://www.tutorialcenter.africa/" />
             </Helmet>
