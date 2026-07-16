@@ -83,8 +83,15 @@ export default function ExamYearList() {
         })
       );
 
-      // Sort descending so newest year (e.g. 2025) comes first
-      const sortedYears = filteredYears.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+      // Helper to extract numeric year from string (e.g. "Year 2024" or "2024/25" -> 2024)
+      const extractNumericYear = (yearVal) => {
+        if (!yearVal) return 0;
+        const match = String(yearVal).match(/\d{4}/);
+        return match ? parseInt(match[0], 10) : 0;
+      };
+
+      // Sort descending so newest year (e.g. 2026, 2025) comes first
+      const sortedYears = filteredYears.sort((a, b) => extractNumericYear(b.year) - extractNumericYear(a.year));
 
       console.log("[ExamYearList] Filtered & Prefixed Years with Counts:", { bodyId, subjectId }, sortedYears);
       setYears(sortedYears);
@@ -103,8 +110,19 @@ export default function ExamYearList() {
   // Helper to calculate "X years ago"
   const getYearAgo = (year) => {
     const currentYear = new Date().getFullYear();
-    const diff = currentYear - parseInt(year);
-    return `${diff} year ago`;
+    // Helper to extract numeric year
+    const extractNumericYear = (yearVal) => {
+      if (!yearVal) return 0;
+      const match = String(yearVal).match(/\d{4}/);
+      return match ? parseInt(match[0], 10) : 0;
+    };
+    const parsedYear = extractNumericYear(year);
+    if (!parsedYear) return "Unknown";
+    const diff = currentYear - parsedYear;
+    if (diff < 0) return "Future";
+    if (diff === 0) return "This year";
+    if (diff === 1) return "1 year ago";
+    return `${diff} years ago`;
   };
 
   return (
