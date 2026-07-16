@@ -37,6 +37,9 @@ export default function StudentExam() {
   const [modalHours, setModalHours] = useState(0);
   const [modalMinutes, setModalMinutes] = useState(50);
 
+  // Warning modal state
+  const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
+
   // Sync modal controls when modal is opened
   useEffect(() => {
     if (isClockModalOpen) {
@@ -683,7 +686,7 @@ export default function StudentExam() {
                   {/* Start Exam Button */}
                   <div className="w-full md:w-auto">
                     <button
-                      onClick={handleStartPractice}
+                      onClick={() => setIsWarningModalOpen(true)}
                       disabled={startingExam}
                       className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all shrink-0"
                     >
@@ -811,6 +814,70 @@ export default function StudentExam() {
                 className="flex-1 py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md"
               >
                 Apply Time
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Exam Integrity Warning Modal */}
+      {isWarningModalOpen && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsWarningModalOpen(false)} />
+          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-[32px] p-8 w-[90%] max-w-lg shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200 dark:border-red-800/40">
+                <Icon icon="lucide:shield-alert" className="w-9 h-9 text-red-500" />
+              </div>
+              <h3 className="text-xl font-black uppercase tracking-widest text-[#09314F] dark:text-white mb-2">
+                Exam Integrity Notice
+              </h3>
+              <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-[#C5A97A] to-transparent mx-auto mb-4" />
+            </div>
+
+            <div className="space-y-4 text-sm leading-relaxed text-gray-600 dark:text-gray-300 font-medium mb-8">
+              <p>
+                Before you begin your practice attempt, please read and agree to the following conditions:
+              </p>
+              <div className="bg-gray-50 dark:bg-[#06243A]/60 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 space-y-4">
+                <div className="flex gap-3">
+                  <Icon icon="lucide:x-circle" className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <p>
+                    <span className="font-bold text-[#09314F] dark:text-white">No AI assistance:</span> Do not use ChatGPT, Copilot, or any other AI tools during this exam.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <Icon icon="lucide:search-slash" className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <p>
+                    <span className="font-bold text-[#09314F] dark:text-white">No search tabs:</span> Avoid researching answers in another tab or external resources.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <Icon icon="lucide:swatch-book" className="w-5 h-5 text-[#C5A97A] shrink-0 mt-0.5" />
+                  <p>
+                    <span className="font-bold text-[#09314F] dark:text-white">Treat this like reality:</span> In the actual exam hall, there will be no external help or tabs. Do yourself a massive favor: test your true knowledge under real conditions to build actual readiness.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setIsWarningModalOpen(false)}
+                className="flex-1 py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest transition-all"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsWarningModalOpen(false);
+                  handleStartPractice();
+                }}
+                className="flex-1 py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md"
+              >
+                I Agree & Start
               </button>
             </div>
           </div>

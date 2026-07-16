@@ -4,61 +4,71 @@ import { MessageSquareText, ChevronUp, X } from "lucide-react";
 export default function StickyButtons() {
   const [openChat, setOpenChat] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 600) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
+      const scrolled = window.scrollY > 80;
+      setIsScrolled(scrolled);
+      // Show scroll-to-top button once user scrolls past 400px
+      setShowScrollTop(window.scrollY > 400);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const containerGlassClass = isScrolled
+    ? "bg-white/10 dark:bg-black/25 border-white/20 dark:border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.08)]"
+    : "bg-white/95 dark:bg-[#09314F] border-gray-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)]";
+
+  const btnStyle = `backdrop-blur-[14px] w-[74px] h-[74px] sm:w-[92px] sm:h-[92px] rounded-2xl flex flex-col items-center justify-center gap-1.5 border hover:-translate-y-1 transition-all duration-300 group ${containerGlassClass}`;
+
   return (
     <>
-      <div className="fixed bottom-8 sm:right-8 right-4 z-[60] flex flex-col gap-3">
+      <div className="fixed bottom-6 sm:bottom-8 right-3 sm:right-8 z-[60] flex flex-col gap-2.5 sm:gap-3">
         {/* CHAT WITH US */}
         <button 
           onClick={() => setOpenChat(true)}
-          className="bg-white/95 backdrop-blur-sm px-3 py-3 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col items-center gap-1.5 border border-gray-100 hover:-translate-y-1 transition-transform group"
+          className={btnStyle}
         >
-          <span className="w-10 h-10 rounded-full bg-[#09314F] text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-            <MessageSquareText className="w-5 h-5" />
+          <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#09314F] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
+            <MessageSquareText className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
           </span>
-          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Chat with us</span>
+          <span className="text-[8px] sm:text-[10px] text-gray-800 dark:text-white font-black uppercase tracking-wider text-center leading-none">
+            Chat with us
+          </span>
         </button>
 
         {/* Back To Top */}
         {showScrollTop && (
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="bg-white/95 backdrop-blur-sm px-3 py-3 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col items-center gap-1.5 border border-gray-100 hover:-translate-y-1 transition-transform group"
+            className={btnStyle}
           >
-            <span className="w-10 h-10 rounded-full bg-[#BB9E7F] text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-              <ChevronUp className="w-6 h-6" />
+            <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#BB9E7F] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
+              <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" />
             </span>
-            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Back to Top</span>
+            <span className="text-[8px] sm:text-[10px] text-gray-800 dark:text-white font-black uppercase tracking-wider text-center leading-none">
+              Back to Top
+            </span>
           </button>
         )}
       </div>
 
       {/* Pop Up */}
       {openChat && (
-        <div className="fixed bottom-36 right-4 sm:right-8 w-[260px] bg-white shadow-xl rounded-2xl z-[70] p-4 border border-gray-100">
+        <div className="fixed bottom-32 sm:bottom-36 right-3 sm:right-8 w-[260px] bg-white dark:bg-[#09314F] shadow-xl rounded-2xl z-[70] p-4 border border-gray-100 dark:border-white/10">
           {/* Header */}
           <div className="flex justify-between items-center mb-3">
-            <span className="font-bold text-[#09314F] text-sm">Chat with us</span>
-            <button onClick={() => setOpenChat(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <span className="font-bold text-[#09314F] dark:text-white text-sm">Chat with us</span>
+            <button onClick={() => setOpenChat(false)} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Message */}
-          <p className="text-xs text-gray-600 leading-relaxed">
+          <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
             Chat with us is not available for now, please do well to send us an email.
           </p>
         </div>

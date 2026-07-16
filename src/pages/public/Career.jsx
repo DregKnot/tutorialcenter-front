@@ -2,9 +2,9 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
-import Career_img from "../../assets/images/Career.png";
+import Career_img from "../../assets/images/Careerimg.png";
 import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.svg";
-import handCup from "../../assets/images/handCup.jpg";
+import handCup from "../../assets/images/Hand Cup.png";
 import studentAffiliateImg from "../../assets/images/student_affiliate.png";
 import SectionHeading from "../../components/public/SectionHeading";
 
@@ -15,7 +15,7 @@ const Career = () => {
     <>
       <Navbar />
 
-      <div className="relative z-30 w-full h-[273px]">
+      <div className="relative z-30 w-full h-[373px]">
         {/* background image */}
         <div
           className="bg-image absolute w-full h-full bg-cover bg-no-repeat bg-center"

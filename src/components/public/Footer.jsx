@@ -30,17 +30,22 @@ const Footer = () => {
                                 </p>
                             </div>
 
-                            <div className="form">
-                                <form action="" method="post">
+                             <div className="form">
+                                <form action="https://ee6a4a77.sibforms.com/serve/MUIFABoCBsc3mJ6tQrwxP1F3iPLbDVH8lCZ2F4S152Zy0l4f2tXFfUPLMg4dnYsuX0NzAVnq72fwTYncjP4qPcHIwwVshj_i0yCcE2tjCcN6q7UXWi9_Kn06GcmuLElMCb686rNnLGW-GN8KGEynezak3G98AkUyip1-Fp2Az6uRSAeXqM0sNItc15Nxl7xxP1ojhrWkvitHecQyZw==" method="POST">
                                     <div className="flex flex-col sm:flex-row justify-center gap-5 text-sm">
                                         <input
-                                            type="text"
+                                            type="email"
+                                            name="EMAIL"
+                                            required
                                             placeholder="Your email address"
-                                            className="shadow bg-[#EAEBEC] text-black w-full p-2 rounded-full"
+                                            className="shadow bg-[#EAEBEC] text-black w-full p-2 rounded-full outline-none"
                                         />
+                                        {/* Honeypot field for bot protection */}
+                                        <input type="text" name="email_address_check" value="" className="hidden" readOnly />
+                                        <input type="hidden" name="locale" value="en" />
                                         <button
                                             type="submit"
-                                            className="px-4 text-xs p-2 text-nowrap bg-mainBlue text-mainWhite font-medium rounded-full"
+                                            className="px-4 text-xs p-2 text-nowrap bg-mainBlue text-mainWhite font-medium rounded-full cursor-pointer hover:opacity-95 transition-opacity"
                                         >
                                             Notify me
                                         </button>

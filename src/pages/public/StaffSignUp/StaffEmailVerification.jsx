@@ -5,6 +5,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import signup_img from "../../../assets/images/Student_sign_up.jpg";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 
+
+
 export default function StaffEmailVerification() {
   const navigate = useNavigate();
   const [msg, setMsg] = useState("");
@@ -255,7 +257,7 @@ export default function StaffEmailVerification() {
             <div className="space-y-6">
               <div className="bg-[#F8F9FA] py-4 px-6 rounded-2xl border border-gray-100">
                 <p className="text-sm font-bold text-[#888888]">
-                  Code expires in <span className="text-[#09314F] font-black">{formatTime(count)}</span>
+                  Request New Code In:<span className="text-[#09314F] font-black">{formatTime(count)}</span>
                 </p>
                 {count === 0 && (
                   <button
