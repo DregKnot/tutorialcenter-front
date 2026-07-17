@@ -1,7 +1,17 @@
+import { useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [emailInput, setEmailInput] = useState("");
+
+    const handleSubmit = () => {
+        setShowSuccessModal(true);
+        setTimeout(() => {
+            setEmailInput("");
+        }, 100);
+    };
 
     // social links array
     const socialLinks = [
@@ -31,11 +41,18 @@ const Footer = () => {
                             </div>
 
                              <div className="form">
-                                <form action="https://ee6a4a77.sibforms.com/serve/MUIFABoCBsc3mJ6tQrwxP1F3iPLbDVH8lCZ2F4S152Zy0l4f2tXFfUPLMg4dnYsuX0NzAVnq72fwTYncjP4qPcHIwwVshj_i0yCcE2tjCcN6q7UXWi9_Kn06GcmuLElMCb686rNnLGW-GN8KGEynezak3G98AkUyip1-Fp2Az6uRSAeXqM0sNItc15Nxl7xxP1ojhrWkvitHecQyZw==" method="POST">
+                                <form 
+                                    action="https://ee6a4a77.sibforms.com/serve/MUIFABoCBsc3mJ6tQrwxP1F3iPLbDVH8lCZ2F4S152Zy0l4f2tXFfUPLMg4dnYsuX0NzAVnq72fwTYncjP4qPcHIwwVshj_i0yCcE2tjCcN6q7UXWi9_Kn06GcmuLElMCb686rNnLGW-GN8KGEynezak3G98AkUyip1-Fp2Az6uRSAeXqM0sNItc15Nxl7xxP1ojhrWkvitHecQyZw==" 
+                                    method="POST"
+                                    target="brevo_iframe"
+                                    onSubmit={handleSubmit}
+                                >
                                     <div className="flex flex-col sm:flex-row justify-center gap-5 text-sm">
                                         <input
                                             type="email"
                                             name="EMAIL"
+                                            value={emailInput}
+                                            onChange={(e) => setEmailInput(e.target.value)}
                                             required
                                             placeholder="Your email address"
                                             className="shadow bg-[#EAEBEC] text-black w-full p-2 rounded-full outline-none"
@@ -120,6 +137,30 @@ const Footer = () => {
                     </div>
                 </div>
             </footer>
+
+            {/* Hidden iframe target for silent form submit */}
+            <iframe name="brevo_iframe" style={{ display: "none" }}></iframe>
+
+            {/* Success Notification Modal */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white text-black p-8 rounded-[32px] max-w-sm w-full text-center shadow-2xl relative border border-gray-100 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-red-50 rounded-full flex justify-center items-center mb-5">
+                            <Icon icon="teenyicons:tick-circle-outline" width="36" height="36" className="text-[#E83831]" />
+                        </div>
+                        <h3 className="text-xl font-black mb-2 text-[#09314F]">Awesome!</h3>
+                        <p className="text-sm text-gray-500 font-bold mb-6 leading-relaxed">
+                            Thank you for registering for our newsletter!
+                        </p>
+                        <button
+                            onClick={() => setShowSuccessModal(false)}
+                            className="w-full py-3 bg-[#09314F] text-white font-black rounded-full hover:bg-[#E83831] transition-colors cursor-pointer text-sm tracking-widest uppercase shadow-md"
+                        >
+                            Continue
+                        </button>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
