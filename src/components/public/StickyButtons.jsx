@@ -1,10 +1,19 @@
 import { useState, useEffect } from "react";
 import { MessageSquareText, ChevronUp, X } from "lucide-react";
 
+import { useLocation } from "react-router-dom";
+
 export default function StickyButtons() {
+  const location = useLocation();
   const [openChat, setOpenChat] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Hide buttons on classroom and exam screens
+  const hideOnKeywords = ["classroom", "exam"];
+  const shouldHide = hideOnKeywords.some(keyword => 
+    location.pathname.toLowerCase().includes(keyword)
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,6 +32,8 @@ export default function StickyButtons() {
     : "bg-white/95 dark:bg-[#09314F] border-gray-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)]";
 
   const btnStyle = `backdrop-blur-[14px] w-[74px] h-[74px] sm:w-[92px] sm:h-[92px] rounded-2xl flex flex-col items-center justify-center gap-1.5 border hover:-translate-y-1 transition-all duration-300 group ${containerGlassClass}`;
+
+  if (shouldHide) return null;
 
   return (
     <>

@@ -1,6 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hide Zoom Client View root by default — ZoomMeetingSession.jsx shows it when needed */
+#zmmtg-root {
+  display: none;
+}
+
 /* custom color */
 @layer base {
   :root {

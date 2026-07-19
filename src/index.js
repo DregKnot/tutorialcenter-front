@@ -13,6 +13,30 @@ import QueryProvider from "./providers/QueryProvider";
 import { HelmetProvider } from "react-helmet-async";
 import { createRoot, hydrateRoot } from "react-dom/client";
 
+// Intercept and ignore browser extension errors (like MetaMask) to prevent React development error overlay crashes
+window.addEventListener("error", (e) => {
+  if (
+    e.message &&
+    (e.message.includes("MetaMask") ||
+      e.message.includes("failed to connect") ||
+      e.filename?.includes("chrome-extension"))
+  ) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+  }
+});
+
+window.addEventListener("unhandledrejection", (e) => {
+  if (
+    e.reason &&
+    (String(e.reason).includes("MetaMask") ||
+      String(e.reason).includes("failed to connect") ||
+      e.reason.stack?.includes("chrome-extension"))
+  ) {
+    e.preventDefault();
+  }
+});
+
 const rootElement = document.getElementById("root");
 const appElement = (
   <React.StrictMode>
