@@ -139,7 +139,7 @@ const Footer = () => {
             </footer>
 
             {/* Hidden iframe target for silent form submit */}
-            <iframe name="brevo_iframe" style={{ display: "none" }}></iframe>
+            <iframe name="brevo_iframe" title="Hidden Brevo Subscription Frame" style={{ display: "none" }}></iframe>
 
             {/* Success Notification Modal */}
             {showSuccessModal && (
