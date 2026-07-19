@@ -58,6 +58,8 @@ import StaffMasterClassList from "./pages/staffs/admin/StaffMasterClassList.jsx"
 import CoursesManagement from "./pages/staffs/admin/CoursesManagement.jsx";
 import StudentPaymentHistory from "./pages/Students/StudentPaymentDisplay.jsx";
 import StudentMeetWrapper from "./pages/Students/StudentMeetWrapper.jsx";
+import StaffMeetWrapper from "./pages/staffs/StaffMeetWrapper.jsx";
+import ClassRoom from "./pages/ClassRoom.jsx";
 import StudentSettings from "./pages/Students/StudentSettings.jsx";
 import RecordedClasses from "./pages/Students/RecordedClasses.jsx";
 import StudentGames from "./pages/Students/StudentGames.jsx";
@@ -126,6 +128,7 @@ function App() {
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/classroom/:classSessionId" element={<ClassRoom />} />
           {/* Student Routes */}
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/student/notifications" element={<StudentNotifications />} />
@@ -144,6 +147,7 @@ function App() {
           {/* Staff Routes */}
           <Route path="/staffs/dashboard" element={<StaffDashboard />} />
           <Route path="/staffs/notifications" element={<StaffNotification />} />
+          <Route path="/staffs/meet" element={<StaffMeetWrapper />} />
           <Route path="/staffs/tutor/dashboard" element={<TutorDashboard />} />
           <Route path="/staffs/tutor/master-class" element={<TutorMasterClass />} />
           <Route path="/staffs/tutor/calendar" element={<TutorCalendar />} />

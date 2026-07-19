@@ -171,17 +171,21 @@ export default function StudentClassSchedule() {
     const link = sessionObj?.recording_link || sessionObj?.class_link;
     if (!link) return;
     
-    // Open the window DIRECTLY in the click handler to bypass popup blockers
-    // We store it globally so the MeetWrapper can "adopt" it for tracking.
-    window.activeClassPopup = window.open(link, '_blank');
+    const isZoom = link.includes("zoom.us") || link.includes("zoom");
 
-    navigate('/student/meet', {
-        state: {
-            class_link: link,
-            class_schedule_id: sessionObj.id,
-            alreadyOpened: true
-        }
-    });
+    if (isZoom) {
+      navigate(`/classroom/${sessionObj.id}`);
+    } else {
+      // Open the window DIRECTLY in the click handler to bypass popup blockers for Google Meet
+      window.activeClassPopup = window.open(link, '_blank');
+      navigate('/student/meet', {
+          state: {
+              class_link: link,
+              class_schedule_id: sessionObj.id,
+              alreadyOpened: true
+          }
+      });
+    }
   };
 
   // Helper: find the staff member with role 'tutor', fallback to first staff

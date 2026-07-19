@@ -336,8 +336,6 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
 
     if (!formData.end_date) newErrors.end_date = "End date required";
 
-    if (!formData.link) newErrors.link = "Meeting link is required";
-
     if (formData.link && !/^https?:\/\/.+/.test(formData.link)) {
       newErrors.link = "Please enter a valid URL (e.g., https://...)";
     }

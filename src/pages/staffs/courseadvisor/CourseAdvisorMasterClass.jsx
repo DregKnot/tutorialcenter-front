@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { 
@@ -23,6 +24,7 @@ export default function CourseAdvisorMasterClass() {
   const [videoLink, setVideoLink] = useState("");
   const [saveLoading, setSaveLoading] = useState(false);
 
+  const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
@@ -124,6 +126,18 @@ export default function CourseAdvisorMasterClass() {
       setToast({ type: "error", message: "Failed to update recording link." });
     } finally {
       setSaveLoading(false);
+    }
+  };
+
+  const handleJoinMeeting = (e) => {
+    e.preventDefault();
+    if (!selectedSession || !selectedSession.class_link) return;
+    
+    const isZoom = selectedSession.class_link.includes("zoom.us") || selectedSession.class_link.includes("zoom");
+    if (isZoom) {
+      navigate(`/classroom/${selectedSession.id}`);
+    } else {
+      window.open(selectedSession.class_link, '_blank');
     }
   };
 
@@ -281,14 +295,12 @@ export default function CourseAdvisorMasterClass() {
 
               <div className="flex items-center gap-4 text-blue-500 dark:text-blue-300">
                 <LinkIcon className="w-5 h-5 text-blue-400 dark:text-blue-500 shrink-0" />
-                <a 
-                  href={selectedSession.class_link} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="text-[14px] font-medium underline underline-offset-4 decoration-dotted truncate"
+                <button 
+                  onClick={handleJoinMeeting}
+                  className="text-[14px] font-medium underline underline-offset-4 decoration-dotted truncate text-left focus:outline-none"
                 >
-                  {selectedSession.class_link || "No link assigned"}
-                </a>
+                  {selectedSession.class_link ? (selectedSession.class_link.includes("zoom") ? "Start Zoom Class Room" : "Open Google Meet") : "No link assigned"}
+                </button>
               </div>
 
               <div className="flex items-center gap-4 relative mt-4">

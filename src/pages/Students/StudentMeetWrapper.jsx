@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import GoogleMeetSessions from '../../components/private/Students/GoogleMeetSessions';
+import ZoomMeetingSession from '../../components/private/Students/ZoomMeetingSession';
 import DashboardLayout from '../../components/private/Students/DashboardLayout';  
 
 export default function StudentMeetWrapper() {
@@ -54,16 +55,24 @@ export default function StudentMeetWrapper() {
       );
   }
 
+  const isZoom = sessionDetails.class_link?.includes("zoom.us") || sessionDetails.class_link?.includes("zoom");
+
   return (
-    <DashboardLayout pagetitle="Live Class Session" hideRightPanel={true}>
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <GoogleMeetSessions 
-          class_link={sessionDetails.class_link}
-          class_schedule_id={sessionDetails.class_schedule_id}
-          studentId={sessionDetails.studentId}
-          alreadyOpened={sessionDetails.alreadyOpened}
-        />
-      </div>
+    <DashboardLayout pagetitle={isZoom ? "Live Zoom Class" : "Live Class Session"} hideRightPanel={true}>
+      {isZoom ? (
+        <div className="py-4">
+          <ZoomMeetingSession classSessionId={sessionDetails.class_schedule_id} />
+        </div>
+      ) : (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <GoogleMeetSessions 
+            class_link={sessionDetails.class_link}
+            class_schedule_id={sessionDetails.class_schedule_id}
+            studentId={sessionDetails.studentId}
+            alreadyOpened={sessionDetails.alreadyOpened}
+          />
+        </div>
+      )}
     </DashboardLayout>
   );
 }
