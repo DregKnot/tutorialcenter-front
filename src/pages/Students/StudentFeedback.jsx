@@ -34,6 +34,7 @@ export default function StudentFeedback() {
     if (token) {
       fetchFeedbacks();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, API_BASE_URL]);
 
   const handleDelete = async (id) => {

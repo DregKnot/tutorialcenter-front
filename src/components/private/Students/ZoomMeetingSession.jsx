@@ -28,6 +28,7 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
             return `${window.location.origin}/staffs/tutor/master-class?feedback_session=${classSessionId}`;
         }
         return `${window.location.origin}/student/class-schedule?feedback_session=${classSessionId}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isStaff, classSessionId]);
 
     // Expose leaveMeeting method to parent component

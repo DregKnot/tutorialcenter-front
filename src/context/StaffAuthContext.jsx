@@ -9,6 +9,7 @@ export function StaffAuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isSplashing, setIsSplashing] = useState(false);
   const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
+  const [isClassActive, setIsClassActive] = useState(false);
 
   // Load from localStorage on app start
   useEffect(() => {
@@ -96,8 +97,12 @@ export function StaffAuthProvider({ children }) {
     window.addEventListener("keydown", handleActivity);
     window.addEventListener("touchstart", handleActivity);
 
-    /* 
     const interval = setInterval(() => {
+      if (isClassActive) {
+        handleActivity();
+        return;
+      }
+
       const lastActivity = parseInt(localStorage.getItem("staff_last_activity_at") || "0");
       const diff = Date.now() - lastActivity;
 
@@ -107,12 +112,17 @@ export function StaffAuthProvider({ children }) {
       if (diff >= FIVE_MINUTES) {
         logout();
       } else if (diff >= THREE_MINUTES) {
-        setIsInactiveModalOpen(true);
+        setIsInactiveModalOpen(prev => {
+           if (!prev) return true;
+           return prev;
+        });
       } else {
-        setIsInactiveModalOpen(false);
+        setIsInactiveModalOpen(prev => {
+           if (prev) return false;
+           return prev;
+        });
       }
     }, 1000);
-    */
 
     return () => {
       window.removeEventListener("mousemove", handleActivity);
@@ -120,9 +130,9 @@ export function StaffAuthProvider({ children }) {
       window.removeEventListener("scroll", handleActivity);
       window.removeEventListener("keydown", handleActivity);
       window.removeEventListener("touchstart", handleActivity);
-      // clearInterval(interval);
+      clearInterval(interval);
     };
-  }, [token, logout]);
+  }, [token, isClassActive, logout]);
 
   return (
     <StaffAuthContext.Provider
@@ -137,7 +147,9 @@ export function StaffAuthProvider({ children }) {
         isSplashing,
         setIsSplashing,
         isInactiveModalOpen,
-        resetActivity
+        resetActivity,
+        isClassActive,
+        setIsClassActive
       }}
     >
       {children}

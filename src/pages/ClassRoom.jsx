@@ -2,13 +2,15 @@ import React, { useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ZoomMeetingSession from "../components/private/Students/ZoomMeetingSession";
 import { useAuth } from "../context/AuthContext";
+import { useStaffAuth } from "../context/StaffAuthContext";
 
 export default function ClassRoom() {
     const { classSessionId } = useParams();
     const navigate = useNavigate();
     const zoomRef = useRef(null);
 
-    const { setIsClassActive } = useAuth();
+    const { setIsClassActive: setStudentClassActive } = useAuth();
+    const { setIsClassActive: setStaffClassActive } = useStaffAuth();
 
     useEffect(() => {
         // Suppress Zoom SDK internal warnings from triggering Webpack dev overlay
@@ -20,20 +22,18 @@ export default function ClassRoom() {
         window.addEventListener('unhandledrejection', preventDevOverlay, true);
 
         // Deactivate auto-logout countdown while in the masterclass
-        if (setIsClassActive) {
-            setIsClassActive(true);
-        }
+        if (setStudentClassActive) setStudentClassActive(true);
+        if (setStaffClassActive) setStaffClassActive(true);
 
         return () => {
             window.removeEventListener('error', preventDevOverlay, true);
             window.removeEventListener('unhandledrejection', preventDevOverlay, true);
 
             // Reactivate auto-logout countdown when leaving the class
-            if (setIsClassActive) {
-                setIsClassActive(false);
-            }
+            if (setStudentClassActive) setStudentClassActive(false);
+            if (setStaffClassActive) setStaffClassActive(false);
         };
-    }, [setIsClassActive]);
+    }, [setStudentClassActive, setStaffClassActive]);
 
     const handleLeaveRedirect = () => {
         const isStaff = !!localStorage.getItem("staff_token");
