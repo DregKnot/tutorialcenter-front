@@ -3,16 +3,6 @@ import { useAuth } from "../../../../context/AuthContext";
 // import gsap from "gsap";
 import { Icon } from "@iconify/react";
 
-// ── Mock data (swap with real API when available) ────────────────────────────
-const MOCK_ATTENDANCE = [
-  { day: "Mon", present: true },
-  { day: "Tue", present: true },
-  { day: "Wed", present: true },
-  { day: "Thu", present: false },
-  { day: "Fri", present: true },
-  { day: "Sat", present: false },
-  { day: "Sun", present: false },
-];
 const MOCK_AVG_SCORE = 72.5;
 const MOCK_STREAK = 5;
 const MAX_STREAK = 30;
@@ -36,24 +26,198 @@ function RingProgress({ value, max, color = "#E83831", size = 60, stroke = 5 }) 
   );
 }
 
-// ── 7-bar Attendance mini-chart ───────────────────────────────────────────────
-function AttendanceBars({ data }) {
-  return (
-    <div className="flex items-end gap-[5px]">
+// ── Format minutes into human-readable string ────────────────────────────────
+function formatMinutes(min) {
+  if (min <= 0) return "0m";
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+// ── 7-bar Attendance mini-chart with expandable detail ────────────────────────
+function AttendanceBars({ data, targetMinutes = 300 }) {
+  const [expanded, setExpanded] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobile = windowWidth < 768;
+
+  const getBarColor = (d) => {
+    if (d.minutes <= 0) return "bg-white/10";
+    if (d.overflow) return "bg-amber-400";
+    return "bg-emerald-400";
+  };
+
+  const getBarGlow = (d) => {
+    if (d.minutes <= 0) return "";
+    if (d.overflow) return "shadow-[0_0_12px_rgba(251,191,36,0.8)]";
+    return "shadow-[0_0_8px_rgba(52,211,153,0.7)]";
+  };
+
+  const getBarHeight = (d) => {
+    if (d.minutes <= 0) return "14px";
+    // Scale: 14px min → 36px max based on percent
+    return `${Math.max(14, Math.round(14 + (d.percent / 100) * 22))}px`;
+  };
+
+  // ── Compact bars (always visible) ──
+  const compactBars = (
+    <div
+      className="flex items-end gap-[5px] cursor-pointer relative"
+      onClick={() => setExpanded(true)}
+      title="Click to view activity details"
+    >
       {data.map((d, i) => (
         <div key={i} className="flex flex-col items-center gap-1">
           <div
-            className={`w-[7px] rounded-full transition-all duration-500 ${
-              d.present
-                ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]"
-                : "bg-white/15"
-            }`}
-            style={{ height: d.present ? "32px" : "16px" }}
+            className={`w-[7px] rounded-full transition-all duration-500 ${getBarColor(d)} ${getBarGlow(d)}`}
+            style={{ height: getBarHeight(d) }}
           />
-          <span className="text-[9px] font-bold text-white/35">{d.day[0]}</span>
+          <span className={`text-[9px] font-bold ${d.overflow ? "text-amber-400/80" : "text-white/35"}`}>
+            {d.day[0]}
+          </span>
         </div>
       ))}
     </div>
+  );
+
+  // ── Expanded detail panel ──
+  const detailContent = (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="text-sm font-black text-white tracking-wide">Weekly Activity</h4>
+          <p className="text-[10px] text-white/40 font-semibold mt-0.5">
+            Target: {formatMinutes(targetMinutes)} per day
+          </p>
+        </div>
+        <button
+          onClick={() => setExpanded(false)}
+          className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-all text-xs font-bold"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Horizontal bar chart */}
+      <div className="space-y-2">
+        {data.map((d, i) => {
+          const fillPercent = Math.min((d.minutes / targetMinutes) * 100, 100);
+          const overflowPercent = d.overflow
+            ? Math.min(((d.minutes - targetMinutes) / targetMinutes) * 100, 40)
+            : 0;
+
+          return (
+            <div key={i} className="flex items-center gap-3">
+              {/* Day label */}
+              <span className={`text-[11px] font-black w-8 shrink-0 ${d.overflow ? "text-amber-400" : d.minutes > 0 ? "text-white/70" : "text-white/25"}`}>
+                {d.day}
+              </span>
+
+              {/* Bar track */}
+              <div className="flex-1 h-[14px] bg-white/5 rounded-full overflow-hidden relative">
+                {/* 5-hour scale markers */}
+                {[1, 2, 3, 4].map((hr) => (
+                  <div
+                    key={hr}
+                    className="absolute top-0 bottom-0 w-px bg-white/10"
+                    style={{ left: `${(hr / 5) * 100}%` }}
+                  />
+                ))}
+
+                {/* Main fill */}
+                <div
+                  className={`h-full rounded-full transition-all duration-700 relative ${
+                    d.minutes <= 0
+                      ? "bg-transparent"
+                      : d.overflow
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                        : "bg-gradient-to-r from-emerald-600 to-emerald-400"
+                  }`}
+                  style={{ width: `${fillPercent}%` }}
+                />
+
+                {/* Overflow gold extension */}
+                {d.overflow && (
+                  <div
+                    className="absolute top-0 bottom-0 rounded-r-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all duration-700"
+                    style={{
+                      left: "100%",
+                      width: `${overflowPercent}%`,
+                      marginLeft: "-2px",
+                      boxShadow: "0 0 14px rgba(251,191,36,0.6)",
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Time label */}
+              <span className={`text-[11px] font-black w-14 text-right shrink-0 ${
+                d.overflow ? "text-amber-400" : d.minutes > 0 ? "text-emerald-400" : "text-white/20"
+              }`}>
+                {d.minutes > 0 ? formatMinutes(d.minutes) : "—"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 5-hour scale legend */}
+      <div className="flex justify-between px-11 text-[8px] font-bold text-white/20 uppercase tracking-wider">
+        <span>0h</span>
+        <span>1h</span>
+        <span>2h</span>
+        <span>3h</span>
+        <span>4h</span>
+        <span>5h</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {compactBars}
+
+      {/* Desktop: horizontal expanded overlay */}
+      {expanded && !isMobile && (
+        <>
+          <div className="fixed inset-0 z-[98]" onClick={() => setExpanded(false)} />
+          <div
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[99] w-[420px] p-5 rounded-2xl border border-white/10 animate-in fade-in zoom-in-95 duration-200"
+            style={{
+              background: "linear-gradient(135deg, #0c2238 0%, #1a3a5c 55%, #241530 100%)",
+              boxShadow: "0 25px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)",
+            }}
+          >
+            {detailContent}
+          </div>
+        </>
+      )}
+
+      {/* Mobile: popup modal */}
+      {expanded && isMobile && (
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setExpanded(false)}>
+          <div
+            className="w-full max-w-md p-5 rounded-t-3xl rounded-b-2xl border border-white/10 animate-in slide-in-from-bottom duration-300"
+            style={{
+              background: "linear-gradient(135deg, #0c2238 0%, #1a3a5c 55%, #241530 100%)",
+              boxShadow: "0 -10px 60px rgba(0,0,0,0.5)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {detailContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -176,9 +340,14 @@ function SmartAssistantWidget() {
 
 
 // ── Main Stats Bar ────────────────────────────────────────────────────────────
+// Default empty week for when data hasn't loaded yet
+const EMPTY_WEEK = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(day => ({
+  day, date: "", minutes: 0, sessions: [], percent: 0, overflow: false
+}));
+
 export default function StudentStatsBar({
   avgScore = MOCK_AVG_SCORE,
-  attendance = MOCK_ATTENDANCE,
+  weekActivity = EMPTY_WEEK,
   streak = MOCK_STREAK,
   highlights = [],
 }) {
@@ -242,7 +411,7 @@ export default function StudentStatsBar({
 
           {/* ── Attendance ────────────────────────────────────────────────── */}
           <StatCell label="Attendance">
-            <AttendanceBars data={attendance} />
+            <AttendanceBars data={weekActivity} />
           </StatCell>
 
           <Divider />

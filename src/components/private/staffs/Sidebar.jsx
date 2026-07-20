@@ -35,6 +35,7 @@ const adminMenuItems = [
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
   { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
   { label: "Audit Log", icon: ChartBarIcon },
+  { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon },
 ];
 
@@ -44,6 +45,7 @@ const tutorMenuItems = [
   { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/tutor/calendar" },
   { label: "Assessment", icon: ClipboardDocumentListIcon, destination: "/staffs/tutor/assessment" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/tutor/exams" },
+  { label: "Feedback", icon: ClipboardDocumentCheckIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon, destination: "/staffs/tutor/settings" },
 ];
 
@@ -54,6 +56,7 @@ const courseAdvisorMenuItems = [
   { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/course-advisor/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/calendar" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/course-advisor/exams" },
+  { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon, destination: "/staffs/course-advisor/settings" },
 ];
 

@@ -66,6 +66,11 @@ const menuItems = [
     destination: "/student/settings",
   },
   {
+    label: "Feedback",
+    icon: "mdi:message-star-outline",
+    destination: "/student/feedback",
+  },
+  {
     label: "Help",
     icon: "mdi:help-circle-outline",
     // destination: "/student/help",
