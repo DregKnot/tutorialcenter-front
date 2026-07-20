@@ -247,7 +247,7 @@ export default function StudentExam() {
       console.error("Failed to start practice:", err);
       setToast({
         type: "error",
-        message: err.response?.data?.message || "Failed to start practice attempt. Please try again.",
+        message: "The questions for this exam year are unavailable.",
       });
     } finally {
       setStartingExam(false);

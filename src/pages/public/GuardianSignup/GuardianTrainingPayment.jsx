@@ -219,7 +219,7 @@ export default function GuardianTrainingPayment() {
           </div>
         </div>
 
-        {["Paystack", "Flutterwave", "PayPal", "Interswitch"].map((item) => (
+        {["Paystack"].map((item) => (
           <button
             key={item}
             onClick={() => openGateway(item)}

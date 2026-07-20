@@ -172,7 +172,7 @@ export default function CourseAdvisorMasterClass() {
         <div className="truncate text-right hidden md:block">
            {session.class_link ? (
              <span className="text-[13px] text-blue-400 dark:text-blue-300 font-medium underline underline-offset-4 decoration-dotted">
-               {session.class_link.replace(/^https?:\/\//, '')}
+               {session.class_link.replace(/^https?:\/\//, '').substring(0, 18) + '...'}
              </span>
            ) : (
              <span className="text-xs text-slate-300 dark:text-gray-600 italic">No link</span>

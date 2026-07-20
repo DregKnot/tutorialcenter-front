@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "./Sidebar.jsx";
 import RightPanel from "./RightPanel.jsx";
@@ -50,6 +51,16 @@ export default function DashboardLayout({
     token
   } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const location = useLocation();
+  const isDashboardRoot = location.pathname === '/student/dashboard' || location.pathname === '/student/dashboard/';
+
+  useEffect(() => {
+    if (!isDashboardRoot) {
+      sessionStorage.setItem('phoneAlertDismissed', 'true');
+    }
+  }, [isDashboardRoot]);
+
+  const hasDismissedAlert = sessionStorage.getItem('phoneAlertDismissed') === 'true';
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
@@ -155,7 +166,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Profile Alert (Unified) */}
-        {shouldShowProfileAlert && (
+        {shouldShowProfileAlert && isDashboardRoot && !hasDismissedAlert && (
           <div className="mb-6 lg:mb-8 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md border border-gray-100 dark:border-[#09314F] p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex items-center gap-3 lg:gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="bg-red-50 dark:bg-red-900/20 p-2 lg:p-2.5 rounded-lg lg:rounded-xl">
               <ExclamationTriangleIcon className="w-5 h-5 lg:w-6 lg:h-6 text-red-500" />
@@ -169,7 +180,7 @@ export default function DashboardLayout({
                 <span className="hidden lg:inline">To secure your account and track attendance, please </span>
                 <button 
                   onClick={() => openVerificationModal(student?.tel && !student?.tel_verified_at ? 'phone' : 'email')}
-                  className="text-blue-500 lg:text-[#E83831] hover:underline font-bold lg:font-black"
+                  className="text-yellow-600 dark:text-yellow-500 hover:underline font-bold lg:font-black"
                 >
                   {alertMessage}
                 </button>

@@ -99,7 +99,6 @@ export function AuthProvider({ children }) {
     return (!hasEmail || !emailVerified) || (!hasPhone || !phoneVerified);
   }, [student]);
 
-  // Get alert message
   const getAlertMessage = useCallback(() => {
     if (!student) return "";
     
@@ -108,11 +107,17 @@ export function AuthProvider({ children }) {
     const emailVerified = student.email_verified_at;
     const phoneVerified = student.tel_verified_at;
     
-    const missingItems = [];
-    if (!hasEmail || !emailVerified) missingItems.push("update your email");
-    if (!hasPhone || !phoneVerified) missingItems.push("update your phone number");
+    if (!hasPhone) {
+      return "Please add and verify your phone number";
+    } else if (!phoneVerified) {
+      return "Please verify your phone number";
+    }
     
-    return missingItems.join(" and ");
+    if (!hasEmail || !emailVerified) {
+      return "Please update and verify your email";
+    }
+    
+    return "";
   }, [student]);
 
   const openVerificationModal = useCallback((type) => {
@@ -156,6 +161,7 @@ export function AuthProvider({ children }) {
     window.addEventListener("keydown", handleActivity);
     window.addEventListener("touchstart", handleActivity);
 
+    /*
     const interval = setInterval(() => {
       if (isClassActive) {
         handleActivity();
@@ -182,6 +188,7 @@ export function AuthProvider({ children }) {
         });
       }
     }, 1000);
+    */
 
     return () => {
       window.removeEventListener("mousemove", handleActivity);
@@ -189,7 +196,7 @@ export function AuthProvider({ children }) {
       window.removeEventListener("scroll", handleActivity);
       window.removeEventListener("keydown", handleActivity);
       window.removeEventListener("touchstart", handleActivity);
-      clearInterval(interval);
+      // clearInterval(interval);
     };
   }, [token, isClassActive, logout]);
 

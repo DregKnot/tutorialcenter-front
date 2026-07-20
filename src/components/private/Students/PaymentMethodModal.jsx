@@ -38,7 +38,7 @@ export default function PaymentMethodModal({
         </div>
 
         <div className="flex flex-col space-y-4 mb-10">
-          {["Paystack", "Flutterwave", "PayPal", "Interswitch"].map((item) => {
+          {["Paystack"].map((item) => {
             const isSelected = selectedMethod === item;
             return (
               <button

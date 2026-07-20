@@ -289,7 +289,7 @@ export default function StudentClassSchedule() {
               className="text-[#3A5ECC] dark:text-blue-400 text-[13px] font-bold underline decoration-dotted underline-offset-4 truncate block"
               onClick={(e) => e.stopPropagation()} // Prevent toggling the card when clicking the link
             >
-              {session.recording_link || session.class_link || "Awaiting"}
+              {session.recording_link || (session.class_link ? session.class_link.replace(/^https?:\/\//, '').substring(0, 18) + '...' : null) || "Awaiting"}
             </span>
           </div>
 
@@ -354,7 +354,7 @@ export default function StudentClassSchedule() {
                       onClick={(e) => handleJoinClass(e, session)}
                       className="text-sm font-bold text-[#3A5ECC] dark:text-blue-400 underline decoration-dotted underline-offset-4 break-all block text-left"
                     >
-                      {session.recording_link || session.class_link || "Link Awaiting Deployment..."}
+                      {session.recording_link || (session.class_link ? session.class_link.replace(/^https?:\/\//, '').substring(0, 18) + '...' : null) || "Link Awaiting Deployment..."}
                     </button>
                  </div>
                  <div className="flex items-center gap-2 text-gray-400 dark:text-blue-300 font-black text-[12px] uppercase tracking-widest mt-2">
