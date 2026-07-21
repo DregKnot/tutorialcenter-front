@@ -23,12 +23,13 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
         if (isStaff) {
             const staffRole = localStorage.getItem("staff_role") || "";
             if (staffRole.toLowerCase() === 'course_advisor' || staffRole.toLowerCase() === 'advisor') {
-                return `${window.location.origin}/staffs/course-advisor/master-class`;
+                return `${window.location.origin}/staffs/course-advisor/master-class?feedback_session=${classSessionId}`;
             }
-            return `${window.location.origin}/staffs/tutor/master-class`;
+            return `${window.location.origin}/staffs/tutor/master-class?feedback_session=${classSessionId}`;
         }
-        return `${window.location.origin}/student/class-schedule`;
-    }, [isStaff]);
+        return `${window.location.origin}/student/class-schedule?feedback_session=${classSessionId}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isStaff, classSessionId]);
 
     // Expose leaveMeeting method to parent component
     useImperativeHandle(ref, () => ({

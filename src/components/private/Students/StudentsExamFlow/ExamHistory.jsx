@@ -189,6 +189,9 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
       attempt.subject_name || 
       "General Subject";
 
+    console.log("Exam History Debug - Raw Attempt Data:", attempt);
+    console.log("Exam History Debug - Resolved Subject Name:", subjectName);
+
     const yearValue = 
       attempt.year || 
       attempt.exam_year?.year || 

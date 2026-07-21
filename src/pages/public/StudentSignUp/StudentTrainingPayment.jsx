@@ -248,7 +248,7 @@ export const StudentTrainingPayment = () => {
           </p>
 
           <div className="flex flex-col space-y-4 mb-10">
-            {["Paystack", "Flutterwave", "PayPal", "Interswitch"].map((item) => {
+            {["Paystack"].map((item) => {
               const isSelected = selectedGateway === item;
               return (
                 <button

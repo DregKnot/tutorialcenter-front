@@ -12,9 +12,13 @@ export default function PaymentMethodModal({
   onContinue, 
   loading 
 }) {
+  React.useEffect(() => {
+    if (isOpen && !selectedMethod) {
+      setSelectedMethod("Paystack");
+    }
+  }, [isOpen, selectedMethod, setSelectedMethod]);
+
   if (!isOpen) return null;
-
-
 
   const reference = `TC-PAY-${Date.now()}`;
 
@@ -38,7 +42,7 @@ export default function PaymentMethodModal({
         </div>
 
         <div className="flex flex-col space-y-4 mb-10">
-          {["Paystack", "Flutterwave", "PayPal", "Interswitch"].map((item) => {
+          {["Paystack"].map((item) => {
             const isSelected = selectedMethod === item;
             return (
               <button

@@ -44,6 +44,15 @@ export default function ExamInterface({
   const [examFinished, setExamFinished] = useState(false);
   const [resultSummary, setResultSummary] = useState(null);
 
+  // Feedback States (Shown before congratulations)
+  const [showFeedback, setShowFeedback] = useState(true);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackError, setFeedbackError] = useState(null);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [feedbackTitle, setFeedbackTitle] = useState("");
+  const [comment, setComment] = useState("");
+
   // react-timer-hook setup
   const minutesVal = parseInt(timer, 10) || 50;
   const initialExpiry = new Date();
@@ -279,7 +288,7 @@ export default function ExamInterface({
       console.log("Exam submitted successfully:", response.data);
       setResultSummary(response.data?.result || response.data?.data || null);
       setExamFinished(true);
-
+      setShowFeedback(true); // Reset to show feedback first when exam finishes
       setToast({
         type: "success",
         message: isAuto ? "Practice timed out and submitted successfully!" : "Practice session submitted successfully!",
@@ -782,19 +791,125 @@ export default function ExamInterface({
         </div>
       )}
 
-      {/* Congratulations / Exam Finished Modal Overlay (with blur backdrop to keep active exam layout visible at the back) */}
+      {/* Congratulations / Exam Finished Modal Overlay */}
       {examFinished && (
         <div className="fixed inset-0 z-[2500] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-500">
           <div className="bg-white dark:bg-[#09314F] rounded-[32px] border border-[#C5A97A]/30 p-8 shadow-2xl text-center max-w-3xl w-full relative overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-green-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
 
-            <Icon icon="lucide:party-popper" className="w-20 h-20 text-[#C5A97A] mx-auto mb-6 animate-bounce" />
-            <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight mb-2">
-              Practice Completed!
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
-              Excellent job completing your practice attempt. Here is your summary:
-            </p>
+            {showFeedback ? (
+              <div className="text-left">
+                <Icon icon="mdi:message-star-outline" className="w-16 h-16 text-[#C5A97A] mx-auto mb-4" />
+                <h2 className="text-2xl font-black text-[#09314F] dark:text-white text-center tracking-tight mb-2">
+                  How was the practice?
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
+                  Before you see your score, let us know how you felt about this exam.
+                </p>
+
+                {feedbackError && (
+                  <div className="bg-red-50 text-red-500 p-3 rounded-xl border border-red-100 mb-4 text-sm font-medium">
+                    {feedbackError}
+                  </div>
+                )}
+
+                <div className="mb-6 flex flex-col items-center">
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(star)}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="transition-transform hover:scale-110 focus:outline-none"
+                      >
+                        <Icon
+                          icon={(hoverRating || rating) >= star ? "mdi:star" : "mdi:star-outline"}
+                          className={`w-10 h-10 ${(hoverRating || rating) >= star ? "text-yellow-400" : "text-gray-300 dark:text-gray-600"}`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-8">
+                  <div>
+                    <label className="block text-sm font-bold text-[#09314F] dark:text-gray-300 mb-2">
+                      Title (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={feedbackTitle}
+                      onChange={(e) => setFeedbackTitle(e.target.value)}
+                      placeholder="E.g., Great questions, but a bit tough"
+                      className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-[#09314F] dark:text-white focus:ring-2 focus:ring-[#BB9E7F] transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#09314F] dark:text-gray-300 mb-2">
+                      Comment (Optional)
+                    </label>
+                    <textarea
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="Tell us what you thought..."
+                      rows="3"
+                      className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-[#09314F] dark:text-white focus:ring-2 focus:ring-[#BB9E7F] transition-all resize-none"
+                    ></textarea>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button
+                    onClick={() => setShowFeedback(false)}
+                    className="flex-1 py-4 border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 font-black text-xs uppercase tracking-widest rounded-2xl transition-all"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (rating === 0) {
+                        setFeedbackError("Please select a star rating.");
+                        return;
+                      }
+                      setFeedbackLoading(true);
+                      setFeedbackError(null);
+                      try {
+                        const studentToken = localStorage.getItem("student_token");
+                        await axios.post(`${API_BASE_URL}/api/feedback`, {
+                          feedbackable_type: "exam_attempt",
+                          feedbackable_id: attemptId,
+                          rating,
+                          title: feedbackTitle,
+                          comment,
+                        }, {
+                          headers: { Authorization: `Bearer ${studentToken}` }
+                        });
+                        setFeedbackLoading(false);
+                        setShowFeedback(false);
+                      } catch (err) {
+                        setFeedbackLoading(false);
+                        setFeedbackError(err.response?.data?.message || err.message || "Failed to submit feedback.");
+                      }
+                    }}
+                    disabled={feedbackLoading}
+                    className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all disabled:opacity-50"
+                  >
+                    {feedbackLoading ? "Submitting..." : "Submit Feedback"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Icon icon="lucide:party-popper" className="w-20 h-20 text-[#C5A97A] mx-auto mb-6 animate-bounce" />
+                <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight mb-2">
+                  Practice Completed!
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+                  Excellent job completing your practice attempt. Here is your summary:
+                </p>
 
             {/* Prominent Circular Progress Score Chart */}
             <div className="relative w-40 h-40 mx-auto mb-8 flex items-center justify-center">
@@ -872,6 +987,8 @@ export default function ExamInterface({
                 Review Exam
               </button>
             </div>
+            </>
+            )}
           </div>
         </div>
       )}

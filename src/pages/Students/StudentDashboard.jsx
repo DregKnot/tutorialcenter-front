@@ -12,6 +12,7 @@ import StudentActivityChart from "../../components/private/Students/dashboard/St
 import AchievementsPanel from "../../components/private/Students/dashboard/AchievementsPanel.jsx";
 import MiniCalendarWidget from "../../components/private/Students/dashboard/MiniCalendarWidget.jsx";
 import RecommendedExamPractice from "../../components/private/Students/dashboard/RecommendedExamPractice.jsx";
+import useStudentActivity from "../../hooks/useStudentActivity.js";
 
 // ── Welcome header ─────────────────────────────────────────────────────────────
 function WelcomeHeader() {
@@ -50,6 +51,9 @@ export default function StudentDashboard({ blogs = [] }) {
   const [loading, setLoading] = useState(true);
   const [showNoCoursePopup, setShowNoCoursePopup] = useState(false);
   const [attempts, setAttempts] = useState([]);
+
+  // Fetch real login/logout activity data
+  const { weekData: weekActivity } = useStudentActivity(authToken);
 
   useEffect(() => {
     const fetchActiveCourses = async () => {
@@ -214,6 +218,13 @@ export default function StudentDashboard({ blogs = [] }) {
   });
 
   highlights.push({
+    type: "recorded",
+    text: "Missed a session? Catch up on Recorded Masterclasses!",
+    actionLabel: "Watch",
+    actionUrl: "/student/recorded-classes"
+  });
+
+  highlights.push({
     type: "merit",
     text: "New Merit unlocked: Exam Streak Champion!",
     actionLabel: "View",
@@ -271,7 +282,7 @@ export default function StudentDashboard({ blogs = [] }) {
         <WelcomeHeader />
 
         {/* ── Stats Bar ─────────────────────────────────────────────────── */}
-        <StudentStatsBar avgScore={avgScore} streak={actualStreak} highlights={highlights} />
+        <StudentStatsBar avgScore={avgScore} streak={actualStreak} weekActivity={weekActivity} highlights={highlights} />
 
         {/* ── Main 2-column grid ────────────────────────────────────────── */}
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
@@ -292,7 +303,7 @@ export default function StudentDashboard({ blogs = [] }) {
 
             {/* Student Activity Chart */}
             <div className="flex-1 flex flex-col min-h-[250px]">
-              <StudentActivityChart />
+              <StudentActivityChart attempts={attempts} />
             </div>
 
           </div>
@@ -316,7 +327,7 @@ export default function StudentDashboard({ blogs = [] }) {
         </div>
 
         {/* ── Recommended Exam Practice — full width ─────────────────────── */}
-        <RecommendedExamPractice />
+        <RecommendedExamPractice courses={courses} attempts={attempts} />
 
       </div>
     </DashboardLayout>

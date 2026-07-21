@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import FeedbackModal from "../../../components/common/FeedbackModal";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { 
@@ -23,6 +24,12 @@ export default function TutorMasterClass() {
   const [selectedSession, setSelectedSession] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackClassId, setFeedbackClassId] = useState(null);
+  const [feedbackClassTitle, setFeedbackClassTitle] = useState("");
+
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const staffName = localStorage.getItem("staff_name") || "Tutor";
   const staffRole = localStorage.getItem("staff_role") || "Tutor";
@@ -60,6 +67,31 @@ export default function TutorMasterClass() {
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
+
+  // Check for feedback query parameter
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const feedbackSessionId = searchParams.get("feedback_session");
+
+    if (feedbackSessionId && Object.keys(scheduleData).length > 0) {
+      // Find the session in any of the lists
+      const allSessions = [
+        ...scheduleData.today_classes,
+        ...Object.values(scheduleData.week_schedule).flat(),
+        ...scheduleData.upcoming_sessions
+      ];
+
+      const session = allSessions.find(s => String(s.id) === String(feedbackSessionId));
+      if (session && session.class_id) {
+        setFeedbackClassId(session.class_id);
+        setFeedbackClassTitle(session.class?.title || session.class?.subject?.name || "Masterclass");
+        setFeedbackModalOpen(true);
+        
+        // Clean up URL
+        navigate(location.pathname, { replace: true });
+      }
+    }
+  }, [location.search, scheduleData, navigate, location.pathname]);
 
   // --- HELPERS ---
   const formatDate = (dateStr) => {
@@ -146,7 +178,7 @@ export default function TutorMasterClass() {
         <div className="truncate text-right hidden md:block">
            {session.class_link ? (
              <span className="text-[13px] text-blue-400 dark:text-blue-300 font-medium underline underline-offset-4 decoration-dotted">
-               {session.class_link.replace(/^https?:\/\//, '')}
+               {session.class_link.replace(/^https?:\/\//, '').substring(0, 18) + '...'}
              </span>
            ) : (
              <span className="text-xs text-slate-300 dark:text-gray-600 italic">No link</span>
@@ -177,6 +209,7 @@ export default function TutorMasterClass() {
   };
 
   return (
+    <>
     <StaffDashboardLayout pagetitle="Master Class">
       {toast && (
         <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl text-white font-bold text-sm ${toast.type === "success" ? "bg-[#10B981]" : "bg-[#EF4444] animate-bounce"}`}>
@@ -304,5 +337,13 @@ export default function TutorMasterClass() {
         </div>
       )}
     </StaffDashboardLayout>
+    <FeedbackModal 
+      isOpen={feedbackModalOpen}
+      onClose={() => setFeedbackModalOpen(false)}
+      prefilledType="class"
+      prefilledId={feedbackClassId}
+      prefilledTitle={feedbackClassTitle}
+    />
+    </>
   );
 }

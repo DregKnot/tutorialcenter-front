@@ -12,6 +12,7 @@ import {
   SignalIcon
 } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
+import { Icon } from "@iconify/react";
 
 export default function StudentClassSchedule() {
   const { token: authToken } = useAuth();
@@ -288,7 +289,7 @@ export default function StudentClassSchedule() {
               className="text-[#3A5ECC] dark:text-blue-400 text-[13px] font-bold underline decoration-dotted underline-offset-4 truncate block"
               onClick={(e) => e.stopPropagation()} // Prevent toggling the card when clicking the link
             >
-              {session.recording_link || session.class_link || "Awaiting"}
+              {session.recording_link || (session.class_link ? session.class_link.replace(/^https?:\/\//, '').substring(0, 18) + '...' : null) || "Awaiting"}
             </span>
           </div>
 
@@ -353,7 +354,7 @@ export default function StudentClassSchedule() {
                       onClick={(e) => handleJoinClass(e, session)}
                       className="text-sm font-bold text-[#3A5ECC] dark:text-blue-400 underline decoration-dotted underline-offset-4 break-all block text-left"
                     >
-                      {session.recording_link || session.class_link || "Link Awaiting Deployment..."}
+                      {session.recording_link || (session.class_link ? session.class_link.replace(/^https?:\/\//, '').substring(0, 18) + '...' : null) || "Link Awaiting Deployment..."}
                     </button>
                  </div>
                  <div className="flex items-center gap-2 text-gray-400 dark:text-blue-300 font-black text-[12px] uppercase tracking-widest mt-2">
@@ -536,6 +537,13 @@ export default function StudentClassSchedule() {
               className="w-full pl-16 pr-8 py-5 bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md rounded-[32px] border-none shadow-[0_10px_35px_rgba(0,0,0,0.03)] focus:ring-4 focus:ring-[#BB9E7F]/10 text-[15px] font-bold text-[#09314F] dark:text-white placeholder-gray-300 dark:placeholder-white/50 transition-all"
             />
           </div>
+          <button 
+            onClick={() => navigate('/student/recorded-classes')}
+            className="flex items-center justify-center gap-2 px-8 py-5 bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md rounded-[32px] shadow-[0_10px_35px_rgba(0,0,0,0.03)] hover:shadow-md border border-gray-100 dark:border-[#09314F] text-[#09314F] dark:text-white hover:text-[#E83831] dark:hover:text-[#E83831] transition-all font-black text-xs tracking-widest uppercase"
+          >
+            <Icon icon="lucide:video" className="w-5 h-5 text-[#BB9E7F]" />
+            Recorded Classes
+          </button>
         </div>
 
         {/* ========= Classes List ========= */}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import { useAuth } from "../../context/AuthContext";
 import { Icon } from "@iconify/react";
@@ -8,6 +9,7 @@ import ExamHistory from "../../components/private/Students/StudentsExamFlow/Exam
 
 export default function StudentExam() {
   const { token: authToken } = useAuth();
+  const location = useLocation();
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
@@ -97,14 +99,52 @@ export default function StudentExam() {
       setCourses(coursesData);
       setAvailableExams(availableData);
 
-      // Course is unselected by default
+      // Handle pre-filling from Dashboard recommended practice
+      if (location.state?.prefillSubjectId) {
+        const pSubId = location.state.prefillSubjectId;
+        const matchedCourse = coursesData.find(c => {
+           const subs = c.subjects || c.course?.subjects || [];
+           return subs.some(s => s.id === pSubId);
+        });
+        
+        if (matchedCourse) {
+           setSelectedCourse(matchedCourse);
+           
+           const subs = matchedCourse.subjects || matchedCourse.course?.subjects || [];
+           const matchedSubject = subs.find(s => s.id === pSubId);
+           
+           if (matchedSubject) {
+             setSelectedSubject(matchedSubject);
+             
+             if (location.state.prefillYearId) {
+                const pYearId = String(location.state.prefillYearId);
+                const matchingExam = availableData.find(
+                  exam => (String(exam.subject_id) === String(pSubId) || String(exam.subject?.id) === String(pSubId)) &&
+                          (String(exam.exam_year_id) === pYearId || String(exam.exam_year?.id) === pYearId || String(exam.id) === pYearId)
+                );
+                
+                if (matchingExam) {
+                  const yearId = matchingExam.exam_year_id || matchingExam.exam_year?.id || matchingExam.id;
+                  const yearValue = matchingExam.year || matchingExam.exam_year?.year || matchingExam.exam_year_name || "Unknown Year";
+                  setSelectedYear({
+                    exam_year_id: yearId,
+                    year: yearValue
+                  });
+                }
+             }
+           }
+        }
+        // clear state so it doesn't loop if they navigate back
+        window.history.replaceState({}, document.title)
+      }
+
     } catch (err) {
       console.error("Failed to load initial exam data:", err);
       setError("Failed to load active courses and available exams. Please refresh the page.");
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, authToken]);
+  }, [API_BASE_URL, authToken, location]);
 
   useEffect(() => {
     fetchInitialData();
@@ -247,7 +287,7 @@ export default function StudentExam() {
       console.error("Failed to start practice:", err);
       setToast({
         type: "error",
-        message: err.response?.data?.message || "Failed to start practice attempt. Please try again.",
+        message: "The questions for this exam year are unavailable.",
       });
     } finally {
       setStartingExam(false);

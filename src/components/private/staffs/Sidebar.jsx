@@ -35,6 +35,7 @@ const adminMenuItems = [
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
   { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
   { label: "Audit Log", icon: ChartBarIcon },
+  { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon },
 ];
 
@@ -44,6 +45,7 @@ const tutorMenuItems = [
   { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/tutor/calendar" },
   { label: "Assessment", icon: ClipboardDocumentListIcon, destination: "/staffs/tutor/assessment" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/tutor/exams" },
+  { label: "Feedback", icon: ClipboardDocumentCheckIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon, destination: "/staffs/tutor/settings" },
 ];
 
@@ -54,6 +56,7 @@ const courseAdvisorMenuItems = [
   { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/course-advisor/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/calendar" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/course-advisor/exams" },
+  { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon, destination: "/staffs/course-advisor/settings" },
 ];
 
@@ -231,7 +234,7 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
                   return (
                     <div
                       key={label}
-                      className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 py-1.5 md:py-2 lg:py-2.5"
+                      className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 dark:text-gray-700 cursor-not-allowed ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 py-1.5 md:py-2 lg:py-2.5"
                         }`}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />

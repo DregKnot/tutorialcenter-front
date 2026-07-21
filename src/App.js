@@ -65,7 +65,9 @@ import RecordedClasses from "./pages/Students/RecordedClasses.jsx";
 import StudentGames from "./pages/Students/StudentGames.jsx";
 import StudentExam from "./pages/Students/StudentExam.jsx";
 import StudentScholarship from "./pages/Students/StudentScholarship.jsx";
+import StudentFeedback from "./pages/Students/StudentFeedback.jsx";
 import StaffEmailVerification from "./pages/public/StaffSignUp/StaffEmailVerification.jsx";
+import StaffFeedback from "./pages/staffs/StaffFeedback.jsx";
 import AdminStudentManagement from "./pages/staffs/admin/AdminStudentManagement.jsx";
 import ExamManagement from "./pages/staffs/admin/ExamManagement.jsx";
 import ExamQuestion from "./components/private/staffs/exams/ExamQuestion.jsx";
@@ -138,6 +140,7 @@ function App() {
           <Route path="/student/calendar" element={<StudentCalendar />} />
           <Route path="/student/meet" element={<StudentMeetWrapper />} />
           <Route path="/student/settings" element={<StudentSettings />} />
+          <Route path="/student/feedback" element={<StudentFeedback />} />
           <Route path="/student/recorded-classes" element={<RecordedClasses />} />
           <Route path="/student/games" element={<StudentGames />} />
           <Route path="/student/exams" element={<StudentExam />} />
@@ -146,6 +149,7 @@ function App() {
 
           {/* Staff Routes */}
           <Route path="/staffs/dashboard" element={<StaffDashboard />} />
+          <Route path="/staffs/feedback" element={<StaffFeedback />} />
           <Route path="/staffs/notifications" element={<StaffNotification />} />
           <Route path="/staffs/meet" element={<StaffMeetWrapper />} />
           <Route path="/staffs/tutor/dashboard" element={<TutorDashboard />} />
