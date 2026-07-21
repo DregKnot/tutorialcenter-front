@@ -216,13 +216,6 @@ const MobileNavigation = ({ setVisible, visible }) => {
             )
           )}
         </div>
-
-        <div className="mt-auto pt-8 border-t border-gray-100 dark:border-gray-800">
-          <div className="bg-[#09314F]/5 dark:bg-blue-600/10 p-5 rounded-3xl">
-            <p className="text-[10px] font-black text-[#09314F] dark:text-blue-400 uppercase tracking-widest mb-1 opacity-60">Tutorial Center</p>
-            <p className="text-[11px] text-[#09314F]/70 dark:text-gray-400 leading-relaxed font-medium">Empowering minds, achieving excellence through premium education.</p>
-          </div>
-        </div>
       </div>
     </div>
   );

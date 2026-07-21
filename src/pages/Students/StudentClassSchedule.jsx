@@ -459,10 +459,7 @@ export default function StudentClassSchedule() {
                 </div>
 
                 <div className="flex flex-col items-center md:items-end gap-4 min-w-[200px]">
-                   <div className="text-right flex flex-col items-center md:items-end">
-                      <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">Live Meeting ID</span>
-                      <span className="text-sm font-mono font-bold text-[#BB9E7F]">{(scheduleData.next_class.recording_link || scheduleData.next_class.class_link)?.split('/').pop() || "Awaiting..."}</span>
-                   </div>
+                   {/* Live Meeting ID has been removed as requested */}
                    <button 
                      onClick={(e) => handleJoinClass(e, scheduleData.next_class)}
                      className="px-10 py-5 bg-[#BB9E7F] text-[#09314F] font-black rounded-2xl hover:bg-white transition-all shadow-xl shadow-black/20 group-hover:px-12 active:scale-95 uppercase tracking-widest text-xs"

@@ -52,6 +52,11 @@ const menuItems = [
     destination: "/student/games",
   },
   {
+    label: "Leaderboard",
+    icon: "material-symbols:crown-outline-rounded",
+    destination: "/student/leaderboard",
+  },
+  {
     label: "Scholarship",
     icon: "mdi:school-outline",
   },

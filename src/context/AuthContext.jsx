@@ -144,7 +144,25 @@ export function AuthProvider({ children }) {
   };
 
 
-  // Interaction monitoring
+  // Heartbeat to signal to other tabs/windows that a class or recorded video is active
+  useEffect(() => {
+    if (!token) return;
+
+    if (isClassActive) {
+      const updateHeartbeat = () => {
+        const now = Date.now().toString();
+        localStorage.setItem("student_active_class_heartbeat", now);
+        localStorage.setItem("last_activity_at", now);
+      };
+
+      updateHeartbeat();
+      const heartbeatInterval = setInterval(updateHeartbeat, 2000);
+
+      return () => clearInterval(heartbeatInterval);
+    }
+  }, [token, isClassActive]);
+
+  // Interaction monitoring & autologout
   useEffect(() => {
     if (!token) return;
 
@@ -155,19 +173,28 @@ export function AuthProvider({ children }) {
     // Set initial activity on login/start
     handleActivity();
 
-    window.addEventListener("mousemove", handleActivity);
-    window.addEventListener("click", handleActivity);
-    window.addEventListener("scroll", handleActivity);
-    window.addEventListener("keydown", handleActivity);
-    window.addEventListener("touchstart", handleActivity);
+    const events = ["mousemove", "click", "scroll", "keydown", "touchstart"];
+    events.forEach((evt) => window.addEventListener(evt, handleActivity));
 
-    /*
     const interval = setInterval(() => {
+      // 1. If class/recorded session is active in this tab
       if (isClassActive) {
         handleActivity();
+        setIsInactiveModalOpen(false);
         return;
       }
 
+      // 2. Check if a masterclass or recorded session is active in another tab/window
+      const heartbeat = parseInt(localStorage.getItem("student_active_class_heartbeat") || "0");
+      const isOtherTabClassActive = Date.now() - heartbeat < 10000;
+
+      if (isOtherTabClassActive) {
+        handleActivity();
+        setIsInactiveModalOpen(false);
+        return;
+      }
+
+      // 3. Otherwise calculate inactivity duration
       const lastActivity = parseInt(localStorage.getItem("last_activity_at") || "0");
       const diff = Date.now() - lastActivity;
 
@@ -177,26 +204,15 @@ export function AuthProvider({ children }) {
       if (diff >= FIVE_MINUTES) {
         logout();
       } else if (diff >= THREE_MINUTES) {
-        setIsInactiveModalOpen(prev => {
-           if (!prev) return true;
-           return prev;
-        });
+        setIsInactiveModalOpen((prev) => (!prev ? true : prev));
       } else {
-        setIsInactiveModalOpen(prev => {
-           if (prev) return false;
-           return prev;
-        });
+        setIsInactiveModalOpen((prev) => (prev ? false : prev));
       }
     }, 1000);
-    */
 
     return () => {
-      window.removeEventListener("mousemove", handleActivity);
-      window.removeEventListener("click", handleActivity);
-      window.removeEventListener("scroll", handleActivity);
-      window.removeEventListener("keydown", handleActivity);
-      window.removeEventListener("touchstart", handleActivity);
-      // clearInterval(interval);
+      events.forEach((evt) => window.removeEventListener(evt, handleActivity));
+      clearInterval(interval);
     };
   }, [token, isClassActive, logout]);
 

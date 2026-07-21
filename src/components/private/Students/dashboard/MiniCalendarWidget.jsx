@@ -84,8 +84,8 @@ function SessionModal({ session, onClose }) {
             rel="noreferrer"
             className="flex items-center justify-center gap-2 w-full py-3 bg-[#09314F] hover:bg-[#0a426b] text-white rounded-xl font-black text-sm transition-colors shadow-lg"
           >
-            <Icon icon="logos:google-meet" className="w-4 h-4" />
-            Join Google Meet
+            <Icon icon="logos:zoom" className="w-4 h-4" />
+            Join Zoom Meeting
           </a>
         )}
       </div>
@@ -123,9 +123,9 @@ function SessionCard({ session, onClick }) {
         {formatTimeRange(session.starts_at, session.ends_at)}
       </p>
 
-      {/* Bottom row: Google Meet + Avatars */}
+      {/* Bottom row: Zoom + Avatars */}
       <div className="flex items-center justify-between">
-        {/* Google Meet pill */}
+        {/* Zoom pill */}
         {session.class_link ? (
           <a
             href={session.class_link}
@@ -134,8 +134,7 @@ function SessionCard({ session, onClick }) {
             onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 text-[12px] font-bold text-gray-700 dark:text-gray-200 hover:border-blue-400 transition-colors shadow-sm"
           >
-            <Icon icon="logos:google-meet" className="w-3.5 h-3.5" />
-            Google Meet
+            <Icon icon="logos:zoom" className="w-10 h-3.5" />
           </a>
         ) : (
           <span className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 text-[12px] font-bold text-gray-700 dark:text-gray-200 shadow-sm">
@@ -284,7 +283,9 @@ export default function MiniCalendarWidget() {
                     {d.getDate()}
                   </span>
                   {hasSessions && (
-                    <span className={`absolute bottom-1.5 w-1.5 h-1.5 rounded-full ${isSelected ? "bg-[#bb9e7f]" : "bg-[#E83831]"}`} />
+                    <div className="absolute bottom-1 flex items-center justify-center">
+                      <Icon icon="logos:zoom" className="w-6 h-2.5 drop-shadow-sm transition-transform hover:scale-110" />
+                    </div>
                   )}
                 </button>
               );
