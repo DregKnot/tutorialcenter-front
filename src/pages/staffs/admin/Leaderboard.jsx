@@ -4,9 +4,7 @@ import StaffDashboardLayout from "../../../components/private/staffs/DashboardLa
 import { 
   TrophyIcon, 
   SparklesIcon, 
-  ArrowPathIcon,
-  MagnifyingGlassIcon,
-  FireIcon
+  ArrowPathIcon
 } from "@heroicons/react/24/outline";
 
 export default function Leaderboard() {
