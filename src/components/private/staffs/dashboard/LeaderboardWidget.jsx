@@ -140,7 +140,7 @@ export default function LeaderboardWidget() {
                       )}
                     </div>
                     <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300 truncate w-full mt-2">{top2.name.split(" ")[0]}</p>
-                    <p className="text-[9px] font-black text-slate-500 mt-0.5">{top2.average_score}% Avg</p>
+                    <p className="text-[9px] font-black text-slate-500 mt-0.5">{top2.total_score} Pts</p>
                   </>
                 ) : (
                   <div className="w-12 h-12 rounded-full border border-dashed border-gray-200 dark:border-gray-700"></div>
@@ -167,7 +167,7 @@ export default function LeaderboardWidget() {
                       )}
                     </div>
                     <p className="text-[11px] font-black text-[#0F2843] dark:text-white truncate w-full mt-1.5">{top1.name.split(" ")[0]}</p>
-                    <p className="text-[10px] font-black text-amber-500 mt-0.5">{top1.average_score}% Avg</p>
+                    <p className="text-[10px] font-black text-amber-500 mt-0.5">{top1.total_score} Pts</p>
                   </>
                 ) : (
                   <div className="w-16 h-16 rounded-full border border-dashed border-gray-200 dark:border-gray-700"></div>
@@ -193,7 +193,7 @@ export default function LeaderboardWidget() {
                       )}
                     </div>
                     <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300 truncate w-full mt-2">{top3.name.split(" ")[0]}</p>
-                    <p className="text-[9px] font-black text-amber-700 mt-0.5">{top3.average_score}% Avg</p>
+                    <p className="text-[9px] font-black text-amber-700 mt-0.5">{top3.total_score} Pts</p>
                   </>
                 ) : (
                   <div className="w-12 h-12 rounded-full border border-dashed border-gray-200 dark:border-gray-700"></div>

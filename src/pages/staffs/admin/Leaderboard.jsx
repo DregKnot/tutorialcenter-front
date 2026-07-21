@@ -140,7 +140,7 @@ export default function Leaderboard() {
                     <h3 className="font-black text-[#0F2843] dark:text-white text-base mt-4 text-center truncate w-full px-2">{top2.name}</h3>
                     <div className="mt-3 flex items-center gap-1 bg-slate-50 dark:bg-slate-900/60 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-800">
                       <SparklesIcon className="w-4 h-4 text-slate-400" />
-                      <span className="text-sm font-black text-slate-600 dark:text-slate-300">{top2.average_score}% Avg</span>
+                      <span className="text-sm font-black text-slate-600 dark:text-slate-300">{top2.total_score} Pts</span>
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-4 w-full text-center border-t border-gray-50 dark:border-gray-700/50 pt-4">
                       <div>
@@ -182,7 +182,7 @@ export default function Leaderboard() {
                     <h3 className="font-black text-[#0F2843] dark:text-white text-lg mt-4 text-center truncate w-full px-2">{top1.name}</h3>
                     <div className="mt-3 flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/60 px-4.5 py-1.5 rounded-full border border-amber-200/50">
                       <TrophyIcon className="w-4 h-4 text-amber-500" />
-                      <span className="text-sm font-black text-amber-700 dark:text-amber-300">{top1.average_score}% Avg</span>
+                      <span className="text-sm font-black text-amber-700 dark:text-amber-300">{top1.total_score} Pts</span>
                     </div>
                     <div className="mt-5 grid grid-cols-2 gap-4 w-full text-center border-t border-gray-50 dark:border-gray-700/50 pt-5">
                       <div>
@@ -222,9 +222,9 @@ export default function Leaderboard() {
                       </div>
                     )}
                     <h3 className="font-black text-[#0F2843] dark:text-white text-base mt-4 text-center truncate w-full px-2">{top3.name}</h3>
-                    <div className="mt-3 flex items-center gap-1 bg-amber-50/50 dark:bg-amber-950/40 px-3 py-1 rounded-full border border-amber-100 dark:border-amber-900/30">
-                      <FireIcon className="w-4 h-4 text-amber-600" />
-                      <span className="text-sm font-black text-amber-800 dark:text-amber-300">{top3.average_score}% Avg</span>
+                    <div className="mt-3 flex items-center gap-1 bg-amber-50 dark:bg-amber-900/40 px-3 py-1 rounded-full border border-amber-100 dark:border-amber-800/50">
+                      <SparklesIcon className="w-4 h-4 text-amber-500/70" />
+                      <span className="text-sm font-black text-amber-800 dark:text-amber-400">{top3.total_score} Pts</span>
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-4 w-full text-center border-t border-gray-50 dark:border-gray-700/50 pt-4">
                       <div>

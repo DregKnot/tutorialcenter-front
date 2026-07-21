@@ -354,7 +354,7 @@ export default function StudentLeaderboard() {
                   <span className="text-3xl md:text-5xl font-black text-slate-200/50">2</span>
                   <div className="text-center">
                     <span className="block text-sm md:text-xl font-black text-slate-100">{top2.points.toLocaleString()} pts</span>
-                    <span className="text-[9px] md:text-[11px] font-bold text-slate-300">{top2.avgAccuracy}% Accuracy</span>
+                    <span className="text-[9px] md:text-[11px] font-bold text-slate-300">Highest: {top2.highestScore}%</span>
                   </div>
                 </div>
               </div>
@@ -405,7 +405,7 @@ export default function StudentLeaderboard() {
                   <span className="text-4xl md:text-6xl font-black text-amber-300/50">1</span>
                   <div className="text-center">
                     <span className="block text-base md:text-2xl font-black text-amber-300">{top1.points.toLocaleString()} pts</span>
-                    <span className="text-[10px] md:text-xs font-black text-amber-200">{top1.avgAccuracy}% Accuracy</span>
+                    <span className="text-[10px] md:text-xs font-black text-amber-200">Highest: {top1.highestScore}%</span>
                   </div>
                 </div>
               </div>
@@ -451,7 +451,7 @@ export default function StudentLeaderboard() {
                   <span className="text-3xl md:text-5xl font-black text-amber-600/40">3</span>
                   <div className="text-center">
                     <span className="block text-sm md:text-xl font-black text-amber-200">{top3.points.toLocaleString()} pts</span>
-                    <span className="text-[9px] md:text-[11px] font-bold text-amber-300/90">{top3.avgAccuracy}% Accuracy</span>
+                    <span className="text-[9px] md:text-[11px] font-bold text-amber-300/90">Highest: {top3.highestScore}%</span>
                   </div>
                 </div>
               </div>
@@ -530,8 +530,8 @@ export default function StudentLeaderboard() {
                   {/* Right: Stats + Points */}
                   <div className="flex items-center gap-6 shrink-0">
                     <div className="hidden md:block text-right">
-                      <span className="block text-xs font-black text-emerald-600 dark:text-emerald-400">{ranker.avgAccuracy}%</span>
-                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Accuracy</span>
+                      <span className="block text-xs font-black text-emerald-600 dark:text-emerald-400">{ranker.highestScore}%</span>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Highest</span>
                     </div>
 
                     {/* Points */}
