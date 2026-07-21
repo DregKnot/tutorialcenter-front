@@ -69,6 +69,7 @@ import StudentLeaderboard from "./pages/Students/StudentLeaderboard.jsx";
 import StudentFeedback from "./pages/Students/StudentFeedback.jsx";
 import StaffEmailVerification from "./pages/public/StaffSignUp/StaffEmailVerification.jsx";
 import StaffFeedback from "./pages/staffs/StaffFeedback.jsx";
+import StaffLeaderboard from "./pages/staffs/admin/Leaderboard.jsx";
 import AdminStudentManagement from "./pages/staffs/admin/AdminStudentManagement.jsx";
 import ExamManagement from "./pages/staffs/admin/ExamManagement.jsx";
 import ExamQuestion from "./components/private/staffs/exams/ExamQuestion.jsx";
@@ -152,6 +153,7 @@ function App() {
           {/* Staff Routes */}
           <Route path="/staffs/dashboard" element={<StaffDashboard />} />
           <Route path="/staffs/feedback" element={<StaffFeedback />} />
+          <Route path="/staffs/leaderboard" element={<StaffLeaderboard />} />
           <Route path="/staffs/notifications" element={<StaffNotification />} />
           <Route path="/staffs/meet" element={<StaffMeetWrapper />} />
           <Route path="/staffs/tutor/dashboard" element={<TutorDashboard />} />

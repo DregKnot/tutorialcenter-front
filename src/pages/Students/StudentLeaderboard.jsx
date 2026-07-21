@@ -320,7 +320,7 @@ export default function StudentLeaderboard() {
                 {/* Avatar & Crown */}
                 <div className="relative mb-3 flex flex-col items-center">
                   <span className="px-3 py-1 bg-slate-200/20 text-slate-100 border border-slate-300/40 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider mb-2 flex items-center gap-1 shadow-md backdrop-blur-md">
-                    <Icon icon="lucide:shield" className="w-3.5 h-3.5 text-slate-200" /> #2 Silver
+                    <Icon icon="lucide:shield" className="w-3.5 h-3.5 text-slate-200" /> 2 Silver
                   </span>
                   <div className="relative w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-slate-300 shadow-[0_0_25px_rgba(203,213,225,0.4)] p-1 bg-gradient-to-br from-slate-300 to-slate-600 transition-transform group-hover:scale-105 duration-300">
                     <div className="w-full h-full rounded-full bg-[#0c2238] flex items-center justify-center text-white font-black text-base md:text-xl overflow-hidden shadow-inner">
@@ -369,7 +369,7 @@ export default function StudentLeaderboard() {
                     <Icon icon="lucide:crown" className="w-8 h-8 md:w-11 md:h-11 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.9)]" />
                   </div>
                   <span className="px-3.5 py-1 bg-amber-400 text-black font-black rounded-full text-[10px] md:text-xs uppercase tracking-widest my-1 shadow-lg shadow-amber-500/40 border border-amber-300">
-                    #1 Champion
+                    1 Champion
                   </span>
                   
                   {/* Glowing Avatar */}
@@ -417,7 +417,7 @@ export default function StudentLeaderboard() {
                 {/* Avatar */}
                 <div className="relative mb-3 flex flex-col items-center">
                   <span className="px-3 py-1 bg-amber-800/40 text-amber-200 border border-amber-700/50 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider mb-2 flex items-center gap-1 shadow-md backdrop-blur-md">
-                    <Icon icon="lucide:award" className="w-3.5 h-3.5 text-amber-400" /> #3 Bronze
+                    <Icon icon="lucide:award" className="w-3.5 h-3.5 text-amber-400" /> 3 Bronze
                   </span>
                   <div className="relative w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-amber-700 shadow-[0_0_25px_rgba(180,83,9,0.5)] p-1 bg-gradient-to-br from-amber-600 to-yellow-900 transition-transform group-hover:scale-105 duration-300">
                     <div className="w-full h-full rounded-full bg-[#0c2238] flex items-center justify-center text-white font-black text-base md:text-xl overflow-hidden shadow-inner">
@@ -498,7 +498,7 @@ export default function StudentLeaderboard() {
                   {/* Left: Rank # + Avatar + Name */}
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="w-9 h-9 shrink-0 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center text-sm font-black text-gray-700 dark:text-gray-300 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">
-                      #{rankNum}
+                      {rankNum}
                     </div>
 
                     <div className="relative w-11 h-11 shrink-0 rounded-full border border-gray-300 dark:border-white/20 overflow-hidden bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-gray-800 dark:text-white font-black text-sm">
@@ -555,7 +555,7 @@ export default function StudentLeaderboard() {
             {/* Left: Your Position Info */}
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-600 text-black flex items-center justify-center font-black text-base md:text-lg shadow-lg shadow-amber-500/20">
-                #{myStats.rank}
+                {myStats.rank}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-0.5 md:mb-0">

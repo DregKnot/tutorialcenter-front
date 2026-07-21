@@ -72,7 +72,7 @@ export default function Leaderboard() {
   };
 
   return (
-    <StaffDashboardLayout pagetitle="Student Leaderboard">
+    <StaffDashboardLayout pagetitle="Student Leadership Board">
       <div className="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-10">
         
         {/* Header Block */}
@@ -82,8 +82,8 @@ export default function Leaderboard() {
               <TrophyIcon className="w-7 h-7 text-amber-500" />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black text-[#0F2843] dark:text-white uppercase tracking-tight">Performance Leaderboard</h1>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Ranking students based on their exam attempt scores</p>
+              <h1 className="text-xl md:text-2xl font-black text-[#0F2843] dark:text-white uppercase tracking-tight">Student Leadership Board</h1>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Ranking students based on their total exam points</p>
             </div>
           </div>
           <button 

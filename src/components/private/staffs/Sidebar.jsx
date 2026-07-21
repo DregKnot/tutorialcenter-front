@@ -17,6 +17,7 @@ import {
   ChevronRightIcon,
   ClipboardDocumentListIcon,
   CreditCardIcon,
+  TrophyIcon,
 } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
@@ -33,6 +34,7 @@ const adminMenuItems = [
   { label: "Calendar", icon: CalendarDaysIcon },
   { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
+  { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
   { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
   { label: "Audit Log", icon: ChartBarIcon },
   { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
@@ -43,6 +45,7 @@ const tutorMenuItems = [
   { label: "Dashboard", icon: HomeIcon, destination: "/staffs/tutor/dashboard" },
   { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/tutor/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/tutor/calendar" },
+  { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
   { label: "Assessment", icon: ClipboardDocumentListIcon, destination: "/staffs/tutor/assessment" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/tutor/exams" },
   { label: "Feedback", icon: ClipboardDocumentCheckIcon, destination: "/staffs/feedback" },
@@ -55,6 +58,7 @@ const courseAdvisorMenuItems = [
   { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/course-advisor/guardians" },
   { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/course-advisor/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/calendar" },
+  { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/course-advisor/exams" },
   { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon, destination: "/staffs/course-advisor/settings" },
@@ -62,6 +66,7 @@ const courseAdvisorMenuItems = [
 
 const moderatorMenuItems = [
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
+  { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
 ];
 
 export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose }) {
