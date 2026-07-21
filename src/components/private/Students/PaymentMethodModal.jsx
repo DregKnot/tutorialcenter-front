@@ -12,9 +12,13 @@ export default function PaymentMethodModal({
   onContinue, 
   loading 
 }) {
+  React.useEffect(() => {
+    if (isOpen && !selectedMethod) {
+      setSelectedMethod("Paystack");
+    }
+  }, [isOpen, selectedMethod, setSelectedMethod]);
+
   if (!isOpen) return null;
-
-
 
   const reference = `TC-PAY-${Date.now()}`;
 

@@ -327,7 +327,7 @@ export default function StudentDashboard({ blogs = [] }) {
         </div>
 
         {/* ── Recommended Exam Practice — full width ─────────────────────── */}
-        <RecommendedExamPractice />
+        <RecommendedExamPractice courses={courses} attempts={attempts} />
 
       </div>
     </DashboardLayout>

@@ -11,8 +11,6 @@ export default function PaymentMethod() {
 
   const paymentMethods = [
     { id: "paystack", name: "Paystack" },
-    { id: "paypal", name: "Paypal" },
-    { id: "interswitch", name: "Inter-switch" },
   ];
 
   /* ================= LOAD TOTAL FROM STORAGE ================= */
