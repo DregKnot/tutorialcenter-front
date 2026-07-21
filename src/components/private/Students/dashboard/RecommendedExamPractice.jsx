@@ -216,8 +216,28 @@ export default function RecommendedExamPractice({ courses = [], attempts = [] })
     });
   };
 
-  if (loading && !recommendedCards.length) return null;
-  if (!recommendedCards.length) return null;
+  if (loading && !recommendedCards.length) return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-10 flex flex-col items-center justify-center min-h-[200px]">
+        <div className="w-10 h-10 border-4 border-[#0F2843]/20 border-t-[#0F2843] rounded-full animate-spin"></div>
+    </div>
+  );
+  if (!recommendedCards.length) return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wide">
+            Recommended Practice
+          </h3>
+          <p className="text-xs text-gray-400 mt-0.5">Customized for your performance</p>
+        </div>
+      </div>
+      <div className="w-full flex flex-col items-center justify-center p-10 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+        <Icon icon="lucide:book-open" className="w-10 h-10 text-gray-300 mb-4" />
+        <p className="text-sm font-black text-gray-400">No Recommended Practices Yet</p>
+        <p className="text-xs text-gray-400 mt-1">Take some exams to get personalized recommendations.</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">

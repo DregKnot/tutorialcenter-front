@@ -216,19 +216,40 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
                 value={studentInfo?.email} 
                 disabled={true}
               />
-              <ModalInput 
-                label="Phone Number" 
-                icon="heroicons:phone-solid" 
-                name="tel" 
-                value={studentInfo?.tel || "Not Provided"} 
-                disabled={true}
-              />
+              <div className="relative">
+                <ModalInput 
+                  label="Phone Number" 
+                  icon="heroicons:phone-solid" 
+                  name="tel" 
+                  value={studentInfo?.tel || "Not Provided"} 
+                  disabled={true}
+                />
+                {studentInfo?.tel_verified_at && (
+                  <div className="absolute right-3 top-9 flex items-center justify-center text-green-500 bg-green-50 rounded-full p-1 shadow-sm" title={`Verified at: ${new Date(studentInfo.tel_verified_at).toLocaleDateString()}`}>
+                    <Icon icon="heroicons:check-badge-solid" className="w-5 h-5" />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Grid Section for secondary details */}
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-4">
+              <ModalInput 
+                label="Department" 
+                icon="heroicons:academic-cap-solid" 
+                name="department" 
+                value={studentInfo?.department || student.department || "Not Provided"} 
+                disabled={true}
+              />
+              <ModalInput 
+                label="Date of Birth" 
+                icon="heroicons:calendar-solid" 
+                name="date_of_birth" 
+                value={studentInfo?.date_of_birth ? studentInfo.date_of_birth.split('T')[0] : "Not Provided"} 
+                disabled={true}
+              />
               <ModalInput 
                 label="Gender" 
                 icon="ph:gender-male-bold" 
@@ -260,31 +281,48 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
             </div>
 
             {/* Guardians */}
-            {studentInfo?.guardians && studentInfo.guardians.length > 0 && (
-              <div className="space-y-3">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Guardians</label>
-                <div className="flex flex-col gap-2">
-                  {studentInfo.guardians.map((g, idx) => (
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Guardians</label>
+              <div className="flex flex-col gap-2">
+                {student?.guardians?.length > 0 || studentInfo?.guardians?.length > 0 ? (
+                  (student.guardians || studentInfo.guardians).map((g, idx) => (
                     <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-between border border-gray-100 dark:border-gray-700">
                        <div>
                          <p className="font-bold text-sm text-[#0F2843] dark:text-white">{g.firstname} {g.surname}</p>
                          <p className="text-xs text-gray-400">{g.email} • {g.tel}</p>
                        </div>
                     </div>
-                  ))}
-                </div>
+                  ))
+                ) : (
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-gray-700">
+                    <p className="text-sm font-semibold text-gray-500">No guardian information provided</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Enrolled Courses */}
+            {/* Enrolled Courses & Subjects */}
             {studentInfo?.course_enrollments && studentInfo.course_enrollments.length > 0 && (
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Enrolled Courses</label>
-                <div className="flex flex-wrap gap-2">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Enrolled Courses & Subjects</label>
+                <div className="flex flex-col gap-3">
                   {studentInfo.course_enrollments.map((ce, idx) => (
-                    <span key={idx} className="px-3 py-1.5 bg-[#BB9E7F]/10 text-[#BB9E7F] rounded-lg text-xs font-bold border border-[#BB9E7F]/20">
-                      {ce.course?.title || `Course ID: ${ce.course_id}`}
-                    </span>
+                    <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                      <p className="font-bold text-sm text-[#0F2843] dark:text-white mb-2">
+                        {ce.course?.title || `Course ID: ${ce.course_id}`}
+                      </p>
+                      {ce.course?.subjects && ce.course.subjects.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {ce.course.subjects.map((sub, sIdx) => (
+                            <span key={sIdx} className="px-2.5 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] rounded-md text-[10px] font-bold border border-[#BB9E7F]/20">
+                              {sub.title || sub.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400">No subjects listed for this course.</p>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

@@ -112,7 +112,7 @@ export default function StudentActivityChart({ attempts = [] }) {
         <div className="flex flex-col">
           <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3 text-center">Time Spent ({barUnit})</h4>
           <div className="flex-1 min-h-[180px] -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={barData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }} barCategoryGap="35%">
                 <defs>
                   <linearGradient id="activityGrad" x1="0" y1="0" x2="0" y2="1">
@@ -151,7 +151,7 @@ export default function StudentActivityChart({ attempts = [] }) {
           <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2 text-center">Attempt Breakdown</h4>
           {charts.subjectPieData.length > 0 ? (
             <div className="flex-1 min-h-[160px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <PieChart>
                   <Pie
                     data={charts.subjectPieData}

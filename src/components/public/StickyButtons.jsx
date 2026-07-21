@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MessageSquareText, ChevronUp, X } from "lucide-react";
 
 import { useLocation } from "react-router-dom";
@@ -8,6 +8,8 @@ export default function StickyButtons() {
   const [openChat, setOpenChat] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isChatDisabled, setIsChatDisabled] = useState(false);
+  const longPressTimer = useRef(null);
 
   // Hide buttons on classroom and exam screens
   const hideOnKeywords = ["classroom", "exam"];
@@ -27,6 +29,18 @@ export default function StickyButtons() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleTouchStart = () => {
+    longPressTimer.current = setTimeout(() => {
+      setIsChatDisabled(true);
+    }, 800);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+
   const containerGlassClass = isScrolled
     ? "bg-white/10 dark:bg-black/25 border-white/20 dark:border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.08)]"
     : "bg-white/95 dark:bg-[#09314F] border-gray-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)]";
@@ -39,17 +53,24 @@ export default function StickyButtons() {
     <>
       <div className="fixed bottom-6 sm:bottom-8 right-3 sm:right-8 z-[60] flex flex-col gap-2.5 sm:gap-3">
         {/* CHAT WITH US */}
-        <button 
-          onClick={() => setOpenChat(true)}
-          className={btnStyle}
-        >
-          <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#09314F] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
-            <MessageSquareText className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
-          </span>
-          <span className="text-[8px] sm:text-[10px] text-gray-800 dark:text-white font-black uppercase tracking-wider text-center leading-none">
-            Chat with us
-          </span>
-        </button>
+        {!isChatDisabled && (
+          <button 
+            onClick={() => setOpenChat(true)}
+            onDoubleClick={() => setIsChatDisabled(true)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+            className={btnStyle}
+            title="Double click or long press to hide"
+          >
+            <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#09314F] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
+              <MessageSquareText className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+            </span>
+            <span className="text-[8px] sm:text-[10px] text-gray-800 dark:text-white font-black uppercase tracking-wider text-center leading-none">
+              Chat with us
+            </span>
+          </button>
+        )}
 
         {/* Back To Top */}
         {showScrollTop && (

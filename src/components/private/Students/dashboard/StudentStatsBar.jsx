@@ -1,30 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "../../../../context/AuthContext";
-// import gsap from "gsap";
 import { Icon } from "@iconify/react";
+import GlassSurface from "../../../ui/GlassSurface";
 
 const MOCK_AVG_SCORE = 72.5;
-const MOCK_STREAK = 5;
-const MAX_STREAK = 30;
-
-// ── Circular progress ring ────────────────────────────────────────────────────
-function RingProgress({ value, max, color = "#E83831", size = 60, stroke = 5 }) {
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference * (1 - Math.min(value / max, 1));
-  return (
-    <svg width={size} height={size} className="-rotate-90">
-      <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={stroke} />
-      <circle
-        cx={size/2} cy={size/2} r={radius} fill="none"
-        stroke={color} strokeWidth={stroke}
-        strokeDasharray={circumference} strokeDashoffset={dashOffset}
-        strokeLinecap="round"
-        style={{ transition: "stroke-dashoffset 0.8s ease" }}
-      />
-    </svg>
-  );
-}
 
 // ── Format minutes into human-readable string ────────────────────────────────
 function formatMinutes(min) {
@@ -236,77 +215,161 @@ function StatCell({ label, children }) {
   );
 }
 
-// ── Smart Assistant Widget (3D Roulette Liquid Glass Carousel) ───────────────
-function SmartAssistantWidget() {
+// ── Smart Assistant Widget (GlassSurface Notification Roulette) ──────────────
+function SmartAssistantWidget({ highlights = [], unreadCount = 0 }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const intervalRef = useRef(null);
+  const containerRef = useRef(null);
+  const [distortion, setDistortion] = useState(-160);
+  const [displaceAmount, setDisplaceAmount] = useState(1);
 
-  const messages = [
-    {
-      title: "Streak reset?",
-      desc: "Let's check your progress.",
-      icon: "lucide:history",
-      color: "text-orange-400",
-      bg: "bg-orange-500/20 border-orange-500/30",
-      action: "Review",
-      actionBg: "bg-orange-500 hover:bg-orange-600"
-    },
-    {
-      title: "Merit unlocked",
-      desc: "Fulfill this challenge.",
-      icon: "lucide:award",
-      color: "text-emerald-400",
-      bg: "bg-emerald-500/20 border-emerald-500/30",
-      action: "Start",
-      actionBg: "bg-emerald-500 hover:bg-emerald-600"
-    },
-    {
-      title: "Biology 101",
-      desc: "Score 45% to restore!",
-      icon: "lucide:microscope",
-      color: "text-blue-400",
-      bg: "bg-blue-500/20 border-blue-500/30",
-      action: "Practice",
-      actionBg: "bg-blue-500 hover:bg-blue-600"
-    }
-  ];
-
-  // 3D Roulette Rotation logic (CSS-based)
+  // Dynamic distortion on scroll
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % messages.length);
-    }, 3000); // 3 seconds
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      
+      // Calculate how close the center of the component is to the center of the viewport
+      const componentCenter = rect.top + rect.height / 2;
+      const viewportCenter = viewportHeight / 2;
+      
+      // Distance from center (0 = perfectly centered)
+      const distanceFromCenter = Math.abs(viewportCenter - componentCenter);
+      
+      // Normalize distance (0 to 1, where 0 is center and 1 is edge of screen)
+      const normalizedDistance = Math.min(distanceFromCenter / (viewportHeight / 2), 1);
+      
+      // When at the center (normalizedDistance = 0), distortion is very high (-360)
+      // When at the edges (normalizedDistance = 1), distortion is normal (-160)
+      const dynamicDistortion = -160 - ((1 - normalizedDistance) * 200);
+      const dynamicDisplace = 1 + ((1 - normalizedDistance) * 4); // Increases displacement at center
 
-    return () => clearInterval(interval);
-  }, [messages.length]);
+      setDistortion(dynamicDistortion);
+      setDisplaceAmount(dynamicDisplace);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Initial check
+    
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Map highlight types to visual config
+  const getHighlightStyle = (type) => {
+    switch (type) {
+      case "payment":
+        return { icon: "lucide:credit-card", color: "text-rose-400", bg: "bg-rose-500/20 border-rose-500/30", actionBg: "bg-rose-500 hover:bg-rose-600" };
+      case "blog":
+        return { icon: "lucide:newspaper", color: "text-violet-400", bg: "bg-violet-500/20 border-violet-500/30", actionBg: "bg-violet-500 hover:bg-violet-600" };
+      case "liveclass":
+        return { icon: "lucide:video", color: "text-sky-400", bg: "bg-sky-500/20 border-sky-500/30", actionBg: "bg-sky-500 hover:bg-sky-600" };
+      case "recorded":
+        return { icon: "lucide:play-circle", color: "text-indigo-400", bg: "bg-indigo-500/20 border-indigo-500/30", actionBg: "bg-indigo-500 hover:bg-indigo-600" };
+      case "merit":
+        return { icon: "lucide:award", color: "text-emerald-400", bg: "bg-emerald-500/20 border-emerald-500/30", actionBg: "bg-emerald-500 hover:bg-emerald-600" };
+      case "notification":
+        return { icon: "lucide:bell-ring", color: "text-amber-400", bg: "bg-amber-500/20 border-amber-500/30", actionBg: "bg-amber-500 hover:bg-amber-600" };
+      default:
+        return { icon: "lucide:info", color: "text-blue-400", bg: "bg-blue-500/20 border-blue-500/30", actionBg: "bg-blue-500 hover:bg-blue-600" };
+    }
+  };
+
+  // Build the messages array from highlights + notification count
+  const messages = useMemo(() => {
+    const items = [];
+
+    // Add notification count item if there are unread notifications
+    if (unreadCount > 0) {
+      items.push({
+        type: "notification",
+        text: `You have ${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`,
+        actionLabel: "View",
+        actionUrl: null, // will trigger bell icon click
+      });
+    }
+
+    // Add all highlights
+    highlights.forEach((h) => {
+      items.push(h);
+    });
+
+    // Fallback if completely empty
+    if (items.length === 0) {
+      items.push({
+        type: "info",
+        text: "You're all caught up! Keep practicing.",
+        actionLabel: "Practice",
+        actionUrl: "/student/exams",
+      });
+    }
+
+    return items;
+  }, [highlights, unreadCount]);
+
+  // Auto-rotate with pause-on-hover
+  useEffect(() => {
+    if (isPaused || messages.length <= 1) return;
+
+    intervalRef.current = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % messages.length);
+    }, 3500);
+
+    return () => clearInterval(intervalRef.current);
+  }, [isPaused, messages.length]);
+
+  const handleMouseEnter = () => setIsPaused(true);
+  const handleMouseLeave = () => setIsPaused(false);
+
+  const handleAction = (msg) => {
+    if (msg.type === "notification") {
+      // Trigger the notification panel toggle via the global event
+      window.dispatchEvent(new Event("toggleNotifications"));
+    } else if (msg.actionUrl) {
+      window.location.href = msg.actionUrl;
+    }
+  };
 
   return (
-    <div 
-      className="w-full xl:w-[300px] shrink-0 h-[80px] xl:h-auto relative rounded-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] overflow-hidden"
-      style={{
-        background: "rgba(255, 255, 255, 0.02)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        perspective: "1000px"
-      }}
-    >
-      {/* Decorative glass glare */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-30 pointer-events-none z-10" />
-
-      {/* 3D Roulette Cylinder Container */}
-      <div className="w-full h-full relative" style={{ transformStyle: "preserve-3d" }}>
+    <div ref={containerRef} className="w-full xl:w-[300px] shrink-0 h-[80px] xl:h-auto relative">
+      <GlassSurface
+        width="100%"
+        height="100%"
+        borderRadius={12}
+        brightness={45}
+        opacity={0.9}
+        blur={14}
+        displace={displaceAmount}
+        backgroundOpacity={0.03}
+        saturation={1.2}
+        distortionScale={distortion}
+        redOffset={2}
+        greenOffset={8}
+        blueOffset={16}
+        className="absolute inset-0"
+        style={{ perspective: "1000px" }}
+      >
+      <div
+        className="w-full h-full relative"
+        style={{ transformStyle: "preserve-3d" }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         {messages.map((msg, i) => {
           const isCurrent = i === activeIndex;
           const isPrev = i === (activeIndex - 1 + messages.length) % messages.length;
+          const style = getHighlightStyle(msg.type);
 
           return (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="absolute inset-0 w-full px-4 flex items-center justify-between gap-3 shrink-0"
               style={{
-                transform: isCurrent 
-                  ? "translateY(0) rotateX(0deg)" 
-                  : isPrev 
-                    ? "translateY(-100%) rotateX(-90deg)" 
+                transform: isCurrent
+                  ? "translateY(0) rotateX(0deg)"
+                  : isPrev
+                    ? "translateY(-100%) rotateX(-90deg)"
                     : "translateY(100%) rotateX(90deg)",
                 transformOrigin: "center center -30px",
                 backfaceVisibility: "hidden",
@@ -316,23 +379,43 @@ function SmartAssistantWidget() {
               }}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center border shadow-inner ${msg.bg}`}>
-                  <Icon icon={msg.icon} className={`${msg.color} w-4 h-4`} />
+                <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center border shadow-inner ${style.bg}`}>
+                  <Icon icon={style.icon} className={`${style.color} w-4 h-4`} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-white font-bold text-[12px] leading-tight truncate">{msg.title}</p>
-                  <p className={`${msg.color} text-[9px] font-semibold uppercase tracking-wider truncate mt-0.5`}>{msg.desc}</p>
+                  <p className="text-white font-bold text-[12px] leading-tight truncate">{msg.text}</p>
+                  <p className={`${style.color} text-[9px] font-semibold uppercase tracking-wider truncate mt-0.5`}>
+                    {msg.type === "notification" ? "Tap to check" : msg.type}
+                  </p>
                 </div>
               </div>
 
               {/* Action Button */}
-              <button className={`shrink-0 px-3.5 py-1.5 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all hover:scale-105 active:scale-95 shadow-md ${msg.actionBg}`}>
-                {msg.action}
+              <button
+                onClick={() => handleAction(msg)}
+                className={`shrink-0 px-3.5 py-1.5 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all hover:scale-105 active:scale-95 shadow-md ${style.actionBg}`}
+              >
+                {msg.actionLabel}
               </button>
             </div>
           );
         })}
+
+        {/* Dot indicators */}
+        {messages.length > 1 && (
+          <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+            {messages.map((_, i) => (
+              <div
+                key={i}
+                className={`w-1 h-1 rounded-full transition-all duration-300 ${
+                  i === activeIndex ? "bg-white/80 w-2.5" : "bg-white/20"
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
+      </GlassSurface>
     </div>
   );
 }
@@ -348,8 +431,10 @@ const EMPTY_WEEK = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(day => ({
 export default function StudentStatsBar({
   avgScore = MOCK_AVG_SCORE,
   weekActivity = EMPTY_WEEK,
-  streak = MOCK_STREAK,
+  streak = 0,
   highlights = [],
+  unreadCount = 0,
+  leaderboardRank = null,
 }) {
   const { student } = useAuth();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
@@ -377,9 +462,8 @@ export default function StudentStatsBar({
 
           {/* ── Avatar + Name ─────────────────────────────────────────────── */}
           <div className="flex items-center gap-4">
-            <div className="relative w-[50px] h-[50px] flex-shrink-0">
-              <RingProgress value={streak} max={MAX_STREAK} color="#bb9e7f" size={50} stroke={4.5} />
-              <div className="absolute inset-[5px] rounded-full bg-[#09314F]/80 flex items-center justify-center text-white font-black text-xs shadow-inner backdrop-blur-sm overflow-hidden">
+            <div className="relative w-[50px] h-[50px] flex-shrink-0 rounded-full border-[2.5px] border-[#bb9e7f] shadow-[0_0_12px_rgba(187,158,127,0.3)] overflow-hidden">
+              <div className="w-full h-full rounded-full bg-[#09314F]/80 flex items-center justify-center text-white font-black text-xs shadow-inner backdrop-blur-sm overflow-hidden">
                 {student?.profile_picture ? (
                   <img src={`${API_BASE_URL}/storage/${student.profile_picture}`} alt="avatar" className="w-full h-full rounded-full object-cover" />
                 ) : (
@@ -416,21 +500,39 @@ export default function StudentStatsBar({
 
           <Divider />
 
-          {/* ── Streaks ───────────────────────────────────────────────────── */}
-          <StatCell label="Streaks">
-            <div className="relative w-[48px] h-[48px]">
-              <RingProgress value={streak} max={MAX_STREAK} color="#bb9e7f" size={48} stroke={4.5} />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-lg font-black text-white">{streak}</span>
-              </div>
+          {/* ── Max Streak ───────────────────────────────────────────────── */}
+          <StatCell label="Max Streak">
+            <div className="flex items-center gap-1.5">
+              <Icon icon="lucide:flame" className="w-5 h-5 text-[#bb9e7f]" />
+              <span
+                className="text-[28px] font-black leading-none text-[#bb9e7f]"
+                style={{ textShadow: "0 0 16px rgba(187,158,127,0.4)" }}
+              >
+                {streak}
+              </span>
+            </div>
+          </StatCell>
+
+          <Divider />
+
+          {/* ── Leaderboard Rank ────────────────────────────────────────── */}
+          <StatCell label="Ranking">
+            <div className="flex items-center gap-1.5">
+              <Icon icon="lucide:trophy" className="w-5 h-5 text-yellow-400" />
+              <span
+                className="text-[28px] font-black leading-none text-yellow-400"
+                style={{ textShadow: "0 0 16px rgba(250,204,21,0.4)" }}
+              >
+                {leaderboardRank ? `#${leaderboardRank}` : "-"}
+              </span>
             </div>
           </StatCell>
 
         </div>
       </div>
 
-      {/* ── Cut-out Highlight Pill (Sits on Grandparent Gradient background) ───── */}
-      <SmartAssistantWidget streak={streak} />
+      {/* ── Cut-out Highlight Pill (GlassSurface Notification Roulette) ───── */}
+      <SmartAssistantWidget highlights={highlights} unreadCount={unreadCount} />
       
     </div>
   );

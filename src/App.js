@@ -65,6 +65,7 @@ import RecordedClasses from "./pages/Students/RecordedClasses.jsx";
 import StudentGames from "./pages/Students/StudentGames.jsx";
 import StudentExam from "./pages/Students/StudentExam.jsx";
 import StudentScholarship from "./pages/Students/StudentScholarship.jsx";
+import StudentLeaderboard from "./pages/Students/StudentLeaderboard.jsx";
 import StudentFeedback from "./pages/Students/StudentFeedback.jsx";
 import StaffEmailVerification from "./pages/public/StaffSignUp/StaffEmailVerification.jsx";
 import StaffFeedback from "./pages/staffs/StaffFeedback.jsx";
@@ -145,6 +146,7 @@ function App() {
           <Route path="/student/games" element={<StudentGames />} />
           <Route path="/student/exams" element={<StudentExam />} />
           <Route path="/student/scholarship" element={<StudentScholarship />} />
+          <Route path="/student/leaderboard" element={<StudentLeaderboard />} />
           <Route path="/student/blog" element={<StudentBlog />} />
 
           {/* Staff Routes */}

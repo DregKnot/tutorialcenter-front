@@ -86,8 +86,10 @@ const AntigravityInner = ({
     let destX = (m.x * v.width) / 2;
     let destY = (m.y * v.height) / 2;
 
+    const elapsedTime = performance.now() * 0.001;
+
     if (autoAnimate && Date.now() - lastMouseMoveTime.current > 2000) {
-      const time = state.clock.getElapsedTime();
+      const time = elapsedTime;
       destX = Math.sin(time * 0.5) * (v.width / 4);
       destY = Math.cos(time * 0.5 * 2) * (v.height / 4);
     }
@@ -99,7 +101,7 @@ const AntigravityInner = ({
     const targetX = virtualMouse.current.x;
     const targetY = virtualMouse.current.y;
 
-    const globalRotation = state.clock.getElapsedTime() * rotationSpeed;
+    const globalRotation = elapsedTime * rotationSpeed;
 
     particles.forEach((particle, i) => {
       let { t, speed, mx, my, mz, cz, randomRadiusOffset } = particle;
@@ -190,7 +192,13 @@ const AntigravityInner = ({
 
 const Antigravity = props => {
   return (
-    <Canvas camera={{ position: [0, 0, 50], fov: 35 }}>
+    <Canvas
+      camera={{ position: [0, 0, 50], fov: 35 }}
+      gl={{ antialias: true, powerPreference: "high-performance", alpha: true }}
+      onCreated={({ gl }) => {
+        gl.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault(), false);
+      }}
+    >
       <AntigravityInner {...props} />
       <EffectComposer disableNormalPass>
         <Bloom luminanceThreshold={1} mipmapBlur intensity={2} />

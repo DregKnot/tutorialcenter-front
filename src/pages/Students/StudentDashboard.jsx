@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import axios from "axios";
@@ -15,19 +15,36 @@ import RecommendedExamPractice from "../../components/private/Students/dashboard
 import useStudentActivity from "../../hooks/useStudentActivity.js";
 
 // ── Welcome header ─────────────────────────────────────────────────────────────
-function WelcomeHeader() {
+function WelcomeHeader({ leaderboardRank }) {
   const { student } = useAuth();
-  const firstName = student?.firstname || "Student";
+  let firstName = student?.firstname || "Student";
+  let title = "";
+  
+  if (leaderboardRank >= 1 && leaderboardRank <= 3) {
+    if (student?.gender?.toLowerCase() === "female") {
+      title = "Queen ";
+    } else if (student?.gender?.toLowerCase() === "male") {
+      title = "King ";
+    } else {
+      title = "Highness ";
+    }
+  }
+
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const dateStr = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
+  let nameColorClass = "text-[#E83831]"; // Default red
+  if (leaderboardRank === 1) nameColorClass = "text-amber-400 drop-shadow-md"; // Gold
+  else if (leaderboardRank === 2) nameColorClass = "text-slate-300 drop-shadow-md"; // Silver
+  else if (leaderboardRank === 3) nameColorClass = "text-amber-700 drop-shadow-md"; // Bronze
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-4">
       <div>
         <h1 className="text-2xl sm:text-3xl font-black text-[#09314F] dark:text-white tracking-tight">
-          {greeting}, <span className="text-[#E83831]">{firstName}</span> 👋
+          {greeting}, <span className={nameColorClass}>{title}{firstName}</span> 👋
         </h1>
         <p className="text-sm text-gray-400 dark:text-gray-500 font-semibold mt-0.5">
           {dateStr} · Here's your learning overview
@@ -45,15 +62,36 @@ export default function StudentDashboard({ blogs = [] }) {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
-  const { token: authToken } = useAuth();
+  const { token: authToken, student } = useAuth();
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNoCoursePopup, setShowNoCoursePopup] = useState(false);
   const [attempts, setAttempts] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [leaderboardRank, setLeaderboardRank] = useState(null);
 
   // Fetch real login/logout activity data
   const { weekData: weekActivity } = useStudentActivity(authToken);
+
+  // Fetch unread notification count
+  const fetchUnreadCount = useCallback(async () => {
+    if (!authToken) return;
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      setUnreadCount(res.data.unread_count || 0);
+    } catch (err) {
+      console.error("Failed to fetch unread count for dashboard:", err);
+    }
+  }, [API_BASE_URL, authToken]);
+
+  useEffect(() => {
+    fetchUnreadCount();
+    window.addEventListener('updateUnreadCount', fetchUnreadCount);
+    return () => window.removeEventListener('updateUnreadCount', fetchUnreadCount);
+  }, [fetchUnreadCount]);
 
   useEffect(() => {
     const fetchActiveCourses = async () => {
@@ -95,9 +133,34 @@ export default function StudentDashboard({ blogs = [] }) {
       }
     };
 
+    const fetchRank = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/students/leaderboard`, {
+          headers: { Authorization: `Bearer ${authToken}`, Accept: "application/json" },
+        });
+        let rawData = [];
+        if (Array.isArray(res.data)) rawData = res.data;
+        else if (res.data?.data && Array.isArray(res.data.data)) rawData = res.data.data;
+        else if (res.data?.leaderboard && Array.isArray(res.data.leaderboard)) rawData = res.data.leaderboard;
+
+        // Find current user's rank
+        const studentObj = rawData.find(item => item.student_id === student?.id || item.id === student?.id);
+        if (studentObj && studentObj.rank) {
+          setLeaderboardRank(studentObj.rank);
+        } else {
+          // If rank is not explicitly given but they are in the array, use their index
+          const idx = rawData.findIndex(item => item.student_id === student?.id || item.id === student?.id);
+          if (idx !== -1) setLeaderboardRank(idx + 1);
+        }
+      } catch (err) {
+        console.error("Failed to fetch leaderboard rank:", err);
+      }
+    };
+
     fetchActiveCourses();
     fetchHistory();
-  }, [API_BASE_URL, authToken]);
+    fetchRank();
+  }, [API_BASE_URL, authToken, student?.id]);
 
   // Compute average score from history
   const avgScore = attempts.length > 0
@@ -109,8 +172,8 @@ export default function StudentDashboard({ blogs = [] }) {
       }, 0) / attempts.length)
     : 0;
 
-  // Calculate Streak
-  const getStreak = (allAttempts) => {
+  // Calculate Max Streak (highest streak ever achieved)
+  const getMaxStreak = (allAttempts) => {
     if (!allAttempts || allAttempts.length === 0) return 0;
     const dates = allAttempts
       .map((a) => {
@@ -121,39 +184,29 @@ export default function StudentDashboard({ blogs = [] }) {
       .map((d) => new Date(d));
 
     if (dates.length === 0) return 0;
-    dates.sort((a, b) => b - a);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    let currentStreak = 0;
-    let expectedDate = new Date(today);
-    const firstDate = new Date(dates[0]);
-    firstDate.setHours(0, 0, 0, 0);
-    if (firstDate.getTime() === today.getTime()) {
-      currentStreak = 1;
-      expectedDate = yesterday;
-    } else if (firstDate.getTime() === yesterday.getTime()) {
-      currentStreak = 1;
-      expectedDate = new Date(yesterday);
-      expectedDate.setDate(expectedDate.getDate() - 1);
-    } else {
-      return 0; 
-    }
+    dates.sort((a, b) => a - b); // ascending for max streak
+    
+    let maxStreak = 1;
+    let currentStreak = 1;
+    
     for (let i = 1; i < dates.length; i++) {
-      const d = new Date(dates[i]);
-      d.setHours(0, 0, 0, 0);
-      if (d.getTime() === expectedDate.getTime()) {
+      const prev = new Date(dates[i - 1]);
+      prev.setHours(0, 0, 0, 0);
+      const curr = new Date(dates[i]);
+      curr.setHours(0, 0, 0, 0);
+      const diffDays = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
         currentStreak++;
-        expectedDate.setDate(expectedDate.getDate() - 1);
-      } else if (d.getTime() < expectedDate.getTime()) {
-        break;
+        maxStreak = Math.max(maxStreak, currentStreak);
+      } else if (diffDays > 1) {
+        currentStreak = 1;
       }
     }
-    return currentStreak;
+    return maxStreak;
   };
 
-  const actualStreak = getStreak(attempts);
+  const actualMaxStreak = getMaxStreak(attempts);
 
   // Generate highlights
   const highlights = [];
@@ -279,10 +332,10 @@ export default function StudentDashboard({ blogs = [] }) {
       <div className="flex flex-col gap-6 w-full max-w-[1600px] mx-auto text-gray-800 dark:text-gray-100 pb-10">
 
         {/* ── Welcome header ────────────────────────────────────────────────── */}
-        <WelcomeHeader />
+        <WelcomeHeader leaderboardRank={leaderboardRank} />
 
         {/* ── Stats Bar ─────────────────────────────────────────────────── */}
-        <StudentStatsBar avgScore={avgScore} streak={actualStreak} weekActivity={weekActivity} highlights={highlights} />
+        <StudentStatsBar avgScore={avgScore} streak={actualMaxStreak} weekActivity={weekActivity} highlights={highlights} unreadCount={unreadCount} leaderboardRank={leaderboardRank} />
 
         {/* ── Main 2-column grid ────────────────────────────────────────── */}
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
