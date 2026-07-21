@@ -51,7 +51,7 @@ export default function StudentFeedback() {
   };
 
   return (
-    <DashboardLayout pagetitle="My Feedback History">
+    <DashboardLayout pagetitle="My Feedback History" hideRightPanel={true}>
       <div className="max-w-5xl mx-auto p-4 md:p-8">
         
         <div className="flex justify-between items-end mb-8">

@@ -190,7 +190,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose, isEx
                   return (
                     <div
                       key={label}
-                      className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 py-1.5 md:py-2 lg:py-2.5"
+                      className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 dark:text-gray-700 cursor-not-allowed ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 py-1.5 md:py-2 lg:py-2.5"
                         }`}
                     >
                       <Icon icon={icon} className="w-5 h-5 flex-shrink-0" />
