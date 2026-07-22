@@ -173,16 +173,29 @@ export default function CourseAdvisorCalendar() {
   const handleSaveVideoLink = async () => {
     if (!selectedSession) return;
     setSaveLoading(true);
+    const payload = {
+      session_id: selectedSession.id,
+      class_session_id: selectedSession.id,
+      recording_link: videoLink,
+      recording_url: videoLink,
+      video_url: videoLink
+    };
+    const headers = { 
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json" 
+    };
+
     try {
-      await axios.post(`${API_BASE_URL}/api/classes/session/recording`, {
-        session_id: selectedSession.id,
-        recording_link: videoLink
-      }, {
-        headers: { 
-          "Authorization": `Bearer ${token}`,
-          "Accept": "application/json" 
+      try {
+        await axios.post(`${API_BASE_URL}/api/classes/session/recording`, payload, { headers });
+      } catch (err1) {
+        console.warn("Primary recording endpoint notice, trying advisor recording route:", err1?.message);
+        try {
+          await axios.post(`${API_BASE_URL}/api/advisor/classes/session/recording`, payload, { headers });
+        } catch (err2) {
+          await axios.put(`${API_BASE_URL}/api/classes/session/recording`, payload, { headers });
         }
-      });
+      }
       
       setToast({ type: "success", message: "Recording link updated successfully!" });
       setSelectedSession(null);
