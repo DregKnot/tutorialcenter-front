@@ -16,10 +16,19 @@ import "react-quill-new/dist/quill.snow.css";
 import SymbolPicker from "../../../common/SymbolPicker";
 import { Icon } from "@iconify/react";
 
-// Quill configuration matching QuestionItem.jsx — includes superscript/subscript support
+const stripImagesFromHtml = (html) => {
+  if (!html) return html;
+  let cleaned = html;
+  if (/<img[^>]*>/i.test(cleaned) || /data:image\//i.test(cleaned)) {
+    cleaned = cleaned.replace(/<img[^>]*>/gi, '').replace(/data:image\/[a-zA-Z0-9+/]+;base64,[^"'\s>]+/gi, '');
+  }
+  return cleaned;
+};
+
+// Quill configuration matching QuestionItem.jsx — excludes image button and blocks image paste
 const quillFormats = [
   'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
-  'list', 'indent', 'link', 'image', 'video', 'script'
+  'list', 'indent', 'link', 'video', 'script'
 ];
 
 const quillModules = {
@@ -28,11 +37,18 @@ const quillModules = {
     ['bold', 'italic', 'underline', 'strike'],
     [{ 'script': 'sub'}, { 'script': 'super' }],
     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    ['link', 'image', 'video'],
+    ['link', 'video'],
     ['clean']
   ],
   clipboard: {
-    matchVisual: false
+    matchVisual: false,
+    matchers: [
+      ['NODE_ELEMENT', (node) => {
+        if (node.tagName === 'IMG') {
+          return { ops: [] };
+        }
+      }]
+    ]
   }
 };
 
@@ -718,7 +734,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
               <ReactQuill 
                 theme="snow" 
                 value={questionText || ""} 
-                onChange={setQuestionText}
+                onChange={(val) => setQuestionText(stripImagesFromHtml(val))}
                 modules={quillModules}
                 formats={quillFormats}
                 className="[&_.ql-editor]:min-h-[120px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
@@ -904,7 +920,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
               <ReactQuill 
                 theme="snow" 
                 value={explanation} 
-                onChange={setExplanation}
+                onChange={(val) => setExplanation(stripImagesFromHtml(val))}
                 modules={quillModules}
                 formats={quillFormats}
                 className="[&_.ql-editor]:min-h-[100px] [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" 

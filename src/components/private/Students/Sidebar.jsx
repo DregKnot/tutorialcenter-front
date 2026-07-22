@@ -21,6 +21,11 @@ const menuItems = [
     destination: "/student/dashboard",
   },
   {
+    label: "Leaderboard",
+    icon: "material-symbols:crown-outline-rounded",
+    destination: "/student/leaderboard",
+  },
+  {
     label: "Courses",
     icon: "mdi:book-open-page-variant",
     // destination: "/student/courses",
@@ -50,11 +55,6 @@ const menuItems = [
     label: "Games & Fun",
     icon: "mdi:controller-classic",
     destination: "/student/games",
-  },
-  {
-    label: "Leaderboard",
-    icon: "material-symbols:crown-outline-rounded",
-    destination: "/student/leaderboard",
   },
   {
     label: "Scholarship",
