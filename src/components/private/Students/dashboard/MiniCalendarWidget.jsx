@@ -32,9 +32,31 @@ function formatTimeRange(start, end) {
   return `${format(start)}${end ? `-${format(end)}` : ""}`;
 }
 
+function isPastSession(session) {
+  if (!session || !session.session_date) return false;
+  const now = new Date();
+  const sDate = new Date(session.session_date);
+  const sessionDay = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (sessionDay < today) return true;
+  if (sessionDay > today) return false;
+
+  const timeStr = session.ends_at || session.starts_at;
+  if (timeStr) {
+    const parts = timeStr.split(":");
+    const sessionEndTime = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate(), parseInt(parts[0], 10), parseInt(parts[1], 10));
+    if (sessionEndTime < now) return true;
+  }
+  return false;
+}
+
 // ── Session detail popup ──────────────────────────────────────────────────────
 function SessionModal({ session, onClose }) {
   if (!session) return null;
+  const isPast = isPastSession(session);
+  const recUrl = session.recording_link || session.recording_url;
+
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
@@ -45,8 +67,10 @@ function SessionModal({ session, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4">
-          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-black px-3 py-1 rounded-full">
-            Class Session
+          <span className={`text-xs font-black px-3 py-1 rounded-full ${
+            isPast ? "bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300" : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+          }`}>
+            {isPast ? "Ended Class" : "Class Session"}
           </span>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
             <Icon icon="lucide:x" className="w-4 h-4 text-gray-400" />
@@ -77,16 +101,39 @@ function SessionModal({ session, onClose }) {
             </div>
           )}
         </div>
-        {session.class_link && (
-          <a
-            href={session.class_link}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-3 bg-[#09314F] hover:bg-[#0a426b] text-white rounded-xl font-black text-sm transition-colors shadow-lg"
-          >
-            <Icon icon="logos:zoom" className="w-4 h-4" />
-            Join Zoom Meeting
-          </a>
+
+        {isPast ? (
+          recUrl ? (
+            <a
+              href={recUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-colors shadow-lg"
+            >
+              <Icon icon="lucide:play-circle" className="w-5 h-5" />
+              Watch Recorded Class
+            </a>
+          ) : (
+            <a
+              href="/student/recorded-classes"
+              className="flex items-center justify-center gap-2 w-full py-3 bg-purple-700 hover:bg-purple-800 text-white rounded-xl font-black text-sm transition-colors shadow-lg"
+            >
+              <Icon icon="lucide:film" className="w-5 h-5" />
+              Recorded Classes
+            </a>
+          )
+        ) : (
+          session.class_link && (
+            <a
+              href={session.class_link}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-3 bg-[#09314F] hover:bg-[#0a426b] text-white rounded-xl font-black text-sm transition-colors shadow-lg"
+            >
+              <Icon icon="logos:zoom" className="w-4 h-4" />
+              Join Zoom Meeting
+            </a>
+          )
         )}
       </div>
     </div>
@@ -97,6 +144,8 @@ function SessionModal({ session, onClose }) {
 function SessionCard({ session, onClick }) {
   const startDate = new Date(session.session_date);
   const isToday = isSameDay(startDate, new Date());
+  const isPast = isPastSession(session);
+  const recUrl = session.recording_link || session.recording_url;
   const participantCount = session.class?.staffs?.length || session.participants?.length || session.participant_count || 6;
   const visibleAvatars = Math.min(4, participantCount);
   const extra = participantCount > 4 ? participantCount - 4 : 0;
@@ -123,10 +172,21 @@ function SessionCard({ session, onClick }) {
         {formatTimeRange(session.starts_at, session.ends_at)}
       </p>
 
-      {/* Bottom row: Zoom + Avatars */}
+      {/* Bottom row: Zoom / Recorded Class + Avatars */}
       <div className="flex items-center justify-between">
-        {/* Zoom pill */}
-        {session.class_link ? (
+        {/* Zoom / Recorded Class pill */}
+        {isPast ? (
+          <a
+            href={recUrl || "/student/recorded-classes"}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1.5 bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-800 rounded-full px-3 py-1.5 text-[11px] font-black text-purple-700 dark:text-purple-300 hover:bg-purple-200 transition-colors shadow-sm"
+          >
+            <Icon icon="lucide:play-circle" className="w-3.5 h-3.5" />
+            Recorded Class
+          </a>
+        ) : session.class_link ? (
           <a
             href={session.class_link}
             target="_blank"

@@ -98,59 +98,10 @@ export function StaffAuthProvider({ children }) {
     }
   }, [token, isClassActive]);
 
-  // Interaction monitoring & autologout
+  // Inactivity monitoring & autologout disabled per staff settings
   useEffect(() => {
-    if (!token) return;
-
-    const handleActivity = () => {
-      localStorage.setItem("staff_last_activity_at", Date.now().toString());
-    };
-
-    // Set initial activity on login/start
-    handleActivity();
-
-    const events = ["mousemove", "click", "scroll", "keydown", "touchstart"];
-    events.forEach((evt) => window.addEventListener(evt, handleActivity));
-
-    const interval = setInterval(() => {
-      // 1. If class is active in this tab
-      if (isClassActive) {
-        handleActivity();
-        setIsInactiveModalOpen(false);
-        return;
-      }
-
-      // 2. Check if a masterclass is active in another tab/window
-      const heartbeat = parseInt(localStorage.getItem("staff_active_class_heartbeat") || "0");
-      const isOtherTabClassActive = Date.now() - heartbeat < 10000;
-
-      if (isOtherTabClassActive) {
-        handleActivity();
-        setIsInactiveModalOpen(false);
-        return;
-      }
-
-      // 3. Otherwise calculate inactivity duration
-      const lastActivity = parseInt(localStorage.getItem("staff_last_activity_at") || "0");
-      const diff = Date.now() - lastActivity;
-
-      const THREE_MINUTES = 3 * 60 * 1000;
-      const FIVE_MINUTES = 5 * 60 * 1000;
-
-      if (diff >= FIVE_MINUTES) {
-        logout();
-      } else if (diff >= THREE_MINUTES) {
-        setIsInactiveModalOpen((prev) => (!prev ? true : prev));
-      } else {
-        setIsInactiveModalOpen((prev) => (prev ? false : prev));
-      }
-    }, 1000);
-
-    return () => {
-      events.forEach((evt) => window.removeEventListener(evt, handleActivity));
-      clearInterval(interval);
-    };
-  }, [token, isClassActive, logout]);
+    setIsInactiveModalOpen(false);
+  }, []);
 
   return (
     <StaffAuthContext.Provider

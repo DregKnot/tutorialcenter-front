@@ -66,7 +66,7 @@ export default function StaffDashboardLayout({
 
 
   return (
-    <div className="min-h-screen bg-[#E6E9EC] dark:bg-gray-900">
+    <div className="min-h-screen bg-[#E6E9EC] dark:bg-[#041628]">
       <StaffInactivityModal />
       {/* ===== MOBILE LAYOUT ===== */}
       <div className="lg:hidden">
