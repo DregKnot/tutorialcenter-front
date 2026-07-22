@@ -80,7 +80,7 @@ export default function TutorDashboard() {
       value: "42", 
       sub: "Students currently in your roster", 
       badge: "+2 this month",
-      icon: <UserGroupIcon className="w-6 h-6 text-[#09314F]" />,
+      icon: <UserGroupIcon className="w-6 h-6 text-[#09314F] dark:text-blue-300" />,
       color: "blue"
     },
     { 
@@ -106,16 +106,16 @@ export default function TutorDashboard() {
       <div className="p-6 max-w-6xl mx-auto w-full min-h-screen pb-20">
 
         {/* Announcement Bar */}
-        <div className="bg-white border border-gray-100 rounded-[24px] p-2 mb-10 shadow-sm">
-           <div className="bg-slate-50/80 rounded-[20px] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="bg-white dark:bg-[#09314F] border border-gray-100 dark:border-white/10 rounded-[24px] p-2 mb-10 shadow-sm">
+           <div className="bg-slate-50/80 dark:bg-black/20 rounded-[20px] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
-                 <p className="text-sm font-bold text-slate-600">
+                 <p className="text-sm font-bold text-slate-600 dark:text-slate-200">
                    {scheduleData.next_class ? `Your next session: ${scheduleData.next_class.class?.title}` : "No upcoming sessions for today."}
                  </p>
               </div>
               {scheduleData.next_class && (
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white px-3 py-1.5 rounded-full border border-slate-100 shadow-sm">
+                <span className="text-[10px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest bg-white dark:bg-black/30 px-3 py-1.5 rounded-full border border-slate-100 dark:border-white/10 shadow-sm">
                   {formatTimeStr(scheduleData.next_class.starts_at)}
                 </span>
               )}
@@ -125,17 +125,17 @@ export default function TutorDashboard() {
         {/* Progress Level Section */}
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-4 px-2">
-            <Icon icon="mdi:chart-line" className="text-[#0F2843] w-5 h-5" />
-            <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Activity Level</h2>
+            <Icon icon="mdi:chart-line" className="text-[#0F2843] dark:text-blue-300 w-5 h-5" />
+            <h2 className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Activity Level</h2>
           </div>
-          <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
-            <div className="flex justify-between text-[10px] font-black text-slate-400 mb-3 uppercase tracking-wider">
+          <div className="bg-white dark:bg-[#09314F] p-6 rounded-[32px] border border-gray-100 dark:border-white/10 shadow-sm">
+            <div className="flex justify-between text-[10px] font-black text-slate-400 dark:text-slate-400 mb-3 uppercase tracking-wider">
               <span>Start</span>
-              <span className="text-[#09314F]">Current Progress (8%)</span>
+              <span className="text-[#09314F] dark:text-white">Current Progress (8%)</span>
               <span>Goal</span>
             </div>
-            <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-               <div className="h-full bg-[#09314F] relative transition-all duration-1000" style={{ width: '8%' }}>
+            <div className="h-3 w-full bg-slate-100 dark:bg-black/30 rounded-full overflow-hidden">
+               <div className="h-full bg-[#09314F] dark:bg-blue-500 relative transition-all duration-1000" style={{ width: '8%' }}>
                   <div className="absolute right-0 top-0 bottom-0 w-1 bg-white/20" />
                </div>
             </div>
@@ -145,26 +145,26 @@ export default function TutorDashboard() {
         {/* Info Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {stats.map((stat, idx) => (
-            <div key={idx} className="bg-white p-7 rounded-[40px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+            <div key={idx} className="bg-white dark:bg-[#09314F] p-7 rounded-[40px] border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
               <div className="flex items-center justify-between mb-8">
                 <div className={`p-4 rounded-2xl transition-colors ${
-                  stat.color === 'blue' ? 'bg-blue-50 group-hover:bg-blue-100' : 
-                  stat.color === 'green' ? 'bg-green-50 group-hover:bg-green-100' : 'bg-red-50 group-hover:bg-red-100'
+                  stat.color === 'blue' ? 'bg-blue-50 dark:bg-blue-950/50 group-hover:bg-blue-100' : 
+                  stat.color === 'green' ? 'bg-green-50 dark:bg-emerald-950/50 group-hover:bg-green-100' : 'bg-red-50 dark:bg-rose-950/50 group-hover:bg-red-100'
                 }`}>
                   {stat.icon}
                 </div>
-                <div className="px-3.5 py-1.5 rounded-full border border-gray-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                <div className="px-3.5 py-1.5 rounded-full border border-gray-100 dark:border-white/10 text-[9px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-wider">
                   {stat.badge}
                 </div>
               </div>
-              <h4 className="text-[13px] font-bold text-slate-400 mb-1">{stat.label}</h4>
+              <h4 className="text-[13px] font-bold text-slate-400 dark:text-slate-300 mb-1">{stat.label}</h4>
               <div className={`text-4xl font-black mb-3 tracking-tighter ${
-                stat.color === 'blue' ? 'text-[#09314F]' : 
-                stat.color === 'green' ? 'text-[#10B981]' : 'text-[#EF4444]'
+                stat.color === 'blue' ? 'text-[#09314F] dark:text-white' : 
+                stat.color === 'green' ? 'text-[#10B981] dark:text-emerald-400' : 'text-[#EF4444] dark:text-rose-400'
               }`}>
                 {stat.value}
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">{stat.sub}</p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-400 font-medium">{stat.sub}</p>
             </div>
           ))}
         </div>
@@ -173,10 +173,10 @@ export default function TutorDashboard() {
         <div>
           <div className="flex items-center justify-between mb-8 px-2">
              <div className="flex items-center gap-3">
-               <Icon icon="mdi:book-open-variant" className="text-[#0F2843] w-6 h-6" />
-               <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Agenda</h2>
+               <Icon icon="mdi:book-open-variant" className="text-[#0F2843] dark:text-blue-300 w-6 h-6" />
+               <h2 className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Agenda</h2>
              </div>
-             <a href="/staffs/tutor/master-class" className="text-[11px] font-black text-[#0F2843] hover:text-[#2563EB] transition-colors uppercase tracking-widest">
+             <a href="/staffs/tutor/master-class" className="text-[11px] font-black text-[#0F2843] dark:text-blue-300 hover:text-[#2563EB] dark:hover:text-blue-400 transition-colors uppercase tracking-widest">
                See All Schedule
              </a>
           </div>
@@ -184,35 +184,35 @@ export default function TutorDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
              {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-[180px] bg-slate-50 animate-pulse rounded-[32px] border border-slate-100" />
+                  <div key={i} className="h-[180px] bg-slate-50 dark:bg-black/20 animate-pulse rounded-[32px] border border-slate-100 dark:border-white/10" />
                 ))
              ) : (
                <>
                 {/* Next Class - Prominent Card */}
                 {scheduleData.next_class && (
-                  <div className="group relative bg-white p-6 rounded-[32px] border-2 border-[#10B981] shadow-lg shadow-green-50/50 flex flex-col justify-between overflow-hidden">
+                  <div className="group relative bg-white dark:bg-[#09314F] p-6 rounded-[32px] border-2 border-[#10B981] shadow-lg shadow-green-50/50 dark:shadow-none flex flex-col justify-between overflow-hidden">
                     <div className="absolute -top-3 left-8 bg-[#10B981] text-white text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.15em] shadow-sm">
                       Next Class
                     </div>
                     
                     <div className="mt-4 flex items-center gap-5">
-                       <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-[20px] flex items-center justify-center font-black text-lg border border-emerald-100">
+                       <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 rounded-[20px] flex items-center justify-center font-black text-lg border border-emerald-100 dark:border-emerald-800">
                           {getInitials(scheduleData.next_class.class?.title)}
                        </div>
                        <div className="min-w-0">
-                          <h4 className="font-black text-[#0F2843] text-[15px] truncate leading-tight mb-1" title={scheduleData.next_class.class?.title}>
+                          <h4 className="font-black text-[#0F2843] dark:text-white text-[15px] truncate leading-tight mb-1" title={scheduleData.next_class.class?.title}>
                             {scheduleData.next_class.class?.title}
                           </h4>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">
+                          <p className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider truncate">
                             {formatDate(scheduleData.next_class.session_date)}
                           </p>
                        </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-50">
+                    <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-50 dark:border-white/10">
                        <div className="flex items-center gap-2">
                           <ClockIcon className="w-4 h-4 text-emerald-500" />
-                          <span className="text-[11px] font-black text-emerald-600 uppercase tracking-tight">
+                          <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-tight">
                             {formatTimeStr(scheduleData.next_class.starts_at)}
                           </span>
                        </div>
@@ -221,12 +221,12 @@ export default function TutorDashboard() {
                            href={scheduleData.next_class.class_link}
                            target="_blank"
                            rel="noreferrer"
-                           className="bg-[#0F2843] text-white text-[10px] font-black px-5 py-2.5 rounded-xl hover:bg-[#E83831] transition-all active:scale-95 shadow-lg shadow-slate-200 uppercase tracking-widest"
+                           className="bg-[#0F2843] dark:bg-blue-600 text-white text-[10px] font-black px-5 py-2.5 rounded-xl hover:bg-[#E83831] dark:hover:bg-blue-500 transition-all active:scale-95 shadow-lg shadow-slate-200 dark:shadow-none uppercase tracking-widest"
                          >
                             Join Now
                          </a>
                        ) : (
-                         <span className="text-[10px] font-black text-slate-300 uppercase italic">Awaiting Link</span>
+                         <span className="text-[10px] font-black text-slate-300 dark:text-slate-500 uppercase italic">Awaiting Link</span>
                        )}
                     </div>
                   </div>
@@ -237,26 +237,26 @@ export default function TutorDashboard() {
                   .filter(s => s.id !== scheduleData.next_class?.id)
                   .slice(0, 2) // Limit for dashboard
                   .map(session => (
-                    <div key={session.id} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                    <div key={session.id} className="bg-white dark:bg-[#09314F] p-6 rounded-[32px] border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
                        <div className="flex items-center gap-4 mb-4">
-                          <div className="w-12 h-12 bg-slate-50 text-slate-600 rounded-[18px] flex items-center justify-center font-black text-sm border border-slate-100">
+                          <div className="w-12 h-12 bg-slate-50 dark:bg-black/30 text-slate-600 dark:text-gray-200 rounded-[18px] flex items-center justify-center font-black text-sm border border-slate-100 dark:border-white/10">
                              {getInitials(session.class?.title)}
                           </div>
                           <div className="min-w-0">
-                             <h4 className="font-bold text-[#0F2843] text-[14px] truncate" title={session.class?.title}>
+                             <h4 className="font-bold text-[#0F2843] dark:text-white text-[14px] truncate" title={session.class?.title}>
                                {session.class?.title}
                              </h4>
-                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Today</p>
+                             <p className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider">Today</p>
                           </div>
                        </div>
-                       <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                          <div className="flex items-center gap-2 text-slate-500">
+                       <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-white/10">
+                          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-300">
                              <ClockIcon className="w-4 h-4" />
                              <span className="text-[11px] font-bold">
                                {formatTimeStr(session.starts_at)}
                              </span>
                           </div>
-                          <button className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-100 transition-all opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0">
+                          <button className="p-2.5 bg-slate-50 dark:bg-white/10 text-slate-400 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0">
                              <VideoCameraIcon className="w-4 h-4" />
                           </button>
                        </div>
@@ -266,11 +266,11 @@ export default function TutorDashboard() {
 
                 {/* Empty State / Add Placeholder */}
                 {(!scheduleData.next_class && scheduleData.today_classes.length === 0) && (
-                   <div className="bg-slate-50/50 border-2 border-dashed border-gray-100 rounded-[32px] flex flex-col items-center justify-center p-8 text-center min-h-[160px]">
-                      <div className="w-12 h-12 rounded-full bg-white border border-slate-100 flex items-center justify-center mb-4">
-                         <Icon icon="mdi:calendar-check" className="text-slate-200 w-6 h-6" />
+                   <div className="bg-slate-50/50 dark:bg-white/5 border-2 border-dashed border-gray-100 dark:border-white/10 rounded-[32px] flex flex-col items-center justify-center p-8 text-center min-h-[160px]">
+                      <div className="w-12 h-12 rounded-full bg-white dark:bg-[#09314F] border border-slate-100 dark:border-white/10 flex items-center justify-center mb-4">
+                         <Icon icon="mdi:calendar-check" className="text-slate-200 dark:text-slate-500 w-6 h-6" />
                       </div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] max-w-[140px]">Agenda is clear for today</p>
+                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-[0.2em] max-w-[140px]">Agenda is clear for today</p>
                    </div>
                 )}
                </>

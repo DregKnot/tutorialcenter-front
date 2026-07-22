@@ -133,7 +133,7 @@ export default function LearningSection() {
                                         to="/register"
                                         className="inline-block bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-bold px-8 py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 text-sm md:text-base"
                                     >
-                                        Experience Active Learning For Free
+                                        Experience Active Learning
                                     </Link>
                                 </div>
                             </ScrollReveal>

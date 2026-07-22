@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useState, useMemo, useCallback, useRef } fr
 import { useAuth } from "../../context/AuthContext";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import axios from "axios";
+import { Icon } from "@iconify/react";
 
 // SVG Icons to avoid import issues
 const ChevronLeftIcon = () => (
@@ -66,7 +67,27 @@ export default function StudentCalendar() {
   });
   const [selectedMobileDate, setSelectedMobileDate] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
+  const [selectedDateModal, setSelectedDateModal] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const isPastSession = useCallback((session) => {
+    if (!session || !session.session_date) return false;
+    const now = new Date();
+    const sDate = new Date(session.session_date);
+    const sessionDay = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (sessionDay < today) return true;
+    if (sessionDay > today) return false;
+
+    const timeStr = session.ends_at || session.starts_at;
+    if (timeStr) {
+      const parts = timeStr.split(":");
+      const sessionEndTime = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate(), parseInt(parts[0], 10), parseInt(parts[1], 10));
+      if (sessionEndTime < now) return true;
+    }
+    return false;
+  }, []);
 
   const calendarScrollRef = useRef(null);
 
@@ -419,7 +440,10 @@ export default function StudentCalendar() {
                       return (
                         <div
                           key={idx}
-                          onClick={() => setCurrentDate(date)}
+                          onClick={() => {
+                            setCurrentDate(date);
+                            setSelectedDateModal(date);
+                          }}
                           className={`p-2 flex flex-col gap-1 min-h-[90px] transition-all cursor-pointer relative group ${
                             !isCurrentMonth ? "bg-gray-50/30 dark:bg-black/5" : ""
                           } ${isFocused ? "bg-blue-50/20 dark:bg-blue-950/10" : "hover:bg-gray-50/50 dark:hover:bg-white/5"}`}
@@ -699,6 +723,130 @@ export default function StudentCalendar() {
         </div>
       </div>
 
+      {/* ====== DAY SCHEDULES POPUP GRID MODAL ====== */}
+      {selectedDateModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#09314F] border border-gray-100 dark:border-white/10 rounded-3xl p-6 md:p-8 w-full max-w-3xl shadow-2xl relative flex flex-col max-h-[85vh]">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/10 mb-6">
+              <div>
+                <h2 className="text-lg md:text-xl font-extrabold text-[#09314F] dark:text-white flex items-center gap-2">
+                  <Icon icon="lucide:calendar" className="w-5 h-5 text-amber-500" />
+                  {selectedDateModal.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                </h2>
+                <p className="text-xs font-bold text-gray-400 dark:text-blue-300 mt-1">
+                  {getSessionsForDate(selectedDateModal).length} {getSessionsForDate(selectedDateModal).length === 1 ? "Class Session" : "Class Sessions"} Scheduled
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedDateModal(null)}
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all"
+              >
+                <Icon icon="lucide:x" className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Grid of Cards */}
+            <div className="flex-1 overflow-y-auto pr-1 space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 custom-scrollbar">
+              {getSessionsForDate(selectedDateModal).length > 0 ? (
+                getSessionsForDate(selectedDateModal).map((s, idx) => {
+                  const colors = getClassColor(s.class?.title || s.title);
+                  const past = isPastSession(s);
+                  const recUrl = s.recording_link || s.recording_url || s.recorded_url || s.video_url;
+
+                  return (
+                    <div
+                      key={s.id || idx}
+                      className={`p-5 rounded-2xl border ${colors.bg} ${colors.border} flex flex-col justify-between shadow-sm hover:shadow-md transition-all space-y-4`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${colors.text} bg-white/60 dark:bg-black/30 backdrop-blur-sm`}>
+                            {s.subject || s.class?.title || "Class"}
+                          </span>
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                            past ? "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                          }`}>
+                            {past ? "Ended" : "Scheduled"}
+                          </span>
+                        </div>
+                        
+                        <h3 className={`text-base font-extrabold leading-snug ${colors.text}`}>
+                          {s.class?.title || s.title || "Master Class"}
+                        </h3>
+
+                        {s.starts_at && (
+                          <div className="flex items-center gap-1.5 text-xs font-semibold mt-2 opacity-90">
+                            <Icon icon="lucide:clock" className="w-3.5 h-3.5 shrink-0" />
+                            <span>{formatTimeRange(s.starts_at, s.ends_at)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="pt-3 border-t border-black/5 dark:border-white/10">
+                        {past ? (
+                          recUrl ? (
+                            <a
+                              href={recUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
+                            >
+                              <Icon icon="lucide:play-circle" className="w-4 h-4" />
+                              Watch Recorded Class
+                            </a>
+                          ) : (
+                            <a
+                              href="/student/recorded-classes"
+                              className="w-full py-2.5 px-4 bg-purple-700 hover:bg-purple-800 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
+                            >
+                              <Icon icon="lucide:film" className="w-4 h-4" />
+                              Recorded Classes
+                            </a>
+                          )
+                        ) : (
+                          s.class_link ? (
+                            <a
+                              href={s.class_link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="w-full py-2.5 px-4 bg-[#09314F] hover:bg-[#E83831] text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
+                            >
+                              <Icon icon="logos:zoom" className="w-4 h-4" />
+                              Join Class Now
+                            </a>
+                          ) : (
+                            <div className="text-center py-2 text-xs font-bold text-gray-400 dark:text-gray-500 italic">
+                              Class Link Pending
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="col-span-2 py-12 text-center text-gray-400 dark:text-gray-500 font-bold text-sm">
+                  No classes scheduled for this date.
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setSelectedDateModal(null)}
+                className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-700 dark:text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* ====== SESSION DETAIL MODAL (Preserved & Styled) ====== */}
       {selectedSession && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -758,11 +906,48 @@ export default function StudentCalendar() {
               </div>
             </div>
 
+            {/* Action button: Recorded Class if past, else Join Class */}
+            <div className="mt-6">
+              {isPastSession(selectedSession) ? (
+                selectedSession.recording_link || selectedSession.recording_url ? (
+                  <a
+                    href={selectedSession.recording_link || selectedSession.recording_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <Icon icon="lucide:play-circle" className="w-4 h-4" />
+                    Watch Recorded Class
+                  </a>
+                ) : (
+                  <a
+                    href="/student/recorded-classes"
+                    className="w-full py-3.5 bg-purple-700 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <Icon icon="lucide:film" className="w-4 h-4" />
+                    Go to Recorded Classes
+                  </a>
+                )
+              ) : (
+                selectedSession.class_link && (
+                  <a
+                    href={selectedSession.class_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-3.5 bg-[#09314F] dark:bg-blue-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <Icon icon="logos:zoom" className="w-4 h-4" />
+                    Join Class Now
+                  </a>
+                )
+              )}
+            </div>
+
             <button
               onClick={() => setSelectedSession(null)}
-              className="mt-6 w-full py-3.5 bg-[#09314F] dark:bg-blue-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider"
+              className="mt-3 w-full py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200 font-bold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider"
             >
-              Cancel
+              Close
             </button>
           </div>
         </div>

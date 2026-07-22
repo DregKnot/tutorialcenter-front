@@ -145,6 +145,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
     setSubmitting(true);
 
     const data = new FormData();
+    data.append("_method", "PUT");
 
     Object.keys(staff).forEach(key => {
       const value = staff[key];
@@ -152,7 +153,13 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
         if (value instanceof File) {
           data.append(key, value);
         }
-      } else if (value !== null && value !== "" && key !== "staff_id") {
+      } else if (
+        value !== null && 
+        value !== undefined && 
+        value !== "" && 
+        key !== "staff_id" && 
+        typeof value !== "object"
+      ) {
         data.append(key, value);
       }
     });
@@ -161,7 +168,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
     console.log("Updating Staff Payload:", Object.fromEntries(data.entries()));
 
     try {
-      const res = await axios.put(`${API_BASE_URL}/api/admin/staffs/update/${staffId}`, data, {
+      const res = await axios.post(`${API_BASE_URL}/api/admin/staffs/update/${staffId}`, data, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
