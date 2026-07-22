@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import axios from "axios";
 import { Icon } from "@iconify/react";
+import { useNavigate } from "react-router-dom";
 
 // SVG Icons to avoid import issues
 const ChevronLeftIcon = () => (
@@ -54,8 +55,29 @@ const getClassColor = (title) => {
 };
 
 export default function StudentCalendar() {
+  const navigate = useNavigate();
   const { token } = useAuth();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+
+  const handleJoinClass = useCallback((s) => {
+    if (!s) return;
+    const link = s.class_link || s.recording_link;
+    if (!link && !s.id) return;
+
+    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
+    if (isZoom && s.id) {
+      navigate(`/classroom/${s.id}`);
+    } else if (link) {
+      window.open(link, '_blank');
+      navigate('/student/meet', {
+        state: {
+          class_link: link,
+          class_schedule_id: s.id,
+          alreadyOpened: true
+        }
+      });
+    }
+  }, [navigate]);
 
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -808,15 +830,16 @@ export default function StudentCalendar() {
                           )
                         ) : (
                           s.class_link ? (
-                            <a
-                              href={s.class_link}
-                              target="_blank"
-                              rel="noreferrer"
+                            <button
+                              onClick={() => {
+                                setSelectedDateModal(null);
+                                handleJoinClass(s);
+                              }}
                               className="w-full py-2.5 px-4 bg-[#09314F] hover:bg-[#E83831] text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
                             >
                               <Icon icon="logos:zoom" className="w-4 h-4" />
                               Join Class Now
-                            </a>
+                            </button>
                           ) : (
                             <div className="text-center py-2 text-xs font-bold text-gray-400 dark:text-gray-500 italic">
                               Class Link Pending
@@ -930,15 +953,17 @@ export default function StudentCalendar() {
                 )
               ) : (
                 selectedSession.class_link && (
-                  <a
-                    href={selectedSession.class_link}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    onClick={() => {
+                      const sessionToJoin = selectedSession;
+                      setSelectedSession(null);
+                      handleJoinClass(sessionToJoin);
+                    }}
                     className="w-full py-3.5 bg-[#09314F] dark:bg-blue-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
                   >
                     <Icon icon="logos:zoom" className="w-4 h-4" />
                     Join Class Now
-                  </a>
+                  </button>
                 )
               )}
             </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { Icon } from "@iconify/react";
+import { useNavigate } from "react-router-dom";
 import { 
   UserGroupIcon, 
   HandThumbUpIcon, 
@@ -12,6 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function TutorDashboard() {
+  const navigate = useNavigate();
   const [scheduleData, setScheduleData] = useState({
     next_class: null,
     today_classes: [],
@@ -22,6 +24,26 @@ export default function TutorDashboard() {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
+
+  const handleJoinClass = (session) => {
+    if (!session) return;
+    const link = session.class_link || session.recording_link;
+    if (!link && !session.id) return;
+
+    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
+    if (isZoom && session.id) {
+      navigate(`/classroom/${session.id}`);
+    } else if (link) {
+      window.open(link, '_blank');
+      navigate('/staffs/meet', {
+        state: {
+          class_link: link,
+          class_schedule_id: session.id,
+          alreadyOpened: true
+        }
+      });
+    }
+  };
 
   // --- FETCHING LOGIC ---
   const fetchDashboardData = useCallback(async () => {
@@ -217,14 +239,12 @@ export default function TutorDashboard() {
                           </span>
                        </div>
                        {scheduleData.next_class.class_link ? (
-                         <a 
-                           href={scheduleData.next_class.class_link}
-                           target="_blank"
-                           rel="noreferrer"
+                         <button 
+                           onClick={() => handleJoinClass(scheduleData.next_class)}
                            className="bg-[#0F2843] dark:bg-blue-600 text-white text-[10px] font-black px-5 py-2.5 rounded-xl hover:bg-[#E83831] dark:hover:bg-blue-500 transition-all active:scale-95 shadow-lg shadow-slate-200 dark:shadow-none uppercase tracking-widest"
                          >
                             Join Now
-                         </a>
+                         </button>
                        ) : (
                          <span className="text-[10px] font-black text-slate-300 dark:text-slate-500 uppercase italic">Awaiting Link</span>
                        )}
