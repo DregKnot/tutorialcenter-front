@@ -15,7 +15,7 @@ export default function StaffFeedback() {
     const fetchFeedbacks = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/feedback`, {
+        const res = await axios.get(`${API_BASE_URL}/api/staffs/feedback`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -38,7 +38,7 @@ export default function StaffFeedback() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this feedback?")) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/feedback/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/staffs/feedback/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setFeedbacks((prev) => prev.filter((f) => f.id !== id));

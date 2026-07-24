@@ -8,7 +8,7 @@ import DashboardLayout from '../../components/private/Students/DashboardLayout';
 export default function StudentMeetWrapper() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { student, loading } = useAuth();
+  const { student, loading, setIsClassActive } = useAuth();
   
   const [sessionDetails, setSessionDetails] = useState(null);
 
@@ -45,7 +45,13 @@ export default function StudentMeetWrapper() {
       studentId: studentId,
       alreadyOpened: state.alreadyOpened || false
     });
-  }, [location, navigate, student, loading]);
+
+    if (setIsClassActive) setIsClassActive(true);
+
+    return () => {
+      if (setIsClassActive) setIsClassActive(false);
+    };
+  }, [location, navigate, student, loading, setIsClassActive]);
 
   if (loading || !sessionDetails) {
       return (

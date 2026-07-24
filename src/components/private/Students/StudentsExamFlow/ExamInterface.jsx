@@ -878,7 +878,7 @@ export default function ExamInterface({
                       setFeedbackError(null);
                       try {
                         const studentToken = localStorage.getItem("student_token");
-                        await axios.post(`${API_BASE_URL}/api/feedback`, {
+                        await axios.post(`${API_BASE_URL}/api/students/feedback`, {
                           feedbackable_type: "exam_attempt",
                           feedbackable_id: attemptId,
                           rating,

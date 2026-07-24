@@ -523,7 +523,7 @@ export default function StudentStatsBar({
                 className="text-[28px] font-black leading-none text-yellow-400"
                 style={{ textShadow: "0 0 16px rgba(250,204,21,0.4)" }}
               >
-                {leaderboardRank ? `#${leaderboardRank}` : "-"}
+                {leaderboardRank ? `${leaderboardRank}` : "-"}
               </span>
             </div>
           </StatCell>

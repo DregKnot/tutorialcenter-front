@@ -59,9 +59,10 @@ export default function FeedbackModal({
       const studentToken = localStorage.getItem("student_token");
       const staffToken = localStorage.getItem("staff_token");
       const token = studentToken || staffToken;
+      const apiPrefix = studentToken ? "/api/students" : "/api/staffs";
 
       const res = await axios.post(
-        `${process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000"}/api/feedback`,
+        `${process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000"}${apiPrefix}/feedback`,
         {
           feedbackable_type: typeToSubmit,
           feedbackable_id: idToSubmit,

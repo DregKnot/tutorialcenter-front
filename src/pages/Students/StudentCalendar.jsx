@@ -113,6 +113,49 @@ export default function StudentCalendar() {
 
   const calendarScrollRef = useRef(null);
 
+  // Helper to flatten tiered schedule API response
+  const getFlatSessions = (data) => {
+    const list = [];
+    if (Array.isArray(data)) return data; // if it's already a flat array
+    
+    if (data.next_class) list.push(data.next_class);
+    if (Array.isArray(data.today_classes)) {
+      data.today_classes.forEach(s => {
+        if (!list.some(item => item.id === s.id)) list.push(s);
+      });
+    }
+    if (data.week_schedule) {
+      Object.values(data.week_schedule).forEach(sessionsArray => {
+        if (Array.isArray(sessionsArray)) {
+          sessionsArray.forEach(s => {
+            if (!list.some(item => item.id === s.id)) list.push(s);
+          });
+        }
+      });
+    }
+    if (Array.isArray(data.upcoming_sessions)) {
+      data.upcoming_sessions.forEach(s => {
+        if (!list.some(item => item.id === s.id)) list.push(s);
+      });
+    }
+    if (Array.isArray(data.past_sessions)) {
+      data.past_sessions.forEach(s => {
+        if (!list.some(item => item.id === s.id)) list.push(s);
+      });
+    }
+    if (Array.isArray(data.history)) {
+      data.history.forEach(s => {
+        if (!list.some(item => item.id === s.id)) list.push(s);
+      });
+    }
+    if (Array.isArray(data.sessions)) {
+      data.sessions.forEach(s => {
+        if (!list.some(item => item.id === s.id)) list.push(s);
+      });
+    }
+    return list;
+  };
+
   // Fetch sessions
   const fetchSchedule = useCallback(async () => {
     setLoading(true);
@@ -121,7 +164,8 @@ export default function StudentCalendar() {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
       const data = res.data.sessions || res.data.schedule || res.data.data || res.data || [];
-      setSessions(Array.isArray(data) ? data : []);
+      const flatList = getFlatSessions(data);
+      setSessions(flatList);
     } catch (error) {
       console.error("Failed to fetch calendar schedule:", error);
       setSessions([]);

@@ -45,7 +45,7 @@ export default function StickyButtons() {
     ? "bg-white/10 dark:bg-black/25 border-white/20 dark:border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.08)]"
     : "bg-white/95 dark:bg-[#09314F] border-gray-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)]";
 
-  const btnStyle = `backdrop-blur-[14px] w-[74px] h-[74px] sm:w-[92px] sm:h-[92px] rounded-2xl flex flex-col items-center justify-center gap-1.5 border hover:-translate-y-1 transition-all duration-300 group ${containerGlassClass}`;
+  const btnStyle = `backdrop-blur-[14px] w-[60px] h-[60px] sm:w-[92px] sm:h-[92px] rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-1 sm:gap-1.5 border hover:-translate-y-1 transition-all duration-300 group ${containerGlassClass}`;
 
   if (shouldHide) return null;
 
@@ -63,10 +63,10 @@ export default function StickyButtons() {
             className={btnStyle}
             title="Double click or long press to hide"
           >
-            <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#09314F] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
-              <MessageSquareText className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+            <span className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-[#09314F] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
+              <MessageSquareText className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
-            <span className="text-[8px] sm:text-[10px] text-gray-800 dark:text-white font-black uppercase tracking-wider text-center leading-none">
+            <span className="text-[7px] sm:text-[10px] text-gray-800 dark:text-white font-black uppercase tracking-wider text-center leading-none">
               Chat with us
             </span>
           </button>
@@ -78,10 +78,10 @@ export default function StickyButtons() {
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className={btnStyle}
           >
-            <span className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#BB9E7F] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
-              <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-[#BB9E7F] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
+              <ChevronUp className="w-4 h-4 sm:w-6 sm:h-6" />
             </span>
-            <span className="text-[8px] sm:text-[10px] text-gray-800 dark:text-white font-black uppercase tracking-wider text-center leading-none">
+            <span className="text-[7px] sm:text-[10px] text-gray-800 dark:text-white font-black uppercase tracking-wider text-center leading-none">
               Back to Top
             </span>
           </button>

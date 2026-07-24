@@ -3,6 +3,7 @@ import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
+import JoinMethodModal from "../../../components/common/JoinMethodModal";
 import { 
   UserGroupIcon, 
   HandThumbUpIcon, 
@@ -25,6 +26,9 @@ export default function TutorDashboard() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [sessionToJoin, setSessionToJoin] = useState(null);
+
   const handleJoinClass = (session) => {
     if (!session) return;
     const link = session.class_link || session.recording_link;
@@ -32,7 +36,8 @@ export default function TutorDashboard() {
 
     const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
     if (isZoom && session.id) {
-      navigate(`/classroom/${session.id}`);
+      setSessionToJoin(session);
+      setIsJoinModalOpen(true);
     } else if (link) {
       window.open(link, '_blank');
       navigate('/staffs/meet', {
@@ -124,7 +129,8 @@ export default function TutorDashboard() {
   ];
 
   return (
-    <StaffDashboardLayout pagetitle="Dashboard">
+    <>
+    <StaffDashboardLayout pagetitle="Tutor Overview">
       <div className="p-6 max-w-6xl mx-auto w-full min-h-screen pb-20">
 
         {/* Announcement Bar */}
@@ -300,5 +306,26 @@ export default function TutorDashboard() {
 
       </div>
     </StaffDashboardLayout>
+    <JoinMethodModal 
+      isOpen={isJoinModalOpen}
+      onClose={() => setIsJoinModalOpen(false)}
+      onJoinApp={() => {
+        setIsJoinModalOpen(false);
+        const link = sessionToJoin?.class_link || sessionToJoin?.recording_link;
+        if (link) {
+          navigate('/staffs/meet/app', {
+            state: {
+              class_link: link,
+              class_schedule_id: sessionToJoin.id
+            }
+          });
+        }
+      }}
+      onJoinWeb={() => {
+        setIsJoinModalOpen(false);
+        if (sessionToJoin?.id) navigate(`/classroom/${sessionToJoin.id}`);
+      }}
+    />
+    </>
   );
 }

@@ -75,7 +75,7 @@ export default function CourseAdvisorStudentManagement() {
         }
       };
 
-      const res = await axios.get(`${API_BASE_URL}/api/admin/students/all`, config);
+      const res = await axios.get(`${API_BASE_URL}/api/advisor/students/all`, config);
       console.log("[CourseAdvisorStudentManagement] Fetch results:", res.data);
       const fetchedStudents = res.data?.students || res.data?.data || [];
       const studentsArray = Array.isArray(fetchedStudents) ? fetchedStudents : [];

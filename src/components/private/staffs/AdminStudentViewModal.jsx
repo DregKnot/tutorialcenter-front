@@ -72,12 +72,14 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
+  const staffRole = localStorage.getItem("staff_role");
+  const apiPrefix = staffRole === "advisor" ? "advisor" : "admin";
 
   // Fetch full student details
   const fetchStudentDetails = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/admin/students/${studentId}`, {
+      const res = await axios.get(`${API_BASE_URL}/api/${apiPrefix}/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -91,7 +93,7 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, studentId, token]);
+  }, [API_BASE_URL, studentId, token, apiPrefix]);
 
   useEffect(() => {
     if (studentId) fetchStudentDetails();
@@ -353,17 +355,19 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
         </div>
 
         {/* Suspend/Restore Logic (Floating Button Overlay) */}
-        <button 
-            onClick={isSuspended ? handleRestore : handleSuspend}
-            disabled={submitting}
-            className={`absolute top-8 right-8 px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg shadow-sm transition-all active:scale-95 ${
-                isSuspended 
-                ? "bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 hover:shadow-md" 
-                : "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:shadow-md"
-            }`}
-        >
-            {submitting ? "Processing..." : isSuspended ? "Restore Student" : "Suspend Student"}
-        </button>
+        {staffRole !== "advisor" && (
+          <button 
+              onClick={isSuspended ? handleRestore : handleSuspend}
+              disabled={submitting}
+              className={`absolute top-8 right-8 px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg shadow-sm transition-all active:scale-95 ${
+                  isSuspended 
+                  ? "bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 hover:shadow-md" 
+                  : "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:shadow-md"
+              }`}
+          >
+              {submitting ? "Processing..." : isSuspended ? "Restore Student" : "Suspend Student"}
+          </button>
+        )}
       </div>
     </div>
   );
