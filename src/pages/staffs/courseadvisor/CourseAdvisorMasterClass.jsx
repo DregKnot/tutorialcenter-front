@@ -23,6 +23,7 @@ export default function CourseAdvisorMasterClass() {
   const [selectedSession, setSelectedSession] = useState(null);
   const [videoLink, setVideoLink] = useState("");
   const [saveLoading, setSaveLoading] = useState(false);
+  const [showJoinOptions, setShowJoinOptions] = useState(false);
 
   const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -135,7 +136,7 @@ export default function CourseAdvisorMasterClass() {
     
     const isZoom = selectedSession.class_link.includes("zoom.us") || selectedSession.class_link.includes("zoom");
     if (isZoom) {
-      navigate(`/classroom/${selectedSession.id}`);
+      setShowJoinOptions(true);
     } else {
       window.open(selectedSession.class_link, '_blank');
     }
@@ -144,6 +145,7 @@ export default function CourseAdvisorMasterClass() {
   const openModal = (session) => {
     setSelectedSession(session);
     setVideoLink(session.recording_link || "");
+    setShowJoinOptions(false);
   };
 
   // --- UI COMPONENTS ---
@@ -295,12 +297,43 @@ export default function CourseAdvisorMasterClass() {
 
               <div className="flex items-center gap-4 text-blue-500 dark:text-blue-300">
                 <LinkIcon className="w-5 h-5 text-blue-400 dark:text-blue-500 shrink-0" />
-                <button 
-                  onClick={handleJoinMeeting}
-                  className="text-[14px] font-medium underline underline-offset-4 decoration-dotted truncate text-left focus:outline-none"
-                >
-                  {selectedSession.class_link ? (selectedSession.class_link.includes("zoom") ? "Start Zoom Class Room" : "Open Google Meet") : "No link assigned"}
-                </button>
+                {showJoinOptions ? (
+                  <div className="flex flex-col gap-2 w-full pr-4">
+                    <button 
+                      onClick={() => {
+                        navigate('/staffs/meet', {
+                          state: {
+                            class_link: selectedSession.class_link,
+                            topic: selectedSession.class?.title || selectedSession.title || 'Master Class'
+                          }
+                        });
+                      }}
+                      className="w-full py-2 bg-[#09314F] hover:bg-[#1a4a75] text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+                    >
+                      Join on Web
+                    </button>
+                    <button 
+                      onClick={() => {
+                        navigate('/staffs/meet/app', {
+                          state: {
+                            class_link: selectedSession.class_link,
+                            topic: selectedSession.class?.title || selectedSession.title || 'Master Class'
+                          }
+                        });
+                      }}
+                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+                    >
+                      Join via Zoom App
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handleJoinMeeting}
+                    className="text-[14px] font-medium underline underline-offset-4 decoration-dotted truncate text-left focus:outline-none"
+                  >
+                    {selectedSession.class_link ? (selectedSession.class_link.includes("zoom") ? "Join Zoom Class Room" : "Open Google Meet") : "No link assigned"}
+                  </button>
+                )}
               </div>
 
               <div className="flex items-center gap-4 relative mt-4">

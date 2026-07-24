@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Icon } from "@iconify/react";
 import axios from "axios";
 import { useAuth } from "../../../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -53,9 +54,34 @@ function isPastSession(session) {
 
 // ── Session detail popup ──────────────────────────────────────────────────────
 function SessionModal({ session, onClose }) {
+  const navigate = useNavigate();
   if (!session) return null;
   const isPast = isPastSession(session);
   const recUrl = session.recording_link || session.recording_url;
+
+  const handleJoin = (e) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const link = session.class_link || session.recording_link;
+    if (!link && !session.id) return;
+    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
+
+    if (isZoom && session.id) {
+      navigate(`/classroom/${session.id}`);
+    } else if (link) {
+      window.open(link, '_blank');
+      navigate('/student/meet', {
+        state: {
+          class_link: link,
+          class_schedule_id: session.id,
+          alreadyOpened: true
+        }
+      });
+    }
+    onClose();
+  };
 
   return (
     <div
@@ -124,15 +150,13 @@ function SessionModal({ session, onClose }) {
           )
         ) : (
           session.class_link && (
-            <a
-              href={session.class_link}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              onClick={handleJoin}
               className="flex items-center justify-center gap-2 w-full py-3 bg-[#09314F] hover:bg-[#0a426b] text-white rounded-xl font-black text-sm transition-colors shadow-lg"
             >
               <Icon icon="logos:zoom" className="w-4 h-4" />
               Join Zoom Meeting
-            </a>
+            </button>
           )
         )}
       </div>
@@ -142,6 +166,7 @@ function SessionModal({ session, onClose }) {
 
 // ── Session card (matching image 2 style) ─────────────────────────────────────
 function SessionCard({ session, onClick }) {
+  const navigate = useNavigate();
   const startDate = new Date(session.session_date);
   const isToday = isSameDay(startDate, new Date());
   const isPast = isPastSession(session);
@@ -149,6 +174,27 @@ function SessionCard({ session, onClick }) {
   const participantCount = session.class?.staffs?.length || session.participants?.length || session.participant_count || 6;
   const visibleAvatars = Math.min(4, participantCount);
   const extra = participantCount > 4 ? participantCount - 4 : 0;
+
+  const handlePillClick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const link = session.class_link || session.recording_link;
+    if (!link && !session.id) return;
+    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
+
+    if (isZoom && session.id) {
+      navigate(`/classroom/${session.id}`);
+    } else if (link) {
+      window.open(link, '_blank');
+      navigate('/student/meet', {
+        state: {
+          class_link: link,
+          class_schedule_id: session.id,
+          alreadyOpened: true
+        }
+      });
+    }
+  };
 
   return (
     <button
@@ -187,15 +233,12 @@ function SessionCard({ session, onClick }) {
             Recorded Class
           </a>
         ) : session.class_link ? (
-          <a
-            href={session.class_link}
-            target="_blank"
-            rel="noreferrer"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={handlePillClick}
             className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 text-[12px] font-bold text-gray-700 dark:text-gray-200 hover:border-blue-400 transition-colors shadow-sm"
           >
             <Icon icon="logos:zoom" className="w-10 h-3.5" />
-          </a>
+          </button>
         ) : (
           <span className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 text-[12px] font-bold text-gray-700 dark:text-gray-200 shadow-sm">
             <Icon icon="lucide:video" className="w-3.5 h-3.5 text-gray-400" />

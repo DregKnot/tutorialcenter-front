@@ -59,6 +59,7 @@ import CoursesManagement from "./pages/staffs/admin/CoursesManagement.jsx";
 import StudentPaymentHistory from "./pages/Students/StudentPaymentDisplay.jsx";
 import StudentMeetWrapper from "./pages/Students/StudentMeetWrapper.jsx";
 import StaffMeetWrapper from "./pages/staffs/StaffMeetWrapper.jsx";
+import StaffAppMeetWrapper from "./pages/staffs/StaffAppMeetWrapper.jsx";
 import ClassRoom from "./pages/ClassRoom.jsx";
 import StudentSettings from "./pages/Students/StudentSettings.jsx";
 import RecordedClasses from "./pages/Students/RecordedClasses.jsx";
@@ -156,6 +157,7 @@ function App() {
           <Route path="/staffs/leaderboard" element={<StaffLeaderboard />} />
           <Route path="/staffs/notifications" element={<StaffNotification />} />
           <Route path="/staffs/meet" element={<StaffMeetWrapper />} />
+          <Route path="/staffs/meet/app" element={<StaffAppMeetWrapper />} />
           <Route path="/staffs/tutor/dashboard" element={<TutorDashboard />} />
           <Route path="/staffs/tutor/master-class" element={<TutorMasterClass />} />
           <Route path="/staffs/tutor/calendar" element={<TutorCalendar />} />

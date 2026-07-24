@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import { 
@@ -82,6 +82,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
 
   const [imagePreview, setImagePreview] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Fetch full staff details & classes
   const fetchStaffDetails = useCallback(async () => {
@@ -261,9 +262,9 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
           {/* Top Section: Avatar + Primary Fields */}
           <div className="flex flex-col md:flex-row gap-6 mb-8 items-start">
             {/* Avatar Selection */}
-            <div 
+              <div 
               className="w-44 h-44 shrink-0 relative cursor-pointer group"
-              onClick={() => isEditing && document.getElementById('modalStaffImage').click()}
+              onClick={() => isEditing && fileInputRef.current?.click()}
             >
               <div className="w-full h-full rounded-[20px] overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center relative">
                 {imagePreview ? (
@@ -285,7 +286,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
               </div>
               <input 
                 type="file" 
-                id="modalStaffImage" 
+                ref={fileInputRef}
                 hidden 
                 accept="image/*" 
                 onChange={handleImageChange} 
@@ -295,7 +296,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    document.getElementById('modalStaffImage').click();
+                    fileInputRef.current?.click();
                   }}
                   className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#0F2843] text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white hover:bg-[#BB9E7F] hover:scale-105 active:scale-95 transition-all z-20"
                   title="Edit Profile Picture"

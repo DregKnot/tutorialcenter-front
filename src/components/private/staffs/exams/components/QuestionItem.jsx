@@ -157,10 +157,19 @@ const transformSymbols = (html) => {
     return html;
   }
 };
-// Define allowed formats, specifically omitting 'divider' or 'hr' so ____ doesn't turn into a line
+const stripImagesFromHtml = (html) => {
+  if (!html) return html;
+  let cleaned = html;
+  if (/<img[^>]*>/i.test(cleaned) || /data:image\//i.test(cleaned)) {
+    cleaned = cleaned.replace(/<img[^>]*>/gi, '').replace(/data:image\/[a-zA-Z0-9+/]+;base64,[^"'\s>]+/gi, '');
+  }
+  return cleaned;
+};
+
+// Define allowed formats, specifically omitting 'image' so question and explanation boxes do not accept images
 const quillFormats = [
   'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
-  'list', 'indent', 'link', 'image', 'video', 'script'
+  'list', 'indent', 'link', 'video', 'script'
 ];
 
 const quillModules = {
@@ -169,11 +178,18 @@ const quillModules = {
     ['bold', 'italic', 'underline', 'strike'],
     [{ 'script': 'sub'}, { 'script': 'super' }],
     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    ['link', 'image', 'video'],
+    ['link', 'video'],
     ['clean']
   ],
   clipboard: {
-    matchVisual: false
+    matchVisual: false,
+    matchers: [
+      ['NODE_ELEMENT', (node) => {
+        if (node.tagName === 'IMG') {
+          return { ops: [] };
+        }
+      }]
+    ]
   }
 };
 
@@ -362,14 +378,15 @@ export default function QuestionItem({
                 formats={quillFormats}
                 onChange={(val, delta, source) => {
                   if (source !== 'user') return;
-                  if (val && (val.includes('$') || val.includes('\\') || val.includes('&') || val.includes('^') || val.includes('_'))) {
-                    const transformed = transformSymbols(val);
-                    if (transformed !== val) {
+                  let sanitized = stripImagesFromHtml(val);
+                  if (sanitized && (sanitized.includes('$') || sanitized.includes('\\') || sanitized.includes('&') || sanitized.includes('^') || sanitized.includes('_'))) {
+                    const transformed = transformSymbols(sanitized);
+                    if (transformed !== sanitized) {
                       updateQuestionField(qIdx, "questionText", transformed);
                       return;
                     }
                   }
-                  updateQuestionField(qIdx, "questionText", val);
+                  updateQuestionField(qIdx, "questionText", sanitized);
                 }} 
                 placeholder="Type your question here..." 
               />
@@ -470,14 +487,15 @@ export default function QuestionItem({
                 formats={quillFormats}
                 onChange={(val, delta, source) => {
                   if (source !== 'user') return;
-                  if (val && (val.includes('$') || val.includes('\\') || val.includes('&') || val.includes('^') || val.includes('_'))) {
-                    const transformed = transformSymbols(val);
-                    if (transformed !== val) {
+                  let sanitized = stripImagesFromHtml(val);
+                  if (sanitized && (sanitized.includes('$') || sanitized.includes('\\') || sanitized.includes('&') || sanitized.includes('^') || sanitized.includes('_'))) {
+                    const transformed = transformSymbols(sanitized);
+                    if (transformed !== sanitized) {
                       updateQuestionField(qIdx, "explanation", transformed);
                       return;
                     }
                   }
-                  updateQuestionField(qIdx, "explanation", val);
+                  updateQuestionField(qIdx, "explanation", sanitized);
                 }} 
                 placeholder="Explain why the answer is correct..." 
               />

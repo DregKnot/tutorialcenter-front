@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ZoomMeetingSession from '../../components/private/Students/ZoomMeetingSession';
 import StaffDashboardLayout from '../../components/private/staffs/DashboardLayout.jsx';  
+import { useStaffAuth } from '../../context/StaffAuthContext';
 
 export default function StaffMeetWrapper() {
   const location = useLocation();
@@ -9,6 +10,7 @@ export default function StaffMeetWrapper() {
   
   const [sessionDetails, setSessionDetails] = useState(null);
   const staffToken = localStorage.getItem("staff_token");
+  const { setIsClassActive } = useStaffAuth();
 
   useEffect(() => {
     // Check if we arrived via routing state with the necessary details
@@ -34,7 +36,13 @@ export default function StaffMeetWrapper() {
       class_link: state.class_link,
       class_schedule_id: state.class_schedule_id
     });
-  }, [location, navigate, staffToken]);
+
+    if (setIsClassActive) setIsClassActive(true);
+
+    return () => {
+      if (setIsClassActive) setIsClassActive(false);
+    };
+  }, [location, navigate, staffToken, setIsClassActive]);
 
   if (!sessionDetails) {
       return (

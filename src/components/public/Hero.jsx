@@ -50,35 +50,26 @@ export default function Hero() {
                         </ScrollReveal>
                         
                         <ScrollReveal delay={0.6} direction="up" distance={20}>
-                            <div className="flex flex-col items-start">
-                                <h4 className="text-[#09314F] font-bold text-sm tracking-wide uppercase mb-3 bg-[#BB9E7F]/10 px-4 py-1.5 rounded-full border border-[#BB9E7F]/20">
-                                    Be part of our first 100 students
-                                </h4>
-                                <div className="flex items-center gap-4">
-                                    {/* New Join Waitlist Button */}
-                                    <a
-                                        href="https://forms.gle/AHhAYrecFjjS7KB2A"
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-bold px-10 py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
-                                    >
-                                        Join waitlist
-                                    </a>
-
-                                    {/* Old buttons (hidden as requested) */}
+                            <div className="flex items-center gap-4">
+                                {/* View Training Button */}
+                                <div className="w-[236px] h-[56px] rounded-xl p-[2px] bg-gradient-to-r from-[#09314F] to-[#E83831] hover:shadow-md transition-all hover:-translate-y-0.5 shadow-sm">
                                     <Link
                                         to="/training"
-                                        className="hidden bg-white text-[#09314F] border-[2px] border-solid border-[#09314F] font-bold px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors"
+                                        className="flex items-center justify-center bg-white rounded-[10px] w-full h-full"
                                     >
-                                        View Training
-                                    </Link>
-                                    <Link
-                                        to="/register"
-                                        className="hidden bg-[#09314F] text-white font-bold px-8 py-3 rounded-xl hover:bg-[#062136] transition-colors"
-                                    >
-                                        Apply Now
+                                        <span className="bg-gradient-to-r from-[#09314F] to-[#E83831] bg-clip-text text-transparent font-bold">
+                                            View Training
+                                        </span>
                                     </Link>
                                 </div>
+                                
+                                {/* Apply Now Button */}
+                                <Link
+                                    to="/register"
+                                    className="flex items-center justify-center w-[236px] h-[56px] bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-bold rounded-xl hover:opacity-90 transition-all hover:-translate-y-0.5 shadow-sm"
+                                >
+                                    Apply Now
+                                </Link>
                             </div>
                         </ScrollReveal>
                     </div>
@@ -175,22 +166,23 @@ export const MobileHero = ({ currentSlide }) => {
                     </ScrollReveal>
                     
                     <ScrollReveal delay={0.6} direction="up" distance={20}>
-                        <div className="flex flex-col items-start gap-3">
-                            <h4 className="text-white font-bold text-xs tracking-wide uppercase bg-[#BB9E7F]/20 px-4 py-1.5 rounded-full border border-[#BB9E7F]/40 backdrop-blur-sm">
-                                Be part of our first 100 students
-                            </h4>
-                            <a
-                                href="https://forms.gle/AHhAYrecFjjS7KB2A"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="w-full text-center bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-bold px-8 py-3.5 rounded-xl shadow-lg"
+                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                            <div className="w-[236px] h-[56px] sm:flex-1 rounded-xl p-[2px] bg-gradient-to-r from-[#09314F] to-[#E83831] hover:shadow-md transition-all shadow-sm">
+                                <Link
+                                    to="/training"
+                                    className="flex items-center justify-center bg-white rounded-[10px] w-full h-full"
+                                >
+                                    <span className="bg-gradient-to-r from-[#09314F] to-[#E83831] bg-clip-text text-transparent font-bold">
+                                        View Training
+                                    </span>
+                                </Link>
+                            </div>
+                            <Link
+                                to="/register"
+                                className="w-[236px] h-[56px] sm:flex-1 flex items-center justify-center bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all"
                             >
-                                Join waitlist
-                            </a>
-
-                            {/* Hidden original buttons */}
-                            <Link to="/training" className="hidden">View Training</Link>
-                            <Link to="/register" className="hidden">Apply Now</Link>
+                                Apply Now
+                            </Link>
                         </div>
                     </ScrollReveal>
                 </div>

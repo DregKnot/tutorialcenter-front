@@ -66,7 +66,6 @@ const courseAdvisorMenuItems = [
 
 const moderatorMenuItems = [
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
-  { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
 ];
 
 export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose }) {

@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useState, useMemo, useCallback, useRef } fr
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import axios from "axios";
 import { Icon } from "@iconify/react";
+import { useNavigate } from "react-router-dom";
+import JoinMethodModal from "../../../components/common/JoinMethodModal";
 
 // SVG Icons to match premium look
 const ChevronLeftIcon = () => (
@@ -51,8 +53,33 @@ const getClassColor = (title) => {
 };
 
 export default function CourseAdvisorCalendar() {
+  const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
+
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [sessionToJoin, setSessionToJoin] = useState(null);
+
+  const handleJoinClass = useCallback((s) => {
+    if (!s) return;
+    const link = s.class_link || s.recording_link;
+    if (!link && !s.id) return;
+
+    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
+    if (isZoom && s.id) {
+      setSessionToJoin(s);
+      setIsJoinModalOpen(true);
+    } else if (link) {
+      window.open(link, '_blank');
+      navigate('/staffs/meet', {
+        state: {
+          class_link: link,
+          class_schedule_id: s.id,
+          alreadyOpened: true
+        }
+      });
+    }
+  }, [navigate]);
 
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -382,6 +409,7 @@ export default function CourseAdvisorCalendar() {
   };
 
   return (
+    <>
     <StaffDashboardLayout pagetitle="Calendar">
       {toast && (
         <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl text-white font-bold text-sm ${toast.type === "success" ? "bg-[#10B981]" : "bg-[#EF4444] animate-bounce"}`}>
@@ -894,15 +922,15 @@ export default function CourseAdvisorCalendar() {
                           )
                         ) : (
                           s.class_link ? (
-                            <a
-                              href={s.class_link}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="w-full py-2.5 px-4 bg-[#09314F] hover:bg-[#E83831] text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
-                            >
-                              <Icon icon="logos:zoom" className="w-4 h-4" />
-                              Start Class Now
-                            </a>
+                              <button
+                                onClick={() => {
+                                  handleJoinClass(s);
+                                }}
+                                className="w-full py-2.5 px-4 bg-[#09314F] hover:bg-[#E83831] text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
+                              >
+                                <Icon icon="logos:zoom" className="w-4 h-4" />
+                                Start Class Now
+                              </button>
                           ) : (
                             <div className="text-center py-2 text-xs font-bold text-gray-400 dark:text-gray-500 italic">
                               Class Link Pending
@@ -1015,5 +1043,26 @@ export default function CourseAdvisorCalendar() {
         </div>
       )}
     </StaffDashboardLayout>
+    <JoinMethodModal 
+      isOpen={isJoinModalOpen}
+      onClose={() => setIsJoinModalOpen(false)}
+      onJoinApp={() => {
+        setIsJoinModalOpen(false);
+        const link = sessionToJoin?.class_link || sessionToJoin?.recording_link;
+        if (link) {
+          navigate('/staffs/meet', {
+            state: {
+              class_link: link,
+              class_schedule_id: sessionToJoin.id
+            }
+          });
+        }
+      }}
+      onJoinWeb={() => {
+        setIsJoinModalOpen(false);
+        if (sessionToJoin?.id) navigate(`/classroom/${sessionToJoin.id}`);
+      }}
+    />
+    </>
   );
 }
