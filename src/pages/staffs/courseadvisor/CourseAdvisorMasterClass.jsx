@@ -301,12 +301,7 @@ export default function CourseAdvisorMasterClass() {
                   <div className="flex flex-col gap-2 w-full pr-4">
                     <button 
                       onClick={() => {
-                        navigate('/staffs/meet', {
-                          state: {
-                            class_link: selectedSession.class_link,
-                            topic: selectedSession.class?.title || selectedSession.title || 'Master Class'
-                          }
-                        });
+                        if (selectedSession?.id) navigate(`/classroom/${selectedSession.id}`);
                       }}
                       className="w-full py-2 bg-[#09314F] hover:bg-[#1a4a75] text-white font-bold text-xs rounded-xl shadow-sm transition-all"
                     >
@@ -317,6 +312,7 @@ export default function CourseAdvisorMasterClass() {
                         navigate('/staffs/meet/app', {
                           state: {
                             class_link: selectedSession.class_link,
+                            class_schedule_id: selectedSession.id,
                             topic: selectedSession.class?.title || selectedSession.title || 'Master Class'
                           }
                         });

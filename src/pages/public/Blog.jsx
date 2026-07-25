@@ -3,6 +3,7 @@ import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import BlogHero from "../../assets/images/Blogs.jpg";
 import handCup from "../../assets/images/handCup.jpg";
+import ScrollReveal from "../../components/public/ScrollReveal";
 
 // ── Placeholder blog data (coming soon — replace with real API later) ──
 const FEATURED = {
@@ -31,7 +32,7 @@ const POSTS = Array.from({ length: 9 }, (_, i) => ({
 // ── Reusable Blog Card ──
 const BlogCard = ({ post, featured = false }) => (
   <article
-    className={`bg-white/80 rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col opacity-50 grayscale pointer-events-none select-none ${
+    className={`bg-white/80 rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col opacity-50 grayscale pointer-events-none select-none h-full ${
       featured ? "md:flex-row gap-0" : ""
     }`}
   >
@@ -110,12 +111,16 @@ const Blog = () => {
         />
         <div className="absolute w-full h-full bg-black opacity-40" />
         <div className="w-full h-full flex flex-col items-center justify-center relative z-50 gap-2">
-          <h1 className="uppercase text-white text-3xl md:text-4xl font-black tracking-widest">
-            Blog
-          </h1>
-          <p className="text-white/70 text-sm font-medium tracking-wide">
-            Coming soon...
-          </p>
+          <ScrollReveal direction="up" distance={20}>
+            <div className="flex flex-col items-center gap-2">
+              <h1 className="uppercase text-white text-3xl md:text-4xl font-black tracking-widest">
+                Blog
+              </h1>
+              <p className="text-white/70 text-sm font-medium tracking-wide">
+                Coming soon...
+              </p>
+            </div>
+          </ScrollReveal>
         </div>
       </div>
 
@@ -127,17 +132,21 @@ const Blog = () => {
           <div className="Container py-14">
 
             {/* Featured Post */}
-            <div className="mb-10">
-              <BlogCard post={FEATURED} featured />
-            </div>
+            <ScrollReveal delay={0.1} direction="up" distance={30}>
+              <div className="mb-10">
+                <BlogCard post={FEATURED} featured />
+              </div>
+            </ScrollReveal>
 
             {/* Divider */}
             <hr className="border-gray-100 mb-10" />
 
             {/* Blog Grid — 3 columns */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {POSTS.map((post) => (
-                <BlogCard key={post.id} post={post} />
+              {POSTS.map((post, idx) => (
+                <ScrollReveal key={post.id} delay={0.05 * (idx % 3)} direction="up" distance={20} className="h-full">
+                  <BlogCard post={post} />
+                </ScrollReveal>
               ))}
             </div>
 
