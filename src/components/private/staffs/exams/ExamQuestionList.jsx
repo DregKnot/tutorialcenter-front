@@ -61,26 +61,24 @@ export default function ExamQuestionList() {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      // Fetch Context Details
-      console.log("[ExamQuestionList] Fetching Meta Data (Bodies, Years)");
-      const [bodiesRes, yearsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/admin/exam-bodies/all`, config),
-        axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config)
+      // Fetch Context Details via drilldown API
+      console.log("[ExamQuestionList] Fetching Meta Data (Bodies, Subjects, Years)");
+      const [bodiesRes, subjectsRes, yearsRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/admin/exam-data/bodies`, config),
+        axios.get(`${API_BASE_URL}/api/admin/exam-data/subjects?exam_body_id=${bodyId}`, config),
+        axios.get(`${API_BASE_URL}/api/admin/exam-data/years?exam_body_id=${bodyId}&subject_id=${subjectId}`, config)
       ]);
 
-      console.log("[ExamQuestionList] Meta Response (Years):", yearsRes.data);
-
-      const bodies = bodiesRes.data?.exam_bodies || bodiesRes.data?.data || bodiesRes.data || [];
+      const bodies = Array.isArray(bodiesRes.data) ? bodiesRes.data : (bodiesRes.data?.exam_bodies || bodiesRes.data?.data || []);
       const currentBody = bodies.find(b => String(b.id) === String(bodyId));
       
-      const years = yearsRes.data?.data || yearsRes.data?.exam_years || [];
+      const subjects = Array.isArray(subjectsRes.data) ? subjectsRes.data : (subjectsRes.data?.subjects || subjectsRes.data?.data || []);
+      const currentSubject = subjects.find(s => String(s.id) === String(subjectId));
+      setSubject(currentSubject);
+
+      const years = Array.isArray(yearsRes.data) ? yearsRes.data : (yearsRes.data?.data || yearsRes.data?.exam_years || []);
       const currentYear = years.find(y => String(y.id) === String(yearId));
       setYear(currentYear);
-
-      // Extract subject from the year data
-      const yearWithSubject = years.find(y => String(y.subject_id) === String(subjectId) && y.subject);
-      const currentSubject = yearWithSubject?.subject || null;
-      setSubject(currentSubject);
       
       let subjectImage = currentSubject?.image || currentSubject?.banner;
       if (subjectImage && !subjectImage.startsWith('http')) {
@@ -92,21 +90,18 @@ export default function ExamQuestionList() {
         image: subjectImage || currentBody?.image
       });
 
-      // Fetch Questions for this context
-      console.log("[ExamQuestionList] Fetching Past Questions:", `${API_BASE_URL}/api/admin/past-questions/all?page=${page}&exam_year_id=${yearId}`);
-      const questionsRes = await axios.get(`${API_BASE_URL}/api/admin/past-questions/all?page=${page}&exam_year_id=${yearId}`, config);
+      // Fetch Questions via new drilldown API
+      console.log("[ExamQuestionList] Fetching Past Questions:", `${API_BASE_URL}/api/admin/exam-data/questions?exam_year_id=${yearId}&page=${page}`);
+      const questionsRes = await axios.get(`${API_BASE_URL}/api/admin/exam-data/questions?exam_year_id=${yearId}&page=${page}`, config);
       console.log("[ExamQuestionList] Past Questions Response:", questionsRes.data);
       
-      const allQuestions = questionsRes.data?.questions?.data || questionsRes.data?.data?.data || questionsRes.data?.data || questionsRes.data?.questions || [];
-      const lastPage = questionsRes.data?.meta?.last_page || questionsRes.data?.questions?.last_page || questionsRes.data?.data?.last_page || questionsRes.data?.last_page || 1;
-      const limit = questionsRes.data?.meta?.per_page || questionsRes.data?.questions?.per_page || questionsRes.data?.data?.per_page || 50;
+      const allQuestions = questionsRes.data?.data || questionsRes.data?.questions?.data || [];
+      const lastPage = questionsRes.data?.last_page || questionsRes.data?.meta?.last_page || 1;
+      const limit = questionsRes.data?.per_page || questionsRes.data?.meta?.per_page || 50;
       
       setTotalPages(lastPage);
       setPerPage(limit);
-      
-      // Keep safety filter but allQuestions is already correctly filtered on DB level now!
-      const filtered = allQuestions.filter(q => String(q.exam_year_id) === String(yearId));
-      setQuestions(filtered);
+      setQuestions(allQuestions);
       
     } catch (err) {
       console.error("Failed to fetch questions:", err);

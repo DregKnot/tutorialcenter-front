@@ -1050,7 +1050,7 @@ export default function CourseAdvisorCalendar() {
         setIsJoinModalOpen(false);
         const link = sessionToJoin?.class_link || sessionToJoin?.recording_link;
         if (link) {
-          navigate('/staffs/meet', {
+          navigate('/staffs/meet/app', {
             state: {
               class_link: link,
               class_schedule_id: sessionToJoin.id

@@ -3,6 +3,7 @@ import Footer from "../../components/public/Footer";
 import Map from "../../components/public/Map";
 import image from "../../assets/images/Contact us.png";
 import ContactSection from "../../components/public/ContactSection";
+import ScrollReveal from "../../components/public/ScrollReveal";
 
 const Contact = () => {
   return (
@@ -18,12 +19,16 @@ const Contact = () => {
         <div className="absolute w-full h-full bg-black opacity-40"></div>
 
         <div className="relative z-50 w-full h-full flex flex-col items-center justify-center text-center px-4">
-          <h1 className="text-white text-3xl md:text-4xl font-black uppercase tracking-widest">
-            Contact Us
-          </h1>
-          <p className="text-white text-sm mt-2 max-w-md">
-            We are here to help and answer any question you might have. We look forward to hearing from you.
-          </p>
+          <ScrollReveal direction="up" distance={20}>
+            <div className="flex flex-col items-center">
+              <h1 className="text-white text-3xl md:text-4xl font-black uppercase tracking-widest">
+                Contact Us
+              </h1>
+              <p className="text-white text-sm mt-2 max-w-md">
+                We are here to help and answer any question you might have. We look forward to hearing from you.
+              </p>
+            </div>
+          </ScrollReveal>
         </div>
       </div>
 
@@ -36,7 +41,9 @@ const Contact = () => {
           {/* Map */}
           <div className="Container mt-10">
             <div className="area-wrapper">
-              <Map />
+              <ScrollReveal delay={0.2} direction="up" distance={30}>
+                <Map />
+              </ScrollReveal>
             </div>
           </div>
 

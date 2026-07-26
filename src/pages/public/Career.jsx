@@ -7,6 +7,7 @@ import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.s
 import handCup from "../../assets/images/Hand Cup.png";
 import studentAffiliateImg from "../../assets/images/student_affiliate.png";
 import SectionHeading from "../../components/public/SectionHeading";
+import ScrollReveal from "../../components/public/ScrollReveal";
 
 const Career = () => {
   const navigate = useNavigate();
@@ -27,7 +28,9 @@ const Career = () => {
         <div className="overlay absolute w-full h-full bg-black opacity-30"></div>
         {/* content */}
         <div className="w-full h-full flex items-center justify-center relative z-50">
-          <h1 className="uppercase text-white text-3xl font-bold">Career</h1>
+          <ScrollReveal direction="up" distance={20}>
+            <h1 className="uppercase text-white text-3xl font-bold">Career</h1>
+          </ScrollReveal>
         </div>
       </div>
 
@@ -36,26 +39,29 @@ const Career = () => {
         <div className="w-full bg-white py-12">
           <div className="Container">
             <div className="text-sm">
-              <h2 className="text-2xl md:text-4xl font-bold text-primary leading-tight mb-8 max-w-sm uppercase">
-                Meet the team work behind our success
-              </h2>
+              <ScrollReveal delay={0.1} direction="up" distance={30}>
+                <h2 className="text-2xl md:text-4xl font-bold text-primary leading-tight mb-8 max-w-sm uppercase">
+                  Meet the team work behind our success
+                </h2>
 
-              <div className="space-y-6 text-gray-600 leading-relaxed max-w-6xl text-sm md:text-base">
-                <p>
-                  The Tutorial Center is an innovative educational platform
-                  designed to strengthen academic performance, career clarity,
-                  and institutional efficiency across Africa. By integrating
-                  Tutors, Course Advisors, and Administrative Leadership into
-                  one coordinated system, the platform addresses critical gaps
-                  in African education — including poor guidance, inconsistent
-                  teaching quality, and weak academic monitoring systems.
-                </p>
-                <p>
-                  The platform is built to improve access, quality, and
-                  structure in learning environments in senior secondary school.
-                </p>
-              </div>
+                <div className="space-y-6 text-gray-600 leading-relaxed max-w-6xl text-sm md:text-base">
+                  <p>
+                    The Tutorial Center is an innovative educational platform
+                    designed to strengthen academic performance, career clarity,
+                    and institutional efficiency across Africa. By integrating
+                    Tutors, Course Advisors, and Administrative Leadership into
+                    one coordinated system, the platform addresses critical gaps
+                    in African education — including poor guidance, inconsistent
+                    teaching quality, and weak academic monitoring systems.
+                  </p>
+                  <p>
+                    The platform is built to improve access, quality, and
+                    structure in learning environments in senior secondary school.
+                  </p>
+                </div>
+              </ScrollReveal>
 
+              <ScrollReveal delay={0.2} direction="up" distance={30}>
               <div className="grid md:grid-cols-2 gap-4 mb-10 mt-8">
                 {/* Mission Card */}
            
@@ -109,6 +115,8 @@ const Career = () => {
   </div>
 </div>
 </div>
+              </ScrollReveal>
+              <ScrollReveal delay={0.3} direction="up" distance={30}>
               <div>
                 <h4 className="text-[#3B82F6] font-bold text-lg mb-6 uppercase tracking-wide">
                   Available Roles
@@ -138,6 +146,7 @@ const Career = () => {
                   </button>
                 </div>
               </div>
+              </ScrollReveal>
             </div>
           </div>
         </div>
@@ -154,7 +163,8 @@ const Career = () => {
           {/* 2. CONTENT AREA */}
           <div className="Container mt-20 flex flex-col md:flex-row items-start gap-16">
             {/* Left Side: Requirements and Positions */}
-            <div className="w-full md:w-1/2">
+            <ScrollReveal delay={0.1} direction="left" distance={40} className="w-full md:w-1/2">
+            <div className="w-full">
               <div className="mb-10">
                 <h4 className="text-[#3B82F6] font-extrabold text-base mb-4 uppercase tracking-wider">
                   Role Requirement
@@ -206,9 +216,10 @@ const Career = () => {
                 Apply Now
               </button>
             </div>
+            </ScrollReveal>
 
             {/* Right Side: Featured Image */}
-            <div className="w-full md:w-1/2 flex justify-end">
+            <ScrollReveal delay={0.2} direction="right" distance={40} className="w-full md:w-1/2 flex justify-end">
               <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-md border-[2px] border-white ring-1 ring-gray-100">
                 <img
                   src={handCup}
@@ -216,7 +227,7 @@ const Career = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-            </div>
+            </ScrollReveal>
           </div>
         </section>
 
@@ -233,7 +244,7 @@ const Career = () => {
           {/* 2. CONTENT AREA */}
           <div className="Container mt-20 flex flex-col md:flex-row items-center gap-16">
             {/* Featured Image */}
-            <div className="w-full md:w-1/2 order-2 md:order-1">
+            <ScrollReveal delay={0.1} direction="left" distance={40} className="w-full md:w-1/2 order-2 md:order-1">
               <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-md border-[2px] border-white ring-1 ring-gray-100">
                 <img
                   src={handCup}
@@ -241,10 +252,11 @@ const Career = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-            </div>
+            </ScrollReveal>
 
             {/* Content */}
-            <div className="w-full md:w-1/2 order-1 md:order-2">
+            <ScrollReveal delay={0.2} direction="right" distance={40} className="w-full md:w-1/2 order-1 md:order-2">
+              <div className="w-full">
               <div className="mb-8">
                 <h4 className="text-[#3B82F6] font-extrabold text-base mb-4 uppercase tracking-wider">
                   Role Requirement
@@ -279,7 +291,8 @@ const Career = () => {
               >
                 Apply Now
               </button>
-            </div>
+              </div>
+            </ScrollReveal>
           </div>
         </section>
 
@@ -298,7 +311,8 @@ const Career = () => {
           {/* 2. CONTENT AREA */}
           <div className="Container mt-20 flex flex-col md:flex-row items-center gap-12">
             {/* Left Side: Text */}
-            <div className="w-full md:w-1/2">
+            <ScrollReveal delay={0.1} direction="left" distance={40} className="w-full md:w-1/2">
+            <div className="w-full">
               <div className="mb-8">
                 <h4 className="text-[#3B82F6] font-extrabold text-base mb-4 uppercase tracking-wider">
                   Role Requirement
@@ -344,9 +358,10 @@ const Career = () => {
                 Apply Now
               </button>
             </div>
+            </ScrollReveal>
 
             {/* Right Side: Image */}
-            <div className="w-full md:w-1/2 flex justify-end">
+            <ScrollReveal delay={0.2} direction="right" distance={40} className="w-full md:w-1/2 flex justify-end">
               <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-md border-[2px] border-white ring-1 ring-gray-100">
                 <img
                   src={handCup}
@@ -354,7 +369,7 @@ const Career = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-            </div>
+            </ScrollReveal>
           </div>
         </section>
 
@@ -376,7 +391,7 @@ const Career = () => {
           {/* 2. CONTENT AREA */}
           <div className="Container mt-20 flex flex-col md:flex-row items-center gap-16 relative z-10">
             {/* Featured Image */}
-            <div className="w-full md:w-1/2 order-2 md:order-1">
+            <ScrollReveal delay={0.1} direction="left" distance={40} className="w-full md:w-1/2 order-2 md:order-1">
               <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-2xl border-[4px] border-white/20 ring-4 ring-[#BB9E7F]/30 transform hover:scale-[1.02] transition-transform duration-500">
                 <img
                   src={studentAffiliateImg}
@@ -384,10 +399,11 @@ const Career = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-            </div>
+            </ScrollReveal>
 
             {/* Content */}
-            <div className="w-full md:w-1/2 order-1 md:order-2">
+            <ScrollReveal delay={0.2} direction="right" distance={40} className="w-full md:w-1/2 order-1 md:order-2">
+              <div className="w-full">
               <div className="mb-10 bg-black/20 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-xl">
                 <h4 className="text-[#BB9E7F] font-black text-xl mb-4 uppercase tracking-[0.2em] drop-shadow-md">
                   Role Requirement
@@ -419,7 +435,8 @@ const Career = () => {
               >
                 Join Now
               </a>
-            </div>
+              </div>
+            </ScrollReveal>
           </div>
         </section>
       </div>

@@ -34,23 +34,20 @@ export default function ExamManagement() {
         }
       };
 
-      console.log("[ExamManagement] Fetching Exam Bodies, Courses, and Years");
+      console.log("[ExamManagement] Fetching Exam Bodies and Courses via new drilldown API");
       
-      const [examRes, coursesRes, yearsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/admin/exam-bodies/all`, config),
-        axios.get(`${API_BASE_URL}/api/courses`, config),
-        axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config)
+      const [examRes, coursesRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/admin/exam-data/bodies`, config),
+        axios.get(`${API_BASE_URL}/api/courses`, config)
       ]);
 
       console.log("[ExamManagement] Exam Bodies Response:", examRes.data);
       console.log("[ExamManagement] Courses Response:", coursesRes.data);
 
-      const fetchedExams = examRes.data?.exam_bodies || examRes.data?.data || examRes.data || [];
+      const fetchedExams = Array.isArray(examRes.data) ? examRes.data : (examRes.data?.exam_bodies || examRes.data?.data || []);
       const fetchedCourses = coursesRes.data?.data || coursesRes.data?.courses || [];
-      const fetchedYears = yearsRes.data?.data || yearsRes.data?.exam_years || [];
 
       // Map course banners to exams
-      // Map everything
       const examsFinal = fetchedExams.map(exam => {
         const matchingCourse = fetchedCourses.find(c => String(c.id) === String(exam.course_id));
         let bannerPath = matchingCourse?.banner || matchingCourse?.image || exam.image;
@@ -59,18 +56,11 @@ export default function ExamManagement() {
           bannerPath = `${API_BASE_URL}/storage/${bannerPath}`;
         }
 
-        // Count unique subjects for this body
-        const uniqueSubjects = new Set(
-          fetchedYears
-            .filter(y => String(y.exam_body_id) === String(exam.id))
-            .map(y => y.subject_id)
-        );
-
         return {
           ...exam,
           image: bannerPath,
           courseName: matchingCourse?.title || "General",
-          subjectCount: uniqueSubjects.size
+          subjectCount: exam.exam_years_count || 0
         };
       });
 
