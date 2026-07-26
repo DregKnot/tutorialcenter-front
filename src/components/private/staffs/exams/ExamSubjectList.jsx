@@ -24,10 +24,9 @@ export default function ExamSubjectList() {
     setLoading(true);
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      console.log("[ExamSubjectList] Fetching Exam Bodies:", `${API_BASE_URL}/api/admin/exam-bodies/all`);
-      const res = await axios.get(`${API_BASE_URL}/api/admin/exam-bodies/all`, config);
-      console.log("[ExamSubjectList] Exam Bodies Response:", res.data);
-      const bodies = res.data?.exam_bodies || res.data?.data || res.data || [];
+      console.log("[ExamSubjectList] Fetching Exam Bodies:", `${API_BASE_URL}/api/admin/exam-data/bodies`);
+      const res = await axios.get(`${API_BASE_URL}/api/admin/exam-data/bodies`, config);
+      const bodies = Array.isArray(res.data) ? res.data : (res.data?.exam_bodies || res.data?.data || []);
       const currentBody = bodies.find(b => String(b.id) === String(bodyId));
       setExamBody(currentBody);
     } catch (err) {
@@ -41,48 +40,39 @@ export default function ExamSubjectList() {
     fetchBody();
   }, [fetchBody]);
 
-  // Fetch Subjects from Exam Years (extracting unique subjects for this body)
+  // Fetch Subjects via new drilldown API
   useEffect(() => {
-    const fetchSubjectsFromYears = async () => {
+    const fetchSubjects = async () => {
       setLoading(true);
       try {
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        console.log("[ExamSubjectList] Fetching Exam Years to extract Subjects:", `${API_BASE_URL}/api/admin/exam-years/all`);
-        const res = await axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config);
-        console.log("[ExamSubjectList] Exam Years Response:", res.data);
+        console.log("[ExamSubjectList] Fetching Subjects via drilldown API:", `${API_BASE_URL}/api/admin/exam-data/subjects?exam_body_id=${bodyId}`);
+        const res = await axios.get(`${API_BASE_URL}/api/admin/exam-data/subjects?exam_body_id=${bodyId}`, config);
         
-        const allYears = res.data?.data || res.data?.exam_years || [];
+        const subjectsData = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.subjects || []);
         
-        // Filter years by bodyId and extract unique subjects
-        const bodyYears = allYears.filter(y => String(y.exam_body_id) === String(bodyId));
-        
-        const uniqueSubjectsMap = {};
-        bodyYears.forEach(y => {
-          if (y.subject) {
-            let subjectImage = y.subject.image || y.subject.banner;
-            if (subjectImage && !subjectImage.startsWith('http')) {
-              subjectImage = `${API_BASE_URL}/storage/${subjectImage}`;
-            }
-
-            uniqueSubjectsMap[y.subject.id] = {
-              ...y.subject,
-              image: subjectImage,
-              yearCount: (uniqueSubjectsMap[y.subject.id]?.yearCount || 0) + 1
-            };
+        const formattedSubjects = subjectsData.map(sub => {
+          let subjectImage = sub.image || sub.banner;
+          if (subjectImage && !subjectImage.startsWith('http')) {
+            subjectImage = `${API_BASE_URL}/storage/${subjectImage}`;
           }
+          return {
+            ...sub,
+            image: subjectImage,
+            yearCount: sub.exam_years_count || 0
+          };
         });
         
-        const extractedSubjects = Object.values(uniqueSubjectsMap);
-        console.log("[ExamSubjectList] Extracted Subjects for Body:", bodyId, extractedSubjects);
-        setSubjects(extractedSubjects);
+        console.log("[ExamSubjectList] Formatted Subjects for Body:", bodyId, formattedSubjects);
+        setSubjects(formattedSubjects);
       } catch (err) {
-        console.error("Failed to extract subjects from years:", err);
+        console.error("Failed to fetch subjects:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSubjectsFromYears();
+    fetchSubjects();
   }, [bodyId, API_BASE_URL, token]);
 
   return (

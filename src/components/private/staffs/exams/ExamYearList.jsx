@@ -25,26 +25,19 @@ export default function ExamYearList() {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       
-      // Fetch Context Details
-      console.log("[ExamYearList] Fetching Exam Bodies:", `${API_BASE_URL}/api/admin/exam-bodies/all`);
-      console.log("[ExamYearList] Fetching Exam Years:", `${API_BASE_URL}/api/admin/exam-years/all`);
+      console.log("[ExamYearList] Fetching Bodies, Subjects, and Years via new drilldown API");
       
-      const [bodiesRes, yearsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/admin/exam-bodies/all`, config),
-        axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config)
+      const [bodiesRes, subjectsRes, yearsRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/admin/exam-data/bodies`, config),
+        axios.get(`${API_BASE_URL}/api/admin/exam-data/subjects?exam_body_id=${bodyId}`, config),
+        axios.get(`${API_BASE_URL}/api/admin/exam-data/years?exam_body_id=${bodyId}&subject_id=${subjectId}`, config)
       ]);
 
-      console.log("[ExamYearList] Exam Bodies Response:", bodiesRes.data);
-      console.log("[ExamYearList] Exam Years Response:", yearsRes.data);
-
-      const bodies = bodiesRes.data?.exam_bodies || bodiesRes.data?.data || bodiesRes.data || [];
+      const bodies = Array.isArray(bodiesRes.data) ? bodiesRes.data : (bodiesRes.data?.exam_bodies || bodiesRes.data?.data || []);
       setExamBody(bodies.find(b => String(b.id) === String(bodyId)));
 
-      const allYears = yearsRes.data?.data || yearsRes.data?.exam_years || [];
-
-      // Extract subject from the year data
-      const yearWithSubject = allYears.find(y => String(y.subject_id) === String(subjectId) && y.subject);
-      const currentSubject = yearWithSubject?.subject || null;
+      const subjects = Array.isArray(subjectsRes.data) ? subjectsRes.data : (subjectsRes.data?.subjects || subjectsRes.data?.data || []);
+      const currentSubject = subjects.find(s => String(s.id) === String(subjectId));
       setSubject(currentSubject);
 
       let subjectImage = currentSubject?.image || currentSubject?.banner;
@@ -52,49 +45,43 @@ export default function ExamYearList() {
         subjectImage = `${API_BASE_URL}/storage/${subjectImage}`;
       }
 
-      const filteredYearsRaw = allYears.filter(y => 
-        String(y.exam_body_id) === String(bodyId) && 
-        String(y.subject_id) === String(subjectId)
-      );
+      const yearsData = Array.isArray(yearsRes.data) ? yearsRes.data : (yearsRes.data?.data || yearsRes.data?.exam_years || []);
 
-      const filteredYears = await Promise.all(
-        filteredYearsRaw.map(async (y) => {
+      const formattedYears = await Promise.all(
+        yearsData.map(async (y) => {
           let yearImage = subjectImage || y.image || y.banner;
           if (yearImage && !yearImage.startsWith('http')) {
             yearImage = `${API_BASE_URL}/storage/${yearImage}`;
           }
 
-          try {
-            const countRes = await axios.get(
-              `${API_BASE_URL}/api/admin/past-questions/all?exam_year_id=${y.id}&per_page=1`,
-              config
-            );
-            const totalCount = 
-              countRes.data?.questions?.total || 
-              countRes.data?.total || 
-              countRes.data?.questions?.data?.length || 
-              countRes.data?.data?.length || 
-              0;
-            return { ...y, image: yearImage, questionCount: totalCount };
-          } catch (e) {
-            console.error(`Failed to fetch count for year ${y.id}:`, e);
-            return { ...y, image: yearImage, questionCount: 0 };
+          let totalCount = y.questions_count || y.past_questions_count || 0;
+          if (!totalCount) {
+            try {
+              const countRes = await axios.get(
+                `${API_BASE_URL}/api/admin/exam-data/questions?exam_year_id=${y.id}&page=1`,
+                config
+              );
+              totalCount = 
+                countRes.data?.total || 
+                countRes.data?.meta?.total || 
+                countRes.data?.questions?.total || 
+                countRes.data?.data?.length || 
+                0;
+            } catch (e) {
+              console.error(`Failed to fetch count for year ${y.id}:`, e);
+            }
           }
+
+          return {
+            ...y,
+            image: yearImage,
+            questionCount: totalCount
+          };
         })
       );
 
-      // Helper to extract numeric year from string (e.g. "Year 2024" or "2024/25" -> 2024)
-      const extractNumericYear = (yearVal) => {
-        if (!yearVal) return 0;
-        const match = String(yearVal).match(/\d{4}/);
-        return match ? parseInt(match[0], 10) : 0;
-      };
-
-      // Sort descending so newest year (e.g. 2026, 2025) comes first
-      const sortedYears = filteredYears.sort((a, b) => extractNumericYear(b.year) - extractNumericYear(a.year));
-
-      console.log("[ExamYearList] Filtered & Prefixed Years with Counts:", { bodyId, subjectId }, sortedYears);
-      setYears(sortedYears);
+      console.log("[ExamYearList] Formatted Years with Counts:", { bodyId, subjectId }, formattedYears);
+      setYears(formattedYears);
       
     } catch (err) {
       console.error("Failed to fetch years:", err);
