@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import { stripHtmlAndDecode } from "../../../utils/textUtils";
 import { 
   XMarkIcon, 
   CameraIcon, 
@@ -49,7 +50,7 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses, sho
     setLoading(true);
     console.group("Subject Creation: Submit Form");
     
-    const plainDescription = description.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ");
+    const plainDescription = stripHtmlAndDecode(description);
     
     const formData = new FormData();
     formData.append("name", subjectName);

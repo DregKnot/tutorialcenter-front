@@ -12,6 +12,7 @@ import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import ExamBodyCreateModal from "./ExamBodyCreateModal";
 import ExamYearCreateModal from "./ExamYearCreateModal";
+import { stripHtmlAndDecode } from "../../../../utils/textUtils";
 
 export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -137,7 +138,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
       if (groupType === "none") {
         formData.append("type", "");
       } else {
-        const plainGroupContent = groupContent.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ");
+        const plainGroupContent = stripHtmlAndDecode(groupContent);
         formData.append("type", groupType);
         formData.append("title", groupTitle);
         formData.append("content", plainGroupContent);

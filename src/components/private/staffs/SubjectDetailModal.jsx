@@ -66,9 +66,12 @@ export default function SubjectDetailModal({ isOpen, subject, course, onClose, o
                 <div className="w-1.5 h-6 bg-[#BB9E7F] rounded-full"></div>
                 <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.25em]">Syllabus Overview</h3>
               </div>
-              <p className="text-lg text-[#0F2843] dark:text-gray-300 leading-relaxed font-bold whitespace-pre-wrap">
-                {subject.description?.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") || "This subject module provides in-depth comprehensive learning materials and interactive sessions designed to help students master the complexities of the topic and prepare for excellence."}
-              </p>
+              <div 
+                className="text-lg text-[#0F2843] dark:text-gray-300 leading-relaxed font-medium quill-content break-words"
+                dangerouslySetInnerHTML={{ 
+                  __html: subject.description || "This subject module provides in-depth comprehensive learning materials and interactive sessions designed to help students master the complexities of the topic and prepare for excellence." 
+                }}
+              />
             </div>
 
             {/* Parent Curriculum & Info */}

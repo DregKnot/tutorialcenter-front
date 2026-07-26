@@ -18,8 +18,9 @@ import CourseEdit from "../../../components/private/staffs/CourseEdit.jsx";
 import DisenrolledCourses from "../../../components/private/staffs/DisenrolledCourses.jsx";
 import CourseCreate from "../../../components/private/staffs/CourseCreate.jsx";
 import CourseDetailModal from "../../../components/private/staffs/CourseDetailModal.jsx";
-import SubjectCreate from "../../../components/private/staffs/SubjectCreate.jsx";
 import SubjectDetailModal from "../../../components/private/staffs/SubjectDetailModal.jsx";
+import SubjectCreate from "../../../components/private/staffs/SubjectCreate.jsx";
+import { stripHtmlAndDecode } from "../../../utils/textUtils.js";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
@@ -307,7 +308,7 @@ export default function CoursesManagement() {
                       
                       <h3 className="text-xl font-black text-[#0F2843] dark:text-white leading-tight mb-2 group-hover:text-[#BB9E7F] transition-colors uppercase tracking-tight">{course.title}</h3>
                       <p className="text-[11px] text-gray-400 font-bold mb-4 line-clamp-2">
-                        {course.description?.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") || "Comprehensive academic tutoring program."}
+                        {stripHtmlAndDecode(course.description) || "Comprehensive academic tutoring program."}
                       </p>
                       
                       <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-700 flex items-center gap-2">
@@ -414,7 +415,7 @@ export default function CoursesManagement() {
                                 {subject.name}
                               </h3>
                               <p className="text-[10px] text-white/60 font-medium line-clamp-2 uppercase tracking-wide">
-                                {subject.description?.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") || "In-depth academic module."}
+                                {stripHtmlAndDecode(subject.description) || "In-depth academic module."}
                               </p>
                             </div>
 

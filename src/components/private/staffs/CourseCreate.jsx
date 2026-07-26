@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import { stripHtmlAndDecode } from "../../../utils/textUtils";
 import { 
   XMarkIcon, 
   CameraIcon, 
@@ -45,8 +46,8 @@ export default function CourseCreate({ isOpen, onClose, onSuccess, showToast }) 
     setLoading(true);
     console.group("Course Creation: Submit Form");
     
-    // Strip HTML tags from description for submission as requested
-    const plainDescription = description.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ");
+    // Clean and decode HTML description for submission
+    const plainDescription = stripHtmlAndDecode(description);
     
     // Using FormData for banner upload
     const formData = new FormData();

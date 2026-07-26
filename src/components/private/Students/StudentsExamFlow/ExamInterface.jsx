@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import { useTimer } from "react-timer-hook";
+import { stripHtmlAndDecode } from "../../../../utils/textUtils";
 
 export default function ExamInterface({
   attemptId,
@@ -316,7 +317,7 @@ export default function ExamInterface({
 
   const cleanText = (htmlStr) => {
     if (!htmlStr) return "";
-    return htmlStr.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    return stripHtmlAndDecode(htmlStr);
   };
 
   // Active element

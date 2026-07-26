@@ -21,6 +21,7 @@ const ModalInput = ({
   placeholder = "", 
   isSelect = false, 
   options = [],
+  error,
   className = "" 
 }) => {
   return (
@@ -37,7 +38,7 @@ const ModalInput = ({
             value={value || ""}
             onChange={onChange}
             disabled={disabled}
-            className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all appearance-none disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50"
+            className={`w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border ${error ? "border-red-500" : "border-gray-200 dark:border-gray-700"} rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all appearance-none disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50`}
           >
             <option value="" disabled>{placeholder || `Select ${label}`}</option>
             {options.map(opt => (
@@ -52,7 +53,7 @@ const ModalInput = ({
             onChange={onChange}
             disabled={disabled}
             placeholder={placeholder}
-            className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50"
+            className={`w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border ${error ? "border-red-500" : "border-gray-200 dark:border-gray-700"} rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50`}
           />
         )}
 
@@ -65,6 +66,9 @@ const ModalInput = ({
           )}
         </div>
       </div>
+      {error && (
+        <p className="text-[11px] text-red-500 font-bold ml-1">{error}</p>
+      )}
     </div>
   );
 };
@@ -133,9 +137,23 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 2048 * 1024) {
+        setErrors(prev => ({ ...prev, profile_picture: "Image size must not exceed 2MB." }));
+        setToast({ type: "error", message: "Image size must not exceed 2MB." });
+        return;
+      }
+      const validTypes = ["image/jpeg", "image/png", "image/jpg"];
+      if (!validTypes.includes(file.type)) {
+        setErrors(prev => ({ ...prev, profile_picture: "Please select a JPG or PNG image." }));
+        setToast({ type: "error", message: "Please select a JPG or PNG image." });
+        return;
+      }
       setStaff(prev => ({ ...prev, profile_picture: file }));
       setImagePreview(URL.createObjectURL(file));
       setIsEditing(true);
+      if (errors.profile_picture) {
+        setErrors(prev => ({ ...prev, profile_picture: null }));
+      }
     }
   };
 
@@ -262,52 +280,58 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
           {/* Top Section: Avatar + Primary Fields */}
           <div className="flex flex-col md:flex-row gap-6 mb-8 items-start">
             {/* Avatar Selection */}
+            <div className="w-44 shrink-0 flex flex-col items-center">
               <div 
-              className="w-44 h-44 shrink-0 relative cursor-pointer group"
-              onClick={() => isEditing && fileInputRef.current?.click()}
-            >
-              <div className="w-full h-full rounded-[20px] overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center relative">
-                {imagePreview ? (
-                  <img 
-                    src={imagePreview}
-                    className="w-full h-full object-cover"
-                    alt="Profile" 
-                  />
-                ) : (
-                  <div className="w-full h-full bg-[#0F2843] dark:bg-gray-700 text-white flex items-center justify-center text-5xl font-black">
-                    {(staff.firstname?.[0] || "U").toUpperCase()}
-                  </div>
+                className="w-44 h-44 shrink-0 relative cursor-pointer group"
+                onClick={() => !isSuspended && fileInputRef.current?.click()}
+              >
+                <div className="w-full h-full rounded-[20px] overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center relative">
+                  {imagePreview ? (
+                    <img 
+                      src={imagePreview}
+                      className="w-full h-full object-cover"
+                      alt="Profile" 
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#0F2843] dark:bg-gray-700 text-white flex items-center justify-center text-5xl font-black">
+                      {(staff.firstname?.[0] || "U").toUpperCase()}
+                    </div>
+                  )}
+                  {isEditing && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Icon icon="heroicons:camera" className="w-8 h-8 text-white" />
+                    </div>
+                  )}
+                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  hidden 
+                  accept=".jpg,.jpeg,.png,image/jpeg,image/png" 
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={handleImageChange} 
+                />
+                {!isSuspended && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#0F2843] text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white hover:bg-[#BB9E7F] hover:scale-105 active:scale-95 transition-all z-20"
+                    title="Edit Profile Picture"
+                  >
+                    <Icon icon="lucide:pencil" className="w-4 h-4" />
+                  </button>
                 )}
-                {isEditing && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Icon icon="heroicons:camera" className="w-8 h-8 text-white" />
+                {isSuspended && (
+                  <div className="absolute -top-2 -right-2 bg-red-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">
+                    Suspended
                   </div>
                 )}
               </div>
-              <input 
-                type="file" 
-                ref={fileInputRef}
-                hidden 
-                accept="image/*" 
-                onChange={handleImageChange} 
-              />
-              {!isSuspended && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    fileInputRef.current?.click();
-                  }}
-                  className="absolute -bottom-1 -right-1 w-9 h-9 bg-[#0F2843] text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white hover:bg-[#BB9E7F] hover:scale-105 active:scale-95 transition-all z-20"
-                  title="Edit Profile Picture"
-                >
-                  <Icon icon="lucide:pencil" className="w-4 h-4" />
-                </button>
-              )}
-              {isSuspended && (
-                <div className="absolute -top-2 -right-2 bg-red-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">
-                  Suspended
-                </div>
+              {errors.profile_picture && (
+                <p className="text-[11px] text-red-500 font-bold mt-2 text-center w-full">{errors.profile_picture}</p>
               )}
             </div>
 
@@ -321,6 +345,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 onChange={handleChange} 
                 disabled={!isEditing}
                 placeholder="First Name"
+                error={errors.firstname}
               />
               <ModalInput 
                 label="Last Name" 
@@ -330,6 +355,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 onChange={handleChange} 
                 disabled={!isEditing}
                 placeholder="Surname"
+                error={errors.surname}
               />
               <ModalInput 
                 label="Middle Name" 
@@ -339,6 +365,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 onChange={handleChange} 
                 disabled={!isEditing}
                 placeholder="Middle Name"
+                error={errors.middlename}
               />
               <ModalInput 
                 label="Email" 
@@ -348,6 +375,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 onChange={handleChange} 
                 disabled={!isEditing}
                 placeholder="Email Address"
+                error={errors.email}
               />
             </div>
           </div>
@@ -368,6 +396,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                   { label: "Female", value: "female" },
                   { label: "Others", value: "others" }
                 ]}
+                error={errors.gender}
               />
               <ModalInput 
                 label="Date of Birth" 
@@ -377,6 +406,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 onChange={handleChange} 
                 disabled={!isEditing}
                 type="date"
+                error={errors.date_of_birth}
               />
             </div>
 
@@ -395,6 +425,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 { label: "Advisor", value: "advisor" },
                 {label: "Moderator", value: "moderator"}
               ]}
+              error={errors.role}
             />
 
             {/* Teaching Info (Classes) */}
@@ -439,6 +470,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                     { label: "Abuja", value: "Abuja" },
                     { label: "Port Harcourt", value: "Port Harcourt" }
                 ]}
+                error={errors.location}
               />
             </div>
 
@@ -452,8 +484,11 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 disabled={!isEditing}
                 rows={1}
                 placeholder="Full Home Address"
-                className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50 resize-none"
+                className={`w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border ${errors.address ? "border-red-500" : "border-gray-200 dark:border-gray-700"} rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50 resize-none`}
               />
+              {errors.address && (
+                <p className="text-[11px] text-red-500 font-bold ml-1">{errors.address}</p>
+              )}
             </div>
           </div>
         </div>
@@ -462,7 +497,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
         <div className="px-8 pb-8 flex items-center gap-4">
           {/* Left Action: Back/Suspend */}
           <button 
-            onClick={onClose}
+            onClick={isEditing ? () => { setIsEditing(false); setErrors({}); setImagePreview(null); fetchStaffDetails(); } : onClose}
             className="flex-1 py-4 bg-[#E83831] text-white font-black text-sm uppercase tracking-widest rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             {isEditing ? "Cancel" : "Back"}
