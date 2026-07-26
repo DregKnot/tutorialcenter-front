@@ -105,7 +105,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose, isEx
       <aside
         className={`
           fixed top-0 lg:top-2 left-0 lg:left-2 z-[60] lg:z-50 
-          h-screen lg:h-[calc(100vh-22px)]
+          h-[calc(100vh-4rem)] lg:h-[calc(100vh-22px)]
           bg-white dark:bg-gray-900
           transition-all duration-300
           ${collapsed ? "w-20" : "w-64"}
@@ -226,7 +226,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose, isEx
             </nav>
 
             {/* Mobile Footer */}
-            <div className="p-2 md:p-3 lg:p-4 pt-2 md:pt-3 lg:pt-4 pb-20 space-y-3 md:space-y-4 lg:space-y-5 mt-auto lg:hidden border-t border-gray-100 dark:border-gray-800">
+            <div className="p-2 md:p-3 lg:p-4 pt-2 md:pt-3 lg:pt-4 pb-12 space-y-3 md:space-y-4 lg:space-y-5 mt-auto lg:hidden border-t border-gray-100 dark:border-gray-800">
               {/* Theme Toggle (Mobile) */}
               <div className={`flex items-center gap-1 ${collapsed ? "justify-center" : "justify-between px-2"}`}>
                 {!collapsed && <span className="text-xs text-gray-500">Light</span>}
