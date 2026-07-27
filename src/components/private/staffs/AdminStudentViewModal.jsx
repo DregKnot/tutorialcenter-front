@@ -145,6 +145,9 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
   const studentInfo = Array.isArray(student?.information) ? student.information[0] : (student?.information || {});
   const isSuspended = !!student?.deleted_at || !!studentInfo?.deleted_at || student?.account_status === "suspended" || student?.banned === 1;
 
+  const enrolledSubjects = student?.enrolled_subjects || student?.enrolled_subject || studentInfo?.enrolled_subjects || studentInfo?.enrolled_subject || student?.subjects || [];
+  const enrolledCourses = student?.courses || student?.course_enrollments || studentInfo?.courses || studentInfo?.course_enrollments || [];
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md px-4 py-8 animate-in fade-in duration-300">
       
@@ -304,31 +307,52 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
             </div>
 
             {/* Enrolled Courses & Subjects */}
-            {studentInfo?.course_enrollments && studentInfo.course_enrollments.length > 0 && (
-              <div className="space-y-3">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Enrolled Courses & Subjects</label>
-                <div className="flex flex-col gap-3">
-                  {studentInfo.course_enrollments.map((ce, idx) => (
-                    <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-                      <p className="font-bold text-sm text-[#0F2843] dark:text-white mb-2">
-                        {ce.course?.title || `Course ID: ${ce.course_id}`}
-                      </p>
-                      {ce.course?.subjects && ce.course.subjects.length > 0 ? (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {ce.course.subjects.map((sub, sIdx) => (
-                            <span key={sIdx} className="px-2.5 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] rounded-md text-[10px] font-bold border border-[#BB9E7F]/20">
-                              {sub.title || sub.name}
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Enrolled Courses & Subjects</label>
+              {(enrolledSubjects.length > 0 || enrolledCourses.length > 0) ? (
+                <div className="space-y-3">
+                  {/* Display Courses if available */}
+                  {enrolledCourses.length > 0 && (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                      <p className="text-[11px] font-black uppercase text-gray-400 tracking-wider mb-2.5">Enrolled Courses ({enrolledCourses.length})</p>
+                      <div className="flex flex-wrap gap-2">
+                        {enrolledCourses.map((ce, idx) => {
+                          const courseName = ce?.title || ce?.name || ce?.course?.title || ce?.course?.name || `Course ID: ${ce?.id || ce?.course_id}`;
+                          return (
+                            <span key={idx} className="px-3 py-1.5 bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-white rounded-lg text-xs font-bold border border-[#0F2843]/20 dark:border-white/20 flex items-center gap-1.5">
+                              <Icon icon="heroicons:academic-cap-solid" className="w-3.5 h-3.5" />
+                              {courseName}
                             </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-gray-400">No subjects listed for this course.</p>
-                      )}
+                          );
+                        })}
+                      </div>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Display Enrolled Subjects */}
+                  {enrolledSubjects.length > 0 && (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                      <p className="text-[11px] font-black uppercase text-gray-400 tracking-wider mb-2.5">Enrolled Subjects ({enrolledSubjects.length})</p>
+                      <div className="flex flex-wrap gap-2">
+                        {enrolledSubjects.map((sub, idx) => {
+                          const subName = sub?.title || sub?.name || sub?.subject?.title || sub?.subject?.name || sub?.subject_name || `Subject ID: ${sub?.id || sub?.subject_id}`;
+                          return (
+                            <span key={idx} className="px-3 py-1.5 bg-[#BB9E7F]/15 text-[#BB9E7F] dark:text-[#d4b592] rounded-lg text-xs font-bold border border-[#BB9E7F]/30 shadow-sm flex items-center gap-1.5">
+                              <Icon icon="heroicons:book-open-solid" className="w-3.5 h-3.5" />
+                              {subName}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-gray-700">
+                  <p className="text-sm font-semibold text-gray-500">No enrolled subjects or courses found</p>
+                </div>
+              )}
+            </div>
 
             {/* Status */}
             <div className="space-y-6">

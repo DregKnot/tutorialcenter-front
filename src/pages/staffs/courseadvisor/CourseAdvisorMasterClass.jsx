@@ -104,27 +104,54 @@ export default function CourseAdvisorMasterClass() {
     };
   }, [scheduleData, searchQuery]);
 
-  // --- ACTIONS ---
   const handleSaveVideoLink = async () => {
     if (!selectedSession) return;
     setSaveLoading(true);
+
+    // Ensure link starts with http:// or https:// to satisfy Laravel's 'required|url' validator
+    let formattedLink = (videoLink || "").trim();
+    if (formattedLink && !/^https?:\/\//i.test(formattedLink)) {
+      formattedLink = "https://" + formattedLink;
+    }
+
+    const payload = {
+      session_id: selectedSession.id,
+      class_session_id: selectedSession.id,
+      class_id: selectedSession.class_id || selectedSession.id,
+      id: selectedSession.id,
+      recording_link: formattedLink,
+      recording_url: formattedLink,
+      video_url: formattedLink
+    };
+    const headers = { 
+      "Authorization": `Bearer ${token}`,
+      "Accept": "application/json" 
+    };
+
     try {
-      await axios.post(`${API_BASE_URL}/api/classes/session/recording`, {
-        session_id: selectedSession.id, // Or class_id if that's what the endpoint expects
-        recording_link: videoLink
-      }, {
-        headers: { 
-          "Authorization": `Bearer ${token}`,
-          "Accept": "application/json" 
+      try {
+        await axios.post(`${API_BASE_URL}/api/staffs/classes/session/recording`, payload, { headers });
+      } catch (err1) {
+        console.warn("Primary staffs recording endpoint not found, trying without 's':", err1?.message);
+        try {
+          await axios.post(`${API_BASE_URL}/api/classes/session/recording`, payload, { headers });
+        } catch (err2) {
+          console.warn("Standard route not found, trying advisor route:", err2?.message);
+          try {
+            await axios.post(`${API_BASE_URL}/api/advisor/classes/session/recording`, payload, { headers });
+          } catch (err3) {
+            await axios.post(`${API_BASE_URL}/api/staff/classes/session/recording`, payload, { headers });
+          }
         }
-      });
+      }
       
-      setToast({ type: "success", message: "Recording frequency updated successfully!" });
+      setToast({ type: "success", message: "Recording link updated successfully!" });
       setSelectedSession(null);
       fetchSessions();
     } catch (error) {
-      console.error("Save error:", error);
-      setToast({ type: "error", message: "Failed to update recording link." });
+      console.error("Save recording error:", error);
+      const backendMsg = error?.response?.data?.message || error?.response?.data?.error || "Failed to update recording link.";
+      setToast({ type: "error", message: backendMsg });
     } finally {
       setSaveLoading(false);
     }
