@@ -200,12 +200,21 @@ export default function CourseAdvisorCalendar() {
   const handleSaveVideoLink = async () => {
     if (!selectedSession) return;
     setSaveLoading(true);
+
+    // Ensure link starts with http:// or https:// to satisfy Laravel's 'required|url' validator
+    let formattedLink = (videoLink || "").trim();
+    if (formattedLink && !/^https?:\/\//i.test(formattedLink)) {
+      formattedLink = "https://" + formattedLink;
+    }
+
     const payload = {
       session_id: selectedSession.id,
       class_session_id: selectedSession.id,
-      recording_link: videoLink,
-      recording_url: videoLink,
-      video_url: videoLink
+      class_id: selectedSession.class_id || selectedSession.id,
+      id: selectedSession.id,
+      recording_link: formattedLink,
+      recording_url: formattedLink,
+      video_url: formattedLink
     };
     const headers = { 
       Authorization: `Bearer ${token}`,
@@ -214,13 +223,18 @@ export default function CourseAdvisorCalendar() {
 
     try {
       try {
-        await axios.post(`${API_BASE_URL}/api/classes/session/recording`, payload, { headers });
+        await axios.post(`${API_BASE_URL}/api/staffs/classes/session/recording`, payload, { headers });
       } catch (err1) {
-        console.warn("Primary recording endpoint notice, trying advisor recording route:", err1?.message);
+        console.warn("Primary staffs recording endpoint not found, trying without 's':", err1?.message);
         try {
-          await axios.post(`${API_BASE_URL}/api/advisor/classes/session/recording`, payload, { headers });
+          await axios.post(`${API_BASE_URL}/api/classes/session/recording`, payload, { headers });
         } catch (err2) {
-          await axios.put(`${API_BASE_URL}/api/classes/session/recording`, payload, { headers });
+          console.warn("Standard route not found, trying advisor route:", err2?.message);
+          try {
+            await axios.post(`${API_BASE_URL}/api/advisor/classes/session/recording`, payload, { headers });
+          } catch (err3) {
+            await axios.post(`${API_BASE_URL}/api/staff/classes/session/recording`, payload, { headers });
+          }
         }
       }
       
@@ -230,7 +244,8 @@ export default function CourseAdvisorCalendar() {
       setTimeout(() => setToast(null), 3000);
     } catch (error) {
       console.error("Save recording error:", error);
-      setToast({ type: "error", message: "Failed to update recording link." });
+      const backendMsg = error?.response?.data?.message || error?.response?.data?.error || "Failed to update recording link.";
+      setToast({ type: "error", message: backendMsg });
       setTimeout(() => setToast(null), 3000);
     } finally {
       setSaveLoading(false);

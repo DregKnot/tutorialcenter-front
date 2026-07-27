@@ -163,8 +163,11 @@ export default function StudentCalendar() {
       const res = await axios.get(`${API_BASE_URL}/api/students/calendar/schedule`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
+      console.log("📅 [StudentCalendar] Raw Calendar API Response:", res.data);
       const data = res.data.sessions || res.data.schedule || res.data.data || res.data || [];
+      console.log("📅 [StudentCalendar] Extracted Calendar Data Structure:", data);
       const flatList = getFlatSessions(data);
+      console.log("📅 [StudentCalendar] Flattened Sessions List for Calendar:", flatList);
       setSessions(flatList);
     } catch (error) {
       console.error("Failed to fetch calendar schedule:", error);

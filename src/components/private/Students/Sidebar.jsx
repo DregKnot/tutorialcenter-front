@@ -105,7 +105,8 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose, isEx
       <aside
         className={`
           fixed top-0 lg:top-2 left-0 lg:left-2 z-[60] lg:z-50 
-          h-[calc(100vh-4rem)] lg:h-[calc(100vh-22px)]
+          bottom-16 lg:bottom-auto
+          h-[calc(100vh-4rem)] h-[calc(100dvh-4rem)] lg:h-[calc(100vh-22px)]
           bg-white dark:bg-gray-900
           transition-all duration-300
           ${collapsed ? "w-20" : "w-64"}
@@ -154,7 +155,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose, isEx
         {/* Scrollable Content Area */}
         <div className={`flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll flex flex-col ${collapsed ? "items-center" : "px-3 md:px-4 space-y-4"}`}>
           {/* Avatar & Name */}
-          <div className="flex flex-col min-h-0">
+          <div className="flex flex-col min-h-0 flex-1 justify-between">
             <div className={`flex py-1 md:py-2 items-center ${collapsed ? "justify-center" : "gap-2 md:gap-3"}`}>
               {studentLoaded ? (
                 <img
@@ -226,7 +227,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose, isEx
             </nav>
 
             {/* Mobile Footer */}
-            <div className="p-2 md:p-3 lg:p-4 pt-2 md:pt-3 lg:pt-4 pb-12 space-y-3 md:space-y-4 lg:space-y-5 mt-auto lg:hidden border-t border-gray-100 dark:border-gray-800">
+            <div className="p-2 md:p-3 lg:p-4 pt-2 md:pt-3 lg:pt-4 pb-3 md:pb-4 space-y-3 md:space-y-4 lg:space-y-5 mt-auto lg:hidden border-t border-gray-100 dark:border-gray-800">
               {/* Theme Toggle (Mobile) */}
               <div className={`flex items-center gap-1 ${collapsed ? "justify-center" : "justify-between px-2"}`}>
                 {!collapsed && <span className="text-xs text-gray-500">Light</span>}

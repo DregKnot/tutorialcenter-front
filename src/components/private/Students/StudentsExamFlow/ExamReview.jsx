@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
+import { stripHtmlAndDecode } from "../../../../utils/textUtils";
 
 export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -44,7 +45,7 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
 
   const cleanText = (htmlStr) => {
     if (!htmlStr) return "";
-    return htmlStr.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    return stripHtmlAndDecode(htmlStr);
   };
 
   const cleanHtmlContent = (html) => {

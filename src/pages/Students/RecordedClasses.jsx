@@ -220,7 +220,7 @@ const RecordedClasses = () => {
             {/* Video Player */}
             <div className="w-full aspect-video bg-black relative">
               <iframe
-                src={`https://www.youtube.com/embed/${selectedVideo.videoId}?autoplay=1`}
+                src={`https://youtu.be/MOclJJ7IpSY?si=XCMpWZgAvTDQK95s`}
                 title="Recorded Class Video"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

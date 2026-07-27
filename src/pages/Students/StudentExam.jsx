@@ -150,14 +150,52 @@ export default function StudentExam() {
     fetchInitialData();
   }, [fetchInitialData]);
 
+  // Derive unique, deduplicated subjects that actually have exams in availableExams for the selected course
+  const getAvailableSubjectsForCourse = (course) => {
+    if (!course || !availableExams || availableExams.length === 0) return [];
+
+    // All subject IDs assigned to this course from database mapping
+    const courseSubIds = new Set(
+      (course.subjects || course.course?.subjects || []).map(s => String(s.id))
+    );
+    const courseId = String(course.id || course.course?.id || course.course_id || "");
+
+    const uniqueSubjectsMap = new Map();
+
+    availableExams.forEach((exam) => {
+      const subId = String(exam.subject_id || exam.subject?.id);
+      if (!subId) return;
+
+      // Check if this exam belongs to the selected course:
+      // Either the subject ID is in the course's subject list, OR the exam body's course_id matches
+      const matchesCourse =
+        courseSubIds.has(subId) ||
+        (courseId && String(exam.exam_body?.course_id) === courseId);
+
+      if (matchesCourse && !uniqueSubjectsMap.has(subId)) {
+        // Find subject info from exam.subject or fallback to course subject data
+        const courseSub = (course.subjects || course.course?.subjects || []).find(s => String(s.id) === subId);
+        const examSub = exam.subject || {};
+
+        uniqueSubjectsMap.set(subId, {
+          id: exam.subject_id || exam.subject?.id || courseSub?.id,
+          name: examSub.name || examSub.title || courseSub?.name || courseSub?.title || "Unknown Subject",
+          banner: examSub.banner || examSub.image || courseSub?.banner || courseSub?.image,
+          description: examSub.description || courseSub?.description || "",
+        });
+      }
+    });
+
+    return Array.from(uniqueSubjectsMap.values());
+  };
+
   // Cross-reference: Check if subject is available in availableExams
   const isSubjectAvailable = (subjectId) => {
     if (!availableExams || availableExams.length === 0) return false;
     return availableExams.some(
       (exam) =>
         String(exam.subject_id) === String(subjectId) ||
-        String(exam.subject?.id) === String(subjectId) ||
-        String(exam.id) === String(subjectId)
+        String(exam.subject?.id) === String(subjectId)
     );
   };
 
@@ -169,8 +207,7 @@ export default function StudentExam() {
     const matched = availableExams.filter(
       (exam) =>
         String(exam.subject_id) === String(subjectId) ||
-        String(exam.subject?.id) === String(subjectId) ||
-        String(exam.id) === String(subjectId)
+        String(exam.subject?.id) === String(subjectId)
     );
 
     // Extract year information securely
@@ -537,79 +574,76 @@ export default function StudentExam() {
                   </span>
                 </div>
 
-                {!selectedCourse.subjects || selectedCourse.subjects.length === 0 ? (
-                  <div className="p-6 text-center bg-gray-50 dark:bg-gray-800/30 rounded-2xl">
-                    <p className="text-sm text-gray-400 font-bold">No subjects mapped to this course.</p>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    {/* Fade Overlays for elegant premium scroll effect */}
-                    <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#E6E9EC] dark:from-gray-900 to-transparent pointer-events-none z-10 opacity-30"></div>
-                    <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#E6E9EC] dark:from-gray-900 to-transparent pointer-events-none z-10 opacity-30"></div>
+                {(() => {
+                  const availableCourseSubjects = getAvailableSubjectsForCourse(selectedCourse);
+                  if (!availableCourseSubjects || availableCourseSubjects.length === 0) {
+                    return (
+                      <div className="p-8 text-center bg-gray-50 dark:bg-gray-800/30 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                        <Icon icon="lucide:book-open" className="w-10 h-10 text-gray-400 mx-auto mb-3 opacity-50" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-bold">No practice exams or questions are currently available for subjects in this course.</p>
+                        <p className="text-xs text-gray-400 mt-1">Please check back later or select a different course.</p>
+                      </div>
+                    );
+                  }
 
-                    <div
-                      ref={subjectRowRef}
-                      className="flex gap-4 overflow-x-auto py-3 pb-4 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800 select-none cursor-grab"
-                      style={{ WebkitOverflowScrolling: "touch" }}
-                    >
-                      {selectedCourse.subjects.map((sub, idx) => {
-                        const name = sub.name || sub.title || "Subject";
-                        const available = isSubjectAvailable(sub.id);
-                        const isSelected = selectedSubject && String(selectedSubject.id) === String(sub.id);
-                        const bannerUrl = sub.banner
-                          ? (sub.banner.startsWith("http") ? sub.banner : `${API_BASE_URL}/storage/${sub.banner}`)
-                          : "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop";
+                  return (
+                    <div className="relative">
+                      {/* Fade Overlays for elegant premium scroll effect */}
+                      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#E6E9EC] dark:from-gray-900 to-transparent pointer-events-none z-10 opacity-30"></div>
+                      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#E6E9EC] dark:from-gray-900 to-transparent pointer-events-none z-10 opacity-30"></div>
 
-                        return (
-                          <div
-                            key={sub.id || idx}
-                            onClick={() => available && handleSubjectSelect(sub)}
-                            className={`w-[180px] md:w-[210px] shrink-0 p-4 rounded-3xl border flex flex-col justify-between transition-all duration-300 relative select-none group overflow-visible ${
-                              !available
-                                ? "bg-gray-100 dark:bg-gray-900/40 border-gray-200/50 dark:border-gray-800/30 cursor-not-allowed opacity-60"
-                                : isSelected
-                                ? "bg-[#09314F] text-white border-transparent ring-4 ring-[#C5A97A]/30 scale-[1.02] shadow-md"
-                                : "bg-white dark:bg-[#09314F]/40 border-gray-100 dark:border-[#09314F] hover:border-gray-200 hover:scale-[1.01] cursor-pointer shadow-sm"
-                            }`}
-                          >
-                            {/* Overlay for unavailable subjects */}
-                            {!available && (
-                              <div className="absolute inset-0 bg-black/60 dark:bg-black/75 rounded-3xl flex items-center justify-center p-4 z-20 text-center animate-fade-in">
-                                <span className="text-[11px] font-bold text-white uppercase tracking-widest leading-relaxed">
-                                  Not available
-                                </span>
+                      <div
+                        ref={subjectRowRef}
+                        className="flex gap-4 overflow-x-auto py-3 pb-4 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800 select-none cursor-grab"
+                        style={{ WebkitOverflowScrolling: "touch" }}
+                      >
+                        {availableCourseSubjects.map((sub, idx) => {
+                          const name = sub.name || sub.title || "Subject";
+                          const isSelected = selectedSubject && String(selectedSubject.id) === String(sub.id);
+                          const bannerUrl = sub.banner
+                            ? (sub.banner.startsWith("http") ? sub.banner : `${API_BASE_URL}/storage/${sub.banner}`)
+                            : "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop";
+
+                          return (
+                            <div
+                              key={sub.id || idx}
+                              onClick={() => handleSubjectSelect(sub)}
+                              className={`w-[180px] md:w-[210px] shrink-0 p-4 rounded-3xl border flex flex-col justify-between transition-all duration-300 relative select-none group overflow-visible ${
+                                isSelected
+                                  ? "bg-[#09314F] text-white border-transparent ring-4 ring-[#C5A97A]/30 scale-[1.02] shadow-md"
+                                  : "bg-white dark:bg-[#09314F]/40 border-gray-100 dark:border-[#09314F] hover:border-gray-200 hover:scale-[1.01] cursor-pointer shadow-sm"
+                              }`}
+                            >
+                              {/* Banner Header Image */}
+                              <div className="w-full h-24 rounded-2xl overflow-hidden mb-3 relative shrink-0">
+                                <img
+                                  src={bannerUrl}
+                                  alt={name}
+                                  className="w-full h-full object-cover rounded-2xl transition-transform duration-700 ease-out group-hover:scale-110"
+                                />
+                                <div className="absolute inset-0 bg-black/10 dark:bg-black/35 pointer-events-none transition-opacity duration-700 group-hover:bg-black/5 dark:group-hover:bg-black/20"></div>
+                                {isSelected && (
+                                  <div className="absolute top-2.5 right-2.5 bg-[#C5A97A] text-white p-1 rounded-full shadow-md flex items-center justify-center animate-scale-in">
+                                    <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
+                                  </div>
+                                )}
                               </div>
-                            )}
 
-                            {/* Banner Header Image */}
-                            <div className="w-full h-24 rounded-2xl overflow-hidden mb-3 relative shrink-0">
-                              <img
-                                src={bannerUrl}
-                                alt={name}
-                                className="w-full h-full object-cover rounded-2xl transition-transform duration-700 ease-out group-hover:scale-110"
-                              />
-                              <div className="absolute inset-0 bg-black/10 dark:bg-black/35 pointer-events-none transition-opacity duration-700 group-hover:bg-black/5 dark:group-hover:bg-black/20"></div>
-                              {isSelected && (
-                                <div className="absolute top-2.5 right-2.5 bg-[#C5A97A] text-white p-1 rounded-full shadow-md flex items-center justify-center animate-scale-in">
-                                  <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
-                                </div>
-                              )}
+                              <div className="mt-1 min-w-0 w-full">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-[#C5A97A] block">
+                                  SUBJECT
+                                </span>
+                                <h4 className="text-sm font-black uppercase tracking-tight truncate mt-1 w-full">
+                                  {name}
+                                </h4>
+                              </div>
                             </div>
-
-                            <div className="mt-1 min-w-0 w-full">
-                              <span className="text-[9px] font-black uppercase tracking-widest text-[#C5A97A] block">
-                                SUBJECT
-                              </span>
-                              <h4 className="text-sm font-black uppercase tracking-tight truncate mt-1 w-full">
-                                {name}
-                              </h4>
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             )}
 

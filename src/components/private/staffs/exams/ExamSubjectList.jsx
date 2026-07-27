@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import StaffDashboardLayout from "../DashboardLayout.jsx";
+import { stripHtmlAndDecode } from "../../../../utils/textUtils";
 import { 
   // ArrowLeftIcon,
   // BookOpenIcon,
@@ -18,6 +19,10 @@ export default function ExamSubjectList() {
   const [subjects, setSubjects] = useState([]);
   const [examBody, setExamBody] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const handleSelectSubject = (subjectId) => {
+    navigate(`/staffs/manage-exams/${bodyId}/subjects/${subjectId}/years`);
+  };
 
   // Fetch Exam Body Details
   const fetchBody = useCallback(async () => {
@@ -109,46 +114,56 @@ export default function ExamSubjectList() {
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Scanning Subjects...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {subjects.map((subject) => (
-              <div 
-                key={subject.id}
-                onClick={() => navigate(`/staffs/manage-exams/${bodyId}/subjects/${subject.id}/years`)}
-                className="bg-white dark:bg-gray-800 rounded-[32px] overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all group cursor-pointer flex flex-col"
-              >
-                {/* Image Container */}
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={subject.image || "https://images.unsplash.com/photo-1513258496099-48168024adb0?q=80&w=2070&auto=format&fit=crop"} 
-                    alt={subject.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute top-4 right-4 px-3 py-1.5 bg-[#0F2843]/90 backdrop-blur-md rounded-xl text-white text-[10px] font-black min-w-[35px] text-center">
-                    {subject.yearCount || 0}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {subjects.length > 0 ? (
+              subjects.map((subject) => (
+                <div
+                  key={subject.id}
+                  onClick={() => handleSelectSubject(subject.id)}
+                  className="group bg-white dark:bg-gray-900 rounded-[36px] p-4 border border-gray-100 dark:border-gray-800 hover:border-[#BB9E7F]/50 transition-all duration-500 hover:shadow-2xl hover:shadow-[#0F2843]/5 flex flex-col justify-between h-full relative cursor-pointer overflow-hidden"
+                >
+                  {/* Subject Image / Banner */}
+                  <div className="relative h-36 rounded-[28px] overflow-hidden bg-gray-50 dark:bg-gray-800 mb-6">
+                    {subject.banner ? (
+                      <img 
+                        src={subject.banner.startsWith('http') ? subject.banner : `${API_BASE_URL}/storage/${subject.banner}`} 
+                        alt={subject.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#0F2843] to-[#1a416d] text-white">
+                        <span className="text-3xl font-black opacity-20 uppercase">{subject.name ? subject.name.substring(0,2) : "SB"}</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
-                </div>
 
-                <div className="p-6 flex flex-col flex-1">
-                  <div className="mb-4">
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-900 text-gray-400 text-[9px] font-black uppercase tracking-widest rounded-lg">SUBJECT</span>
-                  </div>
-                  <h3 className="text-lg font-black text-[#0F2843] dark:text-white uppercase tracking-tight mb-2 group-hover:text-[#BB9E7F] transition-colors">
-                    {subject.title || subject.name}
-                  </h3>
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium leading-relaxed mb-6 line-clamp-2 uppercase tracking-wide">
-                    {subject.description?.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ") || "Foundational subject for the selected exam program."}
-                  </p>
-
-                  <div className="mt-auto pt-6 border-t border-gray-50 dark:border-gray-700 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500 font-black uppercase">Active</span>
+                  <div className="p-6 flex flex-col flex-1">
+                    <div className="mb-4">
+                      <span className="px-3 py-1 bg-gray-100 dark:bg-gray-900 text-gray-400 text-[9px] font-black uppercase tracking-widest rounded-lg">SUBJECT</span>
                     </div>
-                    <span className="text-[10px] text-gray-400 font-black uppercase">{subject.yearCount || 0} Years</span>
+                    <h3 className="text-lg font-black text-[#0F2843] dark:text-white uppercase tracking-tight mb-2 group-hover:text-[#BB9E7F] transition-colors">
+                      {subject.title || subject.name}
+                    </h3>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium leading-relaxed mb-6 line-clamp-2 uppercase tracking-wide">
+                      {stripHtmlAndDecode(subject.description) || "Foundational subject for the selected exam program."}
+                    </p>
+
+                    <div className="mt-auto pt-6 border-t border-gray-50 dark:border-gray-700 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500 font-black uppercase">Active</span>
+                      </div>
+                      <span className="text-[10px] text-gray-400 font-black uppercase">{subject.yearCount || 0} Years</span>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="col-span-full py-20 text-center bg-gray-50 dark:bg-gray-800/40 rounded-[36px] border border-dashed border-gray-200 dark:border-gray-700">
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">No subjects found for this exam body</p>
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>

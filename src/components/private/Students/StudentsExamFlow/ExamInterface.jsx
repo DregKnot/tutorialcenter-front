@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import { useTimer } from "react-timer-hook";
+import { stripHtmlAndDecode } from "../../../../utils/textUtils";
 
 export default function ExamInterface({
   attemptId,
@@ -137,6 +138,18 @@ export default function ExamInterface({
           initialSubmitted[q.id] = optId;
         }
       });
+
+      // Merge with any local storage answers that haven't synced yet (resilience against refreshes/drops)
+      try {
+        const localSaved = localStorage.getItem(`exam_answers_${attemptId}`);
+        if (localSaved) {
+          const parsed = JSON.parse(localSaved);
+          Object.assign(initialSelected, parsed);
+        }
+      } catch (e) {
+        console.error("Failed reading local storage answers:", e);
+      }
+
       setSelectedOptions(initialSelected);
       setSubmittedAnswers(initialSubmitted);
 
@@ -157,6 +170,28 @@ export default function ExamInterface({
   useEffect(() => {
     fetchQuestions();
   }, [fetchQuestions]);
+
+  // Background Image Preloader: Cache all question & group diagrams in browser memory immediately
+  useEffect(() => {
+    if (!questions || questions.length === 0) return;
+
+    const imagesToPreload = new Set();
+    questions.forEach((q) => {
+      if (q.image) {
+        const url = q.image.startsWith("http") ? q.image : `${API_BASE_URL}/storage/${q.image}`;
+        imagesToPreload.add(url);
+      }
+      if (q.group?.image) {
+        const url = q.group.image.startsWith("http") ? q.group.image : `${API_BASE_URL}/storage/${q.group.image}`;
+        imagesToPreload.add(url);
+      }
+    });
+
+    imagesToPreload.forEach((url) => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, [questions, API_BASE_URL]);
 
   // Auto-scroll active pagination item into view
   useEffect(() => {
@@ -203,9 +238,11 @@ export default function ExamInterface({
     return options;
   };
 
-  // Submit background answer
-  const submitAnswerToBackend = async (questionId, optionId) => {
-    if (!optionId || submittedAnswers[questionId] === optionId) return true;
+  const isSyncingQueueRef = useRef(false);
+
+  // Submit background answer (silent, no error toast spam on temporary network drops)
+  const submitAnswerToBackend = useCallback(async (questionId, optionId) => {
+    if (!optionId || String(submittedAnswers[questionId]) === String(optionId)) return true;
 
     try {
       const headers = {
@@ -226,39 +263,72 @@ export default function ExamInterface({
       return true;
     } catch (err) {
       console.error("Failed to sync answer:", err);
-      setToast({
-        type: "error",
-        message: "Network Sync Error: Could not save your answer to the server.",
-      });
       return false;
     }
-  };
+  }, [attemptId, API_BASE_URL, token, submittedAnswers]);
 
-  // Navigates and saves pending choices in the background
-  const handleNavigate = async (targetIndex) => {
-    if (targetIndex < 0 || targetIndex >= questions.length) return;
+  // Background queue processor: submits up to batchLimit unsynced answers sequentially without blocking UI
+  const processBackgroundQueue = useCallback(async (batchLimit = 5) => {
+    if (isSyncingQueueRef.current || examFinished) return;
 
-    const currentQuestion = questions[currentIndex];
-    const localChoice = selectedOptions[currentQuestion.id];
+    // Find unsynced question IDs where local choice differs from submitted answer
+    const unsyncedIds = Object.keys(selectedOptions).filter(
+      (qId) => selectedOptions[qId] && String(selectedOptions[qId]) !== String(submittedAnswers[qId])
+    );
+    if (unsyncedIds.length === 0) return;
 
-    // If an option is selected but not synced, sync in background
-    if (localChoice && submittedAnswers[currentQuestion.id] !== localChoice) {
-      setSavingAnswer(true);
-      await submitAnswerToBackend(currentQuestion.id, localChoice);
-      setSavingAnswer(false);
+    isSyncingQueueRef.current = true;
+    setSavingAnswer(true);
+
+    const batch = unsyncedIds.slice(0, batchLimit);
+    for (const qId of batch) {
+      const optId = selectedOptions[qId];
+      if (!optId) continue;
+      await submitAnswerToBackend(qId, optId);
     }
 
+    setSavingAnswer(false);
+    isSyncingQueueRef.current = false;
+  }, [selectedOptions, submittedAnswers, submitAnswerToBackend, examFinished]);
+
+  // Silent background interval: every 20 seconds, check and submit up to 5 unsynced items
+  useEffect(() => {
+    if (examFinished || loading) return;
+    const interval = setInterval(() => {
+      processBackgroundQueue(5);
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [examFinished, loading, processBackgroundQueue]);
+
+  // Navigates instantly and triggers background saving without blocking
+  const handleNavigate = (targetIndex) => {
+    if (targetIndex < 0 || targetIndex >= questions.length) return;
+
+    // Instant UI switch! Zero latency!
     setCurrentIndex(targetIndex);
+
+    // Trigger background submission in batches of 5 (at Q5, Q10, Q15, Q20, Q25...)
+    if ((targetIndex + 1) % 5 === 0) {
+      processBackgroundQueue(5);
+    }
   };
 
-  // Handle choice selection
+  // Handle choice selection with localStorage persistence
   const handleOptionSelect = (optionId) => {
     if (examFinished) return;
     const currentQuestion = questions[currentIndex];
-    setSelectedOptions((prev) => ({
-      ...prev,
-      [currentQuestion.id]: optionId,
-    }));
+    setSelectedOptions((prev) => {
+      const updated = {
+        ...prev,
+        [currentQuestion.id]: optionId,
+      };
+      try {
+        localStorage.setItem(`exam_answers_${attemptId}`, JSON.stringify(updated));
+      } catch (e) {
+        console.error("Failed to save to localStorage:", e);
+      }
+      return updated;
+    });
   };
 
   // Submit full exam attempt
@@ -266,11 +336,12 @@ export default function ExamInterface({
     setSubmittingExam(true);
     setShowSubmitConfirm(false);
     
-    // First sync current active question selection if any
-    const currentQuestion = questions[currentIndex];
-    const currentChoice = selectedOptions[currentQuestion?.id];
-    if (currentChoice && submittedAnswers[currentQuestion?.id] !== currentChoice) {
-      await submitAnswerToBackend(currentQuestion.id, currentChoice);
+    // Flush ALL remaining unsynced answers before final exam submission
+    const unsyncedIds = Object.keys(selectedOptions).filter(
+      (qId) => selectedOptions[qId] && String(selectedOptions[qId]) !== String(submittedAnswers[qId])
+    );
+    for (const qId of unsyncedIds) {
+      await submitAnswerToBackend(qId, selectedOptions[qId]);
     }
 
     try {
@@ -294,6 +365,12 @@ export default function ExamInterface({
         message: isAuto ? "Practice timed out and submitted successfully!" : "Practice session submitted successfully!",
       });
 
+      // After successful submission, clean up localStorage!
+      try {
+        localStorage.removeItem(`exam_answers_${attemptId}`);
+        localStorage.removeItem(`exam_attempt_${attemptId}_index`);
+      } catch (e) {}
+
     } catch (err) {
       console.error("Failed to submit exam:", err);
       setToast({
@@ -311,12 +388,12 @@ export default function ExamInterface({
 
   // Counts
   const totalQuestions = questions.length;
-  const answeredCount = Object.keys(submittedAnswers).length;
+  const answeredCount = Object.keys(selectedOptions).length;
   const unansweredCount = totalQuestions - answeredCount;
 
   const cleanText = (htmlStr) => {
     if (!htmlStr) return "";
-    return htmlStr.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    return stripHtmlAndDecode(htmlStr);
   };
 
   // Active element

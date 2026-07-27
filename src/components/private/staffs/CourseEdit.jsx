@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import { stripHtmlAndDecode } from "../../../utils/textUtils";
 import { 
   PencilIcon, 
   TrashIcon, 
@@ -128,8 +129,8 @@ export default function CourseEdit({ mode = "courses", showToast }) {
       "Content-Type": "multipart/form-data"
     };
 
-    // Strip HTML tags for clean storage as requested
-    const plainDescription = description.replace(/<[^>]*>?/gm, "").replace(/&nbsp;/g, " ");
+    // Clean and decode HTML description for storage
+    const plainDescription = stripHtmlAndDecode(description);
 
     if (editingItem.type === "course") {
       payload = new FormData();
