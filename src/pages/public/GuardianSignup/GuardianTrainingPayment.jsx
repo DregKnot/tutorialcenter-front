@@ -156,7 +156,7 @@ export default function GuardianTrainingPayment() {
               gateway: "paystack",
               status: "successful",
               gateway_reference: paymentReference,
-              paid_at: Date.now(),
+              paid_at: new Date().toISOString(),
               meta: {
                 channel: response.channel,
                 paid_at: response.paid_at,
