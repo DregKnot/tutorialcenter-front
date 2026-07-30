@@ -4,7 +4,7 @@ import Contact from "./pages/public/Contact.jsx";
 import Career from "./pages/public/Career.jsx";
 import Blog from "./pages/public/Blog.jsx";
 import StudentBlog from "./components/private/Students/StudentBlog.jsx";
-import Login from "./pages/public/StudentLogin.jsx";
+import LoginSelection from "./pages/public/LoginSelection.jsx";
 import SignUp from "./pages/public/SignUp.jsx";
 import StickyButtons from "./components/public/StickyButtons.jsx";
 import { Route, Routes } from "react-router-dom";
@@ -96,7 +96,7 @@ function App() {
         <Route path="/guardian/login" element={<GuardianLogin />} />
         <Route path="/guardian/dashboard" element={<GuardianDashboard />} />
         <Route path="*" element={<NotFound />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LoginSelection />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/career" element={<Career />} />

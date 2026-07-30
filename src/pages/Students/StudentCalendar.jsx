@@ -113,46 +113,33 @@ export default function StudentCalendar() {
 
   const calendarScrollRef = useRef(null);
 
-  // Helper to flatten tiered schedule API response
+  // Helper to flatten tiered schedule API response safely
   const getFlatSessions = (data) => {
     const list = [];
     if (Array.isArray(data)) return data; // if it's already a flat array
     
-    if (data.next_class) list.push(data.next_class);
-    if (Array.isArray(data.today_classes)) {
-      data.today_classes.forEach(s => {
-        if (!list.some(item => item.id === s.id)) list.push(s);
+    const addSession = (s) => {
+      if (!s) return;
+      const isDuplicate = list.some(item => {
+        if (s.id && item.id) return item.id === s.id;
+        return item.title === s.title && item.session_date === s.session_date && item.starts_at === s.starts_at;
       });
-    }
+      if (!isDuplicate) list.push(s);
+    };
+
+    if (data.next_class) addSession(data.next_class);
+    if (Array.isArray(data.today_classes)) data.today_classes.forEach(addSession);
     if (data.week_schedule) {
       Object.values(data.week_schedule).forEach(sessionsArray => {
-        if (Array.isArray(sessionsArray)) {
-          sessionsArray.forEach(s => {
-            if (!list.some(item => item.id === s.id)) list.push(s);
-          });
-        }
+        if (Array.isArray(sessionsArray)) sessionsArray.forEach(addSession);
       });
     }
-    if (Array.isArray(data.upcoming_sessions)) {
-      data.upcoming_sessions.forEach(s => {
-        if (!list.some(item => item.id === s.id)) list.push(s);
-      });
-    }
-    if (Array.isArray(data.past_sessions)) {
-      data.past_sessions.forEach(s => {
-        if (!list.some(item => item.id === s.id)) list.push(s);
-      });
-    }
-    if (Array.isArray(data.history)) {
-      data.history.forEach(s => {
-        if (!list.some(item => item.id === s.id)) list.push(s);
-      });
-    }
-    if (Array.isArray(data.sessions)) {
-      data.sessions.forEach(s => {
-        if (!list.some(item => item.id === s.id)) list.push(s);
-      });
-    }
+    if (Array.isArray(data.upcoming_sessions)) data.upcoming_sessions.forEach(addSession);
+    if (Array.isArray(data.past_sessions)) data.past_sessions.forEach(addSession);
+    if (Array.isArray(data.older_sessions)) data.older_sessions.forEach(addSession);
+    if (Array.isArray(data.history)) data.history.forEach(addSession);
+    if (Array.isArray(data.sessions)) data.sessions.forEach(addSession);
+    
     return list;
   };
 
@@ -160,17 +147,17 @@ export default function StudentCalendar() {
   const fetchSchedule = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/students/calendar/schedule`, {
+      const res = await axios.get(`${API_BASE_URL}/api/students/class/schedule`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
-      console.log("📅 [StudentCalendar] Raw Calendar API Response:", res.data);
-      const data = res.data.sessions || res.data.schedule || res.data.data || res.data || [];
+      console.log("📅 [StudentCalendar] Raw Class Schedule API Response:", res.data);
+      const data = res.data?.data || res.data?.sessions || res.data?.schedule || res.data || [];
       console.log("📅 [StudentCalendar] Extracted Calendar Data Structure:", data);
       const flatList = getFlatSessions(data);
       console.log("📅 [StudentCalendar] Flattened Sessions List for Calendar:", flatList);
       setSessions(flatList);
     } catch (error) {
-      console.error("Failed to fetch calendar schedule:", error);
+      console.error("Failed to fetch class schedule for calendar:", error);
       setSessions([]);
     } finally {
       setLoading(false);

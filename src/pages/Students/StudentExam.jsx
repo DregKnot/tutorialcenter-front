@@ -179,7 +179,7 @@ export default function StudentExam() {
 
         uniqueSubjectsMap.set(subId, {
           id: exam.subject_id || exam.subject?.id || courseSub?.id,
-          name: examSub.name || examSub.title || courseSub?.name || courseSub?.title || "Unknown Subject",
+          name: examSub.name || examSub.title || courseSub?.name || courseSub?.title || exam.subject_name || exam.title || exam.name || "Unknown Subject",
           banner: examSub.banner || examSub.image || courseSub?.banner || courseSub?.image,
           description: examSub.description || courseSub?.description || "",
         });

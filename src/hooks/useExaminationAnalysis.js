@@ -38,8 +38,40 @@ export default function useExaminationAnalysis(attempts = []) {
       timeSpentByYearMap[submittedYear] = (timeSpentByYearMap[submittedYear] || 0) + diffMinutes;
       totalTimeSpentMinutes += diffMinutes;
 
-      // Subject tracking
-      const subjectName = attempt.exam_year?.subject?.name || "Unknown Subject";
+      // Subject tracking helper to resolve subject name across various API payload structures
+      const extractSubjectName = (att) => {
+        if (!att) return "Unknown Subject";
+        if (typeof att.subject === "string" && att.subject.trim()) return att.subject.trim();
+        if (att.subject?.name) return att.subject.name;
+        if (att.subject?.title) return att.subject.title;
+
+        if (att.exam_year?.subject?.name) return att.exam_year.subject.name;
+        if (att.exam_year?.subject?.title) return att.exam_year.subject.title;
+        if (typeof att.exam_year?.subject === "string" && att.exam_year.subject.trim()) return att.exam_year.subject.trim();
+        if (att.exam_year?.subject_name) return att.exam_year.subject_name;
+
+        if (att.examYear?.subject?.name) return att.examYear.subject.name;
+        if (att.examYear?.subject?.title) return att.examYear.subject.title;
+        if (att.examYear?.subject_name) return att.examYear.subject_name;
+
+        if (att.exam?.subject?.name) return att.exam.subject.name;
+        if (att.exam?.subject?.title) return att.exam.subject.title;
+        if (att.exam?.subject_name) return att.exam.subject_name;
+        if (att.exam?.title) return att.exam.title;
+        if (att.exam?.name) return att.exam.name;
+
+        if (att.subject_name) return att.subject_name;
+        if (att.subject_title) return att.subject_title;
+        if (att.course_subject?.name) return att.course_subject.name;
+        if (att.course_subject?.title) return att.course_subject.title;
+
+        if (att.title) return att.title;
+        if (att.name) return att.name;
+
+        return "Unknown Subject";
+      };
+
+      const subjectName = extractSubjectName(attempt);
       subjectsSet.add(subjectName);
       subjectAttemptsMap[subjectName] = (subjectAttemptsMap[subjectName] || 0) + 1;
 

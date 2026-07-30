@@ -3,7 +3,7 @@ import { SparklesIcon, RocketLaunchIcon } from "@heroicons/react/24/solid";
 import Orb from "./Orb";
 
 const CountdownSection = () => {
-  const targetDate = new Date("2026-07-30T12:00:00+01:00").getTime();
+  const targetDate = new Date("2026-07-30T12:20:00+01:00").getTime();
 
   const [isLive, setIsLive] = useState(() => new Date().getTime() >= targetDate);
   const [timeLeft, setTimeLeft] = useState(() => {
@@ -98,7 +98,7 @@ const CountdownSection = () => {
               The Countdown Begins
             </h2>
             <p className="text-gray-300 font-medium text-center max-w-xl mb-12 text-sm md:text-base drop-shadow-md">
-              We are preparing something extraordinary. Join us tomorrow at 12:00 PM for the official launch of Tutorial Center.
+              We are preparing something extraordinary. Join us today at 12:20 PM for the official launch of Tutorial Center.
             </p>
             
             <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 w-full">
