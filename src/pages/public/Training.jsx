@@ -286,13 +286,19 @@ const Training = () => {
                     ? `${API_BASE_URL}/storage/${course.banner}`
                     : getLogoForCourse(course.title);
                   const hasBanner = !!course.banner;
-                  const basePrice = course.price || 0;
+                  const basePrice = Number(course.price) || 25000;
 
-                  // calculated durations with 5% discount for multi-month
+                  // Actual Normal Prices (from backend)
                   const monthly = basePrice;
                   const quarterly = Math.round(basePrice * 3 * 0.95);
                   const semiAnnually = Math.round(basePrice * 6 * 0.95);
                   const annually = Math.round(basePrice * 12 * 0.95);
+
+                  // Expensive Slashed Prices (calculated from 40,000)
+                  const slashedMonthly = 40000;
+                  const slashedQuarterly = 40000 * 3;
+                  const slashedSemiAnnually = 40000 * 6;
+                  const slashedAnnually = 40000 * 12;
 
                   return (
                     <ScrollReveal key={course.id} delay={0.1 * index} direction="up" distance={30}>
@@ -349,21 +355,33 @@ const Training = () => {
                             <div className="mb-4">
                               <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Duration:</p>
                               <div className="space-y-2">
-                                <div className="flex justify-between">
+                                <div className="flex justify-between items-center">
                                   <span className="text-xs font-bold text-gray-500">Monthly (1 month):</span>
-                                  <span className="text-xs font-black text-[#09314F]">₦{monthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedMonthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                    <span className="text-xs font-black text-[#09314F]">₦{monthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                  </div>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between items-center">
                                   <span className="text-xs font-bold text-gray-500">Quarterly (3 months):</span>
-                                  <span className="text-xs font-black text-[#09314F]">₦{quarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedQuarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                    <span className="text-xs font-black text-[#09314F]">₦{quarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                  </div>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between items-center">
                                   <span className="text-xs font-bold text-gray-500">Semi-Annually (6 months):</span>
-                                  <span className="text-xs font-black text-[#09314F]">₦{semiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedSemiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                    <span className="text-xs font-black text-[#09314F]">₦{semiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                  </div>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between items-center">
                                   <span className="text-xs font-bold text-gray-500">Annually (1 year):</span>
-                                  <span className="text-xs font-black text-[#09314F]">₦{annually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                    <span className="text-xs font-black text-[#09314F]">₦{annually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -394,7 +412,7 @@ const Training = () => {
                               </p>
                               <div className="flex justify-between">
                                 <span className="text-[10px] text-gray-500 font-bold">Quarterly savings:</span>
-                                <span className="text-[10px] font-black text-green-600">₦{Math.round(basePrice * 3 * 0.05).toLocaleString()}</span>
+                                <span className="text-[10px] font-black text-green-600">₦{Math.round(monthly * 3 * 0.05).toLocaleString()}</span>
                               </div>
                             </div>
 

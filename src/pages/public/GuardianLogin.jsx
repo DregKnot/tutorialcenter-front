@@ -25,19 +25,48 @@ export default function GuardianLogin() {
     setMsg({ text: "", type: "" });
     try {
       const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
-      const response = await axios.post(`${API_BASE_URL}/api/guardians/login`, formData);
       
-      if (response.status === 200) {
+      const payload = {
+        entry: formData.entry,
+        email: formData.entry,
+        tel: formData.entry,
+        phone: formData.entry,
+        username: formData.entry,
+        password: formData.password
+      };
+
+      console.log("🛡️ [GuardianLogin] Submitting login request to /api/guardians/login:", payload);
+      const response = await axios.post(`${API_BASE_URL}/api/guardians/login`, payload, {
+        headers: { Accept: "application/json" }
+      });
+      
+      if (response.status === 200 || response.data?.token) {
         setMsg({ text: "Login successful!", type: "success" });
-        localStorage.setItem("guardian_token", response.data.token);
-        localStorage.setItem("guardian_info", JSON.stringify(response.data.guardian));
+        const token = response.data.token || response.data.access_token;
+        const guardianData = response.data.guardian || response.data.data || response.data.user;
+        
+        localStorage.setItem("guardian_token", token);
+        if (guardianData) {
+          localStorage.setItem("guardian_info", JSON.stringify(guardianData));
+        }
         
         setTimeout(() => {
           navigate("/guardian/dashboard");
-        }, 1500);
+        }, 1200);
       }
     } catch (err) {
-      setMsg({ text: err.response?.data?.message || "Invalid Login Credentials", type: "error" });
+      console.error("❌ [GuardianLogin] Login error:", err.response?.data || err);
+      const rawError =
+        err.response?.data?.errors ||
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Invalid Guardian Login Credentials";
+
+      const formattedError = typeof rawError === "object"
+        ? (Object.values(rawError).flat().join(" ") || JSON.stringify(rawError))
+        : rawError;
+
+      setMsg({ text: formattedError, type: "error" });
     } finally {
       setLoading(false);
     }

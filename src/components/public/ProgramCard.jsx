@@ -3,7 +3,7 @@ import BookIcon from "../../assets/images/emojione_books.png";
 import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
-const ProgramCard = ({ subject, title, month, quarter, semiAnnual, year, topic1, topic2, topic3, topic4, path, logo, state }) => {
+const ProgramCard = ({ subject, title, month, quarter, semiAnnual, year, slashedMonth, slashedQuarter, slashedSemiAnnual, slashedYear, topic1, topic2, topic3, topic4, path, logo, state }) => {
     return (
         <>
             <div className="md:mr-14 mr-5">
@@ -46,18 +46,18 @@ const ProgramCard = ({ subject, title, month, quarter, semiAnnual, year, topic1,
                                 <p className="text-ascent md:text-lg text-base font-semibold mb-4">
                                     Duration:
                                 </p>
-                                <ul className="[&_li]:text-nowrap [&_span]:text-ascent [&_span]:font-semibold [&_span]:pl-3 flex flex-col">
+                                <ul className="[&_li]:text-nowrap [&_span]:text-ascent [&_span]:font-semibold [&_span]:pl-2 flex flex-col">
                                     <li>
-                                        Monthly: <span>₦{Number(month).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        Monthly: {slashedMonth && <span className="line-through text-gray-400 font-normal text-xs !pl-1">₦{Number(slashedMonth).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>}<span>₦{Number(month).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                     </li>
                                     <li>
-                                        Quarterly: <span>₦{Number(quarter).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        Quarterly: {slashedQuarter && <span className="line-through text-gray-400 font-normal text-xs !pl-1">₦{Number(slashedQuarter).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>}<span>₦{Number(quarter).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                     </li>
                                     <li>
-                                        Semi-Annually: <span>₦{Number(semiAnnual).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        Semi-Annually: {slashedSemiAnnual && <span className="line-through text-gray-400 font-normal text-xs !pl-1">₦{Number(slashedSemiAnnual).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>}<span>₦{Number(semiAnnual).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                     </li>
                                     <li>
-                                        Annualy: <span>₦{Number(year).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        Annualy: {slashedYear && <span className="line-through text-gray-400 font-normal text-xs !pl-1">₦{Number(slashedYear).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>}<span>₦{Number(year).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                     </li>
                                 </ul>
                             </div>

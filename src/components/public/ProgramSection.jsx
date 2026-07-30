@@ -124,12 +124,19 @@ const ProgramSection = () => {
                                 >
                                     {programDatas.map((item, index) => {
 
-                                        const basePrice = item.price || 0;
-
+                                        const basePrice = Number(item.price) || 25000;
+                                        
+                                        // Actual Normal Prices (from backend)
                                         const monthly = basePrice;
                                         const quarterly = Math.round(basePrice * 3 * 0.95);
                                         const semiAnnually = Math.round(basePrice * 6 * 0.95);
                                         const annually = Math.round(basePrice * 12 * 0.95);
+
+                                        // Expensive Slashed Prices (calculated from 40,000)
+                                        const slashedMonthly = 40000;
+                                        const slashedQuarterly = 40000 * 3;
+                                        const slashedSemiAnnually = 40000 * 6;
+                                        const slashedAnnually = 40000 * 12;
 
                                         const bannerUrl = item.banner
                                             ? `${API_BASE_URL}/storage/${item.banner}`
@@ -149,6 +156,10 @@ const ProgramSection = () => {
                                                     quarter={quarterly}
                                                     semiAnnual={semiAnnually}
                                                     year={annually}
+                                                    slashedMonth={slashedMonthly}
+                                                    slashedQuarter={slashedQuarterly}
+                                                    slashedSemiAnnual={slashedSemiAnnually}
+                                                    slashedYear={slashedAnnually}
                                                     topic1="Comprehensive tutorials"
                                                     topic2="Weekly masterclasses"
                                                     topic3="Mock tests and practice questions"

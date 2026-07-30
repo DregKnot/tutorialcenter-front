@@ -87,11 +87,19 @@ const CourseDetails = () => {
     ? `${API_BASE_URL}/storage/${course.banner}`
     : null;
 
-  const basePrice = course.price || 0;
+  const basePrice = Number(course.price) || 25000;
+
+  // Actual Normal Prices (from backend)
   const monthly = basePrice;
   const quarterly = Math.round(basePrice * 3 * 0.95);
   const semiAnnually = Math.round(basePrice * 6 * 0.95);
   const annually = Math.round(basePrice * 12 * 0.95);
+
+  // Expensive Slashed Prices (calculated from 40,000)
+  const slashedMonthly = 40000;
+  const slashedQuarterly = 40000 * 3;
+  const slashedSemiAnnually = 40000 * 6;
+  const slashedAnnually = 40000 * 12;
 
   return (
     <>
@@ -198,12 +206,10 @@ const CourseDetails = () => {
                             <span className="text-[#E83831]">📘</span> {department}
                           </h3>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {deptSubjects.map((sub, idx) => (
-                              <div key={idx} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                                  {idx + 1}
-                                </div>
-                                <span className="font-semibold text-gray-700 text-sm">{sub.title || sub.name}</span>
+                            {deptSubjects.map((sub, sIdx) => (
+                              <div key={sub.id || sIdx} className="flex items-center gap-2 text-sm font-bold text-gray-700 bg-gray-50 p-3 rounded-xl">
+                                <span className="w-2 h-2 rounded-full bg-[#09314F]" />
+                                {sub.name || sub.title}
                               </div>
                             ))}
                           </div>
@@ -211,9 +217,7 @@ const CourseDetails = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 italic bg-gray-50 p-6 rounded-2xl border border-gray-100 text-sm">
-                      No subjects have been mapped to this course yet.
-                    </p>
+                    <p className="text-gray-400 italic font-medium">No subjects found for this course.</p>
                   )}
                 </div>
               </ScrollReveal>
@@ -226,25 +230,37 @@ const CourseDetails = () => {
                   <div className="space-y-5 mb-8">
                     <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                       <span className="text-sm font-bold text-gray-500">Monthly (1 month)</span>
-                      <span className="text-lg font-black text-[#09314F]">₦{monthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-400 line-through">₦{slashedMonthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        <span className="text-lg font-black text-[#09314F]">₦{monthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                      </div>
                     </div>
                     
                     <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-[#BB9E7F]/30 shadow-sm relative overflow-hidden">
                       <div className="absolute top-0 right-0 bg-[#BB9E7F] text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">Save 5%</div>
                       <span className="text-sm font-bold text-gray-500">Quarterly (3 months)</span>
-                      <span className="text-lg font-black text-[#09314F]">₦{quarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-400 line-through">₦{slashedQuarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        <span className="text-lg font-black text-[#09314F]">₦{quarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                      </div>
                     </div>
 
                     <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-[#BB9E7F]/30 shadow-sm relative overflow-hidden">
                       <div className="absolute top-0 right-0 bg-[#BB9E7F] text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">Save 5%</div>
                       <span className="text-sm font-bold text-gray-500">Semi-Annually (6 months)</span>
-                      <span className="text-lg font-black text-[#09314F]">₦{semiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-400 line-through">₦{slashedSemiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        <span className="text-lg font-black text-[#09314F]">₦{semiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                      </div>
                     </div>
                     
                     <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-green-200 shadow-sm relative overflow-hidden">
                       <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">Best Value</div>
                       <span className="text-sm font-bold text-gray-500">Annually (1 year)</span>
-                      <span className="text-lg font-black text-green-600">₦{annually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-400 line-through">₦{slashedAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        <span className="text-lg font-black text-green-600">₦{annually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                      </div>
                     </div>
                   </div>
 

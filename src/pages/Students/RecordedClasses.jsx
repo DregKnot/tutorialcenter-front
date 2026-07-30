@@ -6,57 +6,14 @@ import { useAuth } from "../../context/AuthContext";
 const mockClasses = [
   {
     id: 1,
-    title: "Introduction to Calculus & Limits",
+    title: "Algebraic Equations",
     subject: "Mathematics",
-    date: "Oct 24, 2023",
-    duration: "1h 45m",
-    videoId: "dQw4w9WgXcQ",
-    color: "from-blue-500 to-cyan-400"
-  },
-  {
-    id: 2,
-    title: "Cellular Respiration In-depth",
-    subject: "Biology",
-    date: "Oct 22, 2023",
-    duration: "2h 10m",
-    videoId: "dQw4w9WgXcQ",
-    color: "from-emerald-500 to-teal-400"
-  },
-  {
-    id: 3,
-    title: "Newton's Laws of Motion",
-    subject: "Physics",
-    date: "Oct 20, 2023",
+    date: new Date(Date.now() - 86400000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
     duration: "1h 30m",
-    videoId: "dQw4w9WgXcQ",
-    color: "from-purple-500 to-pink-500"
-  },
-  {
-    id: 4,
-    title: "Chemical Bonding Fundamentals",
-    subject: "Chemistry",
-    date: "Oct 18, 2023",
-    duration: "1h 55m",
-    videoId: "dQw4w9WgXcQ",
-    color: "from-orange-500 to-red-500"
-  },
-  {
-    id: 5,
-    title: "World War II - Overview",
-    subject: "History",
-    date: "Oct 15, 2023",
-    duration: "1h 15m",
-    videoId: "dQw4w9WgXcQ",
-    color: "from-yellow-500 to-amber-600"
-  },
-  {
-    id: 6,
-    title: "Grammar & Sentence Structure",
-    subject: "English",
-    date: "Oct 14, 2023",
-    duration: "1h 00m",
-    videoId: "dQw4w9WgXcQ",
-    color: "from-sky-500 to-indigo-500"
+    videoId: "rUgqDFTB7RU",
+    videoUrl: "https://www.youtube.com/embed/rUgqDFTB7RU?autoplay=1",
+    teacher: "Joy Adeleke",
+    color: "from-blue-600 to-indigo-600"
   }
 ];
 
@@ -154,7 +111,7 @@ const RecordedClasses = () => {
                 {/* Content Area */}
                 <div className="p-5 flex flex-col flex-1">
                   <div className="flex justify-between items-start mb-3">
-                    <span className="inline-block px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-[#09314F] dark:text-blue-300 text-[10px] font-black uppercase tracking-wider rounded-md">
+                    <span className="inline-block px-2.5 py-1 bg-[#09314F]/10 dark:bg-gray-700 text-[#09314F] dark:text-blue-300 text-[10px] font-black uppercase tracking-wider rounded-md">
                       {cls.subject}
                     </span>
                     <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 flex items-center gap-1">
@@ -169,10 +126,12 @@ const RecordedClasses = () => {
                   
                   <div className="mt-auto pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                        <Icon icon="lucide:user" className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                      <div className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-[10px] font-bold">
+                        {cls.teacher?.[0] || "T"}
                       </div>
-                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Instructor</span>
+                      <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                        {cls.teacher || "Joy Adeleke"}
+                      </span>
                     </div>
                     <button className="text-[#E83831] text-xs font-black uppercase tracking-wider flex items-center gap-1 group-hover:gap-2 transition-all">
                       Watch <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5" />
@@ -206,7 +165,7 @@ const RecordedClasses = () => {
                   {selectedVideo.subject}
                 </span>
                 <h3 className="text-white font-bold text-sm md:text-base drop-shadow-md">
-                  {selectedVideo.title}
+                  {selectedVideo.title} — {selectedVideo.teacher}
                 </h3>
               </div>
               <button 
@@ -220,8 +179,8 @@ const RecordedClasses = () => {
             {/* Video Player */}
             <div className="w-full aspect-video bg-black relative">
               <iframe
-                src={`https://youtu.be/MOclJJ7IpSY?si=XCMpWZgAvTDQK95s`}
-                title="Recorded Class Video"
+                src={selectedVideo.videoUrl || "https://www.youtube.com/embed/rUgqDFTB7RU?autoplay=1"}
+                title={selectedVideo.title}
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
