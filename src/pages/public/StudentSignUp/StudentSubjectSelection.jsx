@@ -189,7 +189,7 @@ export const StudentSubjectSelection = () => {
               <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
             </button>
             <div className="w-full flex justify-center">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-[#09314F]">
+              <h1 className="text-2xl md:text-3xl font-bold text-[#09314F]">
                 Subject Selection
               </h1>
             </div>
@@ -217,7 +217,7 @@ export const StudentSubjectSelection = () => {
 
               return (
                 <div key={course.id} className={`grid grid-cols-3 items-center px-4 md:px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors relative ${isOpen ? 'z-50' : 'z-10'}`}>
-                  <div className="text-[9px] sm:text-[11px] md:text-sm font-extrabold text-[#09314F] uppercase tracking-wide truncate leading-tight">
+                  <div className="text-[9px] sm:text-[11px] md:text-sm font-bold text-[#09314F] uppercase tracking-wide truncate leading-tight">
                     {course.title}
                   </div>
 
@@ -338,7 +338,7 @@ export const StudentSubjectSelection = () => {
               <h3 className="text-xs font-black text-[#888888] uppercase tracking-widest mb-3">{course.title}</h3>
               <div className="flex flex-wrap gap-2">
                 {subjects.map((s) => (
-                  <span key={s.id} className="px-3 py-1.5 bg-white rounded-xl text-xs font-extrabold text-[#09314F] shadow-sm border border-black/5">
+                  <span key={s.id} className="px-3 py-1.5 bg-white rounded-xl text-xs font-bold text-[#09314F] shadow-sm border border-black/5">
                     {s.name}
                   </span>
                 ))}

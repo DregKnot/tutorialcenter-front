@@ -192,7 +192,7 @@ export default function GuardianPhoneVerification() {
         {/* Center Contents */}
         <div className="w-full max-w-[480px] mx-auto my-auto text-center">
           <div className="mb-10">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-[#09314F] mb-3">
+            <h1 className="text-3xl md:text-4xl font-bold text-[#09314F] mb-3">
               Phone Verification
             </h1>
             <p className="text-[#888888] font-medium leading-relaxed">
@@ -274,7 +274,7 @@ export default function GuardianPhoneVerification() {
         <div className="hidden md:block absolute bottom-[70px] left-0 -translate-x-9">
           <button
             onClick={() => navigate("/login")}
-            className="px-10 py-4 bg-white text-[#09314F] font-extrabold hover:bg-gray-100 transition-all shadow-xl rounded-full active:scale-95"
+            className="px-10 py-4 bg-white text-[#09314F] font-bold hover:bg-gray-100 transition-all shadow-xl rounded-full active:scale-95"
           >
             Login
           </button>

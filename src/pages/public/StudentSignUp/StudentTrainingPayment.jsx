@@ -233,7 +233,7 @@ export const StudentTrainingPayment = () => {
               <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
             </button>
             <div className="w-full flex justify-center">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-[#09314F]">
+              <h1 className="text-2xl md:text-3xl font-bold text-[#09314F]">
                 Payment Method
               </h1>
             </div>

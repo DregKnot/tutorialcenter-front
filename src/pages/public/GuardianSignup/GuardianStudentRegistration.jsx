@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+// Webpack cache breaker
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { location } from "../../../data/locations";
@@ -13,10 +14,11 @@ import {
   ChevronLeftIcon,
   CameraIcon,
   UserCircleIcon,
-  MapIcon
+  MapIcon,
+  EnvelopeIcon
 } from "@heroicons/react/24/outline";
 
-export default function GuardianAddedStudentBiodata() {
+export default function GuardianStudentRegistration() {
   const navigate = useNavigate();
   const [toast, setToast] = useState(null);
   const [errors, setErrors] = useState({});
@@ -27,6 +29,8 @@ export default function GuardianAddedStudentBiodata() {
   const [activeFileIndex, setActiveFileIndex] = useState(null);
 
   const [studentsBiodata, setStudentsBiodata] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [trackingStatus, setTrackingStatus] = useState([]);
 
  useEffect(() => {
   // Get current guardian's students
@@ -163,28 +167,57 @@ export default function GuardianAddedStudentBiodata() {
     e.preventDefault();
     if (!validateForm()) return;
 
+    // Initialize tracking status
+    const initialStatus = studentsBiodata.map(s => ({
+      name: `${s.firstname} ${s.surname}`,
+      status: "pending"
+    }));
+    setTrackingStatus(initialStatus);
+    setShowModal(true);
     setLoading(true);
+
+    let currentIndex = 0;
     try {
+      const currentStudentsStr = localStorage.getItem("guardianStudents");
+      const currentParsed = currentStudentsStr ? JSON.parse(currentStudentsStr) : {};
+      const sharedPassword = currentParsed.password || "";
+
       const updatedStudents = [];
-      for (let i = 0; i < studentsBiodata.length; i++) {
-        const student = studentsBiodata[i];
+      for (; currentIndex < studentsBiodata.length; currentIndex++) {
+        const idx = currentIndex;
+        const student = studentsBiodata[idx];
+        
+        setTrackingStatus(prev => {
+          const newStatus = [...prev];
+          newStatus[idx].status = "sending";
+          return newStatus;
+        });
+
         const trimmedEntry = student.email ? student.email.trim() : "";
         const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEntry);
 
-        const biodataPayload = {
-          firstname: student.firstname,
-          surname: student.surname,
-          email: isEmail ? trimmedEntry : null,
-          tel: isEmail ? null : trimmedEntry,
-          gender: student.gender,
-          date_of_birth: student.date_of_birth,
-          location: student.location,
-          address: student.address,
-          department: student.department,
-          display_picture: student.display_picture,
-        };
+        const combinedPayload = new FormData();
+        if (isEmail) combinedPayload.append('email', trimmedEntry);
+        else combinedPayload.append('tel', trimmedEntry);
+        
+        combinedPayload.append('password', sharedPassword);
+        combinedPayload.append('confirmPassword', sharedPassword);
+        combinedPayload.append('password_confirmation', sharedPassword);
+        combinedPayload.append('firstname', student.firstname);
+        combinedPayload.append('surname', student.surname);
+        combinedPayload.append('gender', student.gender);
+        combinedPayload.append('date_of_birth', student.date_of_birth);
+        combinedPayload.append('location', student.location);
+        combinedPayload.append('address', student.address || '');
+        combinedPayload.append('department', student.department);
+        
+        if (student.display_picture) {
+           combinedPayload.append('profile_picture', student.display_picture);
+        }
 
-        const bioRes = await axios.post(`${API_BASE_URL}/api/Students/biodata`, biodataPayload);
+        const bioRes = await axios.post(`${API_BASE_URL}/api/students/register`, combinedPayload, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         if (bioRes.data && bioRes.data.student) {
           updatedStudents.push({
             ...student,
@@ -192,12 +225,28 @@ export default function GuardianAddedStudentBiodata() {
             display_picture: null,
           });
         }
+        
+        setTrackingStatus(prev => {
+          const newStatus = [...prev];
+          newStatus[idx].status = "success";
+          return newStatus;
+        });
+
+        // Add a 5-second delay to prevent Mailtrap rate limits on the free testing tier.
+        if (idx < studentsBiodata.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        }
       }
 
       localStorage.setItem("guardianStudentsBiodata", JSON.stringify(updatedStudents));
-      setToast({ type: "success", message: "All biodata submitted successfully!" });
-      setTimeout(() => navigate("/register/guardian/training/selection"), 2000);
+      setToast({ type: "success", message: "All students registered successfully!" });
+      
     } catch (err) {
+      setTrackingStatus(prev => {
+        const newStatus = [...prev];
+        if (newStatus[currentIndex]) newStatus[currentIndex].status = "error";
+        return newStatus;
+      });
       setToast({ type: "error", message: err.response?.data?.message || "Failed to process data." });
     } finally {
       setLoading(false);
@@ -248,7 +297,7 @@ export default function GuardianAddedStudentBiodata() {
               <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
             </button>
             <div className="w-full flex justify-center">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-[#09314F]">
+              <h1 className="text-2xl md:text-3xl font-bold text-[#09314F]">
                 Student Biodata
               </h1>
             </div>
@@ -320,6 +369,22 @@ export default function GuardianAddedStudentBiodata() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Email / Phone */}
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label className="text-[10px] font-black text-[#555555] uppercase tracking-widest px-1">Email / Phone</label>
+                        <div className={getInputStyles(index, "email").container}>
+                          <EnvelopeIcon className={getInputStyles(index, "email").icon} />
+                          <input
+                            type="text"
+                            value={student.email}
+                            onChange={(e) => handleChange(index, "email", e.target.value)}
+                            onFocus={() => setFocusedField(`${index}_email`)}
+                            onBlur={() => setFocusedField(null)}
+                            className={`${getInputStyles(index, "email").input} w-full rounded-xl`}
+                          />
+                        </div>
+                      </div>
+
                       {/* First Name */}
                       <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-[#555555] uppercase tracking-widest px-1">First Name</label>
@@ -502,7 +567,7 @@ export default function GuardianAddedStudentBiodata() {
         <div className="hidden md:block absolute bottom-[70px] left-0">
           <button
             onClick={() => navigate("/login")}
-            className="px-10 py-4 bg-white text-[#09314F] font-extrabold hover:bg-gray-100 transition-all shadow-xl rounded-r-full active:scale-95"
+            className="px-10 py-4 bg-white text-[#09314F] font-bold hover:bg-gray-100 transition-all shadow-xl rounded-r-full active:scale-95"
           >
             Login
           </button>
@@ -537,6 +602,69 @@ export default function GuardianAddedStudentBiodata() {
           opacity: 0;
         }
       `}</style>
+
+      {/* Tracking Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-300">
+            <h2 className="text-2xl font-bold text-[#09314F] text-center mb-6">
+              Registration Progress
+            </h2>
+            
+            <div className="space-y-4 mb-8">
+              {trackingStatus.map((status, idx) => (
+                <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <span className="font-medium text-gray-700">{status.name}</span>
+                  <div className="flex items-center gap-2">
+                    {status.status === "pending" && (
+                      <span className="text-sm font-semibold text-gray-400">Pending</span>
+                    )}
+                    {status.status === "sending" && (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                        <span className="text-sm font-semibold text-blue-600">Sending...</span>
+                      </>
+                    )}
+                    {status.status === "success" && (
+                      <span className="text-sm font-bold text-green-500">Sent ✓</span>
+                    )}
+                    {status.status === "error" && (
+                      <span className="text-sm font-bold text-red-500">Failed ✕</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {trackingStatus.every(s => s.status === "success") ? (
+                <button
+                  onClick={() => navigate("/register/guardian/student/otp-verification")}
+                  className="w-full py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-bold rounded-xl hover:opacity-90 transition-all shadow-lg active:scale-95"
+                >
+                  Proceed to Verification
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-full py-4 bg-gray-300 text-gray-500 font-bold rounded-xl cursor-not-allowed"
+                >
+                  {loading ? "Processing..." : "Please wait..."}
+                </button>
+              )}
+              
+              {!loading && trackingStatus.some(s => s.status === "error") && (
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="w-full py-3 text-gray-500 font-semibold hover:bg-gray-100 rounded-xl transition-all"
+                >
+                  Close & Retry
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -243,7 +243,7 @@ export default function StudentBiodata() {
               <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
             </button>
             <div className="w-full flex justify-center">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-[#09314F]">
+              <h1 className="text-2xl md:text-3xl font-bold text-[#09314F]">
                 Student Biodata
               </h1>
             </div>
@@ -540,7 +540,7 @@ export default function StudentBiodata() {
         <div className="hidden md:block absolute bottom-[70px] left-0">
           <button
             onClick={() => navigate("/login")}
-            className="px-10 py-4 bg-white text-[#09314F] font-extrabold hover:bg-gray-100 transition-all shadow-xl rounded-r-full active:scale-95"
+            className="px-10 py-4 bg-white text-[#09314F] font-bold hover:bg-gray-100 transition-all shadow-xl rounded-r-full active:scale-95"
           >
             Login
           </button>

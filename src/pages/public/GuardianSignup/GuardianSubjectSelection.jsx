@@ -48,11 +48,18 @@ export default function GuardianSubjectSelection() {
             const selectedSubjects = {};
 
             for (const course of activeCourses) {
-              const res = await axios.get(
-                `${API_BASE_URL}/courses/${course.id}/subjects/${student.department}`
-              );
-              subjectsByCourse[course.id] = res.data.subjects || [];
-              selectedSubjects[course.id] = [];
+              try {
+                const endpointUrl = `${API_BASE_URL}/api/courses/${course.id}/subjects/${student.department}`;
+                console.log(`📡 [FETCH SUBJECTS] Requesting: ${endpointUrl} (Student: ${student.name}, Dept: ${student.department})`);
+                const res = await axios.get(endpointUrl);
+                console.log(`✅ [FETCH SUBJECTS SUCCESS] ${course.title}:`, res.data);
+                subjectsByCourse[course.id] = res.data.subjects || [];
+                selectedSubjects[course.id] = [];
+              } catch (err) {
+                console.error(`❌ [FETCH SUBJECTS FAILED] course ${course.id}, student ${student.name}:`, err);
+                subjectsByCourse[course.id] = [];
+                selectedSubjects[course.id] = [];
+              }
             }
 
             return {
@@ -65,6 +72,8 @@ export default function GuardianSubjectSelection() {
           })
         );
 
+        console.log("=== Guardian Subject Selection Initialized ===");
+        console.log("Enriched Students Data:", enrichedStudents);
         setStudents(enrichedStudents);
       } catch (err) {
         console.error("Initialization failed:", err);
@@ -178,7 +187,7 @@ export default function GuardianSubjectSelection() {
       )}
 
       {/* LEFT SIDE */}
-      <div className="w-full md:w-1/2 h-full bg-[#F8F9FA] flex flex-col items-center py-8 px-6 lg:px-[100px] overflow-y-auto order-2 md:order-1">
+      <div className="w-full md:w-1/2 h-full bg-[#F8F9FA] flex flex-col items-center py-8 px-6 lg:px-[100px] overflow-y-auto pb-[350px] order-2 md:order-1">
         
         {/* Header */}
         <div className="w-full max-w-[500px] mb-10 text-center">
@@ -190,7 +199,7 @@ export default function GuardianSubjectSelection() {
               <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
             </button>
             <div className="w-full flex justify-center">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-[#09314F]">
+              <h1 className="text-2xl md:text-3xl font-bold text-[#09314F]">
                 Subject Selection
               </h1>
             </div>
@@ -201,9 +210,11 @@ export default function GuardianSubjectSelection() {
         </div>
 
         {/* Multi-Student Accordions */}
-        <div className="w-full max-w-[500px] space-y-6 mb-8 relative z-10">
-          {students.map((student, sIndex) => (
-            <div key={sIndex} className="bg-white rounded-[32px] shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-50 mb-4">
+        <div ref={dropdownRef} className="w-full max-w-[500px] space-y-6 mb-8 relative z-10">
+          {students.map((student, sIndex) => {
+            const hasOpenDropdown = openDropdown?.startsWith(`${sIndex}-`);
+            return (
+            <div key={sIndex} className={`bg-white rounded-[32px] shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-50 mb-4 relative ${hasOpenDropdown ? 'z-50' : 'z-10'}`}>
               <button 
                 onClick={() => toggleStudent(sIndex)}
                 className="w-full flex items-center justify-between p-6 hover:bg-gray-50/50 transition-colors rounded-[32px]"
@@ -222,10 +233,10 @@ export default function GuardianSubjectSelection() {
 
               {student.expanded && (
                 <div className="p-2 pt-0 animate-fadeIn relative">
-                  <div className="bg-[#09314F] text-white rounded-2xl grid grid-cols-[90px_1fr_50px] md:grid-cols-[100px_1fr_60px] px-2 md:px-4 py-3 mb-1">
-                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest px-1 md:px-2">Exam</span>
-                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest px-1 md:px-2">Subjects</span>
-                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-right">Count</span>
+                  <div className="grid grid-cols-3 bg-[#09314F] text-white px-4 md:px-6 py-4 rounded-t-[8px]">
+                    <span className="text-[8px] sm:text-[10px] md:text-sm font-black uppercase tracking-wider text-left leading-tight">Exam</span>
+                    <span className="text-[8px] sm:text-[10px] md:text-sm font-black uppercase tracking-wider text-center leading-tight">Subjects</span>
+                    <span className="text-[8px] sm:text-[10px] md:text-sm font-black uppercase tracking-wider text-right leading-tight">Count</span>
                   </div>
 
                   <div className="space-y-1">
@@ -237,31 +248,34 @@ export default function GuardianSubjectSelection() {
                       const isOpen = openDropdown === currentKey;
 
                       return (
-                        <div key={course.id} className="grid grid-cols-[90px_1fr_50px] md:grid-cols-[100px_1fr_60px] items-center px-2 md:px-4 py-4 border-b border-gray-50 last:border-0 relative">
-                          <span className="text-[10px] md:text-xs font-extrabold text-[#09314F] uppercase truncate">{course.title}</span>
+                        <div key={course.id} className={`grid grid-cols-3 items-center px-4 md:px-6 py-4 border-b border-gray-50 last:border-0 relative ${isOpen ? 'z-50' : 'z-10'}`}>
+                          <div className="text-[9px] sm:text-[11px] md:text-sm font-bold text-[#09314F] uppercase tracking-wide truncate leading-tight">
+                            {course.title}
+                          </div>
                           
-                          <div className="px-2 relative">
+                          <div className="min-w-0 lg:relative flex justify-center">
                             <button
+                              id={`toggle-${course.id}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleDropdown(sIndex, course.id);
                               }}
-                              className="w-full min-h-[40px] flex items-center transition-all pointer-events-auto"
+                              className="w-full max-w-[180px] min-w-0 min-h-[44px] flex items-center justify-center transition-all group pointer-events-auto text-[9px] sm:text-[11px] md:text-sm leading-tight"
                             >
-                              <div className={dropdownTheme.subjectPreview}>
+                              <div className={`${dropdownTheme.subjectPreview} text-center truncate`}>
                                 {selectedIds.length > 0 ? (
                                   subjects
                                     .filter(s => selectedIds.includes(s.id))
                                     .map(s => s.name)
                                     .join(", ")
                                 ) : (
-                                  "Select..."
+                                  "Select subjects"
                                 )}
                               </div>
                             </button>
 
                             {isOpen && (
-                              <div ref={dropdownRef} className={`${dropdownTheme.overlay.container} w-[220px] max-h-[220px]`}>
+                              <div className={`${dropdownTheme.overlay.container} !w-auto !left-4 !right-4 lg:!left-0 lg:!right-auto lg:!w-[280px] lg:!translate-x-0 z-[200] shadow-2xl`}>
                                 <p className={dropdownTheme.overlay.header}>Choose up to {limit}</p>
                                 <div className="space-y-1">
                                   {subjects.map(subject => {
@@ -296,7 +310,8 @@ export default function GuardianSubjectSelection() {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="w-full max-w-[500px]">

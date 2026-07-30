@@ -13,60 +13,16 @@ export default function AddedStudentOTP() {
   const [count, setCount] = useState(60); 
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
-  const [registering, setRegistering] = useState(false);
+
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const hasRegisteredRef = useRef(false);
   const inputRefs = useRef([]);
 
-  // Helper to clean phone number
-  const cleanPhone = useCallback((str) => str.replace(/[\s\-().]/g, ""), []);
 
-  // Register a student
-  const registerStudent = useCallback(async (index, student, password) => {
-    if (student.verified) return; // Skip if already verified
 
-    setRegistering(true);
-    setMsg("");
-
-    try {
-      await axios.post(`${API_BASE_URL}/api/Students/register`, {
-        tel: student.tel,
-        password: password,
-        confirmPassword: password,
-        password_confirmation: password,
-      });
-
-      console.log(`✓ OTP sent to ${student.name}`);
-      setMsg(<span className="text-green-500">OTP sent to {student.name}</span>);
-    } catch (err) {
-      console.error("Registration error:", err);
-      
-      if (err.response?.status === 422 || err.response?.status === 500) {
-        const errorMsg = err.response?.data?.errors || err.response?.data?.message || "";
-        const errorString = typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg);
-        
-        if (errorString.includes('UNIQUE') || errorString.includes('already') || errorString.includes('taken')) {
-          setMsg(
-            <span className="text-yellow-600">
-              Student already registered. Use the OTP sent to their phone.
-            </span>
-          );
-          return;
-        }
-      }
-      
-      setMsg(
-        <span className="text-red-500">
-          Failed to send OTP. {err.response?.data?.message || "Please try again"}
-        </span>
-      );
-    } finally {
-      setRegistering(false);
-    }
-  }, [API_BASE_URL]);
-
+  
   // Load students from localStorage
   useEffect(() => {
     if (hasRegisteredRef.current) return;
@@ -76,36 +32,34 @@ export default function AddedStudentOTP() {
     if (stored) {
       const parsed = JSON.parse(stored);
       
-      const phoneStudents = parsed.students
-        .filter(s => {
-          const cleaned = cleanPhone(s.email);
-          const phoneRegex = /^(\+234|234|0)(70|80|81|90|91)\d{8}$/;
-          return phoneRegex.test(cleaned);
-        })
-        .map(s => ({
+      const allStudents = parsed.students.map(s => {
+        const trimmedEntry = s.email ? s.email.trim() : "";
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEntry);
+        
+        return {
           ...s,
-          tel: cleanPhone(s.email),
+          contact: trimmedEntry,
+          isEmail: isEmail,
           password: parsed.password,
           verified: !!s.verified, // Check for existing verification
-        }));
+        };
+      });
 
-      setStudents(phoneStudents);
+      setStudents(allStudents);
 
       // Find first unverified student
-      const firstUnverifiedIdx = phoneStudents.findIndex(s => !s.verified);
+      const firstUnverifiedIdx = allStudents.findIndex(s => !s.verified);
       
       if (firstUnverifiedIdx !== -1) {
         setCurrentIndex(firstUnverifiedIdx);
-        const student = phoneStudents[firstUnverifiedIdx];
-        registerStudent(firstUnverifiedIdx, student, parsed.password);
-      } else if (phoneStudents.length > 0) {
+      } else if (allStudents.length > 0) {
         // All verified
-        navigate("/register/guardian/student/biodata");
+        navigate("/register/guardian/training/selection");
       }
     } else {
       navigate("/register/guardian/addstudent");
     }
-  }, [navigate, registerStudent, cleanPhone]);
+  }, [navigate]);
 
   // Timer countdown
   useEffect(() => {
@@ -124,10 +78,12 @@ export default function AddedStudentOTP() {
     const stored = localStorage.getItem("guardianStudents");
     if (stored) {
       const parsed = JSON.parse(stored);
-      // We need to match the student in the original array.
-      // PhoneStudents uses the filtered index, but we stored names/emails.
       const currentStudent = students[index];
-      const studentToUpdate = parsed.students.find(s => s.name === currentStudent.name && cleanPhone(s.email) === currentStudent.tel);
+      // Match the student based on name and contact (which was stored in the 'email' field)
+      const studentToUpdate = parsed.students.find(s => 
+        s.name === currentStudent.name && 
+        (s.email ? s.email.trim() : "") === currentStudent.contact
+      );
       
       if (studentToUpdate) {
         studentToUpdate.verified = true;
@@ -172,10 +128,17 @@ export default function AddedStudentOTP() {
     try {
       const currentStudent = students[currentIndex];
       
-      await axios.post(`${API_BASE_URL}/api/Students/verify-phone`, {
-        tel: currentStudent.tel,
-        otp: otpCode,
-      });
+      if (currentStudent.isEmail) {
+        await axios.post(`${API_BASE_URL}/api/students/verify-email`, {
+          email: currentStudent.contact,
+          token: otpCode,
+        });
+      } else {
+        await axios.post(`${API_BASE_URL}/api/Students/verify-phone`, {
+          tel: currentStudent.contact,
+          otp: otpCode,
+        });
+      }
 
       // Mark as verified in state
       const updatedStudents = [...students];
@@ -194,14 +157,11 @@ export default function AddedStudentOTP() {
         setCount(60); 
         setMsg(<span className="text-green-500">✓ {currentStudent.name} verified!</span>);
         
-        // Register next student
-        setTimeout(() => {
-          registerStudent(nextIdx, students[nextIdx], currentStudent.password);
-        }, 1000);
+        // Register next student (Registration already happened in previous step, so we just move to the next OTP)
       } else {
         setMsg(<span className="text-green-500">✓ All students verified!</span>);
         setTimeout(() => {
-          navigate("/register/guardian/student/biodata");
+          navigate("/register/guardian/training/selection");
         }, 2000);
       }
     } catch (err) {
@@ -216,9 +176,15 @@ export default function AddedStudentOTP() {
     const currentStudent = students[currentIndex];
     
     try {
-      await axios.post(`${API_BASE_URL}/api/Students/resend-phone-otp`, {
-        tel: currentStudent.tel,
-      });
+      if (currentStudent.isEmail) {
+        await axios.post(`${API_BASE_URL}/api/students/resend-email-verification`, {
+          email: currentStudent.contact,
+        });
+      } else {
+        await axios.post(`${API_BASE_URL}/api/Students/resend-phone-otp`, {
+          tel: currentStudent.contact,
+        });
+      }
       setCount(60);
       setMsg(<span className="text-green-500">OTP resent to {currentStudent.name}</span>);
     } catch (err) {
@@ -287,7 +253,7 @@ export default function AddedStudentOTP() {
               
               <div className="text-center">
                 <p className="text-sm text-gray-500">
-                  OTP sent to <span className="font-semibold">{currentStudent.tel}</span>
+                  OTP sent to <span className="font-semibold">{currentStudent.contact}</span>
                 </p>
                 {process.env.NODE_ENV === "development" && (
                   <p className="text-sm text-gray-400 mt-1">
@@ -328,14 +294,14 @@ export default function AddedStudentOTP() {
               {/* Verify Button */}
               <button
                 type="submit"
-                disabled={loading || registering}
+                disabled={loading}
                 className={`w-full py-3 rounded-lg font-medium transition ${
-                  loading || registering
+                  loading
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90"
                 } text-white`}
               >
-                {loading ? "Verifying..." : registering ? "Sending OTP..." : "Verify & Continue"}
+                {loading ? "Verifying..." : "Verify & Continue"}
               </button>
             </form>
 
