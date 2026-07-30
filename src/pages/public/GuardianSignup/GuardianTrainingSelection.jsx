@@ -29,7 +29,7 @@ export default function GuardianTrainingSelection() {
       }));
       setStudents(studentsWithTraining);
     } else {
-      navigate("/register/guardian/student/biodata");
+      navigate("/register/guardian/student/registration");
     }
   }, [navigate]);
 
@@ -156,7 +156,7 @@ export default function GuardianTrainingSelection() {
           {/* HEADER */}
           <div className="relative w-full flex items-center justify-center mb-6 mt-4">
             <button
-              onClick={() => navigate("/register/guardian/student/biodata")}
+              onClick={() => navigate("/register/guardian/student/otp-verification")}
               className="absolute left-0 p-3 bg-white hover:bg-gray-50 rounded-2xl shadow-sm transition-all active:scale-90 z-10"
             >
               <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />

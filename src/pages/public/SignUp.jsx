@@ -3,24 +3,19 @@ import { useNavigate } from "react-router-dom";
 import signup_img from "../../assets/images/Student_sign_up.jpg";
 import TC_logo from "../../assets/images/tutorial_logo.png";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import ComingSoon from "../../components/public/ComingSoon";
 
 export default function SignUp() {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState("");
-  const [showComingSoon, setShowComingSoon] = useState(false);
 
   const handleSubmit = () => {
     console.log("Selected Role:", userRole); // Debugging line
     if (userRole === "student") {
       navigate("/register/student");
     } else if (userRole === "guardian") {
-      setShowComingSoon(true);
+      navigate("/register/guardian");
     }
   };
-  if (showComingSoon) {
-    return <ComingSoon onBack={() => setShowComingSoon(false)} />;
-  }
 
   return (
     <>

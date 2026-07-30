@@ -15,13 +15,15 @@ import StudentBiodata from "./pages/public/StudentSignUp/StudentBiodata.jsx";
 import StudentTrainingSelection from "./pages/public/StudentSignUp/StudentTrainingSelection.jsx";
 import { StudentSubjectSelection } from "./pages/public/StudentSignUp/StudentSubjectSelection.jsx";
 import { StudentPaymentSuccessScreen } from "./pages/public/StudentSignUp/StudentPaymentSuccessScreen.jsx";
+import GuardianLogin from "./pages/public/GuardianLogin.jsx";
+import GuardianDashboard from "./pages/Guardians/GuardianDashboard.jsx";
 
 import { GuardianRegistration } from "./pages/public/GuardianSignup/GuardianRegistration.jsx";
 import GuardianPhoneVerification from "./pages/public/GuardianSignup/GuardianPhoneVerification.jsx";
 import GuardianEmailVerification from "./pages/public/GuardianSignup/GuardianEmailVerification.jsx";
 import GuardianAddStudents from "./pages/public/GuardianSignup/GuardianAddStudents.jsx";
 import AddedStudentOTP from "./pages/public/GuardianSignup/AddedStudentOTP.jsx";
-import GuardianAddedStudentBiodata from "./pages/public/GuardianSignup/GuardianAddedStudentBiodata.jsx";
+import GuardianStudentRegistration from "./pages/public/GuardianSignup/GuardianStudentRegistration.jsx";
 import GuardianTrainingSelection from "./pages/public/GuardianSignup/GuardianTrainingSelection.jsx";
 import GuardianSubjectSelection from "./pages/public/GuardianSignup/GuardianSubjectSelection.jsx";
 import GuardianTrainingDuration from "./pages/public/GuardianSignup/GuardianTrainingDuration.jsx";
@@ -91,11 +93,12 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
+        <Route path="/guardian/login" element={<GuardianLogin />} />
+        <Route path="/guardian/dashboard" element={<GuardianDashboard />} />
         <Route path="*" element={<NotFound />} />
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/career" element={<Career />} />
         <Route path="/career" element={<Career />} />
         <Route path="/training" element={<Training />} />
         <Route path="/program/:id" element={<CourseDetails />} />
@@ -113,7 +116,7 @@ function App() {
         <Route path="/register/guardian/email/verify" element={<GuardianEmailVerification />} />
         <Route path="/register/guardian/addstudent" element={<GuardianAddStudents />} />
         <Route path="/register/guardian/student/otp-verification" element={<AddedStudentOTP />} />
-        <Route path="/register/guardian/student/biodata" element={<GuardianAddedStudentBiodata />} />
+        <Route path="/register/guardian/student/registration" element={<GuardianStudentRegistration />} />
         <Route path="/register/guardian/training/selection" element={<GuardianTrainingSelection />} />
         <Route path="/register/guardian/subject/selection" element={<GuardianSubjectSelection />} />
         <Route path="/register/guardian/training/duration" element={<GuardianTrainingDuration />} />

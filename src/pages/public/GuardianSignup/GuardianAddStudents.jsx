@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import TC_logo from "../../../assets/images/tutorial_logo.png";
 import signup_img from "../../../assets/images/Student_sign_up.jpg";
 import { 
@@ -25,8 +24,6 @@ export default function GuardianAddStudents() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [students, setStudents] = useState([{ name: "", email: "", expanded: true }]);
-
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const cleanInput = (input) => {
@@ -129,27 +126,6 @@ export default function GuardianAddStudents() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ── API: Register email students ───────────────────────────────────────────
-  const registerEmailStudents = async (emailStudents, sharedPassword) => {
-    const count = { success: 0, failed: 0 };
-    for (const student of emailStudents) {
-      try {
-        await axios.post(`${API_BASE_URL}/api/Students/register`, {
-          email: student.cleanedEmail,
-          password: sharedPassword,
-          confirmPassword: sharedPassword,
-          password_confirmation: sharedPassword,
-        });
-        count.success++;
-        console.log(`✓ Email sent to ${student.name}`);
-      } catch (err) {
-        count.failed++;
-        console.error(`✗ Failed to register ${student.name}:`, err.response?.data);
-      }
-    }
-    return count;
-  };
-
   // ── Form submission ────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -180,9 +156,6 @@ export default function GuardianAddStudents() {
         };
       });
 
-      const emailStudents = processedStudents.filter((s) => s.isEmail);
-      const phoneStudents = processedStudents.filter((s) => !s.isEmail);
-
       // Step 4: Persist student data to localStorage for subsequent pages
       localStorage.setItem(
         "guardianStudents",
@@ -193,26 +166,12 @@ export default function GuardianAddStudents() {
         })
       );
 
-      // Step 5: Register email students with the backend
-      if (emailStudents.length > 0) {
-        const result = await registerEmailStudents(emailStudents, password);
-        console.log(`Registered: ${result.success} success, ${result.failed} failed`);
-      }
-
-      // Step 6: Navigate — phone students need OTP, email students go straight to biodata
-      if (phoneStudents.length > 0) {
-        setToast({ type: "success", message: `${phoneStudents.length} student(s) need phone verification` });
-        setTimeout(() => {
-          setLoading(false);
-          navigate("/register/guardian/student/otp-verification");
-        }, 2000);
-      } else {
-        setToast({ type: "success", message: "Verification emails sent! Proceeding to biodata..." });
-        setTimeout(() => {
-          setLoading(false);
-          navigate("/register/guardian/student/biodata");
-        }, 2000);
-      }
+      // Step 5: Navigate to Guardian Student Registration (Biodata)
+      setToast({ type: "success", message: "Students added! Proceeding to registration..." });
+      setTimeout(() => {
+        setLoading(false);
+        navigate("/register/guardian/student/registration");
+      }, 2000);
     } catch (err) {
       console.error("Error:", err);
       setToast({ type: "error", message: "Something went wrong. Please try again." });

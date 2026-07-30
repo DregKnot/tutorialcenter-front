@@ -142,7 +142,7 @@ export const StudentTrainingDuration = () => {
               <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
             </button>
             <div className="w-full flex justify-center">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-[#09314F]">
+              <h1 className="text-2xl md:text-3xl font-bold text-[#09314F]">
                 Training Duration
               </h1>
             </div>
@@ -170,7 +170,7 @@ export const StudentTrainingDuration = () => {
                   key={course.id}
                   className="grid grid-cols-3 items-center px-4 md:px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
                 >
-                  <div className="text-[11px] md:text-sm font-extrabold text-[#09314F] uppercase tracking-wide truncate">
+                  <div className="text-[11px] md:text-sm font-bold text-[#09314F] uppercase tracking-wide truncate">
                     {course.title}
                   </div>
 

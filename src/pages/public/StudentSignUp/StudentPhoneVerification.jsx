@@ -307,7 +307,7 @@ export default function StudentPhoneVerification() {
         <div className="hidden md:block absolute bottom-[70px] left-0 -translate-x-9">
           <button
             onClick={() => navigate("/login")}
-            className="px-10 py-4 bg-white text-[#09314F] font-extrabold hover:bg-gray-100 transition-all shadow-xl rounded-full active:scale-95"
+            className="px-10 py-4 bg-white text-[#09314F] font-bold hover:bg-gray-100 transition-all shadow-xl rounded-full active:scale-95"
           >
             Login
           </button>

@@ -293,7 +293,7 @@ export default function StudentRegistration() {
               }
             }}
           />
-          <h1 className="text-3xl font-extrabold text-[#09314F] mb-2">Sign Up</h1>
+          <h1 className="text-3xl font-bold text-[#09314F] mb-2">Sign Up</h1>
           <p className="text-[#888888] font-medium mb-1 italic text-sm text-center">Fill in your student registration & biodata.</p>
         </div>
 

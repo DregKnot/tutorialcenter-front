@@ -47,8 +47,25 @@ export default function ExamManagement() {
       const fetchedExams = Array.isArray(examRes.data) ? examRes.data : (examRes.data?.exam_bodies || examRes.data?.data || []);
       const fetchedCourses = coursesRes.data?.data || coursesRes.data?.courses || [];
 
+      // Fetch subjects for each body to accurately count them (as requested)
+      const examsWithSubjects = await Promise.all(
+        fetchedExams.map(async (exam) => {
+          try {
+            const subRes = await axios.get(`${API_BASE_URL}/api/admin/exam-data/subjects?exam_body_id=${exam.id}`, config);
+            const subjectsData = Array.isArray(subRes.data) ? subRes.data : (subRes.data?.data || subRes.data?.subjects || []);
+            return {
+              ...exam,
+              actual_subject_count: subjectsData.length
+            };
+          } catch (err) {
+            console.error(`Failed to fetch subjects for body ${exam.id}`, err);
+            return { ...exam, actual_subject_count: 0 };
+          }
+        })
+      );
+
       // Map course banners to exams
-      const examsFinal = fetchedExams.map(exam => {
+      const examsFinal = examsWithSubjects.map(exam => {
         const matchingCourse = fetchedCourses.find(c => String(c.id) === String(exam.course_id));
         let bannerPath = matchingCourse?.banner || matchingCourse?.image || exam.image;
         
@@ -60,7 +77,7 @@ export default function ExamManagement() {
           ...exam,
           image: bannerPath,
           courseName: matchingCourse?.title || "General",
-          subjectCount: exam.exam_years_count || 0
+          subjectCount: exam.actual_subject_count || 0
         };
       });
 

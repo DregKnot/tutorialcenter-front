@@ -22,6 +22,7 @@ export default function AdminStudentManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("All");
 
   const [stats, setStats] = useState([
     { 
@@ -36,7 +37,7 @@ export default function AdminStudentManagement() {
     { 
       label: "Active Students", 
       value: 0, 
-      subLabel: "Online", 
+      subLabel: "Paid", 
       icon: CheckCircleIcon, 
       color: "text-[#22C55E]", 
       bg: "bg-green-50/50",
@@ -45,7 +46,7 @@ export default function AdminStudentManagement() {
     { 
       label: "Inactive Students", 
       value: 0, 
-      subLabel: "Offline", 
+      subLabel: "Unpaid", 
       icon: UserGroupOutline, 
       color: "text-[#EF4444]", 
       bg: "bg-red-50/50",
@@ -65,6 +66,50 @@ export default function AdminStudentManagement() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
+  const getLatestCourse = (student) => {
+    const payments = student.payments || [];
+    if (payments.length > 0) {
+       // Filter for successful payments that have an enrollment end_date, sort by created_at descending
+       const sortedPayments = [...payments]
+         .filter(p => p.status === 'successful' && p.enrollment && p.enrollment.end_date)
+         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+       
+       if (sortedPayments.length > 0) {
+          const latestPayment = sortedPayments[0];
+          return {
+             status: latestPayment.enrollment.status || 'active',
+             end_date: latestPayment.enrollment.end_date,
+             start_date: latestPayment.enrollment.start_date
+          };
+       }
+    }
+
+    const studentInfo = Array.isArray(student?.information) ? student.information[0] : (student?.information || {});
+    const courses = student?.courses || student?.course_enrollments || studentInfo?.courses || studentInfo?.course_enrollments || [];
+    
+    if (!courses || courses.length === 0) return null;
+    
+    return [...courses].sort((a, b) => {
+       const dateA = new Date(a.end_date || 0);
+       const dateB = new Date(b.end_date || 0);
+       return dateB - dateA;
+    })[0];
+  };
+
+  const isStudentActive = (student) => {
+    const latest = getLatestCourse(student);
+    if (!latest) return false;
+    return latest.status === 'active' || (latest.end_date && new Date(latest.end_date) >= new Date());
+  };
+
+  const isStudentSuspended = (student) => {
+    return student.banned === 1 || 
+      student.account_status === "suspended" || 
+      student.deleted_at != null || 
+      student.information?.deleted_at != null || 
+      (Array.isArray(student.information) && student.information[0]?.deleted_at != null);
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -75,10 +120,33 @@ export default function AdminStudentManagement() {
         }
       };
 
-      const res = await axios.get(`${API_BASE_URL}/api/admin/students/all`, config);
-      console.log("[AdminStudentManagement] Fetch results:", res.data);
-      const fetchedStudents = res.data?.students || res.data?.data || [];
-      const studentsArray = Array.isArray(fetchedStudents) ? fetchedStudents : [];
+      const [studentsRes, paymentsRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/admin/students/all`, config),
+        axios.get(`${API_BASE_URL}/api/admin/payments/all`, config).catch(e => {
+          console.warn("Failed to fetch payments:", e);
+          return { data: [] };
+        })
+      ]);
+
+      console.log("[AdminStudentManagement] Fetch results:", studentsRes.data);
+      const fetchedStudents = studentsRes.data?.students || studentsRes.data?.data || [];
+      let studentsArray = Array.isArray(fetchedStudents) ? fetchedStudents : [];
+      
+      let paymentsArray = [];
+      const pData = paymentsRes.data;
+      if (Array.isArray(pData)) paymentsArray = pData;
+      else if (Array.isArray(pData?.data)) paymentsArray = pData.data;
+      else if (Array.isArray(pData?.payments)) paymentsArray = pData.payments;
+      else if (Array.isArray(pData?.payments?.data)) paymentsArray = pData.payments.data;
+      else if (pData && typeof pData === 'object') {
+        const possibleArray = Object.values(pData).find(val => Array.isArray(val));
+        if (possibleArray) paymentsArray = possibleArray;
+      }
+
+      studentsArray = studentsArray.map(student => {
+         const studentPayments = paymentsArray.filter(p => p.student_id === student.id || p.student?.id === student.id);
+         return { ...student, payments: studentPayments };
+      });
       
       setStudents(studentsArray);
       calculateStats(studentsArray);
@@ -88,6 +156,7 @@ export default function AdminStudentManagement() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [API_BASE_URL, token]);
 
   const calculateStats = (allStudents) => {
@@ -101,19 +170,13 @@ export default function AdminStudentManagement() {
       return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
     });
 
-    const activeCount = allStudents.filter(s => s.account_status === "active").length;
-    const inactiveCount = allStudents.filter(s => s.account_status === "inactive").length;
-    const suspendedCount = allStudents.filter(s => 
-      s.banned === 1 || 
-      s.account_status === "suspended" || 
-      s.deleted_at != null || 
-      s.information?.deleted_at != null || 
-      (Array.isArray(s.information) && s.information[0]?.deleted_at != null)
-    ).length;
+    const suspendedCount = allStudents.filter(s => isStudentSuspended(s)).length;
+    const activeCount = allStudents.filter(s => isStudentActive(s) && !isStudentSuspended(s)).length;
+    const inactiveCount = allStudents.filter(s => !isStudentActive(s) && !isStudentSuspended(s)).length;
 
     setStats(prev => [
       { ...prev[0], value: allStudents.length, subLabel: `+${newStudentsThisMonth.length} new` },
-      { ...prev[1], value: activeCount || allStudents.length, subLabel: "Active" }, 
+      { ...prev[1], value: activeCount, subLabel: "Active" }, 
       { ...prev[2], value: inactiveCount, subLabel: "Inactive" },
       { ...prev[3], value: suspendedCount, subLabel: `Suspended` },
     ]);
@@ -135,6 +198,20 @@ export default function AdminStudentManagement() {
 
   // Filter students
   const filteredStudents = students.filter(student => {
+    const suspended = isStudentSuspended(student);
+    const active = isStudentActive(student);
+
+    let include = true;
+    if (activeTab === "Active Students") {
+       include = active && !suspended;
+    } else if (activeTab === "Inactive Students") {
+       include = !active && !suspended;
+    } else if (activeTab === "Suspended") {
+       include = suspended;
+    }
+
+    if (!include) return false;
+
     const fullName = `${student.firstname || ''} ${student.surname || ''}`.toLowerCase();
     const query = searchQuery.toLowerCase();
     return fullName.includes(query) || (student.email && student.email.toLowerCase().includes(query));
@@ -151,8 +228,23 @@ export default function AdminStudentManagement() {
         
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
-          {stats.map((stat, idx) => (
-            <div key={idx} className="bg-white dark:bg-gray-800/80 p-6 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50 dark:border-gray-700/50 flex flex-col justify-between h-44 transition-all hover:translate-y-[-2px]">
+          {stats.map((stat, idx) => {
+            const isActiveTab = activeTab === stat.label;
+            
+            let ringClass = "";
+            if (isActiveTab) {
+              if (stat.label === "Active Students") ringClass = "ring-2 ring-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)]";
+              else if (stat.label === "Inactive Students") ringClass = "ring-2 ring-red-400 shadow-[0_0_15px_rgba(239,68,68,0.3)]";
+              else if (stat.label === "Suspended") ringClass = "ring-2 ring-orange-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]";
+              else ringClass = "ring-2 ring-[#0F2843] shadow-[0_0_15px_rgba(15,40,67,0.3)]";
+            }
+
+            return (
+            <div 
+              key={idx} 
+              onClick={() => setActiveTab(isActiveTab ? "All" : stat.label)}
+              className={`bg-white dark:bg-gray-800/80 p-6 rounded-3xl border border-gray-50 dark:border-gray-700/50 flex flex-col justify-between h-44 transition-all cursor-pointer hover:translate-y-[-2px] ${ringClass} ${!isActiveTab && "shadow-[0_4px_20px_rgba(0,0,0,0.03)]"}`}
+            >
                <div className="flex justify-between items-start">
                   <div className={`p-3.5 rounded-2xl ${stat.bg} ${stat.color}`}>
                      <stat.icon className="w-6 h-6" />
@@ -168,7 +260,7 @@ export default function AdminStudentManagement() {
                   <h3 className="text-4xl font-black text-[#0F2843] dark:text-white">{stat.value}</h3>
                </div>
             </div>
-          ))}
+          )})}
         </div>
 
         {/* Filter & Search Bar */}
@@ -183,7 +275,7 @@ export default function AdminStudentManagement() {
                  <input 
                    type="text" 
                    value={searchQuery}
-                   onChange={(e) => setSearchQuery(e.target.value)}
+                   onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                    placeholder="Search by name, email..." 
                    className="w-full pl-14 pr-6 py-4 bg-white dark:bg-gray-800 rounded-2xl border-none shadow-[0_4px_15px_rgba(0,0,0,0.02)] focus:ring-2 focus:ring-[#BB9E7F] text-sm font-medium text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-500" 
                  />
@@ -216,7 +308,11 @@ export default function AdminStudentManagement() {
               <div>Name</div>
               <div className="text-center">Status</div>
               <div className="text-center">Email</div>
-              <div className="text-center">Phone Number</div>
+              { (activeTab === "Active Students" || activeTab === "Inactive Students") ? (
+                <div className="text-center">Expiry Date</div>
+              ) : (
+                <div className="text-center">Phone Number</div>
+              )}
               <div className="text-center">Actions</div>
               <div className="text-center"></div>
            </div>
@@ -267,14 +363,25 @@ export default function AdminStudentManagement() {
                        {isSuspended ? (
                          <span className="text-[#EF4444]">Suspended</span>
                        ) : (
-                         <span className={student.account_status === 'active' ? 'text-[#22C55E]' : 'text-gray-500'}>
-                           {student.account_status || "Active"}
+                         <span className={isStudentActive(student) ? 'text-[#22C55E]' : 'text-gray-500'}>
+                           {isStudentActive(student) ? "Active" : "Inactive"}
                          </span>
                        )}
                      </div>
                      <div className="text-center text-gray-500 font-bold text-[13px] truncate">{student.email || "—"}</div>
-                     <div className="text-center text-[#BB9E7F] font-black text-sm">{student.tel || student.guardian?.tel || "—"}</div>
                      
+                     { (activeTab === "Active Students" || activeTab === "Inactive Students") ? (
+                       <div className="text-center text-gray-700 dark:text-gray-300 font-bold text-[13px]">
+                         {(() => {
+                            const latest = getLatestCourse(student);
+                            if (!latest || !latest.end_date) return "N/A";
+                            return new Date(latest.end_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                         })()}
+                       </div>
+                     ) : (
+                       <div className="text-center text-[#BB9E7F] font-black text-sm">{student.tel || student.guardian?.tel || "—"}</div>
+                     )}
+
                      {/* Actions Column */}
                      <div className="text-center">
                         <button 

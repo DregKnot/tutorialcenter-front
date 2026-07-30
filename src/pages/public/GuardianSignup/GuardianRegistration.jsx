@@ -165,7 +165,7 @@ export const GuardianRegistration = () => {
             alt="Tutorial Center Logo"
             className="h-20 w-auto mb-6 object-contain"
           />
-          <h1 className="text-3xl font-extrabold text-[#333333] mb-2">Sign Up</h1>
+          <h1 className="text-3xl font-bold text-[#333333] mb-2">Sign Up</h1>
           <p className="text-[#666666] font-medium mb-1">Create an account to get started with us.</p>
           <div className="w-full max-w-sm mt-8 border-b-2 border-[#09314F] pb-2 flex justify-center">
              <span className="text-xl font-bold text-[#09314F]">Guardian</span>
