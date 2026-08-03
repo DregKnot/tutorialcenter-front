@@ -18,11 +18,11 @@ const Career = () => {
 
       <div className="relative z-30 w-full h-[373px]">
         {/* background image */}
-        <div
-          className="bg-image absolute w-full h-full bg-cover bg-no-repeat bg-center"
-          style={{
-            backgroundImage: `url(${Career_img})`,
-          }}
+        <img
+          src={Career_img}
+          alt="Career Hero Background"
+          fetchpriority="high"
+          className="absolute inset-0 w-full h-full object-cover z-0"
         />
         {/* overlay */}
         <div className="overlay absolute w-full h-full bg-black opacity-30"></div>

@@ -160,9 +160,11 @@ const Training = () => {
           SECTION 1 — HERO BANNER
           ════════════════════════════════════════════ */}
       <div className="relative z-30 w-full h-[373px]">
-        <div
-          className="bg-image absolute w-full h-full bg-cover bg-no-repeat bg-center"
-          style={{ backgroundImage: `url(${Career_img})` }}
+        <img
+          src={Career_img}
+          alt="Training Hero Background"
+          fetchpriority="high"
+          className="absolute inset-0 w-full h-full object-cover z-0"
         />
         <div className="overlay absolute w-full h-full bg-black opacity-30" />
         <div className="w-full h-full flex items-center justify-center relative z-50">
