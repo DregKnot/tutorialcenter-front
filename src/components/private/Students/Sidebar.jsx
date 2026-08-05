@@ -11,8 +11,8 @@ import { NavLink, Link } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { useAuth } from "../../../context/AuthContext";
 import { useTheme } from "../../../context/ThemeContext";
-import logo from "../../../assets/images/tutorial_logo.png";
-import collapselogo from "../../../assets/images/TC 1.png";
+import logo from "../../../assets/images/tutorial_logo.webp";
+import collapselogo from "../../../assets/images/TC 1.webp";
 
 const menuItems = [
   {

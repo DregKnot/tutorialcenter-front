@@ -1,4 +1,4 @@
-import checkers from "../../assets/images/checkers.png";
+import checkers from "../../assets/images/checkers.webp";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
 const TeamCard = ({ name, role }) => {

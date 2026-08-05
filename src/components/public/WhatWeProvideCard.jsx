@@ -1,4 +1,4 @@
-import vector from "../../assets/images/Vector.png";
+import vector from "../../assets/images/Vector.webp";
 import ScrollReveal from "./ScrollReveal";
 
 const WhatWeProvideCard = ({ item }) => {

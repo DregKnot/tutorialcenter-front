@@ -1,6 +1,6 @@
 import React from "react"; 
-import ComingSoonImg from "../../assets/images/comingSoon.jpg";
-import TC_logo from "../../assets/images/tutorial_logo.png";
+import ComingSoonImg from "../../assets/images/comingSoon.webp";
+import TC_logo from "../../assets/images/tutorial_logo.webp";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 
 const ComingSoon = ({ onBack }) => {

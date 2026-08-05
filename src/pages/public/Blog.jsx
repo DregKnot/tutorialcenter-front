@@ -1,8 +1,8 @@
 import React from "react";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
-import BlogHero from "../../assets/images/Blogs.jpg";
-import handCup from "../../assets/images/handCup.jpg";
+import BlogHero from "../../assets/images/Blogs.webp";
+import handCup from "../../assets/images/handCup.webp";
 import ScrollReveal from "../../components/public/ScrollReveal";
 
 // ── Placeholder blog data (coming soon — replace with real API later) ──

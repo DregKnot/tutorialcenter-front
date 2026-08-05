@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import signup_img from "../../../assets/images/Student_sign_up.jpg";
+import signup_img from "../../../assets/images/Student_sign_up.webp";
 
 export default function PaymentMethod() {
   const navigate = useNavigate();

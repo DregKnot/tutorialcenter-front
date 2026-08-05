@@ -473,18 +473,27 @@ export default function useExamForm() {
   };
 
   // Check duplicate against existing DB questions (skip the question being edited)
-  const isDuplicateDbNumber = (num) => {
+  const isDuplicateDbNumber = (num, targetQId, originalQNum) => {
     if (!num) return false;
+    const numInt = parseInt(num, 10);
     return existingQuestions.some(eq => {
-      // In edit mode, skip the question we're editing
-      if (isEditMode && String(eq.id) === String(editQuestionId)) return false;
-      return String(eq.question_number) === String(num);
+      const eqId = eq?.id ? String(eq.id) : null;
+      const eqNum = parseInt(eq.question_number || eq.questionNumber, 10);
+
+      // In edit mode or question update, skip the question we're editing
+      if (isEditMode) {
+        if (editQuestionId && eqId && String(eqId) === String(editQuestionId)) return false;
+        if (targetQId && eqId && String(eqId) === String(targetQId)) return false;
+        if (originalQNum && eqNum === parseInt(originalQNum, 10)) return false;
+      }
+      return eqNum === numInt || String(eq.question_number) === String(num);
     });
   };
 
   // Combined check: batch + DB
   const isDuplicateNumber = (qIdx, num) => {
-    return isDuplicateBatchNumber(qIdx, num) || isDuplicateDbNumber(num);
+    const q = questions[qIdx];
+    return isDuplicateBatchNumber(qIdx, num) || isDuplicateDbNumber(num, q?.id || q?.question_id, q?.originalQuestionNumber || q?.questionNumber);
   };
 
   // Option Handlers
@@ -598,7 +607,7 @@ export default function useExamForm() {
       if (trimmedQNum && isDuplicateBatchNumber(questions.indexOf(q), trimmedQNum)) {
         qErrors.push("Duplicate question number in this batch");
       }
-      if (trimmedQNum && isDuplicateDbNumber(trimmedQNum)) {
+      if (trimmedQNum && isDuplicateDbNumber(trimmedQNum, q.id || q.question_id, q.originalQuestionNumber || q.questionNumber)) {
         qErrors.push(`Question #${trimmedQNum} already exists in this exam year`);
       }
 

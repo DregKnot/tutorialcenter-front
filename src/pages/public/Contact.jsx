@@ -1,7 +1,7 @@
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import Map from "../../components/public/Map";
-import image from "../../assets/images/Contact us.png";
+import image from "../../assets/images/Contact us.webp";
 import ContactSection from "../../components/public/ContactSection";
 import ScrollReveal from "../../components/public/ScrollReveal";
 

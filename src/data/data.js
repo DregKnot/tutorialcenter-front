@@ -1,7 +1,7 @@
-import calebImg from "../assets/images/Team/Caleb.png";
-import nnemekaImg from "../assets/images/Team/Isaac Nnemeka.jpg";
-import oladeindeImg from "../assets/images/Team/Oladeinde.jpg";
-import blessingImg from "../assets/images/Team/Blessing.jpg";
+import calebImg from "../assets/images/Team/Caleb.webp";
+import nnemekaImg from "../assets/images/Team/Isaac Nnemeka.webp";
+import oladeindeImg from "../assets/images/Team/Oladeinde.webp";
+import blessingImg from "../assets/images/Team/Blessing.webp";
 
 // ==================  exports all team members data ================== //
 export const AllTeams = [

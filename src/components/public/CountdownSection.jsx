@@ -83,7 +83,7 @@ const CountdownSection = () => {
             <p className="text-lg md:text-xl text-white/90 font-bold text-center max-w-2xl mb-10 leading-relaxed drop-shadow-md">
               The wait is over. Dive into the leading digital tutorial center and start your journey to academic excellence today.
             </p>
-            <a href="/student/signup" className="px-10 py-4 bg-[#BB9E7F] hover:bg-white text-[#0F2843] font-black uppercase tracking-widest text-sm rounded-full transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(187,158,127,0.4)] hover:shadow-[0_0_50px_rgba(255,255,255,0.6)]">
+            <a href="/register" className="px-10 py-4 bg-[#BB9E7F] hover:bg-white text-[#0F2843] font-black uppercase tracking-widest text-sm rounded-full transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(187,158,127,0.4)] hover:shadow-[0_0_50px_rgba(255,255,255,0.6)]">
               Get Started Now
             </a>
           </div>

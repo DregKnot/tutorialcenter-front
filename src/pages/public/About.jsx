@@ -1,12 +1,12 @@
 import { benefitData } from "../../data/data";
 import { programData } from "../../data/data";
-import vector from "../../assets/images/Vector.png";
+import vector from "../../assets/images/Vector.webp";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import OurTeam from "../../components/public/OurTeam";
-import handCup from "../../assets/images/Hand Cup.png";
-import image from "../../assets/images/handshake.png";
-import conversation from "../../assets/images/conversations.jpg";
+import handCup from "../../assets/images/Hand Cup.webp";
+import image from "../../assets/images/handshake.webp";
+import conversation from "../../assets/images/conversations.webp";
 import SectionHeading from "../../components/public/SectionHeading";
 import WhatWeProvideCard from "../../components/public/WhatWeProvideCard";
 import CommunityGrowthLayout from "../../components/public/CommunityGrowthLayout";

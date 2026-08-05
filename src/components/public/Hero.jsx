@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 // import { MessageSquareText, ChevronUp } from "lucide-react";
-import logo1 from "../../assets/images/TC 1.png";
+import logo1 from "../../assets/images/TC 1.webp";
 // Placeholder imports for the slideshow images — replace these with the actual images!
-import slide1 from "../../assets/images/Study_that_stays (2).png";
-import slide2 from "../../assets/images/Hero_mobile.png";
+import slide1 from "../../assets/images/Study_that_stays (2).webp";
+import slide2 from "../../assets/images/Hero_mobile.webp";
 import ScrollReveal from "./ScrollReveal";
 
 const slides = [slide1, slide2];

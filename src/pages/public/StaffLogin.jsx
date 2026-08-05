@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import login_img from "../../assets/images/login_img.jpg";
-import TC_logo from "../../assets/images/tutorial_logo.png";
+import login_img from "../../assets/images/login_img.webp";
+import TC_logo from "../../assets/images/tutorial_logo.webp";
 import { EyeIcon, EyeSlashIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { useStaffAuth } from "../../context/StaffAuthContext";
 

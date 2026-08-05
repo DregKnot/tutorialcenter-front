@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import login_img from "../../assets/images/login_img.jpg";
-import TC_logo from "../../assets/images/tutorial_logo.png";
+import login_img from "../../assets/images/login_img.webp";
+import TC_logo from "../../assets/images/tutorial_logo.webp";
 import { EyeIcon, EyeSlashIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext";
 import { OTPModal, PasswordChangeModal, SuccessModal, ForgotInputModal } from "../../components/private/Students/SettingsModals.jsx";

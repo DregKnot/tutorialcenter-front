@@ -82,6 +82,8 @@ import ExamYearList from "./components/private/staffs/exams/ExamYearList.jsx";
 import ExamQuestionList from "./components/private/staffs/exams/ExamQuestionList.jsx";
 import Training from "./pages/public/Training.jsx";
 import CourseDetails from "./pages/public/CourseDetails.jsx";
+import CognitiveTest from "./pages/public/CognitiveTest.jsx";
+import SchoolCognitiveTests from "./pages/staffs/admin/SchoolCognitiveTests.jsx";
 // import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
 
 function App() {
@@ -93,6 +95,7 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
+        <Route path="/cognitive-test" element={<CognitiveTest />} />
         <Route path="/guardian/login" element={<GuardianLogin />} />
         <Route path="/guardian/dashboard" element={<GuardianDashboard />} />
         <Route path="*" element={<NotFound />} />
@@ -177,6 +180,7 @@ function App() {
           <Route path="/staffs/master-class" element={<StaffMasterClassList />} />
           <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
           <Route path="/staffs/manage-exams" element={<ExamManagement />} />
+          <Route path="/staffs/school-tests" element={<SchoolCognitiveTests />} />
           <Route path="/staffs/manage-exams/question" element={<ExamQuestion />} />
           <Route path="/staffs/manage-exams/question/:id" element={<ExamQuestion />} />
           <Route path="/staffs/manage-exams/edit/:id" element={<EditExamHeader />} />

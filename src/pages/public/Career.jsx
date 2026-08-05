@@ -2,10 +2,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
-import Career_img from "../../assets/images/Careerimg.png";
+import Career_img from "../../assets/images/Careerimg.webp";
 import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.svg";
-import handCup from "../../assets/images/Hand Cup.png";
-import studentAffiliateImg from "../../assets/images/student_affiliate.png";
+import handCup from "../../assets/images/Hand Cup.webp";
+import studentAffiliateImg from "../../assets/images/student_affiliate.webp";
 import SectionHeading from "../../components/public/SectionHeading";
 import ScrollReveal from "../../components/public/ScrollReveal";
 

@@ -4,15 +4,15 @@ import axios from "axios";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import SectionHeading from "../../components/public/SectionHeading";
-import Career_img from "../../assets/images/Training.png";
-// import handCup from "../../assets/images/handCup.jpg";
-import medicalFaculty from "../../assets/images/volodymyr-hryshchenko-e8YFkjN2CzY-unsplash.jpg"
-import lawFaculty from "../../assets/images/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg"
-import accountingFaculty from "../../assets/images/olga-delawrence-5616whx5NdQ-unsplash.jpg"
-import engineerFaculty from "../../assets/images/ej-yao-D46mXLsQRJw-unsplash.jpg"
-import environmentFalculty from "../../assets/images/danist-soh-dqXiw7nCb9Q-unsplash.jpg"
-import jambLogo from "../../assets/images/jamb_logo.png";
-import waecLogo from "../../assets/images/waec_logo.png";
+import Career_img from "../../assets/images/Training.webp";
+// import handCup from "../../assets/images/handCup.webp";
+import medicalFaculty from "../../assets/images/volodymyr-hryshchenko-e8YFkjN2CzY-unsplash.webp"
+import lawFaculty from "../../assets/images/giammarco-boscaro-zeH-ljawHtg-unsplash.webp"
+import accountingFaculty from "../../assets/images/olga-delawrence-5616whx5NdQ-unsplash.webp"
+import engineerFaculty from "../../assets/images/ej-yao-D46mXLsQRJw-unsplash.webp"
+import environmentFalculty from "../../assets/images/danist-soh-dqXiw7nCb9Q-unsplash.webp"
+import jambLogo from "../../assets/images/jamb_logo.webp";
+import waecLogo from "../../assets/images/waec_logo.webp";
 import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.svg";
 import ScrollReveal from "../../components/public/ScrollReveal";
 
