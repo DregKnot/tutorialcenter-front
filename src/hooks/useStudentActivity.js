@@ -58,10 +58,23 @@ function calculateDayMinutes(events) {
  * weekData is an array of 7 objects (Mon → Sun of current week):
  *   { day: "Mon", date: "2026-07-14", minutes: 142, sessions: [...], percent: 47.3, overflow: false }
  */
+const activityCache = {
+  token: null,
+  data: null,
+  timestamp: 0,
+};
+const CACHE_TTL = 5 * 60 * 1000;
+
+export const clearActivityCache = () => {
+  activityCache.token = null;
+  activityCache.data = null;
+  activityCache.timestamp = 0;
+};
+
 export default function useStudentActivity(token) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(activityCache.token === token && activityCache.data && Date.now() - activityCache.timestamp < CACHE_TTL));
   const [error, setError] = useState(null);
-  const [weekData, setWeekData] = useState([]);
+  const [weekData, setWeekData] = useState(() => (activityCache.token === token && Date.now() - activityCache.timestamp < CACHE_TTL) ? activityCache.data : []);
 
   const compute = useCallback(async () => {
     if (!token) {
@@ -69,7 +82,9 @@ export default function useStudentActivity(token) {
       return;
     }
 
-    setLoading(true);
+    if (!(activityCache.token === token && activityCache.data && Date.now() - activityCache.timestamp < CACHE_TTL)) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -151,6 +166,9 @@ export default function useStudentActivity(token) {
         };
       });
 
+      activityCache.token = token;
+      activityCache.data = result;
+      activityCache.timestamp = Date.now();
       setWeekData(result);
     } catch (err) {
       console.error("Failed to compute student activity:", err);

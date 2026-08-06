@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { clearDashboardCache } from "../utils/dashboardCache";
+import { clearActivityCache } from "../hooks/useStudentActivity";
 
 const AuthContext = createContext(null);
 
@@ -66,7 +68,12 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
-      // Clear all local storage data
+      // Clear dashboard & activity caches and local/session storage data
+      clearDashboardCache(student?.id);
+      clearActivityCache();
+      try {
+        sessionStorage.clear();
+      } catch (e) {}
       localStorage.clear();
 
       setToken(null);
@@ -80,7 +87,7 @@ export function AuthProvider({ children }) {
         navigate("/student/login");
       }, 2500);
     }
-  }, [navigate]);
+  }, [navigate, student?.id]);
 
   const resetActivity = useCallback(() => {
     localStorage.setItem("last_activity_at", Date.now().toString());

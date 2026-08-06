@@ -1,7 +1,9 @@
-import calebImg from "../assets/images/Team/Caleb.webp";
-import nnemekaImg from "../assets/images/Team/Isaac Nnemeka.webp";
-import oladeindeImg from "../assets/images/Team/Oladeinde.webp";
+import calebImg from "../assets/images/Team/Caleb C.webp";
+import nnemekaImg from "../assets/images/Team/Isaac Nnemka.webp";
+import oladeindeImg from "../assets/images/Team/Olayiwola Oladeinde.webp";
 import blessingImg from "../assets/images/Team/Blessing.webp";
+import samuelImg from "../assets/images/Team/Samuel Olawale.webp"
+import olugbengaImg from "../assets/images/Team/Olugbenga Raymond.webp"
 
 // ==================  exports all team members data ================== //
 export const AllTeams = [
@@ -11,24 +13,26 @@ export const AllTeams = [
         subRole: "Lead Backend Developer",
         handle: "gbenga_raymond",
         category: "leadership",
+         avatarUrl: olugbengaImg,
         linkedinUrl: "", // TODO: supply real LinkedIn URL
     },
     {
-        name: "Samuel Olawale",
-        role: "CTO",
-        subRole: "Lead Frontend Developer",
-        handle: "samuel_olawale",
-        category: "leadership",
-        linkedinUrl: "", // TODO: supply real LinkedIn URL
-    },
-    {
-         name: "Olayiwola Oladeinde",
+        name: "Olayiwola Oladeinde",
         role: "COO",
         subRole: "Chief Operating Officer",
         handle: "johndoe_backend",
         category: "leadership",
         avatarUrl: oladeindeImg,
         linkedinUrl: "https://www.linkedin.com/in/olayiwola-oladeinde-409a5717b", 
+    },
+    {
+         name: "Samuel Olawale",
+        role: "CTO",
+        subRole: "Lead Frontend Developer",
+        handle: "samuel_olawale",
+        category: "leadership",
+         avatarUrl: samuelImg,
+        linkedinUrl: "https://www.linkedin.com/in/samuel-olawale-b3b970419/?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BtitiKIaZTBW6KhJKcnoJsw%3D%3D",
     },
     {
         name: "Nnemeka Isaac",
@@ -41,10 +45,10 @@ export const AllTeams = [
     },
     {
          name: "Caleb Ndubuisi",
-        role: "CSE",
-        subRole: "Lead Cyber Security Expert",
+        role: "CIS",
+        subRole: "Chief Information Security",
         handle: "johndoe_mktg",
-        category: "development",
+        category: "leadership",
         avatarUrl: calebImg,
         linkedinUrl: "", // TODO: supply real LinkedIn URL // TODO: supply real LinkedIn URL
     },

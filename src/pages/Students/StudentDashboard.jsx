@@ -13,6 +13,7 @@ import AchievementsPanel from "../../components/private/Students/dashboard/Achie
 import MiniCalendarWidget from "../../components/private/Students/dashboard/MiniCalendarWidget.jsx";
 import RecommendedExamPractice from "../../components/private/Students/dashboard/RecommendedExamPractice.jsx";
 import useStudentActivity from "../../hooks/useStudentActivity.js";
+import { getDashboardCache, setDashboardCache } from "../../utils/dashboardCache.js";
 
 // ── Welcome header ─────────────────────────────────────────────────────────────
 function WelcomeHeader({ leaderboardRank }) {
@@ -64,12 +65,17 @@ export default function StudentDashboard({ blogs = [] }) {
 
   const { token: authToken, student } = useAuth();
   const navigate = useNavigate();
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const studentId = student?.id;
+
+  // Retrieve cached dashboard state if available for instant 0ms load
+  const cachedData = getDashboardCache(studentId);
+
+  const [courses, setCourses] = useState(() => cachedData?.courses || []);
+  const [loading, setLoading] = useState(() => !cachedData); // Only show spinner if NO cache exists
   const [showNoCoursePopup, setShowNoCoursePopup] = useState(false);
-  const [attempts, setAttempts] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [leaderboardRank, setLeaderboardRank] = useState(null);
+  const [attempts, setAttempts] = useState(() => cachedData?.attempts || []);
+  const [unreadCount, setUnreadCount] = useState(() => cachedData?.unreadCount || 0);
+  const [leaderboardRank, setLeaderboardRank] = useState(() => cachedData?.leaderboardRank || null);
 
   // Fetch real login/logout activity data
   const { weekData: weekActivity } = useStudentActivity(authToken);
@@ -81,7 +87,8 @@ export default function StudentDashboard({ blogs = [] }) {
       const res = await axios.get(`${API_BASE_URL}/api/notifications/unread-count`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
-      setUnreadCount(res.data.unread_count || 0);
+      const count = res.data.unread_count || 0;
+      setUnreadCount(count);
     } catch (err) {
       console.error("Failed to fetch unread count for dashboard:", err);
     }
@@ -94,6 +101,10 @@ export default function StudentDashboard({ blogs = [] }) {
   }, [fetchUnreadCount]);
 
   useEffect(() => {
+    let currentCourses = courses;
+    let currentAttempts = attempts;
+    let currentRank = leaderboardRank;
+
     const fetchActiveCourses = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/students/courses`, {
@@ -104,6 +115,7 @@ export default function StudentDashboard({ blogs = [] }) {
         });
         if (res?.status !== 200) throw new Error(res?.data?.message);
         const fetchedCourses = res?.data?.courses || [];
+        currentCourses = fetchedCourses;
         setCourses(fetchedCourses);
         const hasSubjects = fetchedCourses.some((c) => c.subjects && c.subjects.length > 0);
         if (!hasSubjects) setShowNoCoursePopup(true);
@@ -127,6 +139,7 @@ export default function StudentDashboard({ blogs = [] }) {
         else if (responseData.history && Array.isArray(responseData.history)) attemptsArray = responseData.history;
         else if (responseData.data && Array.isArray(responseData.data.data)) attemptsArray = responseData.data.data;
 
+        currentAttempts = attemptsArray;
         setAttempts(attemptsArray);
       } catch (err) {
         console.error("Failed to load exam history for stats:", err);
@@ -143,24 +156,38 @@ export default function StudentDashboard({ blogs = [] }) {
         else if (res.data?.data && Array.isArray(res.data.data)) rawData = res.data.data;
         else if (res.data?.leaderboard && Array.isArray(res.data.leaderboard)) rawData = res.data.leaderboard;
 
-        // Find current user's rank
         const studentObj = rawData.find(item => item.student_id === student?.id || item.id === student?.id);
         if (studentObj && studentObj.rank) {
+          currentRank = studentObj.rank;
           setLeaderboardRank(studentObj.rank);
         } else {
-          // If rank is not explicitly given but they are in the array, use their index
           const idx = rawData.findIndex(item => item.student_id === student?.id || item.id === student?.id);
-          if (idx !== -1) setLeaderboardRank(idx + 1);
+          if (idx !== -1) {
+            currentRank = idx + 1;
+            setLeaderboardRank(idx + 1);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch leaderboard rank:", err);
       }
     };
 
-    fetchActiveCourses();
-    fetchHistory();
-    fetchRank();
-  }, [API_BASE_URL, authToken, student?.id]);
+    const loadData = async () => {
+      await Promise.all([fetchActiveCourses(), fetchHistory(), fetchRank()]);
+      // Cache data for instant loading on subsequent navigations
+      if (studentId) {
+        setDashboardCache(studentId, {
+          courses: currentCourses,
+          attempts: currentAttempts,
+          leaderboardRank: currentRank,
+          unreadCount,
+        });
+      }
+    };
+
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [API_BASE_URL, authToken, studentId]);
 
   // Compute average score from history
   const avgScore = attempts.length > 0
