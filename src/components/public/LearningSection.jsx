@@ -1,4 +1,4 @@
-import studyImage from "../../assets/images/Study_that_stays (2).png";
+import studyImage from "../../assets/images/Study_that_stays (2).webp";
 import { Link } from "react-router-dom";
 import {
     LightBulbIcon,

@@ -1,9 +1,9 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import TC_logo from "../../../assets/images/tutorial_logo.png";
+import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import ReturnArrow from "../../../assets/svg/return arrow.svg";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import signup_img from "../../../assets/images/otpparent.jpg";
+import signup_img from "../../../assets/images/otpparent.webp";
 
 export default function GuardianEmailVerification() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000"; // Base URL for API

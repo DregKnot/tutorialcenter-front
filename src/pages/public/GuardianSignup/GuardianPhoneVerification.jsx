@@ -1,8 +1,8 @@
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
-import TC_logo from "../../../assets/images/tutorial_logo.png";
+import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import signup_img from "../../../assets/images/otpparent.jpg";
+import signup_img from "../../../assets/images/otpparent.webp";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 
 export default function GuardianPhoneVerification() {

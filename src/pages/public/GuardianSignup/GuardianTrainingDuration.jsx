@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import TC_logo from "../../../assets/images/tutorial_logo.png";
-import signup_img from "../../../assets/images/Student_sign_up.jpg";
+import TC_logo from "../../../assets/images/tutorial_logo.webp";
+import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 
 export default function GuardianTrainingDuration() {

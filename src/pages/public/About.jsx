@@ -1,12 +1,12 @@
 import { benefitData } from "../../data/data";
 import { programData } from "../../data/data";
-import vector from "../../assets/images/Vector.png";
+import vector from "../../assets/images/Vector.webp";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import OurTeam from "../../components/public/OurTeam";
-import handCup from "../../assets/images/Hand Cup.png";
-import image from "../../assets/images/handshake.png";
-import conversation from "../../assets/images/conversations.jpg";
+import handCup from "../../assets/images/Hand Cup.webp";
+import image from "../../assets/images/handshake.webp";
+import conversation from "../../assets/images/conversations.webp";
 import SectionHeading from "../../components/public/SectionHeading";
 import WhatWeProvideCard from "../../components/public/WhatWeProvideCard";
 import CommunityGrowthLayout from "../../components/public/CommunityGrowthLayout";
@@ -21,11 +21,11 @@ const About = () => {
       {/* Hero Banner */}
       <div className="relative z-30 w-full h-[373px]">
         {/* background image */}
-        <div
-          className="bg-image absolute w-full h-full bg-cover bg-no-repeat bg-center"
-          style={{
-            backgroundImage: `url(${conversation})`,
-          }}
+        <img
+          src={conversation}
+          alt="About us background"
+          fetchpriority="high"
+          className="absolute inset-0 w-full h-full object-cover z-0"
         />
         {/* overlay */}
         <div className="overlay absolute w-full h-full bg-black opacity-40"></div>
@@ -111,16 +111,16 @@ const About = () => {
                 ))}
               </div>
               <ScrollReveal delay={0.2} direction="up" distance={40}>
-                <div className="relative my-20 flex justify-end">
+                <div className="relative my-10 md:my-20 flex justify-center lg:justify-end w-full">
                   <iframe
-                    className="w-[650px] h-[400px] max-w-full bg-black rounded-2xl relative shadow-lg z-20"
+                    className="w-full max-w-[650px] h-[220px] sm:h-[320px] md:h-[400px] bg-black rounded-2xl relative shadow-lg z-20"
                     src="https://www.youtube.com/embed/OdBVxoFVJVk?autoplay=1&rel=0"
                     title="YouTube video"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   ></iframe>
-                  <div className="lg:absolute top-11 left-auto lg:right-[620px] z-0">
+                  <div className="hidden md:block lg:absolute top-11 left-auto lg:right-[620px] z-0">
                     <div
                       style={{ backgroundImage: `url('${handCup}')` }}
                       className="w-[500px] h-[300px] max-w-full rounded-2xl bg-center bg-cover bg-no-repeat border-[3px] border-white border-solid shadow-md"

@@ -1,8 +1,8 @@
 import React from "react";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
-import BlogHero from "../../assets/images/Blogs.jpg";
-import handCup from "../../assets/images/handCup.jpg";
+import BlogHero from "../../assets/images/Blogs.webp";
+import handCup from "../../assets/images/handCup.webp";
 import ScrollReveal from "../../components/public/ScrollReveal";
 
 // ── Placeholder blog data (coming soon — replace with real API later) ──
@@ -105,9 +105,11 @@ const Blog = () => {
 
       {/* ── HERO ── */}
       <div className="relative z-30 w-full h-[373px]">
-        <div
-          className="absolute w-full h-full bg-cover bg-no-repeat bg-center"
-          style={{ backgroundImage: `url(${BlogHero})` }}
+        <img
+          src={BlogHero}
+          alt="Blog Hero Background"
+          fetchpriority="high"
+          className="absolute inset-0 w-full h-full object-cover z-0"
         />
         <div className="absolute w-full h-full bg-black opacity-40" />
         <div className="w-full h-full flex flex-col items-center justify-center relative z-50 gap-2">

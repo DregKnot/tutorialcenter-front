@@ -3,8 +3,8 @@ import axios from "axios";
 import ProgramCard from "./ProgramCard.jsx";
 import SectionHeading from "./SectionHeading.jsx";
 import ScrollReveal from "./ScrollReveal";
-// import jamb from "../../assets/images/jamb_logo.png";
-// import waec from "../../assets/images/waec_logo.png";
+// import jamb from "../../assets/images/jamb_logo.webp";
+// import waec from "../../assets/images/waec_logo.webp";
 
 const ProgramSection = () => {
 

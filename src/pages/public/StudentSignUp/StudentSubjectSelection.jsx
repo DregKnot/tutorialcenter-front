@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import TC_logo from "../../../assets/images/tutorial_logo.png";
-import signup_img from "../../../assets/images/Student_sign_up.jpg";
+import TC_logo from "../../../assets/images/tutorial_logo.webp";
+import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { dropdownTheme } from "../../../utils/dropdownTheme";
 import { 
   ChevronLeftIcon,

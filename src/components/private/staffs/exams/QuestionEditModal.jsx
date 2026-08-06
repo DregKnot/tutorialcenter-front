@@ -306,12 +306,22 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       return;
     }
 
-    // 3. Validation: Duplicate check in DB (excluding current question)
+    // 3. Validation: Duplicate check in DB (excluding current question being edited)
     if (existingQuestions && Array.isArray(existingQuestions)) {
-      const duplicate = existingQuestions.find(q => 
-        String(q.id) !== String(question.id) && 
-        parseInt(q.question_number || q.questionNumber, 10) === numVal
-      );
+      const currentQId = (question?.id || question?.question_id) ? String(question.id || question.question_id) : null;
+      const originalQNum = parseInt(question?.question_number || question?.questionNumber, 10);
+
+      const duplicate = existingQuestions.find(q => {
+        const qId = (q?.id || q?.question_id) ? String(q.id || q.question_id) : null;
+        const qNum = parseInt(q.question_number || q.questionNumber, 10);
+
+        // Skip current question being edited (by ID or original question number)
+        if (currentQId && qId && currentQId === qId) return false;
+        if (originalQNum && qNum === originalQNum) return false;
+
+        return qNum === numVal;
+      });
+
       if (duplicate) {
         setToast({ type: "error", message: `Question #${numVal} already exists in this exam year.` });
         setTimeout(() => setToast(null), 3000);

@@ -2,8 +2,8 @@ import axios from "axios";
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { location } from "../../../data/locations";
-import TC_logo from "../../../assets/images/tutorial_logo.png";
-import signup_img from "../../../assets/images/Student_sign_up.jpg";
+import TC_logo from "../../../assets/images/tutorial_logo.webp";
+import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { dropdownTheme } from "../../../utils/dropdownTheme";
 import { 
   UserIcon, 

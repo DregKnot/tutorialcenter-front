@@ -1,4 +1,4 @@
-import icon from "../../assets/images/Group 1000001505.png";
+import icon from "../../assets/images/Group 1000001505.webp";
 
 const SectionHeading = ({ title, position_right, fullWidth = false, onClick }) => {
     return (

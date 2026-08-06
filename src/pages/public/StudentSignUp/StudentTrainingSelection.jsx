@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import otp_img_student from "../../../assets/images/otpStudentpic.jpg";
+import otp_img_student from "../../../assets/images/otpStudentpic.webp";
 import axios from "axios";
 
-import TC_logo from "../../../assets/images/tutorial_logo.png";
+import TC_logo from "../../../assets/images/tutorial_logo.webp";
 
 // Module-level constant — avoids causing useEffect to re-run on every render
 const API_BASE_URL =

@@ -3,8 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { location } from "../../../data/locations";
-import TC_logo from "../../../assets/images/tutorial_logo.png";
-import signup_img from "../../../assets/images/Student_sign_up.jpg";
+import TC_logo from "../../../assets/images/tutorial_logo.webp";
+import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { dropdownTheme } from "../../../utils/dropdownTheme";
 import { 
   UserIcon, 
@@ -213,6 +213,10 @@ export default function GuardianStudentRegistration() {
         
         if (student.display_picture) {
            combinedPayload.append('profile_picture', student.display_picture);
+        }
+
+        if (currentParsed.guardian_id) {
+           combinedPayload.append('guardian_id', currentParsed.guardian_id);
         }
 
         const bioRes = await axios.post(`${API_BASE_URL}/api/students/register`, combinedPayload, {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import logo from "../../assets/images/tutorial_logo.png";
+import logo from "../../assets/images/tutorial_logo.webp";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
 

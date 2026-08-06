@@ -2,10 +2,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
-import Career_img from "../../assets/images/Careerimg.png";
+import Career_img from "../../assets/images/Careerimg.webp";
 import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.svg";
-import handCup from "../../assets/images/Hand Cup.png";
-import studentAffiliateImg from "../../assets/images/student_affiliate.png";
+import handCup from "../../assets/images/Hand Cup.webp";
+import studentAffiliateImg from "../../assets/images/student_affiliate.webp";
 import SectionHeading from "../../components/public/SectionHeading";
 import ScrollReveal from "../../components/public/ScrollReveal";
 
@@ -18,11 +18,11 @@ const Career = () => {
 
       <div className="relative z-30 w-full h-[373px]">
         {/* background image */}
-        <div
-          className="bg-image absolute w-full h-full bg-cover bg-no-repeat bg-center"
-          style={{
-            backgroundImage: `url(${Career_img})`,
-          }}
+        <img
+          src={Career_img}
+          alt="Career Hero Background"
+          fetchpriority="high"
+          className="absolute inset-0 w-full h-full object-cover z-0"
         />
         {/* overlay */}
         <div className="overlay absolute w-full h-full bg-black opacity-30"></div>

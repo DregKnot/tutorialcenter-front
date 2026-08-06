@@ -110,6 +110,29 @@ export default function CourseAdvisorStudentManagement() {
       (Array.isArray(student.information) && student.information[0]?.deleted_at != null);
   };
 
+  const calculateStats = useCallback((allStudents) => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const newStudentsThisMonth = allStudents.filter(s => {
+      if (!s.created_at) return false;
+      const date = new Date(s.created_at);
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+    });
+
+    const suspendedCount = allStudents.filter(s => isStudentSuspended(s)).length;
+    const activeCount = allStudents.filter(s => isStudentActive(s) && !isStudentSuspended(s)).length;
+    const inactiveCount = allStudents.filter(s => !isStudentActive(s) && !isStudentSuspended(s)).length;
+
+    setStats(prev => [
+      { ...prev[0], value: allStudents.length, subLabel: `+${newStudentsThisMonth.length} new` },
+      { ...prev[1], value: activeCount, subLabel: "Active" }, 
+      { ...prev[2], value: inactiveCount, subLabel: "Inactive" },
+      { ...prev[3], value: suspendedCount, subLabel: `Suspended` },
+    ]);
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -156,31 +179,7 @@ export default function CourseAdvisorStudentManagement() {
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [API_BASE_URL, token]);
-
-  const calculateStats = (allStudents) => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const newStudentsThisMonth = allStudents.filter(s => {
-      if (!s.created_at) return false;
-      const date = new Date(s.created_at);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-    });
-
-    const suspendedCount = allStudents.filter(s => isStudentSuspended(s)).length;
-    const activeCount = allStudents.filter(s => isStudentActive(s) && !isStudentSuspended(s)).length;
-    const inactiveCount = allStudents.filter(s => !isStudentActive(s) && !isStudentSuspended(s)).length;
-
-    setStats(prev => [
-      { ...prev[0], value: allStudents.length, subLabel: `+${newStudentsThisMonth.length} new` },
-      { ...prev[1], value: activeCount, subLabel: "Active" }, 
-      { ...prev[2], value: inactiveCount, subLabel: "Inactive" },
-      { ...prev[3], value: suspendedCount, subLabel: `Suspended` },
-    ]);
-  };
+  }, [API_BASE_URL, token, calculateStats]);
 
   useEffect(() => {
     fetchData();

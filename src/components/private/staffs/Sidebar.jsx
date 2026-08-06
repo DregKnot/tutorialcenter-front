@@ -21,8 +21,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
-import logo from "../../../assets/images/tutorial_logo.png";
-import collapselogo from "../../../assets/images/TC 1.png";
+import logo from "../../../assets/images/tutorial_logo.webp";
+import collapselogo from "../../../assets/images/TC 1.webp";
 import { useStaffAuth } from "../../../context/StaffAuthContext";
 
 const adminMenuItems = [
@@ -34,6 +34,7 @@ const adminMenuItems = [
   { label: "Calendar", icon: CalendarDaysIcon },
   { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
+  { label: "School Tests", icon: ClipboardDocumentListIcon, destination: "/staffs/school-tests" },
   { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
   { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
   { label: "Audit Log", icon: ChartBarIcon },

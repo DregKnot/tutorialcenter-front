@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import signup_img from "../../../assets/images/Student_sign_up.jpg";
+import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import axios from "axios";
 

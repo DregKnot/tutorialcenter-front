@@ -1,5 +1,5 @@
 import React from 'react';
-import TC_logo from "../../assets/images/TC 1.png";
+import TC_logo from "../../assets/images/TC 1.webp";
 
 const SplashScreen = () => {
   return (

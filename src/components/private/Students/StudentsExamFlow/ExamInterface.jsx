@@ -3,6 +3,7 @@ import axios from "axios";
 import { Icon } from "@iconify/react";
 import { useTimer } from "react-timer-hook";
 import { stripHtmlAndDecode } from "../../../../utils/textUtils";
+import MobileMovableCalculator from "./MobileMovableCalculator";
 
 export default function ExamInterface({
   attemptId,
@@ -566,12 +567,15 @@ export default function ExamInterface({
           const isScience = [
             "math",
             "mathematics",
-            "Geography",
+            "geography",
             "fmath",
             "further math",
             "further mathematics",
             "physics",
-            "chemistry"
+            "chemistry",
+            "accounting",
+            "economics",
+            "calculation"
           ].some(keyword => subName.includes(keyword));
 
           const mainContent = (
@@ -790,12 +794,17 @@ export default function ExamInterface({
 
           if (isScience) {
             return (
-              <div className="flex flex-col lg:flex-row gap-6 items-start relative overflow-hidden">
+              <div className="flex flex-col lg:flex-row gap-6 items-start relative">
                 <div className="flex-1 w-full lg:min-w-0">{mainContent}</div>
                 
-                {/* Right Panel Workspace wrapper matching native sidebar */}
-                <div className="relative shrink-0 z-[100]">
+                {/* Desktop Right Panel Calculator */}
+                <div className="hidden lg:block relative shrink-0 z-[100]">
                   <CalculatorRightbar />
+                </div>
+
+                {/* Mobile & Tablet Movable Calculator Popup */}
+                <div className="lg:hidden">
+                  <MobileMovableCalculator isScience={isScience} />
                 </div>
               </div>
             );

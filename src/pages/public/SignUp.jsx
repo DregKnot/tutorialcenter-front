@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import signup_img from "../../assets/images/Student_sign_up.jpg";
-import TC_logo from "../../assets/images/tutorial_logo.png";
+import signup_img from "../../assets/images/Student_sign_up.webp";
+import TC_logo from "../../assets/images/tutorial_logo.webp";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 
 export default function SignUp() {

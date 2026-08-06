@@ -1,7 +1,7 @@
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import Map from "../../components/public/Map";
-import image from "../../assets/images/Contact us.png";
+import image from "../../assets/images/Contact us.webp";
 import ContactSection from "../../components/public/ContactSection";
 import ScrollReveal from "../../components/public/ScrollReveal";
 
@@ -12,9 +12,11 @@ const Contact = () => {
 
       {/* Hero */}
       <div className="relative z-30 w-full h-[373px]">
-        <div
-          className="absolute w-full h-full bg-cover bg-no-repeat bg-[center_30%]"
-          style={{ backgroundImage: `url('${image}')` }}
+        <img
+          src={image}
+          alt="Contact Hero Background"
+          fetchpriority="high"
+          className="absolute inset-0 w-full h-full object-cover object-[center_30%] z-0"
         />
         <div className="absolute w-full h-full bg-black opacity-40"></div>
 

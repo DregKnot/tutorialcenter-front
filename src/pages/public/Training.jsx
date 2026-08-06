@@ -4,15 +4,15 @@ import axios from "axios";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import SectionHeading from "../../components/public/SectionHeading";
-import Career_img from "../../assets/images/Training.png";
-// import handCup from "../../assets/images/handCup.jpg";
-import medicalFaculty from "../../assets/images/volodymyr-hryshchenko-e8YFkjN2CzY-unsplash.jpg"
-import lawFaculty from "../../assets/images/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg"
-import accountingFaculty from "../../assets/images/olga-delawrence-5616whx5NdQ-unsplash.jpg"
-import engineerFaculty from "../../assets/images/ej-yao-D46mXLsQRJw-unsplash.jpg"
-import environmentFalculty from "../../assets/images/danist-soh-dqXiw7nCb9Q-unsplash.jpg"
-import jambLogo from "../../assets/images/jamb_logo.png";
-import waecLogo from "../../assets/images/waec_logo.png";
+import Career_img from "../../assets/images/Training.webp";
+// import handCup from "../../assets/images/handCup.webp";
+import medicalFaculty from "../../assets/images/volodymyr-hryshchenko-e8YFkjN2CzY-unsplash.webp"
+import lawFaculty from "../../assets/images/giammarco-boscaro-zeH-ljawHtg-unsplash.webp"
+import accountingFaculty from "../../assets/images/olga-delawrence-5616whx5NdQ-unsplash.webp"
+import engineerFaculty from "../../assets/images/ej-yao-D46mXLsQRJw-unsplash.webp"
+import environmentFalculty from "../../assets/images/danist-soh-dqXiw7nCb9Q-unsplash.webp"
+import jambLogo from "../../assets/images/jamb_logo.webp";
+import waecLogo from "../../assets/images/waec_logo.webp";
 import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.svg";
 import ScrollReveal from "../../components/public/ScrollReveal";
 
@@ -160,9 +160,11 @@ const Training = () => {
           SECTION 1 — HERO BANNER
           ════════════════════════════════════════════ */}
       <div className="relative z-30 w-full h-[373px]">
-        <div
-          className="bg-image absolute w-full h-full bg-cover bg-no-repeat bg-center"
-          style={{ backgroundImage: `url(${Career_img})` }}
+        <img
+          src={Career_img}
+          alt="Training Hero Background"
+          fetchpriority="high"
+          className="absolute inset-0 w-full h-full object-cover z-0"
         />
         <div className="overlay absolute w-full h-full bg-black opacity-30" />
         <div className="w-full h-full flex items-center justify-center relative z-50">

@@ -161,6 +161,7 @@ const stripImagesFromHtml = (html) => {
   if (!html) return html;
   let cleaned = html;
   if (/<img[^>]*>/i.test(cleaned) || /data:image\//i.test(cleaned)) {
+    // eslint-disable-next-line no-useless-escape
     cleaned = cleaned.replace(/<img[^>]*>/gi, '').replace(/data:image\/[a-zA-Z0-9+/]+;base64,[^"'\s>]+/gi, '');
   }
   return cleaned;
