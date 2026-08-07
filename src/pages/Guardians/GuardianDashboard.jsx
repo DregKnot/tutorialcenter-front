@@ -151,10 +151,10 @@ export default function GuardianDashboard() {
             { name: 'Help', icon: 'lucide:help-circle', active: false },
             { name: 'Settings', icon: 'lucide:settings', active: false },
           ].map((item) => (
-            <a key={item.name} href="#" className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${item.active ? 'bg-[#09314F] text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-[#09314F] dark:hover:text-white font-medium'}`}>
+            <button key={item.name} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${item.active ? 'bg-[#09314F] text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-[#09314F] dark:hover:text-white font-medium'}`}>
               <Icon icon={item.icon} className="w-5 h-5" />
               {item.name}
-            </a>
+            </button>
           ))}
         </nav>
 

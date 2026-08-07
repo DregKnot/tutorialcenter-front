@@ -29,7 +29,11 @@ const CognitiveTest = () => {
   // Final Results
   const [finalScore, setFinalScore] = useState(null);
 
+  // Backend record ID (from /api/cognitive-tests/start)
+  const [testRecordId, setTestRecordId] = useState(null);
+
   const containerRef = useRef(null);
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   // Check 1-hour token validity upon page mount
   useEffect(() => {
@@ -98,9 +102,23 @@ const CognitiveTest = () => {
     };
   }, [step]);
 
-  const handleStartTest = (e) => {
+  const handleStartTest = async (e) => {
     e.preventDefault();
     if (!studentName.trim() || !schoolName.trim()) return;
+
+    // Register the test session with the backend
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/cognitive-tests/start`, {
+        student_name: studentName.trim(),
+        school: schoolName.trim(),
+      });
+      if (res.data?.data?.id) {
+        setTestRecordId(res.data.data.id);
+        console.log("🧠 [CognitiveTest] Backend record created, ID:", res.data.data.id);
+      }
+    } catch (err) {
+      console.warn("🧠 [CognitiveTest] Backend start failed (continuing offline):", err.message);
+    }
 
     try {
       if (document.documentElement.requestFullscreen) {
@@ -148,7 +166,7 @@ const CognitiveTest = () => {
     const timeTaken = formatTimeSpent(timeSpentSecs);
 
     const resultObj = {
-      id: Date.now(),
+      id: testRecordId || Date.now(),
       student_name: studentName.trim(),
       school_name: schoolName.trim(),
       email: studentEmail.trim() || "N/A",
@@ -167,7 +185,7 @@ const CognitiveTest = () => {
 
     setFinalScore(resultObj);
 
-    // Save locally for instant Admin Dashboard sync
+    // Save locally for instant Admin Dashboard sync (fallback)
     try {
       const existing = JSON.parse(localStorage.getItem("cognitive_test_results") || "[]");
       existing.unshift(resultObj);
@@ -176,13 +194,18 @@ const CognitiveTest = () => {
       console.error("Failed to save result locally", e);
     }
 
-    // Try posting to backend API
-    try {
-      const API_BASE_URL =
-        process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
-      await axios.post(`${API_BASE_URL}/api/cognitive-test/submit`, resultObj).catch(() => {});
-    } catch (e) {
-      console.log("Backend offline, result persisted locally");
+    // Complete the test on the backend
+    if (testRecordId) {
+      try {
+        const res = await axios.post(`${API_BASE_URL}/api/cognitive-tests/${testRecordId}/complete`, {
+          score,
+        });
+        console.log("🧠 [CognitiveTest] Backend complete response:", res.data);
+      } catch (err) {
+        console.warn("🧠 [CognitiveTest] Backend complete failed:", err.message);
+      }
+    } else {
+      console.warn("🧠 [CognitiveTest] No backend record ID — result saved locally only.");
     }
 
     if (document.fullscreenElement && document.exitFullscreen) {
