@@ -93,7 +93,9 @@ export default function GuardianStudentRegistration() {
   // Auto-save biodata to localStorage whenever studentsBiodata changes
   useEffect(() => {
     if (studentsBiodata.length > 0) {
-      localStorage.setItem("guardianStudentsBiodata", JSON.stringify(studentsBiodata));
+      // Strip non-serializable File objects before saving
+      const serializableData = studentsBiodata.map(({ display_picture_file, ...rest }) => rest);
+      localStorage.setItem("guardianStudentsBiodata", JSON.stringify(serializableData));
     }
   }, [studentsBiodata]);
 
@@ -116,9 +118,16 @@ export default function GuardianStudentRegistration() {
         setToast({ type: "error", message: "Please upload an image file." });
         return;
       }
+      // Store the raw File object for upload
       const reader = new FileReader();
       reader.onloadend = () => {
-        handleChange(index, "display_picture", reader.result);
+        setStudentsBiodata((prev) =>
+          prev.map((s, i) =>
+            i === index
+              ? { ...s, display_picture: reader.result, display_picture_file: file }
+              : s
+          )
+        );
       };
       reader.readAsDataURL(file);
     }
@@ -211,12 +220,30 @@ export default function GuardianStudentRegistration() {
         combinedPayload.append('address', student.address || '');
         combinedPayload.append('department', student.department);
         
-        if (student.display_picture) {
-           combinedPayload.append('profile_picture', student.display_picture);
+        if (student.display_picture_file) {
+           combinedPayload.append('profile_picture', student.display_picture_file);
         }
 
-        if (currentParsed.guardian_id) {
-           combinedPayload.append('guardian_id', currentParsed.guardian_id);
+        let guardianIdToUse = currentParsed.guardian_id;
+        
+        // Fallback: If they logged in directly, guardianStudents won't have the ID,
+        // so we pull it from their logged-in session (guardian_info).
+        if (!guardianIdToUse) {
+            const loggedInGuardianStr = localStorage.getItem("guardian_info");
+            if (loggedInGuardianStr) {
+                try {
+                    const loggedInGuardian = JSON.parse(loggedInGuardianStr);
+                    if (loggedInGuardian && loggedInGuardian.id) {
+                        guardianIdToUse = loggedInGuardian.id;
+                    }
+                } catch (e) {
+                    console.error("Could not parse guardian_info", e);
+                }
+            }
+        }
+
+        if (guardianIdToUse) {
+           combinedPayload.append('guardian_id', guardianIdToUse);
         }
 
         const bioRes = await axios.post(`${API_BASE_URL}/api/students/register`, combinedPayload, {

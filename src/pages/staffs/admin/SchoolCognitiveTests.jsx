@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { Icon } from "@iconify/react";
 
@@ -16,6 +17,7 @@ const SchoolCognitiveTests = () => {
   useEffect(() => {
     fetchResults();
     loadExistingLink();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadExistingLink = () => {
@@ -62,25 +64,80 @@ const SchoolCognitiveTests = () => {
     setTimeout(() => setCopied(false), 3000);
   };
 
-  const fetchResults = () => {
-    setLoading(true);
-    let allResults = [];
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
-    // Read local storage JSON dataset
+  const fetchResults = async () => {
+    setLoading(true);
+    let backendResults = [];
+    let localResults = [];
+
+    // 1. Fetch from backend API
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/cognitive-tests`, {
+        headers: { Accept: "application/json" },
+      });
+      const rawData = res.data?.data || [];
+      console.log("🧠 [AdminCognitive] Backend results:", rawData);
+
+      // Map backend fields to the display format
+      backendResults = rawData.map((item) => {
+        const startedAt = item.test_started_at ? new Date(item.test_started_at) : null;
+        const endedAt = item.test_ended_at ? new Date(item.test_ended_at) : null;
+        const score = item.score ?? 0;
+        const total = 20;
+        const percentage = Math.round((score / total) * 100);
+
+        let timeTaken = "N/A";
+        if (startedAt && endedAt) {
+          const diffSecs = Math.round((endedAt - startedAt) / 1000);
+          const mins = Math.floor(diffSecs / 60);
+          const secs = diffSecs % 60;
+          timeTaken = `${mins}m ${secs}s`;
+        }
+
+        return {
+          id: item.id,
+          student_name: item.student_name,
+          school_name: item.school,
+          email: "N/A",
+          score,
+          total,
+          percentage,
+          time_taken: timeTaken,
+          date: startedAt
+            ? startedAt.toLocaleDateString("en-US", {
+                month: "short", day: "numeric", year: "numeric",
+                hour: "2-digit", minute: "2-digit",
+              })
+            : "Unknown",
+          _source: "backend",
+        };
+      });
+    } catch (err) {
+      console.warn("🧠 [AdminCognitive] Backend fetch failed (using localStorage only):", err.message);
+    }
+
+    // 2. Read local storage fallback
     try {
       const stored = localStorage.getItem("cognitive_test_results");
       if (stored) {
-        allResults = JSON.parse(stored);
-      } else {
-        allResults = [];
-        localStorage.setItem("cognitive_test_results", JSON.stringify([]));
+        localResults = JSON.parse(stored).map((r) => ({ ...r, _source: "local" }));
       }
     } catch (e) {
-      console.error("Error loading JSON results", e);
-      allResults = [];
+      console.error("Error loading local JSON results", e);
     }
 
-    // Sort by Percentage (highest first) then Time Taken
+    // 3. Merge & deduplicate: backend takes priority
+    const backendKeys = new Set(
+      backendResults.map((r) => `${r.student_name}||${r.school_name}||${r.score}`)
+    );
+    const uniqueLocalResults = localResults.filter(
+      (r) => !backendKeys.has(`${r.student_name}||${r.school_name}||${r.score}`)
+    );
+
+    const allResults = [...backendResults, ...uniqueLocalResults];
+
+    // Sort by Percentage (highest first)
     allResults.sort((a, b) => (b.percentage || 0) - (a.percentage || 0));
 
     setResults(allResults);
