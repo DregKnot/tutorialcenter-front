@@ -66,7 +66,7 @@ export default function CourseAdvisorStudentManagement() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
-  const getLatestCourse = (student) => {
+  const getLatestCourse = useCallback((student) => {
     const payments = student.payments || [];
     if (payments.length > 0) {
        // Filter for successful payments that have an enrollment end_date, sort by created_at descending
@@ -94,21 +94,21 @@ export default function CourseAdvisorStudentManagement() {
        const dateB = new Date(b.end_date || 0);
        return dateB - dateA;
     })[0];
-  };
+  }, []);
 
-  const isStudentActive = (student) => {
+  const isStudentActive = useCallback((student) => {
     const latest = getLatestCourse(student);
     if (!latest) return false;
     return latest.status === 'active' || (latest.end_date && new Date(latest.end_date) >= new Date());
-  };
+  }, [getLatestCourse]);
 
-  const isStudentSuspended = (student) => {
+  const isStudentSuspended = useCallback((student) => {
     return student.banned === 1 || 
       student.account_status === "suspended" || 
       student.deleted_at != null || 
       student.information?.deleted_at != null || 
       (Array.isArray(student.information) && student.information[0]?.deleted_at != null);
-  };
+  }, []);
 
   const calculateStats = useCallback((allStudents) => {
     const now = new Date();
@@ -131,7 +131,7 @@ export default function CourseAdvisorStudentManagement() {
       { ...prev[2], value: inactiveCount, subLabel: "Inactive" },
       { ...prev[3], value: suspendedCount, subLabel: `Suspended` },
     ]);
-  }, []);
+  }, [isStudentActive, isStudentSuspended]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
