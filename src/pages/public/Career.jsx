@@ -383,7 +383,7 @@ const Career = () => {
 
           {/* 1. FULL-WIDTH BANNER */}
           <SectionHeading
-            title="Student Affiliates"
+            title="Affiliates"
             position_right={false}
             fullWidth={true}
           />
@@ -395,7 +395,7 @@ const Career = () => {
               <div className="w-full max-w-[500px] h-[400px] md:h-[500px] rounded-[50px] overflow-hidden shadow-2xl border-[4px] border-white/20 ring-4 ring-[#BB9E7F]/30 transform hover:scale-[1.02] transition-transform duration-500">
                 <img
                   src={studentAffiliateImg}
-                  alt="Student Affiliate Dashboard"
+                  alt="Affiliate Dashboard"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -412,7 +412,7 @@ const Career = () => {
                   No requirement needed!!
                 </p>
                 <p className="text-gray-200 text-base md:text-lg mt-6 leading-relaxed">
-                  Earn while you learn! We believe students should have the opportunity to build their network and earn rewards by referring their peers. As a Student Affiliate, you can be an ambassador for Tutorial Center, spreading the word about our comprehensive learning solutions.
+                  Earn with us! We believe everyone—students, guardians, teachers, and anyone at all—should have the opportunity to build their network and earn rewards by referring their peers. As an Affiliate, you can be an ambassador for Tutorial Center, spreading the word about our comprehensive learning solutions. All you need is an affiliate account and an affiliate code to get started!
                 </p>
               </div>
 
@@ -422,7 +422,7 @@ const Career = () => {
                 </h4>
                 <div className="flex flex-wrap gap-3">
                   <span className="bg-white text-[#A92429] px-8 py-3.5 rounded-2xl text-[14px] font-black uppercase tracking-wider shadow-[0_4px_15px_rgba(0,0,0,0.2)]">
-                    Student Affiliate / Ambassador
+                    Affiliate / Ambassador
                   </span>
                 </div>
               </div>
