@@ -194,10 +194,15 @@ export default function useExamForm() {
       ]);
 
       console.log("[ExamQuestion] Meta Response (Bodies):", bodiesRes.data);
+      console.log("[ExamQuestion] Meta Response (Years):", yearsRes.data);
+      
+      const yearsData = yearsRes.data?.data || yearsRes.data?.exam_years || yearsRes.data || [];
+      console.log("[ExamQuestion] Parsed Years Data:", yearsData);
+
       setExamBodies(bodiesRes.data?.exam_bodies || bodiesRes.data?.data || bodiesRes.data || []);
       setCourses(coursesRes.data?.data || coursesRes.data?.courses || []);
-      setExamYears(yearsRes.data?.data || yearsRes.data?.exam_years || yearsRes.data || []);
-      setFilteredYears(yearsRes.data?.data || yearsRes.data?.exam_years || yearsRes.data || []);
+      setExamYears(yearsData);
+      setFilteredYears(yearsData);
 
       // Load saved selections
       const savedBodyId = localStorage.getItem("selected_exam_body_id");
@@ -357,12 +362,14 @@ export default function useExamForm() {
 
     // Filter Years (In-memory)
     let filtered = [...examYears];
+    console.log("[ExamQuestion] Filtering Years. Total available:", examYears.length, "Exam Body:", examBodyId, "Subject:", subjectId);
     if (examBodyId) {
       filtered = filtered.filter(y => String(y.exam_body_id) === String(examBodyId));
     }
     if (subjectId) {
       filtered = filtered.filter(y => String(y.subject_id) === String(subjectId));
     }
+    console.log("[ExamQuestion] Filtered Years Result:", filtered);
     setFilteredYears(filtered);
 
   }, [examBodyId, subjectId, examBodies, examYears, API_BASE_URL, token]);

@@ -18,7 +18,6 @@ const CognitiveTest = () => {
   const [showReview, setShowReview] = useState(false); // Toggle answer review mode
   const [studentName, setStudentName] = useState("");
   const [schoolName, setSchoolName] = useState("");
-  const [studentEmail, setStudentEmail] = useState("");
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -169,7 +168,7 @@ const CognitiveTest = () => {
       id: testRecordId || Date.now(),
       student_name: studentName.trim(),
       school_name: schoolName.trim(),
-      email: studentEmail.trim() || "N/A",
+      email: "N/A",
       score,
       total,
       percentage,
@@ -185,14 +184,7 @@ const CognitiveTest = () => {
 
     setFinalScore(resultObj);
 
-    // Save locally for instant Admin Dashboard sync (fallback)
-    try {
-      const existing = JSON.parse(localStorage.getItem("cognitive_test_results") || "[]");
-      existing.unshift(resultObj);
-      localStorage.setItem("cognitive_test_results", JSON.stringify(existing));
-    } catch (e) {
-      console.error("Failed to save result locally", e);
-    }
+
 
     // Complete the test on the backend
     if (testRecordId) {
@@ -204,8 +196,6 @@ const CognitiveTest = () => {
       } catch (err) {
         console.warn("🧠 [CognitiveTest] Backend complete failed:", err.message);
       }
-    } else {
-      console.warn("🧠 [CognitiveTest] No backend record ID — result saved locally only.");
     }
 
     if (document.fullscreenElement && document.exitFullscreen) {
@@ -342,21 +332,7 @@ const CognitiveTest = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
-                  Email / Phone Number <span className="text-gray-400">(Optional)</span>
-                </label>
-                <div className="relative">
-                  <Icon icon="lucide:mail" className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="To receive certificate or prize info..."
-                    value={studentEmail}
-                    onChange={(e) => setStudentEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#BB9E7F] text-sm text-white placeholder-gray-500 font-medium"
-                  />
-                </div>
-              </div>
+
 
               {/* Instructions Callout */}
               <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-2.5 text-xs text-blue-200">
