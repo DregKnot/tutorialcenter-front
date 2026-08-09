@@ -24,6 +24,7 @@ const ProgramCard = ({ subject, title, month, quarter, semiAnnual, year, slashed
                         <img
                             src={logo || "/fallback-banner.png"}
                             alt={title}
+                            loading="lazy"
                             className="
                                 w-full h-full object-cover
                                 transition-transform duration-500

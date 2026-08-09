@@ -1,90 +1,91 @@
-import About from "./pages/public/About.jsx";
+import React, { Suspense, lazy } from 'react';
+import SplashScreen from "./components/public/SplashScreen.jsx";
 import Home from "./pages/public/Home.jsx";
-import Contact from "./pages/public/Contact.jsx";
-import Career from "./pages/public/Career.jsx";
-import Blog from "./pages/public/Blog.jsx";
-import StudentBlog from "./components/private/Students/StudentBlog.jsx";
-import LoginSelection from "./pages/public/LoginSelection.jsx";
-import SignUp from "./pages/public/SignUp.jsx";
 import StickyButtons from "./components/public/StickyButtons.jsx";
 import { Route, Routes } from "react-router-dom";
-import StudentRegistration from "./pages/public/StudentSignUp/StudentRegistration.jsx";
-import StudentPhoneVerification from "./pages/public/StudentSignUp/StudentPhoneVerification.jsx";
-import StudentEmailVerification from "./pages/public/StudentSignUp/StudentEmailVerification.jsx";
-import StudentBiodata from "./pages/public/StudentSignUp/StudentBiodata.jsx";
-import StudentTrainingSelection from "./pages/public/StudentSignUp/StudentTrainingSelection.jsx";
-import { StudentSubjectSelection } from "./pages/public/StudentSignUp/StudentSubjectSelection.jsx";
-import { StudentPaymentSuccessScreen } from "./pages/public/StudentSignUp/StudentPaymentSuccessScreen.jsx";
-import GuardianLogin from "./pages/public/GuardianLogin.jsx";
-import GuardianDashboard from "./pages/Guardians/GuardianDashboard.jsx";
-
-import { GuardianRegistration } from "./pages/public/GuardianSignup/GuardianRegistration.jsx";
-import GuardianPhoneVerification from "./pages/public/GuardianSignup/GuardianPhoneVerification.jsx";
-import GuardianEmailVerification from "./pages/public/GuardianSignup/GuardianEmailVerification.jsx";
-import GuardianAddStudents from "./pages/public/GuardianSignup/GuardianAddStudents.jsx";
-import AddedStudentOTP from "./pages/public/GuardianSignup/AddedStudentOTP.jsx";
-import GuardianStudentRegistration from "./pages/public/GuardianSignup/GuardianStudentRegistration.jsx";
-import GuardianTrainingSelection from "./pages/public/GuardianSignup/GuardianTrainingSelection.jsx";
-import GuardianSubjectSelection from "./pages/public/GuardianSignup/GuardianSubjectSelection.jsx";
-import GuardianTrainingDuration from "./pages/public/GuardianSignup/GuardianTrainingDuration.jsx";
-import GuardianTrainingPayment from "./pages/public/GuardianSignup/GuardianTrainingPayment.jsx";
-
-import { StudentTrainingDuration } from "./pages/public/StudentSignUp/StudentTrainingDuration.jsx";
-import { StudentTrainingPayment } from "./pages/public/StudentSignUp/StudentTrainingPayment.jsx";
-import StudentLogin from "./pages/public/StudentLogin.jsx";
-import StudentDashboard from "./pages/Students/StudentDashboard.jsx";
-import StudentNotifications from "./pages/Students/StudentNotifications.jsx";
-import StaffNotification from "./components/private/staffs/StaffNotification.jsx";
-import StudentPaymentDisplay from "./pages/Students/StudentPaymentDisplay.jsx";
-import StudentClassSchedule from "./pages/Students/StudentClassSchedule.jsx";
-import StudentCalendar from "./pages/Students/StudentCalendar.jsx";
-import ComingSoon from "./pages/public/ComingSoon.jsx";
-import Unauthorized from "./pages/public/Unauthorized.jsx";
-import NotFound from "./pages/public/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import StaffLogin from "./pages/public/StaffLogin.jsx";
-import StaffDashboard from "./pages/staffs/admin/StaffDashboard.jsx";
-import StaffRegistration from "./pages/staffs/admin/StaffRegistration.jsx"
-import StaffManagement from "./pages/staffs/admin/StaffManagement.jsx";
-import AdminPaymentHistory from "./pages/staffs/admin/AdminPaymentHistory.jsx";
-import TutorDashboard from "./pages/staffs/tutor/TutorDashboard.jsx";
-import TutorMasterClass from "./pages/staffs/tutor/TutorMasterClass.jsx";
-import CourseAdvisorDashboard from "./pages/staffs/courseadvisor/CourseAdvisorDashboard.jsx";
-import CourseAdvisorStudentManagement from "./pages/staffs/courseadvisor/CourseAdvisorStudentManagement.jsx";
-import CourseAdvisorGuardianManagement from "./pages/staffs/courseadvisor/CourseAdvisorGuardianManagement.jsx";
-import CourseAdvisorComingSoon from "./pages/staffs/courseadvisor/CourseAdvisorComingSoon.jsx";
-import CourseAdvisorMasterClass from "./pages/staffs/courseadvisor/CourseAdvisorMasterClass.jsx";
-import CourseAdvisorCalendar from "./pages/staffs/courseadvisor/CourseAdvisorCalendar.jsx";
-import TutorCalendar from "./pages/staffs/tutor/TutorCalendar.jsx";
-import StaffMasterClassList from "./pages/staffs/admin/StaffMasterClassList.jsx";
-import CoursesManagement from "./pages/staffs/admin/CoursesManagement.jsx";
-import StudentPaymentHistory from "./pages/Students/StudentPaymentDisplay.jsx";
-import StudentMeetWrapper from "./pages/Students/StudentMeetWrapper.jsx";
-import StaffMeetWrapper from "./pages/staffs/StaffMeetWrapper.jsx";
-import StaffAppMeetWrapper from "./pages/staffs/StaffAppMeetWrapper.jsx";
-import ClassRoom from "./pages/ClassRoom.jsx";
-import StudentSettings from "./pages/Students/StudentSettings.jsx";
-import RecordedClasses from "./pages/Students/RecordedClasses.jsx";
-import StudentGames from "./pages/Students/StudentGames.jsx";
-import StudentExam from "./pages/Students/StudentExam.jsx";
-import StudentScholarship from "./pages/Students/StudentScholarship.jsx";
-import StudentLeaderboard from "./pages/Students/StudentLeaderboard.jsx";
-import StudentFeedback from "./pages/Students/StudentFeedback.jsx";
-import StaffEmailVerification from "./pages/public/StaffSignUp/StaffEmailVerification.jsx";
-import StaffFeedback from "./pages/staffs/StaffFeedback.jsx";
-import StaffLeaderboard from "./pages/staffs/admin/Leaderboard.jsx";
-import AdminStudentManagement from "./pages/staffs/admin/AdminStudentManagement.jsx";
-import ExamManagement from "./pages/staffs/admin/ExamManagement.jsx";
-import ExamQuestion from "./components/private/staffs/exams/ExamQuestion.jsx";
-import EditExamHeader from "./components/private/staffs/exams/EditExamHeader.jsx";
-import ExamSubjectList from "./components/private/staffs/exams/ExamSubjectList.jsx";
-import ExamYearList from "./components/private/staffs/exams/ExamYearList.jsx";
-import ExamQuestionList from "./components/private/staffs/exams/ExamQuestionList.jsx";
-import Training from "./pages/public/Training.jsx";
-import CourseDetails from "./pages/public/CourseDetails.jsx";
-import CognitiveTest from "./pages/public/CognitiveTest.jsx";
-import SchoolCognitiveTests from "./pages/staffs/admin/SchoolCognitiveTests.jsx";
-// import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
+
+// Lazy loaded components
+const About = lazy(() => import("./pages/public/About.jsx"));
+const Contact = lazy(() => import("./pages/public/Contact.jsx"));
+const Career = lazy(() => import("./pages/public/Career.jsx"));
+const Blog = lazy(() => import("./pages/public/Blog.jsx"));
+const StudentBlog = lazy(() => import("./components/private/Students/StudentBlog.jsx"));
+const LoginSelection = lazy(() => import("./pages/public/LoginSelection.jsx"));
+const SignUp = lazy(() => import("./pages/public/SignUp.jsx"));
+const StudentRegistration = lazy(() => import("./pages/public/StudentSignUp/StudentRegistration.jsx"));
+const StudentPhoneVerification = lazy(() => import("./pages/public/StudentSignUp/StudentPhoneVerification.jsx"));
+const StudentEmailVerification = lazy(() => import("./pages/public/StudentSignUp/StudentEmailVerification.jsx"));
+const StudentBiodata = lazy(() => import("./pages/public/StudentSignUp/StudentBiodata.jsx"));
+const StudentTrainingSelection = lazy(() => import("./pages/public/StudentSignUp/StudentTrainingSelection.jsx"));
+const StudentSubjectSelection = lazy(() => import("./pages/public/StudentSignUp/StudentSubjectSelection.jsx").then(module => ({ default: module.StudentSubjectSelection })));
+const StudentPaymentSuccessScreen = lazy(() => import("./pages/public/StudentSignUp/StudentPaymentSuccessScreen.jsx").then(module => ({ default: module.StudentPaymentSuccessScreen })));
+const GuardianLogin = lazy(() => import("./pages/public/GuardianLogin.jsx"));
+const GuardianDashboard = lazy(() => import("./pages/Guardians/GuardianDashboard.jsx"));
+const GuardianRegistration = lazy(() => import("./pages/public/GuardianSignup/GuardianRegistration.jsx").then(module => ({ default: module.GuardianRegistration })));
+const GuardianPhoneVerification = lazy(() => import("./pages/public/GuardianSignup/GuardianPhoneVerification.jsx"));
+const GuardianEmailVerification = lazy(() => import("./pages/public/GuardianSignup/GuardianEmailVerification.jsx"));
+const GuardianAddStudents = lazy(() => import("./pages/public/GuardianSignup/GuardianAddStudents.jsx"));
+const AddedStudentOTP = lazy(() => import("./pages/public/GuardianSignup/AddedStudentOTP.jsx"));
+const GuardianStudentRegistration = lazy(() => import("./pages/public/GuardianSignup/GuardianStudentRegistration.jsx"));
+const GuardianTrainingSelection = lazy(() => import("./pages/public/GuardianSignup/GuardianTrainingSelection.jsx"));
+const GuardianSubjectSelection = lazy(() => import("./pages/public/GuardianSignup/GuardianSubjectSelection.jsx"));
+const GuardianTrainingDuration = lazy(() => import("./pages/public/GuardianSignup/GuardianTrainingDuration.jsx"));
+const GuardianTrainingPayment = lazy(() => import("./pages/public/GuardianSignup/GuardianTrainingPayment.jsx"));
+const StudentTrainingDuration = lazy(() => import("./pages/public/StudentSignUp/StudentTrainingDuration.jsx").then(module => ({ default: module.StudentTrainingDuration })));
+const StudentTrainingPayment = lazy(() => import("./pages/public/StudentSignUp/StudentTrainingPayment.jsx").then(module => ({ default: module.StudentTrainingPayment })));
+const StudentLogin = lazy(() => import("./pages/public/StudentLogin.jsx"));
+const StudentDashboard = lazy(() => import("./pages/Students/StudentDashboard.jsx"));
+const StudentNotifications = lazy(() => import("./pages/Students/StudentNotifications.jsx"));
+const StaffNotification = lazy(() => import("./components/private/staffs/StaffNotification.jsx"));
+const StudentPaymentDisplay = lazy(() => import("./pages/Students/StudentPaymentDisplay.jsx"));
+const StudentClassSchedule = lazy(() => import("./pages/Students/StudentClassSchedule.jsx"));
+const StudentCalendar = lazy(() => import("./pages/Students/StudentCalendar.jsx"));
+const ComingSoon = lazy(() => import("./pages/public/ComingSoon.jsx"));
+const Unauthorized = lazy(() => import("./pages/public/Unauthorized.jsx"));
+const NotFound = lazy(() => import("./pages/public/NotFound.jsx"));
+const StaffLogin = lazy(() => import("./pages/public/StaffLogin.jsx"));
+const StaffDashboard = lazy(() => import("./pages/staffs/admin/StaffDashboard.jsx"));
+const StaffRegistration = lazy(() => import("./pages/staffs/admin/StaffRegistration.jsx"));
+const StaffManagement = lazy(() => import("./pages/staffs/admin/StaffManagement.jsx"));
+const AdminPaymentHistory = lazy(() => import("./pages/staffs/admin/AdminPaymentHistory.jsx"));
+const TutorDashboard = lazy(() => import("./pages/staffs/tutor/TutorDashboard.jsx"));
+const TutorMasterClass = lazy(() => import("./pages/staffs/tutor/TutorMasterClass.jsx"));
+const CourseAdvisorDashboard = lazy(() => import("./pages/staffs/courseadvisor/CourseAdvisorDashboard.jsx"));
+const CourseAdvisorStudentManagement = lazy(() => import("./pages/staffs/courseadvisor/CourseAdvisorStudentManagement.jsx"));
+const CourseAdvisorGuardianManagement = lazy(() => import("./pages/staffs/courseadvisor/CourseAdvisorGuardianManagement.jsx"));
+const CourseAdvisorComingSoon = lazy(() => import("./pages/staffs/courseadvisor/CourseAdvisorComingSoon.jsx"));
+const CourseAdvisorMasterClass = lazy(() => import("./pages/staffs/courseadvisor/CourseAdvisorMasterClass.jsx"));
+const CourseAdvisorCalendar = lazy(() => import("./pages/staffs/courseadvisor/CourseAdvisorCalendar.jsx"));
+const TutorCalendar = lazy(() => import("./pages/staffs/tutor/TutorCalendar.jsx"));
+const StaffMasterClassList = lazy(() => import("./pages/staffs/admin/StaffMasterClassList.jsx"));
+const CoursesManagement = lazy(() => import("./pages/staffs/admin/CoursesManagement.jsx"));
+const StudentPaymentHistory = lazy(() => import("./pages/Students/StudentPaymentDisplay.jsx"));
+const StudentMeetWrapper = lazy(() => import("./pages/Students/StudentMeetWrapper.jsx"));
+const StaffMeetWrapper = lazy(() => import("./pages/staffs/StaffMeetWrapper.jsx"));
+const StaffAppMeetWrapper = lazy(() => import("./pages/staffs/StaffAppMeetWrapper.jsx"));
+const ClassRoom = lazy(() => import("./pages/ClassRoom.jsx"));
+const StudentSettings = lazy(() => import("./pages/Students/StudentSettings.jsx"));
+const RecordedClasses = lazy(() => import("./pages/Students/RecordedClasses.jsx"));
+const StudentGames = lazy(() => import("./pages/Students/StudentGames.jsx"));
+const StudentExam = lazy(() => import("./pages/Students/StudentExam.jsx"));
+const StudentScholarship = lazy(() => import("./pages/Students/StudentScholarship.jsx"));
+const StudentLeaderboard = lazy(() => import("./pages/Students/StudentLeaderboard.jsx"));
+const StudentFeedback = lazy(() => import("./pages/Students/StudentFeedback.jsx"));
+const StaffEmailVerification = lazy(() => import("./pages/public/StaffSignUp/StaffEmailVerification.jsx"));
+const StaffFeedback = lazy(() => import("./pages/staffs/StaffFeedback.jsx"));
+const StaffLeaderboard = lazy(() => import("./pages/staffs/admin/Leaderboard.jsx"));
+const AdminStudentManagement = lazy(() => import("./pages/staffs/admin/AdminStudentManagement.jsx"));
+const ExamManagement = lazy(() => import("./pages/staffs/admin/ExamManagement.jsx"));
+const ExamQuestion = lazy(() => import("./components/private/staffs/exams/ExamQuestion.jsx"));
+const EditExamHeader = lazy(() => import("./components/private/staffs/exams/EditExamHeader.jsx"));
+const ExamSubjectList = lazy(() => import("./components/private/staffs/exams/ExamSubjectList.jsx"));
+const ExamYearList = lazy(() => import("./components/private/staffs/exams/ExamYearList.jsx"));
+const ExamQuestionList = lazy(() => import("./components/private/staffs/exams/ExamQuestionList.jsx"));
+const Training = lazy(() => import("./pages/public/Training.jsx"));
+const CourseDetails = lazy(() => import("./pages/public/CourseDetails.jsx"));
+const CognitiveTest = lazy(() => import("./pages/public/CognitiveTest.jsx"));
+const SchoolCognitiveTests = lazy(() => import("./pages/staffs/admin/SchoolCognitiveTests.jsx"));// import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
 
 function App() {
   return (
@@ -92,6 +93,7 @@ function App() {
 
       <StickyButtons />
 
+      <Suspense fallback={<SplashScreen />}>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
@@ -193,6 +195,7 @@ function App() {
           />
         </Route>
       </Routes>
+      </Suspense>
     </>
   );
 }

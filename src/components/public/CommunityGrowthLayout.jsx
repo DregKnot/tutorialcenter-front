@@ -49,7 +49,7 @@ export default function CommunityGrowthLayout({
                 </div>
                 <div className="w-full h-full relative overflow-hidden">
                     <div className={`absolute left-0 bottom-0 bg-gradient-to-t md:bg-gradient-to-r ${overlayGradient} to-transparent w-full h-full z-10`}></div>
-                    <img src={imgPath} className="w-full h-full object-cover" alt={title} />
+                    <img src={imgPath} loading="lazy" className="w-full h-full object-cover" alt={title} />
                 </div>
             </div>
         </>

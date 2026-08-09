@@ -50,12 +50,14 @@ export default function LearningSection() {
                         <div className="w-full lg:w-[40%] flex-shrink-0">
                             <ScrollReveal delay={0.2} direction="left" distance={40}>
                                 <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
-                                    <div
-                                        className="w-full h-[450px] lg:h-[800px] bg-cover bg-center bg-no-repeat bg-gray-600 bg-blend-overlay transition-transform duration-700 group-hover:scale-105"
-                                        style={{ backgroundImage: `url("${studyImage}")` }}
-                                        aria-label="Student learning with Tutorial Center"
-                                        role="img"
-                                    />
+                                    <div className="w-full h-[450px] lg:h-[800px] bg-gray-600 relative transition-transform duration-700 group-hover:scale-105">
+                                        <img
+                                            src={studyImage}
+                                            alt="Student learning with Tutorial Center"
+                                            loading="lazy"
+                                            className="w-full h-full object-cover mix-blend-overlay"
+                                        />
+                                    </div>
                                     {/* Subtle overlay shimmer */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-[#09314F]/20 via-transparent to-transparent pointer-events-none z-10" />
                                 </div>

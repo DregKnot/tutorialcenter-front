@@ -21,6 +21,7 @@ const Career = () => {
         <img
           src={Career_img}
           alt="Career Hero Background"
+          loading="eager"
           fetchpriority="high"
           className="absolute inset-0 w-full h-full object-cover z-0"
         />
@@ -72,6 +73,7 @@ const Career = () => {
       <img
         src={crowd}
         alt="Crowd"
+        loading="lazy"
         className="brightness-0 invert text-2xl"
       />
     </div>
@@ -98,6 +100,7 @@ const Career = () => {
       <img
         src={crowd}
         alt="Crowd"
+        loading="lazy"
         className="brightness-0 invert text-2xl"
       />
     </div>
@@ -224,6 +227,7 @@ const Career = () => {
                 <img
                   src={handCup}
                   alt="Success Trophy"
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -249,6 +253,7 @@ const Career = () => {
                 <img
                   src={handCup}
                   alt="Course Advisor Success"
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -366,6 +371,7 @@ const Career = () => {
                 <img
                   src={handCup}
                   alt="Administration Success"
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -396,6 +402,7 @@ const Career = () => {
                 <img
                   src={studentAffiliateImg}
                   alt="Affiliate Dashboard"
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </div>

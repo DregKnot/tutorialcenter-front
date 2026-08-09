@@ -24,6 +24,7 @@ const About = () => {
         <img
           src={conversation}
           alt="About us background"
+          loading="eager"
           fetchpriority="high"
           className="absolute inset-0 w-full h-full object-cover z-0"
         />
@@ -99,7 +100,7 @@ const About = () => {
                     >
                       <div className="">
                         <div className="w-[40px] h-[40px] flex justify-center items-center bg-sencondary rounded-full">
-                          <img src={vector} alt="" width={20} height={20} />
+                          <img src={vector} alt="" width={20} height={20} loading="lazy" />
                         </div>
                       </div>
                       <div className="">
@@ -121,10 +122,9 @@ const About = () => {
                     allowFullScreen
                   ></iframe>
                   <div className="hidden md:block lg:absolute top-11 left-auto lg:right-[620px] z-0">
-                    <div
-                      style={{ backgroundImage: `url('${handCup}')` }}
-                      className="w-[500px] h-[300px] max-w-full rounded-2xl bg-center bg-cover bg-no-repeat border-[3px] border-white border-solid shadow-md"
-                    ></div>
+                    <div className="w-[500px] h-[300px] max-w-full rounded-2xl border-[3px] border-white border-solid shadow-md overflow-hidden">
+                      <img src={handCup} alt="hand holding a cup" loading="lazy" className="w-full h-full object-cover" />
+                    </div>
                   </div>
                 </div>
               </ScrollReveal>

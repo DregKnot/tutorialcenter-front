@@ -128,6 +128,8 @@ const CourseDetails = () => {
                   <img
                     src={bannerUrl}
                     alt={course.title}
+                    loading="eager"
+                    fetchpriority="high"
                     className="w-full h-full object-cover absolute inset-0 opacity-90"
                   />
                 ) : (
