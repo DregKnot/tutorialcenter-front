@@ -41,6 +41,7 @@ export default function StudentExam() {
 
   // Warning modal state
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
 
   // Sync modal controls when modal is opened
   useEffect(() => {
@@ -71,6 +72,31 @@ export default function StudentExam() {
       return () => clearTimeout(t);
     }
   }, [toast]);
+
+  // Lockdown & Tab Switching Monitor
+  useEffect(() => {
+    if (!showExamInterface) return;
+
+    const handleBlur = () => {
+      setWarningMessage("⚠️ Warning: Switching tabs or leaving the screen is monitored!");
+      setTimeout(() => setWarningMessage(""), 5000);
+    };
+
+    const handleContextMenu = (e) => e.preventDefault();
+    const handleCopyPaste = (e) => e.preventDefault();
+
+    window.addEventListener("blur", handleBlur);
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("copy", handleCopyPaste);
+    document.addEventListener("cut", handleCopyPaste);
+
+    return () => {
+      window.removeEventListener("blur", handleBlur);
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("copy", handleCopyPaste);
+      document.removeEventListener("cut", handleCopyPaste);
+    };
+  }, [showExamInterface]);
 
   // Fetch initial data (Courses and Available Exams in parallel)
   const fetchInitialData = useCallback(async () => {
@@ -316,6 +342,15 @@ export default function StudentExam() {
 
       setActiveAttemptId(attemptId);
       setShowExamInterface(true);
+
+      try {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      } catch (e) {
+        // Fullscreen optional
+      }
+
       setToast({
         type: "success",
         message: "Practice session successfully started!",
@@ -349,23 +384,25 @@ export default function StudentExam() {
         <div
           className={`fixed top-6 left-1/2 -translate-x-1/2 z-[2000] px-6 py-4 rounded-2xl shadow-2xl text-white font-bold text-sm transition-all duration-300 flex items-center gap-3 ${
             toast.type === "success"
-              ? "bg-[#76D287]"
-              : toast.type === "warning"
-              ? "bg-[#BB9E7F]"
-              : "bg-[#E83831]"
+              ? "bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/20"
+              : toast.type === "error"
+              ? "bg-gradient-to-r from-red-500 to-rose-500 shadow-red-500/20"
+              : "bg-gradient-to-r from-amber-500 to-orange-500 shadow-orange-500/20"
           }`}
         >
           <Icon
-            icon={
-              toast.type === "success"
-                ? "lucide:check-circle"
-                : toast.type === "warning"
-                ? "lucide:alert-triangle"
-                : "lucide:x-circle"
-            }
-            className="w-5 h-5 shrink-0"
+            icon={toast.type === "success" ? "lucide:check-circle" : toast.type === "error" ? "lucide:x-circle" : "lucide:alert-circle"}
+            className="w-5 h-5"
           />
-          <span>{toast.message}</span>
+          {toast.message}
+        </div>
+      )}
+
+      {/* Lockdown Warning Toast */}
+      {warningMessage && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[3000] bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 animate-bounce border border-white/30">
+          <Icon icon="lucide:alert-triangle" className="w-5 h-5" />
+          {warningMessage}
         </div>
       )}
 
@@ -467,7 +504,11 @@ export default function StudentExam() {
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
-                        <span>Select the target past question year to fetch relevant datasets.</span>
+                        <span>Click 'Start Practice Session' when you are ready to begin.</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
+                        <span><strong>Note:</strong> Your browser will be locked during the exam. Tab switching, copying, and exiting fullscreen are disabled to ensure exam integrity.</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
@@ -914,6 +955,12 @@ export default function StudentExam() {
                 Before you begin your practice attempt, please read and agree to the following conditions:
               </p>
               <div className="bg-gray-50 dark:bg-[#06243A]/60 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 space-y-4">
+                <div className="flex gap-3">
+                  <Icon icon="lucide:lock" className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <p>
+                    <span className="font-bold text-[#09314F] dark:text-white">Browser Lockdown:</span> Your browser will be locked in full screen. Tab switching, copying, and right-clicking are strictly monitored and disabled.
+                  </p>
+                </div>
                 <div className="flex gap-3">
                   <Icon icon="lucide:x-circle" className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                   <p>

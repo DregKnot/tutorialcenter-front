@@ -89,6 +89,8 @@ export default function Hero() {
                                             src={slide} 
                                             alt={`Slide ${idx + 1}`} 
                                             className="w-full h-full object-cover"
+                                            loading={idx === 0 ? "eager" : "lazy"}
+                                            fetchpriority={idx === 0 ? "high" : "auto"}
                                         />
                                     </div>
                                 ))}
@@ -140,11 +142,18 @@ export const MobileHero = ({ currentSlide }) => {
                 {slides.map((slide, idx) => (
                     <div
                         key={idx}
-                        className={`w-full h-full bg-cover bg-no-repeat bg-center absolute top-0 left-0 transition-all duration-1000 ease-in-out ${
+                        className={`w-full h-full absolute top-0 left-0 transition-all duration-1000 ease-in-out ${
                             currentSlide === idx ? "translate-y-0 opacity-100 z-10" : "-translate-y-full opacity-0 z-0"
                         }`}
-                        style={{ backgroundImage: `url("${slide}")` }}
-                    />
+                    >
+                        <img 
+                            src={slide} 
+                            alt={`Mobile Slide ${idx + 1}`} 
+                            className="w-full h-full object-cover"
+                            loading={idx === 1 ? "eager" : "lazy"}
+                            fetchpriority={idx === 1 ? "high" : "auto"}
+                        />
+                    </div>
                 ))}
 
                 {/* Overlay to ensure text readability */}

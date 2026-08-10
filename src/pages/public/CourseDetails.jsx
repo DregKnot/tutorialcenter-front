@@ -128,6 +128,8 @@ const CourseDetails = () => {
                   <img
                     src={bannerUrl}
                     alt={course.title}
+                    loading="eager"
+                    fetchpriority="high"
                     className="w-full h-full object-cover absolute inset-0 opacity-90"
                   />
                 ) : (
@@ -145,16 +147,16 @@ const CourseDetails = () => {
             </ScrollReveal>
 
             {/* Content Area */}
-            <div className="grid md:grid-cols-3 gap-8 p-8 md:p-12">
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8 p-5 sm:p-8 md:p-12">
               
               {/* Left Column: Description */}
               <ScrollReveal delay={0.3} direction="up" distance={20} className="md:col-span-2 space-y-8">
                 <div>
-                  <h2 className="text-2xl font-black text-[#09314F] mb-4 uppercase">Program Overview</h2>
+                  <h2 className="text-2xl font-black text-[#09314F] mb-4 uppercase tracking-tight">Program Overview</h2>
                   {course.description ? (
                     <div 
-                      className="prose max-w-none text-gray-600 leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: course.description }}
+                      className="text-gray-600 leading-relaxed [&>p]:mb-5 [&>p]:text-justify [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:mb-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol>li]:mb-2 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-3"
+                      dangerouslySetInnerHTML={{ __html: course.description.replace(/&nbsp;/g, " ") }}
                     />
                   ) : (
                     <p className="text-gray-500 italic">No detailed description available for this course.</p>
@@ -228,7 +230,7 @@ const CourseDetails = () => {
                   <h3 className="text-xl font-black text-[#09314F] mb-6 uppercase border-b border-gray-200 pb-4">Tuition Options</h3>
                   
                   <div className="space-y-5 mb-8">
-                    <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="flex flex-col items-start bg-white p-4 rounded-xl border border-gray-100 shadow-sm gap-1">
                       <span className="text-sm font-bold text-gray-500">Monthly (1 month)</span>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-gray-400 line-through">₦{slashedMonthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
@@ -236,7 +238,7 @@ const CourseDetails = () => {
                       </div>
                     </div>
                     
-                    <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-[#BB9E7F]/30 shadow-sm relative overflow-hidden">
+                    <div className="flex flex-col items-start bg-white p-4 rounded-xl border border-[#BB9E7F]/30 shadow-sm relative overflow-hidden gap-1">
                       <div className="absolute top-0 right-0 bg-[#BB9E7F] text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">Save 5%</div>
                       <span className="text-sm font-bold text-gray-500">Quarterly (3 months)</span>
                       <div className="flex items-center gap-2">
@@ -245,7 +247,7 @@ const CourseDetails = () => {
                       </div>
                     </div>
 
-                    <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-[#BB9E7F]/30 shadow-sm relative overflow-hidden">
+                    <div className="flex flex-col items-start bg-white p-4 rounded-xl border border-[#BB9E7F]/30 shadow-sm relative overflow-hidden gap-1">
                       <div className="absolute top-0 right-0 bg-[#BB9E7F] text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">Save 5%</div>
                       <span className="text-sm font-bold text-gray-500">Semi-Annually (6 months)</span>
                       <div className="flex items-center gap-2">
@@ -254,7 +256,7 @@ const CourseDetails = () => {
                       </div>
                     </div>
                     
-                    <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-green-200 shadow-sm relative overflow-hidden">
+                    <div className="flex flex-col items-start bg-white p-4 rounded-xl border border-green-200 shadow-sm relative overflow-hidden gap-1">
                       <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">Best Value</div>
                       <span className="text-sm font-bold text-gray-500">Annually (1 year)</span>
                       <div className="flex items-center gap-2">

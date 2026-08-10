@@ -4,6 +4,7 @@ import DashboardLayout from "../../components/private/Students/DashboardLayout.j
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
+import EmbeddedVideoModal from "../../components/private/EmbeddedVideoModal.jsx";
 
 // SVG Icons to avoid import issues
 const ChevronLeftIcon = () => (
@@ -91,6 +92,19 @@ export default function StudentCalendar() {
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedDateModal, setSelectedDateModal] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  const [watchingVideoUrl, setWatchingVideoUrl] = useState(null);
+  const [watchingVideoId, setWatchingVideoId] = useState(null);
+
+  const handleWatchVideo = (url) => {
+    let videoId = null;
+    if (url && (url.includes('youtube.com') || url.includes('youtu.be'))) {
+       const match = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/i);
+       if (match) videoId = match[1];
+    }
+    setWatchingVideoId(videoId);
+    setWatchingVideoUrl(url);
+  };
 
   const isPastSession = useCallback((session) => {
     if (!session || !session.session_date) return false;
@@ -191,16 +205,6 @@ export default function StudentCalendar() {
     if (!d1 || !d2) return false;
     return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
   };
-
-  // Unique classes for Sidebar Legend
-  // const uniqueClasses = useMemo(() => {
-  //   const titles = new Set();
-  //   sessions.forEach(s => {
-  //     const title = s.class?.title || s.title;
-  //     if (title) titles.add(title);
-  //   });
-  //   return Array.from(titles);
-  // }, [sessions]);
 
   // Generate Month Grid Days (42 cells)
   const generateMonthDays = useCallback((baseDate) => {
@@ -844,15 +848,13 @@ export default function StudentCalendar() {
                       <div className="pt-3 border-t border-black/5 dark:border-white/10">
                         {past ? (
                           recUrl ? (
-                            <a
-                              href={recUrl}
-                              target="_blank"
-                              rel="noreferrer"
+                            <button
+                              onClick={() => handleWatchVideo(recUrl)}
                               className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
                             >
                               <Icon icon="lucide:play-circle" className="w-4 h-4" />
                               Watch Recorded Class
-                            </a>
+                            </button>
                           ) : (
                             <a
                               href="/student/recorded-classes"
@@ -967,15 +969,13 @@ export default function StudentCalendar() {
             <div className="mt-6">
               {isPastSession(selectedSession) ? (
                 selectedSession.recording_link || selectedSession.recording_url ? (
-                  <a
-                    href={selectedSession.recording_link || selectedSession.recording_url}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    onClick={() => handleWatchVideo(selectedSession.recording_link || selectedSession.recording_url)}
                     className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
                   >
                     <Icon icon="lucide:play-circle" className="w-4 h-4" />
                     Watch Recorded Class
-                  </a>
+                  </button>
                 ) : (
                   <a
                     href="/student/recorded-classes"
@@ -1011,6 +1011,17 @@ export default function StudentCalendar() {
           </div>
         </div>
       )}
+      {/* Optional: Add New Event Modal */}
+      {/* <AddNewEventModal isOpen={...} onClose={...} /> */}
+
+      <EmbeddedVideoModal 
+        videoUrl={watchingVideoUrl} 
+        videoId={watchingVideoId} 
+        onClose={() => {
+          setWatchingVideoUrl(null);
+          setWatchingVideoId(null);
+        }} 
+      />
     </DashboardLayout>
   );
 }

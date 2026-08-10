@@ -2,25 +2,17 @@ import React, { useState, useEffect } from "react";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import { Icon } from "@iconify/react";
 import { useAuth } from "../../context/AuthContext";
-
-const mockClasses = [
-  {
-    id: 1,
-    title: "Algebraic Equations",
-    subject: "Mathematics",
-    date: new Date(Date.now() - 86400000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    duration: "1h 30m",
-    videoId: "rUgqDFTB7RU",
-    videoUrl: "https://www.youtube.com/embed/rUgqDFTB7RU?autoplay=1",
-    teacher: "Joy Adeleke",
-    color: "from-blue-600 to-indigo-600"
-  }
-];
+import axios from "axios";
 
 const RecordedClasses = () => {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { setIsClassActive } = useAuth();
+  const [recordedClasses, setRecordedClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { setIsClassActive, token } = useAuth();
+  
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
   // Prevent autologout while watching a recorded class
   useEffect(() => {
@@ -35,9 +27,34 @@ const RecordedClasses = () => {
     };
   }, [selectedVideo, setIsClassActive]);
 
-  const filteredClasses = mockClasses.filter(c => 
-    c.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    c.subject.toLowerCase().includes(searchQuery.toLowerCase())
+  // Fetch recorded classes from backend
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoading(true);
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json"
+        };
+        const response = await axios.get(`${API_BASE_URL}/api/students/recorded-classes`, { headers });
+        if (response.data?.success) {
+          setRecordedClasses(response.data.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch recorded classes", err);
+        const errorMsg = err?.response?.data?.message || err?.response?.data?.error || err.message || "Could not load recorded classes.";
+        setError(errorMsg);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (token) fetchClasses();
+  }, [token, API_BASE_URL]);
+
+  const filteredClasses = recordedClasses.filter(c => 
+    (c.title || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (c.subject || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -84,7 +101,13 @@ const RecordedClasses = () => {
         </div>
 
         {/* Classes Grid */}
-        {filteredClasses.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <Icon icon="lucide:loader-2" className="w-8 h-8 text-[#E83831] animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-20 text-red-500 font-semibold">{error}</div>
+        ) : filteredClasses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredClasses.map((cls) => (
               <div 
@@ -119,6 +142,14 @@ const RecordedClasses = () => {
                       {cls.date}
                     </span>
                   </div>
+
+                  {/* Subtitle / Meta */}
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-gray-500 dark:text-gray-400 mb-4">
+                    <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-900/50 px-2 py-1 rounded-md border border-gray-100 dark:border-gray-700">
+                      <Icon icon="lucide:user" className="w-3.5 h-3.5" />
+                      <span className="truncate max-w-[120px]">{cls.tutor}</span>
+                    </div>
+                  </div>
                   
                   <h3 className="font-bold text-gray-800 dark:text-gray-100 leading-tight mb-2 group-hover:text-[#E83831] transition-colors line-clamp-2">
                     {cls.title}
@@ -127,10 +158,10 @@ const RecordedClasses = () => {
                   <div className="mt-auto pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-[10px] font-bold">
-                        {cls.teacher?.[0] || "T"}
+                        {cls.tutor?.[0] || "T"}
                       </div>
                       <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                        {cls.teacher || "Joy Adeleke"}
+                        {cls.tutor || "Instructor"}
                       </span>
                     </div>
                     <button className="text-[#E83831] text-xs font-black uppercase tracking-wider flex items-center gap-1 group-hover:gap-2 transition-all">
@@ -155,39 +186,38 @@ const RecordedClasses = () => {
 
       {/* Video Player Modal */}
       {selectedVideo && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 md:p-8 animate-in fade-in duration-300">
-          <div className="w-full max-w-5xl bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col relative">
-            
-            {/* Modal Header */}
-            <div className="absolute top-0 inset-x-0 z-10 flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
-              <div className="pointer-events-auto flex items-center gap-3">
-                <span className="bg-[#E83831] text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded">
-                  {selectedVideo.subject}
-                </span>
-                <h3 className="text-white font-bold text-sm md:text-base drop-shadow-md">
-                  {selectedVideo.title} — {selectedVideo.teacher}
-                </h3>
-              </div>
-              <button 
-                onClick={() => setSelectedVideo(null)}
-                className="pointer-events-auto w-10 h-10 bg-black/50 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors backdrop-blur-md"
-              >
-                <Icon icon="lucide:x" className="w-5 h-5" />
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4">
+          <button 
+            onClick={() => setSelectedVideo(null)}
+            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-10"
+          >
+            <Icon icon="lucide:x" className="w-6 h-6" />
+          </button>
 
-            {/* Video Player */}
-            <div className="w-full aspect-video bg-black relative">
-              <iframe
-                src={selectedVideo.videoUrl || "https://www.youtube.com/embed/rUgqDFTB7RU?autoplay=1"}
-                title={selectedVideo.title}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full"
-              ></iframe>
+          <div className="w-full max-w-6xl w-11/12 h-[80vh] md:h-[90vh] flex flex-col items-center justify-center bg-black rounded-2xl overflow-hidden shadow-2xl relative">
+            {/* Fullscreen indicator helper */}
+            <div className="absolute top-4 left-4 bg-black/60 px-4 py-2 rounded-lg text-white font-semibold text-sm backdrop-blur-sm z-10 flex items-center gap-2">
+              <Icon icon="lucide:maximize" className="w-4 h-4"/> Use player controls to expand fullscreen
             </div>
-            
+            {selectedVideo.videoId ? (
+              <iframe
+                className="w-full h-full"
+                src={`https://www.youtube-nocookie.com/embed/${selectedVideo.videoId}?autoplay=1&modestbranding=1&rel=0&controls=1`}
+                title="Recorded Masterclass"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <iframe
+                className="w-full h-full"
+                src={selectedVideo.videoUrl}
+                title="Recorded Masterclass"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowFullScreen
+              ></iframe>
+            )}
           </div>
         </div>
       )}

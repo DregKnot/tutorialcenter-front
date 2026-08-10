@@ -2,7 +2,7 @@ import ProfileCard from "./ProfileCard.jsx";
 import { AllTeams } from "../../data/data.js";
 import SectionHeading from "./SectionHeading.jsx";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const OurTeam = () => {
     // List of team departments
@@ -92,10 +92,22 @@ const OurTeam = () => {
     // Autoplay functionality
     useEffect(() => {
         if (isAutoPlaying && filteredTeam.length > slidesToShow) {
-            const interval = setInterval(nextSlide, 2000);
+            const interval = setInterval(nextSlide, 4000); // Increased time before auto scrolling
             return () => clearInterval(interval);
         }
     }, [isAutoPlaying, filteredTeam.length, slidesToShow, nextSlide]);
+
+    // Handle touch/click interactions for mobile to pause then resume after 3s
+    const pauseTimeoutRef = useRef(null);
+    const handleInteraction = () => {
+        setIsAutoPlaying(false);
+        if (pauseTimeoutRef.current) {
+            clearTimeout(pauseTimeoutRef.current);
+        }
+        pauseTimeoutRef.current = setTimeout(() => {
+            setIsAutoPlaying(true);
+        }, 3000);
+    };
 
     // Reset to first slide if current slide exceeds available slides
     useEffect(() => {
@@ -146,6 +158,8 @@ const OurTeam = () => {
                                     }}
                                     onMouseEnter={() => setIsAutoPlaying(false)}
                                     onMouseLeave={() => setIsAutoPlaying(true)}
+                                    onTouchStart={handleInteraction}
+                                    onClick={handleInteraction}
                                 >
                                     {filteredTeam.map((items, i) => {
                                         return (

@@ -163,6 +163,7 @@ const Training = () => {
         <img
           src={Career_img}
           alt="Training Hero Background"
+          loading="eager"
           fetchpriority="high"
           className="absolute inset-0 w-full h-full object-cover z-0"
         />
@@ -215,7 +216,7 @@ const Training = () => {
                   <div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] px-3 py-4 md:p-8 flex gap-3 md:gap-6 shadow-sm h-full">
                     <div className="flex-shrink-0">
                       <div className="w-[40px] h-[40px] md:w-12 md:h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
-                        <img src={crowd} alt="" className="brightness-0 invert text-2xl" />
+                        <img src={crowd} alt="" loading="lazy" className="brightness-0 invert text-2xl" />
                       </div>
                     </div>
                     <div>
@@ -238,7 +239,7 @@ const Training = () => {
                   <div className="bg-[#FFF5F5] rounded-[24px] md:rounded-[30px] px-3 py-4 md:p-8 flex gap-3 md:gap-6 shadow-sm h-full">
                     <div className="flex-shrink-0">
                       <div className="w-[40px] h-[40px] md:w-12 md:h-12 bg-[#EF4444] rounded-xl flex items-center justify-center shadow-[2px_2px_4px_0px_rgba(0,0,0,0.25)]">
-                        <img src={crowd} alt="" className="brightness-0 invert text-2xl" />
+                        <img src={crowd} alt="" loading="lazy" className="brightness-0 invert text-2xl" />
                       </div>
                     </div>
                     <div>
@@ -323,6 +324,7 @@ const Training = () => {
                           <img
                             src={bannerUrl}
                             alt={course.title}
+                            loading="lazy"
                             className={hasBanner
                               ? "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               : "h-24 w-24 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500"
@@ -507,6 +509,7 @@ const Training = () => {
                         <img
                           src={sector.image}
                           alt={sector.title}
+                          loading="lazy"
                           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />

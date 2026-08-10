@@ -59,6 +59,8 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
       setExamBodies(bodiesRes.data?.exam_bodies || bodiesRes.data?.data || bodiesRes.data || []);
       setCourses(coursesRes.data?.data || coursesRes.data?.courses || []);
       setExamYears(yearsRes.data?.data || yearsRes.data?.exam_years || yearsRes.data || []);
+      console.log("Exam Years Data Response:", yearsRes.data);
+      console.log("Exam Years state set to:", yearsRes.data?.data || yearsRes.data?.exam_years || yearsRes.data || []);
     } catch (err) {
       console.error("Failed to fetch initial data:", err);
     } finally {
@@ -264,14 +266,17 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                     className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-sm"
                   >
                     <option value="">Select Exam Year</option>
-                    {examYears
-                      .filter(y => 
-                        (!examBodyId || String(y.exam_body_id) === String(examBodyId)) && 
-                        (!subjectId || String(y.subject_id) === String(subjectId))
-                      )
-                      .map(year => (
+                    {(() => {
+                      const filtered = examYears.filter(y => {
+                        const matchBody = !examBodyId || String(y.exam_body_id) === String(examBodyId);
+                        const matchSubject = !subjectId || String(y.subject_id) === String(subjectId);
+                        return matchBody && matchSubject;
+                      });
+                      console.log("Filtering exam years for body:", examBodyId, "subject:", subjectId, "Result length:", filtered.length, "Original length:", examYears.length);
+                      return filtered.map(year => (
                         <option key={year.id} value={year.id}>{year.year} - {year.exam_body?.name || "Exam Body"}</option>
-                      ))}
+                      ));
+                    })()}
                   </select>
                 </div>
               </div>

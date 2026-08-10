@@ -68,10 +68,6 @@ const SchoolCognitiveTests = () => {
 
   const fetchResults = async () => {
     setLoading(true);
-    let backendResults = [];
-    let localResults = [];
-
-    // 1. Fetch from backend API
     try {
       const res = await axios.get(`${API_BASE_URL}/api/cognitive-tests`, {
         headers: { Accept: "application/json" },
@@ -80,7 +76,7 @@ const SchoolCognitiveTests = () => {
       console.log("🧠 [AdminCognitive] Backend results:", rawData);
 
       // Map backend fields to the display format
-      backendResults = rawData.map((item) => {
+      const backendResults = rawData.map((item) => {
         const startedAt = item.test_started_at ? new Date(item.test_started_at) : null;
         const endedAt = item.test_ended_at ? new Date(item.test_ended_at) : null;
         const score = item.score ?? 0;
@@ -99,7 +95,7 @@ const SchoolCognitiveTests = () => {
           id: item.id,
           student_name: item.student_name,
           school_name: item.school,
-          email: "N/A",
+          // email: "N/A",
           score,
           total,
           percentage,
@@ -113,57 +109,19 @@ const SchoolCognitiveTests = () => {
           _source: "backend",
         };
       });
+
+      // Sort by Percentage (highest first)
+      backendResults.sort((a, b) => (b.percentage || 0) - (a.percentage || 0));
+      setResults(backendResults);
     } catch (err) {
-      console.warn("🧠 [AdminCognitive] Backend fetch failed (using localStorage only):", err.message);
-    }
-
-    // 2. Read local storage fallback
-    try {
-      const stored = localStorage.getItem("cognitive_test_results");
-      if (stored) {
-        localResults = JSON.parse(stored).map((r) => ({ ...r, _source: "local" }));
-      }
-    } catch (e) {
-      console.error("Error loading local JSON results", e);
-    }
-
-    // 3. Merge & deduplicate: backend takes priority
-    const backendKeys = new Set(
-      backendResults.map((r) => `${r.student_name}||${r.school_name}||${r.score}`)
-    );
-    const uniqueLocalResults = localResults.filter(
-      (r) => !backendKeys.has(`${r.student_name}||${r.school_name}||${r.score}`)
-    );
-
-    const allResults = [...backendResults, ...uniqueLocalResults];
-
-    // Sort by Percentage (highest first)
-    allResults.sort((a, b) => (b.percentage || 0) - (a.percentage || 0));
-
-    setResults(allResults);
-    setLoading(false);
-  };
-
-  // Export current results as a downloadable JSON file
-  const handleExportJSON = () => {
-    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-      JSON.stringify(results, null, 2)
-    )}`;
-    const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", jsonString);
-    downloadAnchor.setAttribute("download", `cognitive_test_results_${Date.now()}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
-
-  // Clear all stored test records
-  const handleResetJSON = () => {
-    if (window.confirm("Are you sure you want to clear all recorded test scores?")) {
-      localStorage.setItem("cognitive_test_results", JSON.stringify([]));
-      fetchResults();
+      console.warn("🧠 [AdminCognitive] Backend fetch failed:", err.message);
+      setResults([]);
+    } finally {
+      setLoading(false);
     }
   };
+
+
 
   const uniqueSchools = Array.from(new Set(results.map(r => r.school_name).filter(Boolean)));
 
@@ -199,7 +157,7 @@ const SchoolCognitiveTests = () => {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="px-2.5 py-1 bg-[#09314F]/10 dark:bg-blue-900/40 text-[#09314F] dark:text-blue-300 text-[10px] font-black uppercase tracking-wider rounded-md">
-                Frontend Saved Scores (JSON)
+                Admin Panel
               </span>
               <span className="text-xs font-semibold text-gray-400">• School Competition</span>
             </div>
@@ -207,18 +165,12 @@ const SchoolCognitiveTests = () => {
               School Tests
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Manage student cognitive test scores saved locally on the frontend as JSON data.
+              Manage student cognitive test scores and generate temporary test links.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={handleExportJSON}
-              className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all shadow"
-            >
-              <Icon icon="lucide:download" className="w-4 h-4" />
-              Export JSON
-            </button>
+
 
             <button
               onClick={fetchResults}
@@ -355,13 +307,7 @@ const SchoolCognitiveTests = () => {
               ))}
             </select>
 
-            <button
-              onClick={handleResetJSON}
-              title="Reset data to default JSON sample"
-              className="p-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-xl text-xs font-bold transition-all"
-            >
-              <Icon icon="lucide:rotate-ccw" className="w-4 h-4" />
-            </button>
+
           </div>
         </div>
 
@@ -380,7 +326,7 @@ const SchoolCognitiveTests = () => {
                     <th className="py-4 px-6">Rank</th>
                     <th className="py-4 px-6">Student Name</th>
                     <th className="py-4 px-6">School Name</th>
-                    <th className="py-4 px-6">Contact / Email</th>
+                    {/* <th className="py-4 px-6">Contact / Email</th> */}
                     <th className="py-4 px-6 text-center">Score</th>
                     <th className="py-4 px-6 text-center">Percentage</th>
                     <th className="py-4 px-6 text-right">Time Taken</th>
@@ -424,9 +370,6 @@ const SchoolCognitiveTests = () => {
                           </div>
                         </td>
 
-                        <td className="py-4 px-6 text-gray-500 dark:text-gray-400">
-                          {item.email || "N/A"}
-                        </td>
 
                         <td className="py-4 px-6 text-center font-mono font-bold text-gray-700 dark:text-gray-300">
                           {item.score} / {item.total || 20}

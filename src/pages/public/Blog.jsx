@@ -50,6 +50,7 @@ const BlogCard = ({ post, featured = false }) => (
       <img
         src={post.image}
         alt={post.title}
+        loading="lazy"
         className="w-full h-full object-cover blur-[2px]"
       />
     </div>
@@ -108,6 +109,7 @@ const Blog = () => {
         <img
           src={BlogHero}
           alt="Blog Hero Background"
+          loading="eager"
           fetchpriority="high"
           className="absolute inset-0 w-full h-full object-cover z-0"
         />
