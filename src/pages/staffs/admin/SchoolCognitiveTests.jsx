@@ -13,12 +13,36 @@ const SchoolCognitiveTests = () => {
   const [shareableLink, setShareableLink] = useState("");
   const [linkExpiryTime, setLinkExpiryTime] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [inputSchoolName, setInputSchoolName] = useState("");
+  const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
     fetchResults();
     loadExistingLink();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Live countdown timer for the active link
+  useEffect(() => {
+    let interval;
+    if (linkExpiryTime) {
+      interval = setInterval(() => {
+        const now = Date.now();
+        if (now > linkExpiryTime) {
+          setTimeLeft("Expired");
+          clearInterval(interval);
+        } else {
+          const diffSecs = Math.floor((linkExpiryTime - now) / 1000);
+          const m = Math.floor(diffSecs / 60);
+          const s = diffSecs % 60;
+          setTimeLeft(`${m}m ${s}s`);
+        }
+      }, 1000);
+    } else {
+      setTimeLeft("");
+    }
+    return () => clearInterval(interval);
+  }, [linkExpiryTime]);
 
   const loadExistingLink = () => {
     try {
@@ -38,11 +62,17 @@ const SchoolCognitiveTests = () => {
   };
 
   const handleGenerateLink = () => {
+    if (!inputSchoolName.trim()) {
+      alert("Please enter a School Name before generating the link.");
+      return;
+    }
+
     const expiryTimestamp = Date.now() + 60 * 60 * 1000; // 1 hour validity
     const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     
     const payload = {
       code: randomCode,
+      school: inputSchoolName.trim(),
       exp: expiryTimestamp,
       created_at: Date.now()
     };
@@ -197,13 +227,22 @@ const SchoolCognitiveTests = () => {
               </p>
             </div>
 
-            <button
-              onClick={handleGenerateLink}
-              className="px-5 py-3 bg-[#BB9E7F] hover:bg-white text-[#09314F] font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-md flex items-center gap-2 whitespace-nowrap"
-            >
-              <Icon icon="lucide:link" className="w-4 h-4" />
-              <span>{shareableLink ? "Re-Generate Link" : "Generate 1-Hour Link"}</span>
-            </button>
+            <div className="flex flex-col items-end gap-3 w-full md:w-auto mt-4 md:mt-0">
+              <input
+                type="text"
+                placeholder="Enter School Name..."
+                value={inputSchoolName}
+                onChange={(e) => setInputSchoolName(e.target.value)}
+                className="w-full md:w-64 px-4 py-2 bg-black/20 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-[#BB9E7F] placeholder-gray-400"
+              />
+              <button
+                onClick={handleGenerateLink}
+                className="px-5 py-3 bg-[#BB9E7F] hover:bg-white text-[#09314F] font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-md flex items-center gap-2 whitespace-nowrap w-full md:w-auto justify-center"
+              >
+                <Icon icon="lucide:link" className="w-4 h-4" />
+                <span>{shareableLink ? "Re-Generate Link" : "Generate 1-Hour Link"}</span>
+              </button>
+            </div>
           </div>
 
           {/* Active Generated Link Area */}
@@ -212,7 +251,7 @@ const SchoolCognitiveTests = () => {
               <div className="flex-1 bg-black/40 border border-white/10 px-4 py-2.5 rounded-xl flex items-center justify-between overflow-hidden">
                 <span className="font-mono text-xs text-gray-200 truncate mr-2">{shareableLink}</span>
                 <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded whitespace-nowrap">
-                  Expires in {getRemainingMinutes()}m
+                  Expires in: {timeLeft || `${getRemainingMinutes()}m`}
                 </span>
               </div>
 

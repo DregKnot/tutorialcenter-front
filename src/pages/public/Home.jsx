@@ -1,18 +1,19 @@
-import BenefitSection from "../../components/public/BenefitSection";
-import LearningSection from "../../components/public/LearningSection";
-import CommunityGrowth from "../../components/public/CommunityGrowth";
-import ContactSection from "../../components/public/ContactSection";
-import FaqSection from "../../components/public/FaqSection";
-import Footer from "../../components/public/Footer";
-import Hero from "../../components/public/Hero";
-import CountdownSection from "../../components/public/CountdownSection";
+import React, { Suspense, lazy, memo } from 'react';
 import Navbar from "../../components/public/Navbar";
-import ProgramSection from "../../components/public/ProgramSection";
-// import StickyButtons from "../../components/public/StickyButtons";
-// import TestimonialSection from "../../components/public/TestimonialSection";
+import Hero from "../../components/public/Hero";
 import { Helmet } from "react-helmet-async";
 
-const Home = () => {
+// Lazy-loaded and Memoized below-the-fold components
+const CountdownSection = memo(lazy(() => import("../../components/public/CountdownSection")));
+const BenefitSection = memo(lazy(() => import("../../components/public/BenefitSection")));
+const LearningSection = memo(lazy(() => import("../../components/public/LearningSection")));
+const CommunityGrowth = memo(lazy(() => import("../../components/public/CommunityGrowth")));
+const ProgramSection = memo(lazy(() => import("../../components/public/ProgramSection")));
+const FaqSection = memo(lazy(() => import("../../components/public/FaqSection")));
+const ContactSection = memo(lazy(() => import("../../components/public/ContactSection")));
+const Footer = memo(lazy(() => import("../../components/public/Footer")));
+
+const Home = memo(() => {
     return (
         <>
             <Helmet>
@@ -25,17 +26,19 @@ const Home = () => {
             </Helmet>
             <Navbar />
             <Hero />
-            <CountdownSection />
-            <BenefitSection />
-            <LearningSection />
-            <CommunityGrowth />
-            <ProgramSection />
-            {/* <TestimonialSection /> */}
-            <FaqSection />
-            <ContactSection />
-            <Footer />
+            
+            <Suspense fallback={<div className="h-24 w-full flex items-center justify-center">Loading...</div>}>
+                <CountdownSection />
+                <BenefitSection />
+                <LearningSection />
+                <CommunityGrowth />
+                <ProgramSection />
+                <FaqSection />
+                <ContactSection />
+                <Footer />
+            </Suspense>
         </>
     );
-}
+});
  
 export default Home;

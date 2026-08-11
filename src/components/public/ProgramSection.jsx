@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 import ProgramCard from "./ProgramCard.jsx";
 import SectionHeading from "./SectionHeading.jsx";
 import ScrollReveal from "./ScrollReveal";
@@ -11,8 +12,6 @@ const ProgramSection = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(2);
     const [isTransitioning, setIsTransitioning] = useState(false);
-
-    const [programDatas, setProgramDatas] = useState([]);
 
     // Adjusts number of visible cards based on screen width
     useEffect(() => {
@@ -34,22 +33,14 @@ const ProgramSection = () => {
 
     const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
-    useEffect(() => {
-        const fetchPrograms = async () => {
-            try {
-                const res = await axios.get(`${API_BASE_URL}/api/courses`);
-
-                console.log("API RESPONSE:", res.data);
-
-                const fetched = res?.data?.courses || [];
-                setProgramDatas(fetched);
-            } catch (err) {
-                console.error("Failed to fetch programs:", err);
-            }
-        };
-
-        fetchPrograms();
-    }, [API_BASE_URL]);
+    const { data: programDatas = [] } = useQuery({
+        queryKey: ['courses'],
+        queryFn: async () => {
+            const res = await axios.get(`${API_BASE_URL}/api/courses`);
+            return res?.data?.courses || [];
+        },
+        staleTime: 1000 * 60 * 5 // 5 minutes cache
+    });
 
 
 
