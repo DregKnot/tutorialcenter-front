@@ -9,7 +9,7 @@ const WhatWeProvideCard = ({ item }) => {
             >
                 <div className="">
                     <div className="w-[50px] h-[50px] flex justify-center items-center bg-sencondary rounded-full">
-                        <img src={vector} alt="" width={24} height={24} />
+                        <img src={vector} alt="" width={24} height={24} loading="lazy" />
                     </div>
                 </div>
                 <div className="">

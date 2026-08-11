@@ -186,23 +186,16 @@ export default function useExamForm() {
           "Content-Type": "application/json"
         } 
       };
-      console.log("[ExamQuestion] Fetching Initial Meta Data (Bodies, Courses, Years)");
-      const [bodiesRes, coursesRes, yearsRes] = await Promise.all([
+      console.log("[ExamQuestion] Fetching Initial Meta Data (Bodies, Courses)");
+      const [bodiesRes, coursesRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/admin/exam-bodies/all`, config),
-        axios.get(`${API_BASE_URL}/api/courses`, config),
-        axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config)
+        axios.get(`${API_BASE_URL}/api/courses`, config)
       ]);
 
       console.log("[ExamQuestion] Meta Response (Bodies):", bodiesRes.data);
-      console.log("[ExamQuestion] Meta Response (Years):", yearsRes.data);
-      
-      const yearsData = yearsRes.data?.data || yearsRes.data?.exam_years || yearsRes.data || [];
-      console.log("[ExamQuestion] Parsed Years Data:", yearsData);
 
       setExamBodies(bodiesRes.data?.exam_bodies || bodiesRes.data?.data || bodiesRes.data || []);
       setCourses(coursesRes.data?.data || coursesRes.data?.courses || []);
-      setExamYears(yearsData);
-      setFilteredYears(yearsData);
 
       // Load saved selections
       const savedBodyId = localStorage.getItem("selected_exam_body_id");
@@ -360,19 +353,47 @@ export default function useExamForm() {
     };
     fetchSubjects();
 
-    // Filter Years (In-memory)
-    let filtered = [...examYears];
-    console.log("[ExamQuestion] Filtering Years. Total available:", examYears.length, "Exam Body:", examBodyId, "Subject:", subjectId);
-    if (examBodyId) {
-      filtered = filtered.filter(y => String(y.exam_body_id) === String(examBodyId));
-    }
-    if (subjectId) {
-      filtered = filtered.filter(y => String(y.subject_id) === String(subjectId));
-    }
-    console.log("[ExamQuestion] Filtered Years Result:", filtered);
-    setFilteredYears(filtered);
+    // Fetch Years (Paginated Loop)
+    const fetchDynamicYears = async () => {
+      let allFetchedYears = [];
+      let page = 1;
+      let hasMore = true;
+      const config = { 
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json"
+        } 
+      };
 
-  }, [examBodyId, subjectId, examBodies, examYears, API_BASE_URL, token]);
+      try {
+        while (hasMore) {
+          let queryParams = `page=${page}`;
+          if (examBodyId) queryParams += `&exam_body_id=${examBodyId}`;
+          if (subjectId) queryParams += `&subject_id=${subjectId}`;
+
+          const res = await axios.get(`${API_BASE_URL}/api/admin/exam-years/all?${queryParams}`, config);
+          const yearsData = res.data?.data || res.data?.exam_years || res.data || [];
+          
+          if (Array.isArray(yearsData) && yearsData.length > 0) {
+            allFetchedYears = [...allFetchedYears, ...yearsData];
+            if (!res.data?.next_page_url) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+        setExamYears(allFetchedYears);
+        setFilteredYears(allFetchedYears);
+      } catch (err) {
+        console.error("Failed to fetch dynamic years:", err);
+      }
+    };
+    fetchDynamicYears();
+
+  }, [examBodyId, subjectId, examBodies, API_BASE_URL, token]);
 
   const handleSubjectChange = (id) => {
     setSubjectId(id);
@@ -409,9 +430,8 @@ export default function useExamForm() {
       setExamBodies(bodies);
       setExamBodyId(newData.id);
     } else if (type === "exam-year") {
-      const res = await axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config);
-      const years = res.data?.data || res.data?.exam_years || res.data || [];
-      setExamYears(years);
+      // It will auto-refresh via the useEffect when examBodyId/subjectId dependencies are intact
+      // but we can force set the selected id
       setExamYearId(newData.id);
     }
   };

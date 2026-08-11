@@ -67,11 +67,9 @@ export function StaffAuthProvider({ children }) {
       setRole(null);
       setIsInactiveModalOpen(false);
 
-      // Redirect to staff login
-      setTimeout(() => {
-        setIsSplashing(false);
-        window.location.href = "/staff/login";
-      }, 2500);
+      // Redirect to staff login immediately to prevent Unauthorized flash
+      setIsSplashing(false);
+      window.location.href = "/staff/login";
     }
   }, []);
 

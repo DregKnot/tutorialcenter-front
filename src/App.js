@@ -1,9 +1,11 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import SplashScreen from "./components/public/SplashScreen.jsx";
 import Home from "./pages/public/Home.jsx";
 import StickyButtons from "./components/public/StickyButtons.jsx";
 import { Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import { useAuth } from "./context/AuthContext.jsx";
+import { useStaffAuth } from "./context/StaffAuthContext.jsx";
 
 // Lazy loaded components
 const About = lazy(() => import("./pages/public/About.jsx"));
@@ -88,8 +90,19 @@ const CognitiveTest = lazy(() => import("./pages/public/CognitiveTest.jsx"));
 const SchoolCognitiveTests = lazy(() => import("./pages/staffs/admin/SchoolCognitiveTests.jsx"));// import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
 
 function App() {
+  const { isSplashing: isUserSplashing } = useAuth();
+  const { isSplashing: isStaffSplashing } = useStaffAuth();
+  const [initialLoad, setInitialLoad] = useState(true);
+  
+  const showSplash = isUserSplashing || isStaffSplashing || initialLoad;
+
   return (
     <>
+      <SplashScreen 
+        isGlobal={true} 
+        isVisible={showSplash} 
+        onInitialLoadDone={() => setInitialLoad(false)} 
+      />
 
       <StickyButtons />
 

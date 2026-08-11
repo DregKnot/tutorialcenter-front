@@ -61,13 +61,29 @@ export default function EditExamHeader() {
     setLoadingYears(true);
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const res = await axios.get(`${API_BASE_URL}/api/admin/exam-years/all`, config);
-      const allYears = res.data?.data || res.data?.exam_years || [];
-      const filtered = allYears.filter(y => String(y.exam_body_id) === String(id));
+      let allFetchedYears = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const res = await axios.get(`${API_BASE_URL}/api/admin/exam-years/all?exam_body_id=${id}&page=${page}`, config);
+        const yearsData = res.data?.data || res.data?.exam_years || [];
+
+        if (Array.isArray(yearsData) && yearsData.length > 0) {
+          allFetchedYears = [...allFetchedYears, ...yearsData];
+          if (!res.data?.next_page_url) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
       
       // Sort by year descending
-      filtered.sort((a, b) => parseInt(b.year) - parseInt(a.year));
-      setYears(filtered);
+      allFetchedYears.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+      setYears(allFetchedYears);
     } catch (err) {
       console.error("Failed to fetch exam years:", err);
     } finally {

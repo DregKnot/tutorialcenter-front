@@ -21,7 +21,9 @@ const CognitiveTest = () => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [timerSeconds, setTimerSeconds] = useState(600); // 10 minutes
+  const [timerSeconds, setTimerSeconds] = useState(1200); // 20 minutes
+  const [shuffledQuestions, setShuffledQuestions] = useState([]);
+  const [schoolFromToken, setSchoolFromToken] = useState(false);
   const [warningMessage, setWarningMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -50,12 +52,20 @@ const CognitiveTest = () => {
           } else {
             const minsLeft = Math.ceil((decoded.exp - now) / (1000 * 60));
             setRemainingLinkMins(minsLeft);
+            if (decoded.school) {
+              setSchoolName(decoded.school);
+              setSchoolFromToken(true);
+            }
           }
         }
       } catch (e) {
         console.error("Invalid token format", e);
       }
     }
+    
+    // Shuffle questions once on mount
+    const shuffled = [...cognitiveQuestions].sort(() => Math.random() - 0.5);
+    setShuffledQuestions(shuffled);
   }, [searchParams]);
 
   // Countdown timer when test is active
@@ -136,7 +146,7 @@ const CognitiveTest = () => {
 
   const calculateScore = () => {
     let score = 0;
-    cognitiveQuestions.forEach((q, idx) => {
+    shuffledQuestions.forEach((q, idx) => {
       if (answers[idx] === q.correctIndex) {
         score += 1;
       }
@@ -159,9 +169,9 @@ const CognitiveTest = () => {
     setSubmitting(true);
 
     const score = calculateScore();
-    const total = cognitiveQuestions.length;
+    const total = shuffledQuestions.length;
     const percentage = Math.round((score / total) * 100);
-    const timeSpentSecs = 600 - timerSeconds;
+    const timeSpentSecs = 1200 - timerSeconds;
     const timeTaken = formatTimeSpent(timeSpentSecs);
 
     const resultObj = {
@@ -206,7 +216,7 @@ const CognitiveTest = () => {
     setSubmitting(false);
   };
 
-  const currentQ = cognitiveQuestions[currentIndex] || cognitiveQuestions[0];
+  const currentQ = shuffledQuestions.length > 0 ? (shuffledQuestions[currentIndex] || shuffledQuestions[0]) : cognitiveQuestions[0];
   const minutes = Math.floor(timerSeconds / 60);
   const seconds = timerSeconds % 60;
 
@@ -307,10 +317,11 @@ const CognitiveTest = () => {
                   <input
                     type="text"
                     required
+                    readOnly={schoolFromToken}
                     placeholder="Enter your school name..."
                     value={schoolName}
                     onChange={(e) => setSchoolName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#BB9E7F] text-sm text-white placeholder-gray-500 font-medium"
+                    className={`w-full pl-10 pr-4 py-3 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#BB9E7F] text-sm font-medium ${schoolFromToken ? "bg-white/20 text-gray-200 cursor-not-allowed" : "bg-white/5 text-white placeholder-gray-500"}`}
                   />
                 </div>
               </div>
@@ -359,22 +370,29 @@ const CognitiveTest = () => {
       {step === "test" && (
         <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-between z-10">
           
-          {/* Progress Header */}
+          {/* Progress Header & Timer */}
           <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#BB9E7F]">
-                Question {currentIndex + 1} of {cognitiveQuestions.length}
-              </span>
-              <span className="text-xs font-medium text-gray-400">
-                School: <strong className="text-white">{schoolName}</strong>
-              </span>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#BB9E7F] block mb-1">
+                  Question {currentIndex + 1} of {shuffledQuestions.length}
+                </span>
+                <span className="text-xs font-medium text-gray-400">
+                  School: <strong className="text-white">{schoolName}</strong>
+                </span>
+              </div>
+              <div className="bg-red-600 border-2 border-red-400 rounded-xl px-6 py-2 shadow-[0_0_15px_rgba(220,38,38,0.5)] animate-pulse">
+                <span className="text-lg sm:text-xl font-black text-white tracking-widest font-mono">
+                  {formatTimeSpent(timerSeconds)}
+                </span>
+              </div>
             </div>
 
             {/* Progress Bar */}
             <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-[#BB9E7F] to-[#4ade80] transition-all duration-300 rounded-full"
-                style={{ width: `${((currentIndex + 1) / cognitiveQuestions.length) * 100}%` }}
+                style={{ width: `${((currentIndex + 1) / shuffledQuestions.length) * 100}%` }}
               />
             </div>
           </div>
@@ -444,9 +462,9 @@ const CognitiveTest = () => {
                 Previous
               </button>
 
-              {currentIndex < cognitiveQuestions.length - 1 ? (
+              {currentIndex < shuffledQuestions.length - 1 ? (
                 <button
-                  onClick={() => setCurrentIndex((prev) => Math.min(cognitiveQuestions.length - 1, prev + 1))}
+                  onClick={() => setCurrentIndex((prev) => Math.min(shuffledQuestions.length - 1, prev + 1))}
                   className="px-6 py-2.5 bg-[#BB9E7F] hover:bg-[#d8b590] text-[#0F2843] rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5"
                 >
                   Next
@@ -467,7 +485,7 @@ const CognitiveTest = () => {
 
           {/* Quick Palette Jump Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-2">
-            {cognitiveQuestions.map((_, idx) => {
+            {shuffledQuestions.map((_, idx) => {
               const isAnswered = answers[idx] !== undefined;
               const isCurrent = currentIndex === idx;
               return (
@@ -527,7 +545,7 @@ const CognitiveTest = () => {
 
               {/* Questions Answer Breakdown List */}
               <div className="space-y-6">
-                {cognitiveQuestions.map((q, qIdx) => {
+                {shuffledQuestions.map((q, qIdx) => {
                   const studentAns = answers[qIdx];
                   const isCorrect = studentAns === q.correctIndex;
                   const isUnanswered = studentAns === undefined;
