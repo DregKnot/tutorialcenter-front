@@ -127,8 +127,8 @@ export const cognitiveQuestions = [
     options: [
       "She is one of the candidates who has passed the interview.",
       "She is one of the candidates who have passed the interview.",
-      "She is one of the candidate who has passed the interview.",
-      "She is one of candidate that have passed the interview."
+      "She is one of the candidates that has pass the interview.",
+      "She is the one of the candidates whom passed the interview."
     ],
     correctIndex: 1,
     explanation: "In 'one of the [plural noun] who [verb]', the relative pronoun 'who' refers to 'candidates' (plural), requiring the plural verb 'have'."

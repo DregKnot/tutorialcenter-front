@@ -25,7 +25,7 @@ import {
 const isIOS = () =>
   /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-export default function StudentRegistration() {
+export default function CampaignBiodata() {
   const navigate = useNavigate();
   const [toast, setToast] = useState(null);
   const [errors, setErrors] = useState({});
@@ -39,13 +39,11 @@ export default function StudentRegistration() {
   const [focusedField, setFocusedField] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isGenderOpen, setIsGenderOpen] = useState(false);
-  const [isDepartmentOpen, setIsDepartmentOpen] = useState(false);
   
   const fileInputRef = useRef(null);
   const dateInputRef = useRef(null);
   const dateContainerRef = useRef(null);
   const genderRef = useRef(null);
-  const departmentRef = useRef(null);
 
   const [formData, setFormData] = useState({
     firstname: "",
@@ -67,6 +65,21 @@ export default function StudentRegistration() {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
+  const [subjectCount, setSubjectCount] = useState(0);
+
+  useEffect(() => {
+    try {
+      const data = JSON.parse(localStorage.getItem("studentdata") || "{}");
+      if (data?.data?.department) {
+        setFormData(prev => ({ ...prev, department: data.data.department }));
+      }
+      if (data?.selectedSubjects) {
+        const count = Object.values(data.selectedSubjects).flat().length;
+        setSubjectCount(count);
+      }
+    } catch(e){}
+  }, []);
+
   // Auto-dismiss toast after 4 seconds
   useEffect(() => {
     if (toast) {
@@ -80,9 +93,6 @@ export default function StudentRegistration() {
     function handleClickOutside(event) {
       if (genderRef.current && !genderRef.current.contains(event.target)) {
         setIsGenderOpen(false);
-      }
-      if (departmentRef.current && !departmentRef.current.contains(event.target)) {
-        setIsDepartmentOpen(false);
       }
       if (dateContainerRef.current && !dateContainerRef.current.contains(event.target)) {
         dateInputRef.current?.blur();
@@ -129,10 +139,13 @@ export default function StudentRegistration() {
     if (!formData.firstname.trim()) newErrors.firstname = "First name is required";
     if (!formData.surname.trim()) newErrors.surname = "Last name is required";
     
+    if (!formData.tel.trim()) {
+      newErrors.tel = "Phone number is required";
+    }
+    
     // Check if at least one contact method is provided
     if (!formData.email.trim() && !formData.tel.trim()) {
       newErrors.email = "Email or Phone required";
-      newErrors.tel = "Email or Phone required";
     }
 
     if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -171,7 +184,7 @@ export default function StudentRegistration() {
     e.preventDefault();
     if (!validateForm()) return;
     
-    // Determine verification priority (Email first)
+    // Determine verification priority (Email first, otherwise phone)
     const verificationType = formData.email.trim() ? "email" : "phone";
     setVerifiedVia(verificationType);
 
@@ -201,9 +214,9 @@ export default function StudentRegistration() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      if (registerRes.status === 200 || registerRes.status === 201) {
         if (registerRes.data?.student) {
-          const studentStorage = { data: registerRes.data.student };
+          const existing = JSON.parse(localStorage.getItem('studentdata') || "{}");
+          const studentStorage = { ...existing, data: registerRes.data.student };
           // Save referral code to localStorage (not sent to backend registration)
           if (formData.referral_code.trim()) {
             studentStorage.referral_code = formData.referral_code.trim();
@@ -212,7 +225,6 @@ export default function StudentRegistration() {
         }
         setToast({ type: "success", message: "Registration Successful!" });
         setShowModal(true);
-      }
     } catch (error) {
       console.error("Submit error:", error.response?.data || error);
       const backendMessage = error?.response?.data?.message || "";
@@ -234,9 +246,9 @@ export default function StudentRegistration() {
   const confirmRegistration = () => {
     setShowModal(false);
     if (verifiedVia === "email") {
-      navigate(`/register/student/email/verify?email=${formData.email}`);
+      navigate(`/campaign/gce/email-verify?email=${formData.email}`);
     } else {
-      navigate(`/register/student/phone/verify?tel=${formData.tel}`);
+      navigate(`/campaign/gce/email-verify?tel=${formData.tel}`);
     }
   };
 
@@ -274,7 +286,7 @@ export default function StudentRegistration() {
         {/* Top Navigation */}
         <div className="w-full flex items-center mb-10">
           <button
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/campaign/gce/subjects")}
             className="p-3 bg-white hover:bg-gray-50 rounded-2xl shadow-sm transition-all active:scale-90 border border-gray-100 md:border-none"
           >
             <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
@@ -293,8 +305,21 @@ export default function StudentRegistration() {
               }
             }}
           />
-          <h1 className="text-3xl font-bold text-[#09314F] mb-2">Sign Up</h1>
-          <p className="text-[#888888] font-medium mb-1 italic text-sm text-center">Fill in your student registration & biodata.</p>
+          <h1 className="text-3xl font-bold text-[#09314F] mb-2">Biodata</h1>
+          <p className="text-[#888888] font-medium mb-4 italic text-sm text-center">Fill in your student registration & biodata.</p>
+          
+          {/* Campaign Info Cutout */}
+          <div className="w-full bg-white border-2 border-[#09314F] rounded-2xl p-4 mt-2 shadow-sm flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Course</span>
+              <span className="text-lg font-black text-[#09314F]">GCE</span>
+            </div>
+            <div className="h-10 w-[2px] bg-gray-100 mx-4"></div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Subjects</span>
+              <span className="text-lg font-black text-[#E83831]">{subjectCount}</span>
+            </div>
+          </div>
         </div>
 
         {/* Registration Card */}
@@ -574,26 +599,14 @@ export default function StudentRegistration() {
                 </label>
                 <div className={getInputStyles("department").container}>
                   <AcademicCapIcon className={getInputStyles("department").icon} />
-                  <div className="relative w-full flex items-center" ref={departmentRef}>
-                    <div 
-                      className={`${getInputStyles("department").input} ${dropdownTheme.select} pr-6 cursor-pointer capitalize`}
-                      onClick={() => setIsDepartmentOpen(!isDepartmentOpen)}
-                    >
-                      {formData.department || "select department"}
-                    </div>
-                    <ChevronLeftIcon className={`h-4 w-4 text-gray-400 absolute right-0 pointer-events-none transition-transform duration-300 ${isDepartmentOpen ? "rotate-90" : "-rotate-90"}`} />
-                    {isDepartmentOpen && (
-                      <div className={dropdownTheme.overlay.container}>
-                        <div className={dropdownTheme.overlay.header}>Select Department</div>
-                        {["art", "science", "commercial"].map(option => (
-                          <div key={option} className={dropdownTheme.overlay.item(formData.department === option, false)}
-                            onClick={() => { setFormData(prev => ({ ...prev, department: option })); setIsDepartmentOpen(false); }}>
-                            <span className="capitalize">{option}</span>
-                            {formData.department === option && <span>✓</span>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  <div className="relative w-full flex items-center">
+                    <input 
+                      type="text"
+                      className={`${getInputStyles("department").input} pr-6 cursor-not-allowed capitalize`}
+                      value={formData.department}
+                      readOnly
+                      disabled
+                    />
                   </div>
                 </div>
                 {errors.department && <p className="text-xs text-red-500 font-bold px-1">{errors.department}</p>}

@@ -21,7 +21,7 @@ const CognitiveTest = () => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [timerSeconds, setTimerSeconds] = useState(1200); // 20 minutes
+  const [timerSeconds, setTimerSeconds] = useState(600); // 10 minutes
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [schoolFromToken, setSchoolFromToken] = useState(false);
   const [warningMessage, setWarningMessage] = useState("");
@@ -115,6 +115,13 @@ const CognitiveTest = () => {
     e.preventDefault();
     if (!studentName.trim() || !schoolName.trim()) return;
 
+    // Prevent retakes by the same student from the same school
+    const attemptKey = `cognitive_test_attempt_${schoolName.trim().toLowerCase()}_${studentName.trim().toLowerCase()}`;
+    if (localStorage.getItem(attemptKey)) {
+      alert("You have already taken this test. You cannot retake it.");
+      return;
+    }
+
     // Register the test session with the backend
     try {
       const res = await axios.post(`${API_BASE_URL}/api/cognitive-tests/start`, {
@@ -171,8 +178,12 @@ const CognitiveTest = () => {
     const score = calculateScore();
     const total = shuffledQuestions.length;
     const percentage = Math.round((score / total) * 100);
-    const timeSpentSecs = 1200 - timerSeconds;
+    const timeSpentSecs = 600 - timerSeconds;
     const timeTaken = formatTimeSpent(timeSpentSecs);
+
+    // Mark as taken in localStorage to prevent retakes
+    const attemptKey = `cognitive_test_attempt_${schoolName.trim().toLowerCase()}_${studentName.trim().toLowerCase()}`;
+    localStorage.setItem(attemptKey, "completed");
 
     const resultObj = {
       id: testRecordId || Date.now(),

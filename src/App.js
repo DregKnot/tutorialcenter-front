@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import SplashScreen from "./components/public/SplashScreen.jsx";
 import Home from "./pages/public/Home.jsx";
 import StickyButtons from "./components/public/StickyButtons.jsx";
@@ -46,6 +46,11 @@ const StudentCalendar = lazy(() => import("./pages/Students/StudentCalendar.jsx"
 const ComingSoon = lazy(() => import("./pages/public/ComingSoon.jsx"));
 const Unauthorized = lazy(() => import("./pages/public/Unauthorized.jsx"));
 const NotFound = lazy(() => import("./pages/public/NotFound.jsx"));
+const CampaignDepartmentSelection = lazy(() => import("./pages/public/CampaignSignUp/CampaignDepartmentSelection.jsx"));
+const CampaignSubjectSelection = lazy(() => import("./pages/public/CampaignSignUp/CampaignSubjectSelection.jsx").then(module => ({ default: module.CampaignSubjectSelection })));
+const CampaignBiodata = lazy(() => import("./pages/public/CampaignSignUp/CampaignBiodata.jsx"));
+const CampaignEmailVerification = lazy(() => import("./pages/public/CampaignSignUp/CampaignEmailVerification.jsx"));
+const CampaignPayment = lazy(() => import("./pages/public/CampaignSignUp/CampaignPayment.jsx"));
 const StaffLogin = lazy(() => import("./pages/public/StaffLogin.jsx"));
 const StaffDashboard = lazy(() => import("./pages/staffs/admin/StaffDashboard.jsx"));
 const StaffRegistration = lazy(() => import("./pages/staffs/admin/StaffRegistration.jsx"));
@@ -96,6 +101,14 @@ function App() {
   
   const showSplash = isUserSplashing || isStaffSplashing || initialLoad;
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      localStorage.setItem("global_referral_code", ref);
+    }
+  }, []);
+
   return (
     <>
       <SplashScreen 
@@ -139,6 +152,13 @@ function App() {
         <Route path="/register/guardian/subject/selection" element={<GuardianSubjectSelection />} />
         <Route path="/register/guardian/training/duration" element={<GuardianTrainingDuration />} />
         <Route path="/register/guardian/training/payment" element={<GuardianTrainingPayment />} />
+
+        {/* Campaign Public Registration Routes */}
+        <Route path="/campaign/gce/department" element={<CampaignDepartmentSelection />} />
+        <Route path="/campaign/gce/subjects" element={<CampaignSubjectSelection />} />
+        <Route path="/campaign/gce/biodata" element={<CampaignBiodata />} />
+        <Route path="/campaign/gce/email-verify" element={<CampaignEmailVerification />} />
+        <Route path="/campaign/gce/payment" element={<CampaignPayment />} />
 
         {/* Student Public Registration Routes */}
         <Route path="/student/login" element={<StudentLogin />} />

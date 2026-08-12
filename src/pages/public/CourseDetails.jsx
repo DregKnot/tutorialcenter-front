@@ -267,7 +267,13 @@ const CourseDetails = () => {
                   </div>
 
                   <button
-                    onClick={() => navigate("/register")}
+                    onClick={() => {
+                      if (course?.title?.toLowerCase().includes("gce")) {
+                        navigate("/campaign/gce/department");
+                      } else {
+                        navigate("/register");
+                      }
+                    }}
                     className="w-full py-4 text-white font-black text-lg rounded-2xl shadow-xl hover:brightness-110 transition-all active:scale-95"
                     style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
                   >
@@ -280,6 +286,23 @@ const CourseDetails = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Desktop Bottom Apply Now Button */}
+      <div className="hidden md:flex justify-center mb-16 px-4">
+        <button
+          onClick={() => {
+            if (course?.title?.toLowerCase().includes("gce")) {
+              navigate("/campaign/gce/department");
+            } else {
+              navigate("/register");
+            }
+          }}
+          className="w-full max-w-md py-4 text-white font-black text-xl rounded-2xl shadow-xl hover:brightness-110 transition-all active:scale-95"
+          style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
+        >
+          Apply Now
+        </button>
       </div>
 
       <Footer />

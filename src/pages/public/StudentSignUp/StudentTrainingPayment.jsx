@@ -180,10 +180,18 @@ export const StudentTrainingPayment = () => {
           // Contact: if both email and tel exist, use tel; otherwise use whichever is available
           const contact = (studentEmail && studentTel) ? studentTel : (studentEmail || studentTel);
 
+          // Calculate 5% of total payment amount for affiliate earning
+          let totalAmount = 0;
+          for (const duration of Object.values(selectedDurations)) {
+            totalAmount += Number(duration.price);
+          }
+          const referralEarning = totalAmount * 0.05;
+
           await axios.post(`${AFFILIATE_API_URL}/api/referrals/register`, {
             name,
             contact,
             referral_code: referralCode,
+            amount: referralEarning,
           });
           console.log("Referral submitted successfully");
         } catch (err) {
