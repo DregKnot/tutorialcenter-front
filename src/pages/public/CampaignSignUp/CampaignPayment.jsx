@@ -167,10 +167,13 @@ export default function CampaignPayment() {
           const name = `${firstName} ${lastName}`.trim();
           const contact = (studentEmail && studentTel) ? studentTel : (studentEmail || studentTel);
 
+          const referralEarning = totalAmount * 0.05;
+
           await axios.post(`${AFFILIATE_API_URL}/api/referrals/register`, {
             name,
             contact,
             referral_code: referralCode,
+            amount: referralEarning,
           });
         } catch (err) {}
       }
