@@ -115,7 +115,7 @@ const About = () => {
                 <div className="relative my-10 md:my-20 flex justify-center lg:justify-end w-full">
                   <iframe
                     className="w-full max-w-[650px] h-[220px] sm:h-[320px] md:h-[400px] bg-black rounded-2xl relative shadow-lg z-20"
-                    src="https://www.youtube.com/embed/OdBVxoFVJVk?autoplay=1&rel=0"
+                    src="https://www.youtube.com/embed/OdBVxoFVJVk?autoplay=1&mute=1&loop=1&playlist=OdBVxoFVJVk&rel=0"
                     title="YouTube video"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

@@ -57,7 +57,7 @@ export default function CampaignBiodata() {
     location: "",
     address: "",
     department: "",
-    referral_code: "",
+    referral_code: localStorage.getItem("global_referral_code") || "",
     profile_picture: null,
     profile_picture_preview: null,
     rememberMe: false,

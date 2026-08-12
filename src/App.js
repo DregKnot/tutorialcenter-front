@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import SplashScreen from "./components/public/SplashScreen.jsx";
 import Home from "./pages/public/Home.jsx";
 import StickyButtons from "./components/public/StickyButtons.jsx";
@@ -100,6 +100,14 @@ function App() {
   const [initialLoad, setInitialLoad] = useState(true);
   
   const showSplash = isUserSplashing || isStaffSplashing || initialLoad;
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      localStorage.setItem("global_referral_code", ref);
+    }
+  }, []);
 
   return (
     <>
