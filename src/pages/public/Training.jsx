@@ -354,7 +354,7 @@ const Training = () => {
                           </h3>
 
                           {/* Pricing Section — always visible but expands */}
-                          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
+                          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"}`}>
                             {/* Duration Pricing */}
                             <div className="mb-4">
                               <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Duration:</p>
@@ -418,13 +418,37 @@ const Training = () => {
                                 <span className="text-[10px] text-gray-500 font-bold">Quarterly savings:</span>
                                 <span className="text-[10px] font-black text-green-600">₦{Math.round(monthly * 3 * 0.05).toLocaleString()}</span>
                               </div>
+                              <div className="flex justify-between mt-1">
+                                <span className="text-[10px] text-gray-500 font-bold">Semi-Annual savings:</span>
+                                <span className="text-[10px] font-black text-green-600">₦{Math.round(monthly * 6 * 0.05).toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between mt-1">
+                                <span className="text-[10px] text-gray-500 font-bold">Annual savings:</span>
+                                <span className="text-[10px] font-black text-green-600">₦{Math.round(monthly * 12 * 0.05).toLocaleString()}</span>
+                              </div>
                             </div>
 
-                            {/* Apply Now */}
+                            {/* Learn More (Expanded) */}
+                            <div 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/program/${course.id}`, { state: { course } });
+                              }}
+                              className="flex items-center justify-center gap-1 text-[#09314F] font-bold text-sm mb-4 cursor-pointer hover:underline transition-all"
+                            >
+                              Learn More
+                              <span className="text-lg">→</span>
+                            </div>
+
+                            {/* Enroll */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate("/register");
+                                if (course?.title?.toLowerCase().includes("gce")) {
+                                  navigate("/campaign/gce/department");
+                                } else {
+                                  navigate("/register");
+                                }
                               }}
                               className="w-full py-3.5 text-white font-bold text-sm rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
                               style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
@@ -433,10 +457,10 @@ const Training = () => {
                             </button>
                           </div>
 
-                          {/* "Learn more" CTA when collapsed */}
+                          {/* "See more" CTA when collapsed */}
                           {!isExpanded && (
                             <div className="flex items-center gap-1 text-[#09314F] font-bold text-sm mt-2 group-hover:gap-2 transition-all">
-                              Learn more
+                              See more
                               <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                               </svg>
