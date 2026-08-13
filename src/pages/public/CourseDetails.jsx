@@ -4,15 +4,15 @@ import axios from "axios";
 import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import ScrollReveal from "../../components/public/ScrollReveal";
+import DiscountCard from "../../components/public/DiscountCard";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
 const CourseDetails = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Load from state if navigated from ProgramCard, otherwise null
   const initialCourse = location.state?.course || null;
 
   const [course, setCourse] = useState(initialCourse);
@@ -20,22 +20,19 @@ const CourseDetails = () => {
   
   const [subjects, setSubjects] = useState([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
+  
+  const [selectedSubject, setSelectedSubject] = useState(null);
 
   useEffect(() => {
-    // If course wasn't passed via router state (e.g., user refreshed the page)
     if (!course) {
       const fetchCourse = async () => {
         try {
-          // Fetch all courses since there isn't a known single-course endpoint
           const res = await axios.get(`${API_BASE_URL}/api/courses`);
           const fetchedCourses = res?.data?.courses || [];
-          
-          // Find the specific course
-          const foundCourse = fetchedCourses.find((c) => c.id.toString() === id);
+          const foundCourse = fetchedCourses.find((c) => c.title.toLowerCase().replace(/\s+/g, '-') === slug);
           if (foundCourse) {
             setCourse(foundCourse);
           } else {
-            // Not found
             navigate("/training");
           }
         } catch (err) {
@@ -45,10 +42,9 @@ const CourseDetails = () => {
           setLoading(false);
         }
       };
-
       fetchCourse();
     }
-  }, [course, id, navigate]);
+  }, [course, slug, navigate]);
 
   useEffect(() => {
     if (course && course.id) {
@@ -56,7 +52,6 @@ const CourseDetails = () => {
         setLoadingSubjects(true);
         try {
           const res = await axios.get(`${API_BASE_URL}/api/courses/${course.id}/subjects`);
-          // Handle various API response structures: res.data.subjects, res.data.data, or just res.data
           const fetchedSubjects = res?.data?.subjects || res?.data?.data || res?.data || [];
           setSubjects(Array.isArray(fetchedSubjects) ? fetchedSubjects : []);
         } catch (err) {
@@ -68,6 +63,16 @@ const CourseDetails = () => {
       fetchSubjects();
     }
   }, [course]);
+
+  useEffect(() => {
+    console.log("PAGE INFORMATION (Course):", course);
+  }, [course]);
+
+  useEffect(() => {
+    if (selectedSubject) {
+      console.log("MODAL INFORMATION (Subject):", selectedSubject);
+    }
+  }, [selectedSubject]);
 
   if (loading) {
     return (
@@ -88,25 +93,30 @@ const CourseDetails = () => {
     : null;
 
   const basePrice = Number(course.price) || 25000;
-
-  // Actual Normal Prices (from backend)
   const monthly = basePrice;
   const quarterly = Math.round(basePrice * 3 * 0.95);
   const semiAnnually = Math.round(basePrice * 6 * 0.95);
   const annually = Math.round(basePrice * 12 * 0.95);
 
-  // Expensive Slashed Prices (calculated from 40,000)
   const slashedMonthly = 40000;
   const slashedQuarterly = 40000 * 3;
   const slashedSemiAnnually = 40000 * 6;
   const slashedAnnually = 40000 * 12;
+
+  const handleApply = () => {
+    if (course?.title?.toLowerCase().includes("gce")) {
+      navigate("/campaign/gce/department");
+    } else {
+      navigate("/register");
+    }
+  };
 
   return (
     <>
       <Navbar />
 
       <div className="bg-gray-50 min-h-screen pb-20 pt-28">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="Container">
           
           <ScrollReveal delay={0.1} direction="up" distance={20}>
             <button 
@@ -120,192 +130,230 @@ const CourseDetails = () => {
             </button>
           </ScrollReveal>
 
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-            {/* Header / Banner Area */}
-            <ScrollReveal delay={0.2} direction="up" distance={20}>
-              <div className="bg-[#FFF0F0] relative overflow-hidden flex items-center justify-center p-12 lg:p-20" style={{ minHeight: "300px" }}>
-                {bannerUrl ? (
-                  <img
-                    src={bannerUrl}
-                    alt={course.title}
-                    loading="eager"
-                    fetchpriority="high"
-                    className="w-full h-full object-cover absolute inset-0 opacity-90"
+          {/* Header Area */}
+          <ScrollReveal delay={0.2} direction="up" distance={20}>
+            <div className="bg-[#FFF0F0] relative overflow-hidden flex items-center justify-center p-12 lg:p-20 rounded-3xl mb-12 shadow-md" style={{ minHeight: "300px" }}>
+              {bannerUrl ? (
+                <img
+                  src={bannerUrl}
+                  alt={course.title}
+                  loading="eager"
+                  fetchpriority="high"
+                  className="w-full h-full object-cover absolute inset-0 opacity-90"
+                />
+              ) : (
+                <div className="w-32 h-32 bg-[#E83831] rounded-full flex items-center justify-center shadow-2xl">
+                  <span className="text-white text-5xl font-bold">📚</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#09314F]/90 to-transparent" />
+              <div className="absolute bottom-0 left-0 p-8 w-full">
+                <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight shadow-sm drop-shadow-md">
+                  {course.title}
+                </h1>
+              </div>
+            </div>
+          </ScrollReveal>
+
+          {/* Layout Grid */}
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+            
+            {/* Left Column: Description & Subjects */}
+            <ScrollReveal delay={0.3} direction="up" distance={20} className="md:col-span-2 space-y-12">
+              {/* Overview */}
+              <div>
+                <h2 className="text-3xl font-black text-[#09314F] mb-6 uppercase tracking-tight border-b-2 border-gray-200 pb-2 inline-block">Program Overview</h2>
+                {course.description ? (
+                  <div 
+                    className="text-gray-600 leading-relaxed text-lg [&>p]:mb-5 [&>p]:text-justify [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:mb-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol>li]:mb-2 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-3"
+                    dangerouslySetInnerHTML={{ __html: course.description.replace(/&nbsp;/g, " ") }}
                   />
                 ) : (
-                  <div className="w-32 h-32 bg-[#E83831] rounded-full flex items-center justify-center shadow-2xl">
-                    <span className="text-white text-5xl font-bold">📚</span>
-                  </div>
+                  <p className="text-gray-500 italic">No detailed description available for this course.</p>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#09314F]/90 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-8 w-full">
-                  <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight shadow-sm drop-shadow-md">
-                    {course.title}
-                  </h1>
-                </div>
+              </div>
+
+              {/* What's Included */}
+              <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+                <h3 className="text-xl font-black text-[#09314F] mb-5 uppercase tracking-tight">What's Included</h3>
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-4 text-gray-700 text-lg">
+                    <span className="text-green-500 font-bold bg-green-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">✓</span> 
+                    Comprehensive tutorials tailored to the syllabus
+                  </li>
+                  <li className="flex items-start gap-4 text-gray-700 text-lg">
+                    <span className="text-green-500 font-bold bg-green-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">✓</span> 
+                    Weekly masterclasses with subject experts
+                  </li>
+                  <li className="flex items-start gap-4 text-gray-700 text-lg">
+                    <span className="text-green-500 font-bold bg-green-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">✓</span> 
+                    Standard mock tests and practice questions
+                  </li>
+                  <li className="flex items-start gap-4 text-gray-700 text-lg">
+                    <span className="text-green-500 font-bold bg-green-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">✓</span> 
+                    Live Q&A sessions for difficult topics
+                  </li>
+                </ul>
+              </div>
+
+              {/* Subjects List (Clickable Cards) */}
+              <div>
+                <h2 className="text-3xl font-black text-[#09314F] mb-6 uppercase tracking-tight border-b-2 border-gray-200 pb-2 inline-block">Subjects Covered</h2>
+                <p className="text-gray-500 mb-6 font-medium">Click on any subject to view details.</p>
+                
+                {loadingSubjects ? (
+                  <div className="flex items-center gap-3 text-gray-500">
+                    <div className="w-5 h-5 border-2 border-[#09314F]/20 border-t-[#09314F] rounded-full animate-spin" />
+                    <span className="text-sm font-medium">Loading subjects...</span>
+                  </div>
+                ) : subjects.length > 0 ? (
+                  <div className="space-y-10">
+                    {Object.entries(
+                      subjects.reduce((acc, sub) => {
+                        const dept = sub.departments?.name || sub.departments || "General Subjects";
+                        if (!acc[dept]) acc[dept] = [];
+                        acc[dept].push(sub);
+                        return acc;
+                      }, {})
+                    ).map(([department, deptSubjects], index) => (
+                      <div key={index} className="space-y-4">
+                        <h3 className="text-xl font-black text-[#09314F] uppercase tracking-tight border-b border-gray-200 pb-2">
+                          {department}
+                        </h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                          {deptSubjects.map((sub, sIdx) => (
+                            <div 
+                              key={sub.id || sIdx} 
+                              onClick={() => setSelectedSubject(sub)}
+                              className="bg-white border border-gray-100 shadow-sm rounded-2xl cursor-pointer hover:shadow-xl hover:border-[#09314F]/30 transition-all flex flex-col group overflow-hidden transform hover:-translate-y-1"
+                            >
+                              <div className="w-full h-28 sm:h-32 bg-blue-50/50 relative overflow-hidden flex items-center justify-center">
+                                {sub.banner ? (
+                                  <img src={`${API_BASE_URL}/storage/${sub.banner}`} alt={sub.name || sub.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                ) : (
+                                  <svg className="w-10 h-10 text-blue-200 group-hover:scale-110 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                                )}
+                                <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                              </div>
+                              <div className="p-4 sm:p-5 flex flex-col">
+                                <span className="font-black text-gray-800 text-sm sm:text-base group-hover:text-[#09314F] transition-colors line-clamp-1 mb-1">
+                                  {sub.name || sub.title}
+                                </span>
+                                <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest line-clamp-1">
+                                  {sub.departments?.name || sub.departments || "General Subjects"}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-400 italic font-medium">No subjects found for this course.</p>
+                )}
               </div>
             </ScrollReveal>
 
-            {/* Content Area */}
-            <div className="grid md:grid-cols-3 gap-6 md:gap-8 p-5 sm:p-8 md:p-12">
-              
-              {/* Left Column: Description */}
-              <ScrollReveal delay={0.3} direction="up" distance={20} className="md:col-span-2 space-y-8">
-                <div>
-                  <h2 className="text-2xl font-black text-[#09314F] mb-4 uppercase tracking-tight">Program Overview</h2>
-                  {course.description ? (
-                    <div 
-                      className="text-gray-600 leading-relaxed [&>p]:mb-5 [&>p]:text-justify [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:mb-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol>li]:mb-2 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-3"
-                      dangerouslySetInnerHTML={{ __html: course.description.replace(/&nbsp;/g, " ") }}
-                    />
-                  ) : (
-                    <p className="text-gray-500 italic">No detailed description available for this course.</p>
-                  )}
-                </div>
+            {/* Right Column: Discount Cards */}
+            <ScrollReveal delay={0.4} direction="up" distance={20} className="md:col-span-1">
+              <div className="sticky top-28 space-y-8">
+                <h3 className="text-2xl font-black text-[#09314F] mb-6 uppercase tracking-tight text-center">Tuition Options</h3>
+                
+                <DiscountCard 
+                  title="Monthly (1 month)" 
+                  slashedPrice={slashedMonthly} 
+                  actualPrice={monthly} 
+                />
+                
+                <DiscountCard 
+                  title="Quarterly (3 months)" 
+                  slashedPrice={slashedQuarterly} 
+                  actualPrice={quarterly} 
+                  savingsText="Save 5%"
+                />
 
-                <div className="bg-blue-50/50 rounded-2xl p-6 border border-blue-100">
-                  <h3 className="text-lg font-bold text-[#09314F] mb-3">What's Included:</h3>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-3 text-gray-700">
-                      <span className="text-green-500 font-bold">✓</span> 
-                      Comprehensive tutorials tailored to the syllabus
-                    </li>
-                    <li className="flex items-start gap-3 text-gray-700">
-                      <span className="text-green-500 font-bold">✓</span> 
-                      Weekly masterclasses with subject experts
-                    </li>
-                    <li className="flex items-start gap-3 text-gray-700">
-                      <span className="text-green-500 font-bold">✓</span> 
-                      Standard mock tests and practice questions
-                    </li>
-                    <li className="flex items-start gap-3 text-gray-700">
-                      <span className="text-green-500 font-bold">✓</span> 
-                      Live Q&A sessions for difficult topics
-                    </li>
-                  </ul>
-                </div>
+                <DiscountCard 
+                  title="Semi-Annually (6 months)" 
+                  slashedPrice={slashedSemiAnnually} 
+                  actualPrice={semiAnnually} 
+                  savingsText="Save 5%"
+                />
 
-                {/* Subjects Section */}
-                <div className="mt-10">
-                  <h2 className="text-2xl font-black text-[#09314F] mb-6 uppercase">Subjects Covered</h2>
-                  {loadingSubjects ? (
-                    <div className="flex items-center gap-3 text-gray-500">
-                      <div className="w-5 h-5 border-2 border-[#09314F]/20 border-t-[#09314F] rounded-full animate-spin" />
-                      <span className="text-sm font-medium">Loading subjects...</span>
-                    </div>
-                  ) : subjects.length > 0 ? (
-                    <div className="space-y-6">
-                      {Object.entries(
-                        subjects.reduce((acc, sub) => {
-                          const dept = sub.department?.name || sub.department || "General Subjects";
-                          if (!acc[dept]) acc[dept] = [];
-                          acc[dept].push(sub);
-                          return acc;
-                        }, {})
-                      ).map(([department, deptSubjects], index) => (
-                        <div key={index} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                          <h3 className="text-lg font-black text-[#09314F] mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
-                            <span className="text-[#E83831]">📘</span> {department}
-                          </h3>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {deptSubjects.map((sub, sIdx) => (
-                              <div key={sub.id || sIdx} className="flex items-center gap-2 text-sm font-bold text-gray-700 bg-gray-50 p-3 rounded-xl">
-                                <span className="w-2 h-2 rounded-full bg-[#09314F]" />
-                                {sub.name || sub.title}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-400 italic font-medium">No subjects found for this course.</p>
-                  )}
-                </div>
-              </ScrollReveal>
+                <DiscountCard 
+                  title="Annually (1 year)" 
+                  slashedPrice={slashedAnnually} 
+                  actualPrice={annually} 
+                  savingsText="Best Value"
+                />
 
-              {/* Right Column: Pricing & Action */}
-              <ScrollReveal delay={0.4} direction="up" distance={20}>
-                <div className="bg-gray-50 rounded-3xl p-8 border border-gray-100 shadow-sm sticky top-32">
-                  <h3 className="text-xl font-black text-[#09314F] mb-6 uppercase border-b border-gray-200 pb-4">Tuition Options</h3>
-                  
-                  <div className="space-y-5 mb-8">
-                    <div className="flex flex-col items-start bg-white p-4 rounded-xl border border-gray-100 shadow-sm gap-1">
-                      <span className="text-sm font-bold text-gray-500">Monthly (1 month)</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-gray-400 line-through">₦{slashedMonthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        <span className="text-lg font-black text-[#09314F]">₦{monthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col items-start bg-white p-4 rounded-xl border border-[#BB9E7F]/30 shadow-sm relative overflow-hidden gap-1">
-                      <div className="absolute top-0 right-0 bg-[#BB9E7F] text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">Save 5%</div>
-                      <span className="text-sm font-bold text-gray-500">Quarterly (3 months)</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-gray-400 line-through">₦{slashedQuarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        <span className="text-lg font-black text-[#09314F]">₦{quarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                      </div>
-                    </div>
+                <button
+                  onClick={handleApply}
+                  className="w-full py-4 text-white font-black text-xl rounded-2xl shadow-xl hover:brightness-110 transition-all active:scale-95"
+                  style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
+                >
+                  Apply Now
+                </button>
+                <p className="text-center text-sm text-gray-400 font-medium">Secure your spot today.</p>
+              </div>
+            </ScrollReveal>
 
-                    <div className="flex flex-col items-start bg-white p-4 rounded-xl border border-[#BB9E7F]/30 shadow-sm relative overflow-hidden gap-1">
-                      <div className="absolute top-0 right-0 bg-[#BB9E7F] text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">Save 5%</div>
-                      <span className="text-sm font-bold text-gray-500">Semi-Annually (6 months)</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-gray-400 line-through">₦{slashedSemiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        <span className="text-lg font-black text-[#09314F]">₦{semiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col items-start bg-white p-4 rounded-xl border border-green-200 shadow-sm relative overflow-hidden gap-1">
-                      <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg">Best Value</div>
-                      <span className="text-sm font-bold text-gray-500">Annually (1 year)</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-gray-400 line-through">₦{slashedAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        <span className="text-lg font-black text-green-600">₦{annually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      if (course?.title?.toLowerCase().includes("gce")) {
-                        navigate("/campaign/gce/department");
-                      } else {
-                        navigate("/register");
-                      }
-                    }}
-                    className="w-full py-4 text-white font-black text-lg rounded-2xl shadow-xl hover:brightness-110 transition-all active:scale-95"
-                    style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
-                  >
-                    Enroll Now
-                  </button>
-                  <p className="text-center text-xs text-gray-400 font-medium mt-4">Secure your spot today.</p>
-                </div>
-              </ScrollReveal>
-
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Desktop Bottom Apply Now Button */}
-      <div className="hidden md:flex justify-center mb-16 px-4">
-        <button
-          onClick={() => {
-            if (course?.title?.toLowerCase().includes("gce")) {
-              navigate("/campaign/gce/department");
-            } else {
-              navigate("/register");
-            }
-          }}
-          className="w-full max-w-md py-4 text-white font-black text-xl rounded-2xl shadow-xl hover:brightness-110 transition-all active:scale-95"
-          style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
-        >
-          Apply Now
-        </button>
-      </div>
-
       <Footer />
+
+      {/* Subject Modal Popup */}
+      {selectedSubject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pt-28 pb-6 px-4 sm:px-6 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedSubject(null)}>
+          <div 
+            className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl overflow-hidden transform scale-100 transition-all flex flex-col md:flex-row max-h-[calc(100vh-8rem)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Left Image Area (Side by side on desktop) */}
+            <div className="bg-gray-100 h-56 md:h-auto md:w-2/5 shrink-0 flex items-center justify-center relative">
+              {selectedSubject.banner ? (
+                <img src={`${API_BASE_URL}/storage/${selectedSubject.banner}`} alt={selectedSubject.name} className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-md text-blue-600 relative z-10">
+                  <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              
+              {/* Glass container for department */}
+              <div className="absolute bottom-6 left-6 right-6 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-4 shadow-xl z-10">
+                <p className="text-white text-xs font-bold uppercase tracking-widest opacity-90 mb-1">Department</p>
+                <p className="text-white font-black text-lg drop-shadow-md line-clamp-1">{selectedSubject.departments?.name || selectedSubject.departments || "General Subjects"}</p>
+              </div>
+            </div>
+            
+            {/* Right Scrollable Content Area */}
+            <div className="flex-1 flex flex-col relative overflow-hidden bg-white">
+              <button 
+                onClick={() => setSelectedSubject(null)}
+                className="absolute top-4 right-4 w-10 h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center transition-colors z-20"
+              >
+                ✕
+              </button>
+              
+              <div className="p-6 sm:p-10 overflow-y-auto flex-1">
+                <h3 className="text-3xl sm:text-4xl font-black text-[#09314F] mb-6 pr-12 leading-tight">{selectedSubject.name || selectedSubject.title}</h3>
+                
+                {selectedSubject.description ? (
+                  <div 
+                    className="text-gray-700 text-base sm:text-lg leading-relaxed whitespace-pre-wrap [&>p]:mb-4 [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:mb-2 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-3 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3"
+                    dangerouslySetInnerHTML={{ __html: selectedSubject.description.replace(/&nbsp;/g, " ") }}
+                  />
+                ) : (
+                  <p className="text-gray-400 italic text-base">No description available for this subject.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

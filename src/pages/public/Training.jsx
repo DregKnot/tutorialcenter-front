@@ -430,10 +430,11 @@ const Training = () => {
 
                             {/* Learn More (Expanded) */}
                             <div 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/program/${course.id}`, { state: { course } });
-                              }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const slug = course.title.toLowerCase().replace(/\s+/g, '-');
+                                  navigate(`/program/${slug}`, { state: { course } });
+                                }}
                               className="flex items-center justify-center gap-1 text-[#09314F] font-bold text-sm mb-4 cursor-pointer hover:underline transition-all"
                             >
                               Learn More

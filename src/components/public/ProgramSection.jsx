@@ -155,7 +155,7 @@ const ProgramSection = () => {
                                                     topic2="Weekly masterclasses"
                                                     topic3="Mock tests and practice questions"
                                                     topic4="Live Q&A sessions with experts"
-                                                    path={`/program/${item.id}`}
+                                                    path={`/program/${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                                                     state={{ course: item }}
                                                 />
                                             </div>
