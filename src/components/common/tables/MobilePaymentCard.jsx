@@ -29,13 +29,17 @@ export default function MobilePaymentCard({
 
       <div className="space-y-2">
 
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <span className="text-gray-500 dark:text-gray-400">
             Amount
           </span>
 
           <span className="font-bold text-[#09314F] dark:text-white">
-            ₦{Number(payment.amount).toLocaleString()}
+            {Number(payment.amount) === 0 ? (
+              <span className="text-emerald-600 dark:text-emerald-400 font-black">FREE</span>
+            ) : (
+              `₦${Number(payment.amount).toLocaleString()}`
+            )}
           </span>
         </div>
 
