@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
-import { stripHtmlAndDecode } from "../../../utils/textUtils";
 import { 
   XMarkIcon, 
   CameraIcon, 

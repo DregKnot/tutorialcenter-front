@@ -7,6 +7,7 @@ import {
   BookOpenIcon,
   CheckBadgeIcon
 } from "@heroicons/react/24/outline";
+import { formatDepartments } from "../../../utils/textUtils";
 
 export default function SubjectDetailModal({ isOpen, subject, course, onClose, onDelete, onEdit }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -88,7 +89,7 @@ export default function SubjectDetailModal({ isOpen, subject, course, onClose, o
                   <AcademicCapIcon className="w-8 h-8 text-[#76D287] mb-4" />
                   <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Academic Departments</h4>
                   <p className="text-lg font-black text-[#0F2843] dark:text-white tracking-tight uppercase leading-tight">
-                    {Array.isArray(subject.departments) ? subject.departments.join(", ") : (subject.departments || "All Tracks")}
+                    {formatDepartments(subject.departments, "All Tracks")}
                   </p>
                </div>
             </div>

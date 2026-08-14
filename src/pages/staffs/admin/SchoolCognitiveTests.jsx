@@ -125,7 +125,7 @@ const SchoolCognitiveTests = () => {
           id: item.id,
           student_name: item.student_name,
           school_name: item.school,
-          // email: "N/A",
+          contact: item.contact || "—",
           score,
           total,
           percentage,
@@ -156,9 +156,11 @@ const SchoolCognitiveTests = () => {
   const uniqueSchools = Array.from(new Set(results.map(r => r.school_name).filter(Boolean)));
 
   const filteredResults = results.filter(r => {
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
-      (r.student_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (r.school_name || "").toLowerCase().includes(searchQuery.toLowerCase());
+      (r.student_name || "").toLowerCase().includes(query) ||
+      (r.school_name || "").toLowerCase().includes(query) ||
+      (r.contact || "").toLowerCase().includes(query);
 
     const matchesSchool = selectedSchool === "all" || r.school_name === selectedSchool;
 
@@ -365,7 +367,7 @@ const SchoolCognitiveTests = () => {
                     <th className="py-4 px-6">Rank</th>
                     <th className="py-4 px-6">Student Name</th>
                     <th className="py-4 px-6">School Name</th>
-                    {/* <th className="py-4 px-6">Contact / Email</th> */}
+                    <th className="py-4 px-6">Contact</th>
                     <th className="py-4 px-6 text-center">Score</th>
                     <th className="py-4 px-6 text-center">Percentage</th>
                     <th className="py-4 px-6 text-right">Time Taken</th>
@@ -409,6 +411,9 @@ const SchoolCognitiveTests = () => {
                           </div>
                         </td>
 
+                        <td className="py-4 px-6 text-gray-600 dark:text-gray-400 font-mono text-[11px]">
+                          {item.contact || "—"}
+                        </td>
 
                         <td className="py-4 px-6 text-center font-mono font-bold text-gray-700 dark:text-gray-300">
                           {item.score} / {item.total || 20}

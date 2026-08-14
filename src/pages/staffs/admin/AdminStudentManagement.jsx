@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import AdminStudentViewModal from "../../../components/private/staffs/AdminStudentViewModal.jsx";
 import axios from "axios";
@@ -281,6 +282,15 @@ export default function AdminStudentManagement() {
                  />
               </div>
            </div>
+
+           {/* Create / Recover Student Button */}
+           <Link
+             to="/staffs/create-student"
+             className="flex items-center gap-2 px-5 py-3.5 bg-gradient-to-r from-[#09314F] to-[#BB9E7F] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all shadow-lg flex-shrink-0"
+           >
+             <UserPlusIcon className="w-5 h-5" />
+             <span className="hidden sm:inline">Create / Recover</span>
+           </Link>
 
            {/* Simple pagination arrows */}
            <div className="flex items-center gap-3">

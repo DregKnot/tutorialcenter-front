@@ -18,6 +18,9 @@ const CognitiveTest = () => {
   const [showReview, setShowReview] = useState(false); // Toggle answer review mode
   const [studentName, setStudentName] = useState("");
   const [schoolName, setSchoolName] = useState("");
+  const [contact, setContact] = useState("");
+  const [formError, setFormError] = useState("");
+  const [isStarting, setIsStarting] = useState(false);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -115,25 +118,52 @@ const CognitiveTest = () => {
     e.preventDefault();
     if (!studentName.trim() || !schoolName.trim()) return;
 
+    setFormError("");
+    setIsStarting(true);
+
     // Prevent retakes by the same student from the same school
     const attemptKey = `cognitive_test_attempt_${schoolName.trim().toLowerCase()}_${studentName.trim().toLowerCase()}`;
     if (localStorage.getItem(attemptKey)) {
-      alert("You have already taken this test. You cannot retake it.");
+      setFormError("You have already taken this test. You cannot retake it.");
+      setIsStarting(false);
       return;
     }
 
+    const payload = {
+      student_name: studentName.trim(),
+      school: schoolName.trim(),
+    };
+    if (contact.trim()) {
+      payload.contact = contact.trim();
+    }
+
+    console.log("🧠 [CognitiveTest] [POST] Starting Test -> /api/cognitive-tests/start", payload);
+
     // Register the test session with the backend
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/cognitive-tests/start`, {
-        student_name: studentName.trim(),
-        school: schoolName.trim(),
+      const res = await axios.post(`${API_BASE_URL}/api/cognitive-tests/start`, payload, {
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
       });
+      console.log("🧠 [CognitiveTest] Backend record created:", res.data);
       if (res.data?.data?.id) {
         setTestRecordId(res.data.data.id);
-        console.log("🧠 [CognitiveTest] Backend record created, ID:", res.data.data.id);
       }
     } catch (err) {
+      console.error("🧠 [CognitiveTest] Backend start error:", err.response?.data || err);
+      const backendMsg =
+        err.response?.data?.errors?.contact?.[0] ||
+        err.response?.data?.errors?.student_name?.[0] ||
+        err.response?.data?.errors?.school?.[0] ||
+        err.response?.data?.message;
+
+      if (err.response?.status === 422 && backendMsg) {
+        setFormError(backendMsg);
+        setIsStarting(false);
+        return;
+      }
       console.warn("🧠 [CognitiveTest] Backend start failed (continuing offline):", err.message);
+    } finally {
+      setIsStarting(false);
     }
 
     try {
@@ -189,7 +219,8 @@ const CognitiveTest = () => {
       id: testRecordId || Date.now(),
       student_name: studentName.trim(),
       school_name: schoolName.trim(),
-      email: "N/A",
+      contact: contact.trim() || "N/A",
+      email: contact.trim() || "N/A",
       score,
       total,
       percentage,
@@ -205,13 +236,14 @@ const CognitiveTest = () => {
 
     setFinalScore(resultObj);
 
-
-
     // Complete the test on the backend
     if (testRecordId) {
       try {
+        console.log(`🧠 [CognitiveTest] [POST] Completing Test -> /api/cognitive-tests/${testRecordId}/complete`, { score });
         const res = await axios.post(`${API_BASE_URL}/api/cognitive-tests/${testRecordId}/complete`, {
           score,
+        }, {
+          headers: { Accept: "application/json", "Content-Type": "application/json" }
         });
         console.log("🧠 [CognitiveTest] Backend complete response:", res.data);
       } catch (err) {
@@ -348,13 +380,43 @@ const CognitiveTest = () => {
                     required
                     placeholder="Enter your full name..."
                     value={studentName}
-                    onChange={(e) => setStudentName(e.target.value)}
+                    onChange={(e) => {
+                      setStudentName(e.target.value);
+                      if (formError) setFormError("");
+                    }}
                     className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#BB9E7F] text-sm text-white placeholder-gray-500 font-medium"
                   />
                 </div>
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
+                  Contact Info (Email or Phone Number)
+                </label>
+                <div className="relative">
+                  <Icon icon="lucide:mail" className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="e.g. 08012345678 or student@example.com"
+                    value={contact}
+                    onChange={(e) => {
+                      setContact(e.target.value);
+                      if (formError) setFormError("");
+                    }}
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#BB9E7F] text-sm text-white placeholder-gray-500 font-medium"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1 font-medium">
+                  Enter your email or phone number to receive prize & ranking notifications.
+                </p>
+              </div>
 
+              {formError && (
+                <div className="p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-xs text-red-300 flex items-center gap-2 animate-in fade-in">
+                  <Icon icon="lucide:alert-circle" className="w-4 h-4 text-red-400 flex-shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
 
               {/* Instructions Callout */}
               <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-2.5 text-xs text-blue-200">
@@ -366,11 +428,20 @@ const CognitiveTest = () => {
 
               <button
                 type="submit"
-                disabled={!studentName.trim() || !schoolName.trim()}
+                disabled={!studentName.trim() || !schoolName.trim() || isStarting}
                 className="w-full py-4 bg-gradient-to-r from-[#BB9E7F] to-[#d8b590] hover:opacity-95 text-[#0F2843] font-black uppercase tracking-widest text-sm rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2"
               >
-                <span>Start Cognitive Test</span>
-                <Icon icon="lucide:arrow-right" className="w-5 h-5" />
+                {isStarting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-[#0F2843]/30 border-t-[#0F2843] rounded-full animate-spin" />
+                    <span>Starting Test...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Start Cognitive Test</span>
+                    <Icon icon="lucide:arrow-right" className="w-5 h-5" />
+                  </>
+                )}
               </button>
             </form>
           </div>
@@ -716,6 +787,12 @@ const CognitiveTest = () => {
                     <span>School Name</span>
                     <strong className="text-white font-bold">{finalScore.school_name}</strong>
                   </div>
+                  {finalScore.contact && finalScore.contact !== "N/A" && (
+                    <div className="flex justify-between items-center border-b border-white/10 pb-2.5 text-xs text-gray-300">
+                      <span>Contact</span>
+                      <strong className="text-[#BB9E7F] font-mono font-bold">{finalScore.contact}</strong>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center border-b border-white/10 pb-2.5 text-xs text-gray-300">
                     <span>Time Taken</span>
                     <strong className="text-[#BB9E7F] font-mono font-bold">{finalScore.time_taken}</strong>

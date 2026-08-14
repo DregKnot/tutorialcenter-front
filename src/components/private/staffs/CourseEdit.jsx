@@ -2,14 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
-import { stripHtmlAndDecode } from "../../../utils/textUtils";
 import { 
   PencilIcon, 
   TrashIcon, 
-  AcademicCapIcon,
-  BookOpenIcon,
-  XMarkIcon,
-  CheckIcon,
+  AcademicCapIcon, 
+  BookOpenIcon, 
+  XMarkIcon, 
+  CheckIcon 
 } from "@heroicons/react/24/outline";
 
 export default function CourseEdit({ mode = "courses", showToast }) {

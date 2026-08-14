@@ -46,3 +46,49 @@ export function stripHtmlAndDecode(str) {
   // 4. Clean up multiple consecutive whitespace characters and trim
   return cleaned.replace(/\s+/g, " ").trim();
 }
+
+/**
+ * Formats a departments value (array, JSON string, object, or string)
+ * into a clean, comma-separated list of department names (e.g. "Science, Commercial").
+ */
+export function formatDepartments(depts, fallback = "General Subjects") {
+  if (!depts) return fallback;
+
+  if (Array.isArray(depts)) {
+    if (depts.length === 0) return fallback;
+    const formatted = depts
+      .map((d) => (typeof d === "object" && d !== null ? (d.name || d.title || "") : String(d)))
+      .filter(Boolean)
+      .join(", ");
+    return formatted || fallback;
+  }
+
+  if (typeof depts === "object" && depts !== null) {
+    return depts.name || depts.title || fallback;
+  }
+
+  if (typeof depts === "string") {
+    const trimmed = depts.trim();
+    if (!trimmed) return fallback;
+
+    // Check if it's a JSON encoded array
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          const formatted = parsed
+            .map((d) => (typeof d === "object" && d !== null ? (d.name || d.title || "") : String(d)))
+            .filter(Boolean)
+            .join(", ");
+          return formatted || fallback;
+        }
+      } catch (e) {
+        // Fallback below
+      }
+    }
+
+    return trimmed;
+  }
+
+  return fallback;
+}

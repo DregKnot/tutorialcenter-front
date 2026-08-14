@@ -93,6 +93,7 @@ const Training = lazy(() => import("./pages/public/Training.jsx"));
 const CourseDetails = lazy(() => import("./pages/public/CourseDetails.jsx"));
 const CognitiveTest = lazy(() => import("./pages/public/CognitiveTest.jsx"));
 const SchoolCognitiveTests = lazy(() => import("./pages/staffs/admin/SchoolCognitiveTests.jsx"));// import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
+const AdminCreateStudent = lazy(() => import("./pages/staffs/admin/AdminCreateStudent.jsx"));
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
@@ -212,6 +213,7 @@ function App() {
           <Route path="/staffs/staff-registration" element={<StaffRegistration />} />
           <Route path="/staffs/manage-staffs" element={<StaffManagement />} />
           <Route path="/staffs/manage-students" element={<AdminStudentManagement />} />
+          <Route path="/staffs/create-student" element={<AdminCreateStudent />} />
           <Route path="/staffs/master-class" element={<StaffMasterClassList />} />
           <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
           <Route path="/staffs/manage-exams" element={<ExamManagement />} />
