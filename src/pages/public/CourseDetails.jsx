@@ -5,6 +5,7 @@ import Navbar from "../../components/public/Navbar";
 import Footer from "../../components/public/Footer";
 import ScrollReveal from "../../components/public/ScrollReveal";
 import DiscountCard from "../../components/public/DiscountCard";
+import { formatDepartments } from "../../utils/textUtils";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
@@ -165,7 +166,7 @@ const CourseDetails = () => {
                 <h2 className="text-3xl font-black text-[#09314F] mb-6 uppercase tracking-tight border-b-2 border-gray-200 pb-2 inline-block">Program Overview</h2>
                 {course.description ? (
                   <div 
-                    className="text-gray-600 leading-relaxed text-lg [&>p]:mb-5 [&>p]:text-justify [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:mb-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol>li]:mb-2 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-3"
+                    className="text-gray-600 leading-relaxed text-lg quill-content break-words"
                     dangerouslySetInnerHTML={{ __html: course.description.replace(/&nbsp;/g, " ") }}
                   />
                 ) : (
@@ -210,7 +211,7 @@ const CourseDetails = () => {
                   <div className="space-y-10">
                     {Object.entries(
                       subjects.reduce((acc, sub) => {
-                        const dept = sub.departments?.name || sub.departments || "General Subjects";
+                        const dept = formatDepartments(sub.departments, "General Subjects");
                         if (!acc[dept]) acc[dept] = [];
                         acc[dept].push(sub);
                         return acc;
@@ -240,7 +241,7 @@ const CourseDetails = () => {
                                   {sub.name || sub.title}
                                 </span>
                                 <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest line-clamp-1">
-                                  {sub.departments?.name || sub.departments || "General Subjects"}
+                                  {formatDepartments(sub.departments, "General Subjects")}
                                 </span>
                               </div>
                             </div>
@@ -312,7 +313,7 @@ const CourseDetails = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Left Image Area (Side by side on desktop) */}
-            <div className="bg-gray-100 h-56 md:h-auto md:w-2/5 shrink-0 flex items-center justify-center relative">
+            <div className="bg-gray-100 h-56 md:h-auto md:w-[45%] shrink-0 flex items-center justify-center relative">
               {selectedSubject.banner ? (
                 <img src={`${API_BASE_URL}/storage/${selectedSubject.banner}`} alt={selectedSubject.name} className="absolute inset-0 w-full h-full object-cover" />
               ) : (
@@ -325,7 +326,7 @@ const CourseDetails = () => {
               {/* Glass container for department */}
               <div className="absolute bottom-6 left-6 right-6 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-4 shadow-xl z-10">
                 <p className="text-white text-xs font-bold uppercase tracking-widest opacity-90 mb-1">Department</p>
-                <p className="text-white font-black text-lg drop-shadow-md line-clamp-1">{selectedSubject.departments?.name || selectedSubject.departments || "General Subjects"}</p>
+                <p className="text-white font-black text-lg drop-shadow-md line-clamp-1">{formatDepartments(selectedSubject.departments, "General Subjects")}</p>
               </div>
             </div>
             
@@ -338,12 +339,12 @@ const CourseDetails = () => {
                 ✕
               </button>
               
-              <div className="p-6 sm:p-10 overflow-y-auto flex-1">
+              <div className="p-5 sm:p-7 overflow-y-auto flex-1">
                 <h3 className="text-3xl sm:text-4xl font-black text-[#09314F] mb-6 pr-12 leading-tight">{selectedSubject.name || selectedSubject.title}</h3>
                 
                 {selectedSubject.description ? (
                   <div 
-                    className="text-gray-700 text-base sm:text-lg leading-relaxed whitespace-pre-wrap [&>p]:mb-4 [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:mb-2 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-3 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3"
+                    className="text-gray-700 text-base sm:text-lg leading-relaxed quill-content break-words"
                     dangerouslySetInnerHTML={{ __html: selectedSubject.description.replace(/&nbsp;/g, " ") }}
                   />
                 ) : (
