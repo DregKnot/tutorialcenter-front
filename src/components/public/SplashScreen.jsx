@@ -48,7 +48,7 @@ const SplashScreen = ({ isGlobal = false, isVisible = true, onInitialLoadDone })
       ref={containerRef}
       className={`fixed inset-0 z-[9999] flex items-center justify-center bg-white overflow-hidden ${!isGlobal ? 'opacity-100' : ''}`}
     >
-      <div className="w-full h-full flex items-center justify-center p-4">
+      <div className="w-full h-full flex items-center justify-center p-0 md:p-4">
         { (isVisible || !isGlobal) && <LogoAnimation /> }
       </div>
     </div>
