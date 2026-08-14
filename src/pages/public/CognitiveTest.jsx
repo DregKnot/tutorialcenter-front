@@ -5,6 +5,26 @@ import axios from "axios";
 import logo from "../../assets/images/tutorial_logo.webp";
 import { cognitiveQuestions } from "../../data/cognitiveQuestions";
 
+// Helper to render question text with styled underline tags (e.g. <u>FAST</u>)
+const renderFormattedQuestion = (text) => {
+  if (!text) return "";
+  const parts = text.split(/(<u>.*?<\/u>)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("<u>") && part.endsWith("</u>")) {
+      const content = part.slice(3, -4);
+      return (
+        <span
+          key={index}
+          className="underline decoration-2 underline-offset-4 decoration-[#BB9E7F] font-black text-[#BB9E7F]"
+        >
+          {content}
+        </span>
+      );
+    }
+    return part;
+  });
+};
+
 const CognitiveTest = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -490,7 +510,7 @@ const CognitiveTest = () => {
                 </div>
               )}
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white leading-relaxed mb-6">
-                {currentQ.question}
+                {renderFormattedQuestion(currentQ.question)}
               </h2>
 
               {/* Options Grid */}
@@ -679,7 +699,7 @@ const CognitiveTest = () => {
 
                       {/* Question Text */}
                       <h3 className="text-base font-bold text-white mb-4 leading-relaxed">
-                        {q.question}
+                        {renderFormattedQuestion(q.question)}
                       </h3>
 
                       {/* Options List */}

@@ -916,10 +916,11 @@ export default function AdminCreateStudent() {
                             {/* Amount Badge */}
                             <div className="bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-xl border border-green-100 dark:border-green-800">
                               <span className="text-xs font-black text-green-700 dark:text-green-300">
-                                ₦
-                                {parseFloat(
-                                  payment.amount || 0
-                                ).toLocaleString()}
+                                {Number(payment.amount || 0) === 0
+                                  ? "FREE"
+                                  : `₦${parseFloat(
+                                      payment.amount || 0
+                                    ).toLocaleString()}`}
                               </span>
                             </div>
 

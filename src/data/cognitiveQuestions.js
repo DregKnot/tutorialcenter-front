@@ -107,7 +107,7 @@ export const cognitiveQuestions = [
   {
     id: 12,
     category: "English Language",
-    question: "Identify the part of speech of the underlined word: 'She runs FAST to catch the morning train.'",
+    question: "Identify the part of speech of the underlined word: 'She runs <u>FAST</u> to catch the morning train.'",
     options: ["Adjective", "Adverb", "Noun", "Verb"],
     correctIndex: 1,
     explanation: "'Fast' modifies the verb 'runs', so it functions as an adverb here."

@@ -367,7 +367,9 @@ export default function GuardianDashboard() {
                           
                           <div className="bg-black/10 rounded-2xl p-4 flex justify-between items-center backdrop-blur-sm border border-white/10 mt-auto">
                              <span className="text-xs font-bold uppercase tracking-wider text-white/90">Renewal Cost</span>
-                             <span className="text-lg font-black text-white">₦{Number(subscription.cost).toLocaleString()}</span>
+                             <span className="text-lg font-black text-white">
+                               {Number(subscription.cost) === 0 ? "FREE" : `₦${Number(subscription.cost).toLocaleString()}`}
+                             </span>
                           </div>
                         </div>
                         <button className="w-full py-3.5 mt-4 bg-white text-gray-900 font-black uppercase tracking-wider rounded-xl hover:bg-gray-50 transition-colors shadow-lg active:scale-95 text-xs">

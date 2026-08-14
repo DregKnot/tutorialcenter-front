@@ -304,9 +304,15 @@ export default function AdminPaymentHistory() {
 
                 <td className="px-6 py-4">
                   <div className="flex flex-col">
-                    <span className="font-bold text-[#09314F] dark:text-white">
-                      ₦{Number(payment.amount).toLocaleString()}
-                    </span>
+                    {Number(payment.amount) === 0 ? (
+                      <span className="font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-lg text-xs tracking-wider inline-block w-fit">
+                        FREE
+                      </span>
+                    ) : (
+                      <span className="font-bold text-[#09314F] dark:text-white">
+                        ₦{Number(payment.amount).toLocaleString()}
+                      </span>
+                    )}
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 rounded-md capitalize">
                         {payment.payment_method || 'Card'}
@@ -413,7 +419,13 @@ export default function AdminPaymentHistory() {
                 <div className="flex-1 grid grid-cols-1 gap-y-4 w-full">
                   <div className="bg-[#fcfcfc] dark:bg-[#09314F] border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 flex flex-col justify-center">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Amount Paid</span>
-                    <span className="text-xl font-black text-[#09314F] dark:text-white">₦{Number(selectedPayment.amount).toLocaleString()}</span>
+                    <span className="text-xl font-black text-[#09314F] dark:text-white">
+                      {Number(selectedPayment.amount) === 0 ? (
+                        <span className="text-emerald-600 dark:text-emerald-400">FREE</span>
+                      ) : (
+                        `₦${Number(selectedPayment.amount).toLocaleString()}`
+                      )}
+                    </span>
                   </div>
                   <div className="bg-[#fcfcfc] dark:bg-[#09314F] border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 flex flex-col justify-center">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Payment Type</span>

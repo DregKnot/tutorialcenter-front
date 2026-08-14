@@ -310,9 +310,11 @@ export default function StudentPaymentDisplay() {
                             ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30 text-red-500' 
                             : isPending
                             ? 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900/30 text-[#C5A97A]'
+                            : Number(payment.amount || 0) === 0
+                            ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400'
                             : 'bg-green-50 dark:bg-green-950/20 border-green-100 dark:border-green-900/30 text-green-500'
                         }`}>
-                          <span className="font-black text-sm">₦</span>
+                          <span className="font-black text-[11px]">{Number(payment.amount || 0) === 0 ? "FREE" : "₦"}</span>
                         </div>
                         <div className="min-w-0">
                           <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-tight truncate">{displayTitle}</h4>
@@ -322,7 +324,13 @@ export default function StudentPaymentDisplay() {
 
                       {/* Amount */}
                       <div className="col-span-2 text-center">
-                        <span className="text-sm font-black text-[#09314F] dark:text-white">₦{Number(payment.amount || 0).toLocaleString()}</span>
+                        {Number(payment.amount || 0) === 0 ? (
+                          <span className="inline-block px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black text-xs uppercase tracking-wider rounded-lg border border-emerald-500/20">
+                            FREE
+                          </span>
+                        ) : (
+                          <span className="text-sm font-black text-[#09314F] dark:text-white">₦{Number(payment.amount || 0).toLocaleString()}</span>
+                        )}
                       </div>
 
                       {/* Billing Cycle */}
@@ -363,13 +371,22 @@ export default function StudentPaymentDisplay() {
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${
                           isCancelled 
                             ? 'bg-red-50 border-red-100 text-red-500' 
+                            : Number(payment.amount || 0) === 0
+                            ? 'bg-emerald-50 border-emerald-100 text-emerald-600'
                             : 'bg-green-50 border-green-100 text-green-500'
                         }`}>
-                          <span className="font-black text-sm">₦</span>
+                          <span className="font-black text-[10px]">{Number(payment.amount || 0) === 0 ? "FREE" : "₦"}</span>
                         </div>
                         <div className="min-w-0">
                           <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-tight truncate">{displayTitle}</h4>
-                          <p className="text-[10px] text-gray-400 font-bold mt-0.5">₦{Number(payment.amount || 0).toLocaleString()} • {billingLabel}</p>
+                          <p className="text-[10px] text-gray-400 font-bold mt-0.5">
+                            {Number(payment.amount || 0) === 0 ? (
+                              <span className="text-emerald-600 dark:text-emerald-400 font-black">FREE</span>
+                            ) : (
+                              `₦${Number(payment.amount || 0).toLocaleString()}`
+                            )}{' '}
+                            • {billingLabel}
+                          </p>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
