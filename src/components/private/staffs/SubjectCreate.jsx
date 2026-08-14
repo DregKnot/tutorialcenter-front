@@ -50,11 +50,9 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses, sho
     setLoading(true);
     console.group("Subject Creation: Submit Form");
     
-    const plainDescription = stripHtmlAndDecode(description);
-    
     const formData = new FormData();
     formData.append("name", subjectName);
-    formData.append("description", plainDescription);
+    formData.append("description", description || "");
     departments.forEach(dept => {
       formData.append("departments[]", dept);
     });
@@ -309,11 +307,16 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses, sho
                     toolbar: [
                       [{ header: [1, 2, 3, false] }],
                       ["bold", "italic", "underline", "strike"],
+                      [{ script: "sub" }, { script: "super" }],
                       [{ list: "ordered" }, { list: "bullet" }],
                       ["blockquote", "link"],
                       ["clean"],
                     ],
                   }}
+                  formats={[
+                    "header", "bold", "italic", "underline", "strike",
+                    "script", "list", "bullet", "blockquote", "link"
+                  ]}
                 />
               </div>
             </div>

@@ -165,7 +165,7 @@ const CourseDetails = () => {
                 <h2 className="text-3xl font-black text-[#09314F] mb-6 uppercase tracking-tight border-b-2 border-gray-200 pb-2 inline-block">Program Overview</h2>
                 {course.description ? (
                   <div 
-                    className="text-gray-600 leading-relaxed text-lg [&>p]:mb-5 [&>p]:text-justify [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:mb-2 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol>li]:mb-2 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-3"
+                    className="text-gray-600 leading-relaxed text-lg quill-content break-words"
                     dangerouslySetInnerHTML={{ __html: course.description.replace(/&nbsp;/g, " ") }}
                   />
                 ) : (
@@ -343,7 +343,7 @@ const CourseDetails = () => {
                 
                 {selectedSubject.description ? (
                   <div 
-                    className="text-gray-700 text-base sm:text-lg leading-relaxed whitespace-pre-wrap [&>p]:mb-4 [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:mb-2 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-3 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3"
+                    className="text-gray-700 text-base sm:text-lg leading-relaxed quill-content break-words"
                     dangerouslySetInnerHTML={{ __html: selectedSubject.description.replace(/&nbsp;/g, " ") }}
                   />
                 ) : (

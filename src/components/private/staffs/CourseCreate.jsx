@@ -46,13 +46,10 @@ export default function CourseCreate({ isOpen, onClose, onSuccess, showToast }) 
     setLoading(true);
     console.group("Course Creation: Submit Form");
     
-    // Clean and decode HTML description for submission
-    const plainDescription = stripHtmlAndDecode(description);
-    
     // Using FormData for banner upload
     const formData = new FormData();
     formData.append("title", courseName);
-    formData.append("description", plainDescription);
+    formData.append("description", description || "");
     formData.append("price", price);
     formData.append("status", "active");
     if (banner) {
@@ -255,11 +252,16 @@ export default function CourseCreate({ isOpen, onClose, onSuccess, showToast }) 
                     toolbar: [
                       [{ header: [1, 2, 3, false] }],
                       ["bold", "italic", "underline", "strike"],
+                      [{ script: "sub" }, { script: "super" }],
                       [{ list: "ordered" }, { list: "bullet" }],
                       ["blockquote", "link"],
                       ["clean"],
                     ],
                   }}
+                  formats={[
+                    "header", "bold", "italic", "underline", "strike",
+                    "script", "list", "bullet", "blockquote", "link"
+                  ]}
                 />
               </div>
             </div>

@@ -129,13 +129,13 @@ export default function CourseEdit({ mode = "courses", showToast }) {
       "Content-Type": "multipart/form-data"
     };
 
-    // Clean and decode HTML description for storage
-    const plainDescription = stripHtmlAndDecode(description);
+    // Preserve HTML description for storage
+    const richDescription = description || "";
 
     if (editingItem.type === "course") {
       payload = new FormData();
       payload.append("title", newName);
-      payload.append("description", plainDescription);
+      payload.append("description", richDescription);
       payload.append("price", price);
       if (banner) {
         payload.append("banner", banner);
@@ -144,7 +144,7 @@ export default function CourseEdit({ mode = "courses", showToast }) {
     } else {
       payload = new FormData();
       payload.append("name", newName);
-      payload.append("description", plainDescription);
+      payload.append("description", richDescription);
       payload.append("status", editingItem.data.status || "active");
       
       // Include course_id to ensure database integrity during update
@@ -462,12 +462,18 @@ export default function CourseEdit({ mode = "courses", showToast }) {
                       }}
                       modules={{
                         toolbar: [
-                          [{ header: [1, 2, false] }],
-                          ["bold", "italic", "underline"],
+                          [{ header: [1, 2, 3, false] }],
+                          ["bold", "italic", "underline", "strike"],
+                          [{ script: "sub" }, { script: "super" }],
                           [{ list: "ordered" }, { list: "bullet" }],
+                          ["blockquote", "link"],
                           ["clean"],
                         ],
                       }}
+                      formats={[
+                        "header", "bold", "italic", "underline", "strike",
+                        "script", "list", "bullet", "blockquote", "link"
+                      ]}
                     />
                   </div>
                 </div>
