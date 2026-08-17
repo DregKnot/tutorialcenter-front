@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import axios from "axios";
+import { location as locationList } from "../../../data/locations";
 import {
   MagnifyingGlassIcon,
   UserPlusIcon,
@@ -658,6 +659,7 @@ export default function AdminCreateStudent() {
       errs.confirmPassword = "Passwords do not match";
     if (!formData.gender) errs.gender = "Gender is required";
     if (!formData.date_of_birth) errs.date_of_birth = "Date of birth is required";
+    if (!formData.location.trim()) errs.location = "Location is required";
     if (!formData.department) errs.department = "Department is required";
     if (!formData.course_id) errs.course_id = "Course selection is required";
     if (formData.subject_ids.length === 0)
@@ -1521,16 +1523,32 @@ export default function AdminCreateStudent() {
                     <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
                         <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
-                          State / LGA
+                          Location <span className="text-red-400">*</span>
                         </label>
                         <input
+                          list="admin-create-locations-list"
                           type="text"
                           name="location"
                           value={formData.location}
                           onChange={handleChange}
-                          placeholder="e.g. Lagos, Ikeja"
-                          className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all"
+                          placeholder="Select or enter location..."
+                          autoComplete="off"
+                          className={`w-full rounded-2xl border bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all ${
+                            errors.location
+                              ? "border-red-500"
+                              : "border-gray-200 dark:border-gray-700"
+                          }`}
                         />
+                        <datalist id="admin-create-locations-list">
+                          {locationList.map((loc) => (
+                            <option key={loc.code} value={`${loc.state}, ${loc.country}`} />
+                          ))}
+                        </datalist>
+                        {errors.location && (
+                          <p className="text-[10px] text-red-500 mt-1.5 font-bold">
+                            {errors.location}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">

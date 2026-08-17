@@ -259,7 +259,7 @@ const CourseDetails = () => {
             {/* Right Column: Discount Cards */}
             <ScrollReveal delay={0.4} direction="up" distance={20} className="md:col-span-1">
               <div className="sticky top-28 space-y-8">
-                <h3 className="text-2xl font-black text-[#09314F] mb-6 uppercase tracking-tight text-center">Tuition Options</h3>
+                <h3 className="text-2xl font-black text-[#09314F] mb-6 uppercase tracking-tight text-center">Investment Options</h3>
                 
                 <DiscountCard 
                   title="Monthly (1 month)" 
@@ -272,6 +272,7 @@ const CourseDetails = () => {
                   slashedPrice={slashedQuarterly} 
                   actualPrice={quarterly} 
                   savingsText="Save 5%"
+                  isPopular={true}
                 />
 
                 <DiscountCard 
@@ -285,7 +286,7 @@ const CourseDetails = () => {
                   title="Annually (1 year)" 
                   slashedPrice={slashedAnnually} 
                   actualPrice={annually} 
-                  savingsText="Best Value"
+                  savingsText="Save 5%"
                 />
 
                 <button
