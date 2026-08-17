@@ -37,9 +37,11 @@ export default function StaffLogin() {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (countdown === 0) {
-      const role = localStorage.getItem("staff_role");
+      const role = localStorage.getItem("staff_role")?.toLowerCase();
       if (role === "admin") {
         navigate("/staffs/dashboard");
+      } else if (role === "coo" || role === "preview") {
+        navigate("/staffs/coo/dashboard");
       } else if (role === "moderator") {
         navigate("/staffs/manage-exams");
       } else if (role === "course advisor" || role === "advisor") {

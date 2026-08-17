@@ -22,6 +22,9 @@ import {
 export default function StaffManagement() {
   const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+  const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
+  const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
+
   const token = localStorage.getItem("staff_token");
 
   // --- STATE ---
@@ -170,14 +173,16 @@ export default function StaffManagement() {
     <StaffDashboardLayout pagetitle="MANAGE STAFFS">
       <div className="flex flex-col gap-8">
         {/* Add Staff Button Row */}
-        <div className="flex justify-end">
-          <button
-            onClick={() => navigate("/staffs/staff-registration")}
-            className="flex items-center gap-2 px-8 py-3.5 bg-[#0F2843] text-white font-bold rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all text-sm"
-          >
-            <span className="text-2xl leading-none">+</span> Add Staff
-          </button>
-        </div>
+        {!isPreview && (
+          <div className="flex justify-end">
+            <button
+              onClick={() => navigate("/staffs/staff-registration")}
+              className="flex items-center gap-2 px-8 py-3.5 bg-[#0F2843] text-white font-bold rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all text-sm"
+            >
+              <span className="text-2xl leading-none">+</span> Add Staff
+            </button>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

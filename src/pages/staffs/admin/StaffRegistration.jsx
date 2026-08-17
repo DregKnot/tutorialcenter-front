@@ -381,9 +381,10 @@ export default function StaffRegistration() {
                       >
                         <option value="">Select role</option>
                         <option value="admin">Admin</option>
+                        <option value="coo">COO (Chief Operating Officer)</option>
                         <option value="tutor">Tutor</option>
                         <option value="advisor">Advisor</option>
-                        <option value ="moderator">Moderator</option>
+                        <option value="moderator">Moderator</option>
                         {/* <option value ="accountant">Accountant</option> */}
                         {/* <option value ="superadmin">Super Admin</option> */}
                       </select>

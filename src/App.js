@@ -95,6 +95,9 @@ const CourseDetails = lazy(() => import("./pages/public/CourseDetails.jsx"));
 const CognitiveTest = lazy(() => import("./pages/public/CognitiveTest.jsx"));
 const SchoolCognitiveTests = lazy(() => import("./pages/staffs/admin/SchoolCognitiveTests.jsx"));// import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
 const AdminCreateStudent = lazy(() => import("./pages/staffs/admin/AdminCreateStudent.jsx"));
+const BlogPost = lazy(() => import("./pages/public/BlogPost.jsx"));
+const CooDashboard = lazy(() => import("./pages/staffs/coo/CooDashboard.jsx"));
+const BlogManagement = lazy(() => import("./pages/staffs/admin/BlogManagement.jsx"));
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
@@ -136,6 +139,7 @@ function App() {
         <Route path="/training" element={<Training />} />
         <Route path="/program/:slug" element={<CourseDetails />} />
         <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/register" element={<SignUp />} />
         <Route path="/comingsoon" element={<ComingSoon />} />
         <Route path="/staff/login" element={<StaffLogin />} />
@@ -200,6 +204,8 @@ function App() {
 
           {/* Staff Routes */}
           <Route path="/staffs/dashboard" element={<StaffDashboard />} />
+          <Route path="/staffs/coo/dashboard" element={<CooDashboard />} />
+          <Route path="/staffs/manage-blogs" element={<BlogManagement />} />
           <Route path="/staffs/feedback" element={<StaffFeedback />} />
           <Route path="/staffs/leaderboard" element={<StaffLeaderboard />} />
           <Route path="/staffs/notifications" element={<StaffNotification />} />

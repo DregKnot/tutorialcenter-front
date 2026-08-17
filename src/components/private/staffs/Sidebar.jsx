@@ -18,6 +18,7 @@ import {
   ClipboardDocumentListIcon,
   CreditCardIcon,
   TrophyIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
@@ -37,7 +38,25 @@ const adminMenuItems = [
   { label: "School Tests", icon: ClipboardDocumentListIcon, destination: "/staffs/school-tests" },
   { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
   { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
+  { label: "Blogs", icon: DocumentTextIcon, destination: "/staffs/manage-blogs" },
   { label: "Audit Log", icon: ChartBarIcon },
+  { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
+  { label: "Settings", icon: Cog6ToothIcon },
+];
+
+const cooMenuItems = [
+  { label: "Dashboard", icon: HomeIcon, destination: "/staffs/coo/dashboard" },
+  { label: "Manage Staffs", icon: UsersIcon, destination: "/staffs/manage-staffs" },
+  { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
+  { label: "Manage Guardian", icon: ShieldCheckIcon },
+  { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
+  { label: "Calendar", icon: CalendarDaysIcon },
+  { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
+  { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
+  { label: "School Tests", icon: ClipboardDocumentListIcon, destination: "/staffs/school-tests" },
+  { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
+  { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
+  { label: "Blogs", icon: DocumentTextIcon, destination: "/staffs/manage-blogs" },
   { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon },
 ];
@@ -130,6 +149,7 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
 
   const getMenuItems = () => {
     const roleLower = staffRole.toLowerCase();
+    if (roleLower === "coo" || roleLower === "preview" || roleLower === "operations") return cooMenuItems;
     if (roleLower === "tutor") return tutorMenuItems;
     if (roleLower === "moderator") return moderatorMenuItems;
     if (roleLower === "course advisor" || roleLower === "advisor") return courseAdvisorMenuItems;
@@ -218,7 +238,14 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
                 <div className="min-w-0">
                   {staffLoaded ? (
                     <>
-                      <h6 className="text-[#BB9E7F] text-xs">Welcome {staffRole}</h6>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h6 className="text-[#BB9E7F] text-xs">Welcome {staffRole}</h6>
+                        {(staffRole.toLowerCase() === "coo" || staffRole.toLowerCase() === "preview") && (
+                          <span className="px-1.5 py-0.2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded text-[9px] font-black uppercase tracking-wider">
+                            Preview
+                          </span>
+                        )}
+                      </div>
                       <h3 className="font-bold dark:text-gray-50 text-sm truncate">
                         {fullName}
                       </h3>
