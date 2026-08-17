@@ -191,14 +191,14 @@ export default function CooDashboard() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  COO • Operations Preview
+                  COO • Operations
                 </span>
                 <span className="text-white/60 text-xs font-medium">
                   {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" })}
                 </span>
               </div>
               <h1 className="text-2xl md:text-3xl font-black tracking-tight">
-                {getGreeting()}, {staff?.firstname || "Chief Operations Officer"}
+                {getGreeting()}, {staff?.firstname ? `COO ${staff.firstname}` : "COO"}
               </h1>
               <p className="text-sm text-gray-300 mt-1 max-w-xl font-medium">
                 Welcome to your operations command center. Monitor institutional metrics, explore academic curriculums, and manage editorial publications.

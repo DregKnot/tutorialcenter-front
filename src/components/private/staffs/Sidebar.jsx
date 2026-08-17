@@ -239,12 +239,7 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
                   {staffLoaded ? (
                     <>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h6 className="text-[#BB9E7F] text-xs">Welcome {staffRole}</h6>
-                        {(staffRole.toLowerCase() === "coo" || staffRole.toLowerCase() === "preview") && (
-                          <span className="px-1.5 py-0.2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded text-[9px] font-black uppercase tracking-wider">
-                            Preview
-                          </span>
-                        )}
+                        <h6 className="text-[#BB9E7F] text-xs uppercase font-bold">Welcome {staffRole}</h6>
                       </div>
                       <h3 className="font-bold dark:text-gray-50 text-sm truncate">
                         {fullName}
