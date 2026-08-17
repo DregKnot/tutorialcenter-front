@@ -20,6 +20,9 @@ export default function ExamManagement() {
   const [activeMenu, setActiveMenu] = useState(null);
   const navigate = useNavigate();
 
+  const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
+  const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
+
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
@@ -110,13 +113,15 @@ export default function ExamManagement() {
               <p className="text-gray-400 dark:text-gray-500 font-bold text-[10px] md:text-xs uppercase tracking-widest mt-1">Set Questions And Save In The Database</p>
             </div>
           </div>
-          <button 
-            onClick={() => navigate("/staffs/manage-exams/question")}
-            className="w-full md:w-auto px-8 md:px-10 py-4 md:py-5 bg-[#0F2843] text-white font-black rounded-2xl md:rounded-3xl shadow-2xl shadow-[#0F2843]/30 hover:scale-[1.03] active:scale-95 transition-all text-xs md:text-sm flex items-center justify-center gap-3"
-          >
-            <PlusIcon className="w-5 h-5 md:w-6 h-6" />
-            <span>Create New Question</span>
-          </button>
+          {!isPreview && (
+            <button 
+              onClick={() => navigate("/staffs/manage-exams/question")}
+              className="w-full md:w-auto px-8 md:px-10 py-4 md:py-5 bg-[#0F2843] text-white font-black rounded-2xl md:rounded-3xl shadow-2xl shadow-[#0F2843]/30 hover:scale-[1.03] active:scale-95 transition-all text-xs md:text-sm flex items-center justify-center gap-3"
+            >
+              <PlusIcon className="w-5 h-5 md:w-6 h-6" />
+              <span>Create New Question</span>
+            </button>
+          )}
         </div>
 
         {/* Existing Questions/Exams Section */}

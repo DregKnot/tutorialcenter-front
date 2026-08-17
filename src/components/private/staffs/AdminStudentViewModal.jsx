@@ -72,7 +72,8 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
-  const staffRole = localStorage.getItem("staff_role");
+  const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
+  const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
   const apiPrefix = staffRole === "advisor" ? "advisor" : "admin";
 
   // Fetch full student details
@@ -379,7 +380,7 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
         </div>
 
         {/* Suspend/Restore Logic (Floating Button Overlay) */}
-        {staffRole !== "advisor" && (
+        {!isPreview && staffRole !== "advisor" && (
           <button 
               onClick={isSuspended ? handleRestore : handleSuspend}
               disabled={submitting}

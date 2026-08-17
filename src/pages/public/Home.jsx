@@ -10,6 +10,7 @@ const LearningSection = memo(lazy(() => import("../../components/public/Learning
 const CommunityGrowth = memo(lazy(() => import("../../components/public/CommunityGrowth")));
 const ProgramSection = memo(lazy(() => import("../../components/public/ProgramSection")));
 const FaqSection = memo(lazy(() => import("../../components/public/FaqSection")));
+const BlogSection = memo(lazy(() => import("../../components/public/BlogSection")));
 const ContactSection = memo(lazy(() => import("../../components/public/ContactSection")));
 const Footer = memo(lazy(() => import("../../components/public/Footer")));
 
@@ -33,6 +34,7 @@ const Home = memo(() => {
                 <LearningSection />
                 <CommunityGrowth />
                 <ProgramSection />
+                <BlogSection />
                 <FaqSection />
                 <ContactSection />
                 <Footer />

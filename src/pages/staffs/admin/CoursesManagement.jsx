@@ -42,6 +42,9 @@ export default function CoursesManagement() {
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [expandedCourseIds, setExpandedCourseIds] = useState(new Set());
 
+  const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
+  const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
+
   const token = localStorage.getItem("staff_token");
   const config = { 
     headers: { 
@@ -200,22 +203,24 @@ export default function CoursesManagement() {
         {activeView === "main" && (<>
 
         {/* Action Buttons */}
-        <div className="space-y-3">
-          <button 
-            onClick={() => setActiveView("edit")}
-            className="w-full text-left px-6 py-4 bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md border border-gray-200 dark:border-[#09314F] rounded-xl text-[15px] font-bold text-[#09314F] dark:text-white hover:shadow-md hover:border-gray-300 dark:hover:border-blue-400 transition-all active:scale-[0.99] flex items-center gap-3"
-          >
-            <PencilSquareIcon className="w-5 h-5 text-[#BB9E7F]" />
-            {activeTab === "courses" ? "Edit Courses" : "Edit Subjects"}
-          </button>
-          <button
-            onClick={() => setActiveView("disenrolled")}
-            className="w-full text-left px-6 py-4 bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md border border-gray-200 dark:border-[#09314F] rounded-xl text-[15px] font-bold text-[#09314F] dark:text-white hover:shadow-md hover:border-gray-300 dark:hover:border-blue-400 transition-all active:scale-[0.99] flex items-center gap-3"
-          >
-            <ExclamationTriangleIcon className="w-5 h-5 text-[#E83831]" />
-            {activeTab === "courses" ? "Disenrolled Courses" : "Disenrolled Subjects"}
-          </button>
-        </div>
+        {!isPreview && (
+          <div className="space-y-3">
+            <button 
+              onClick={() => setActiveView("edit")}
+              className="w-full text-left px-6 py-4 bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md border border-gray-200 dark:border-[#09314F] rounded-xl text-[15px] font-bold text-[#09314F] dark:text-white hover:shadow-md hover:border-gray-300 dark:hover:border-blue-400 transition-all active:scale-[0.99] flex items-center gap-3"
+            >
+              <PencilSquareIcon className="w-5 h-5 text-[#BB9E7F]" />
+              {activeTab === "courses" ? "Edit Courses" : "Edit Subjects"}
+            </button>
+            <button
+              onClick={() => setActiveView("disenrolled")}
+              className="w-full text-left px-6 py-4 bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md border border-gray-200 dark:border-[#09314F] rounded-xl text-[15px] font-bold text-[#09314F] dark:text-white hover:shadow-md hover:border-gray-300 dark:hover:border-blue-400 transition-all active:scale-[0.99] flex items-center gap-3"
+            >
+              <ExclamationTriangleIcon className="w-5 h-5 text-[#E83831]" />
+              {activeTab === "courses" ? "Disenrolled Courses" : "Disenrolled Subjects"}
+            </button>
+          </div>
+        )}
 
         {/* Toggle Bar */}
         <div className="flex items-center gap-2 p-1.5 bg-gray-100/50 dark:bg-gray-800/50 backdrop-blur-md rounded-[24px] w-fit border border-gray-200/50 dark:border-gray-700/50">
@@ -250,7 +255,7 @@ export default function CoursesManagement() {
         {/* ==================== COURSES TAB ==================== */}
         {activeTab === "courses" && (
           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500" key="courses">
-            {/* Create Course Button */}
+            {/* Course Header Banner */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-10 bg-white dark:bg-gray-800/50 backdrop-blur-xl rounded-[40px] border border-gray-100 dark:border-gray-700 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
               <div className="flex items-center gap-6">
                  <div className="w-20 h-20 bg-[#0F2843] rounded-[28px] flex items-center justify-center shadow-xl shadow-[#0F2843]/20 group">
@@ -261,13 +266,15 @@ export default function CoursesManagement() {
                     <p className="text-gray-400 font-bold text-sm uppercase tracking-widest mt-1">Foundational Programs</p>
                  </div>
               </div>
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="w-full sm:w-auto px-10 py-5 bg-[#0F2843] text-white font-black rounded-3xl shadow-2xl shadow-[#0F2843]/30 hover:scale-[1.03] active:scale-95 transition-all text-sm flex items-center justify-center gap-3 group"
-              >
-                <PlusIcon className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
-                Forge New Course
-              </button>
+              {!isPreview && (
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="w-full sm:w-auto px-10 py-5 bg-[#0F2843] text-white font-black rounded-3xl shadow-2xl shadow-[#0F2843]/30 hover:scale-[1.03] active:scale-95 transition-all text-sm flex items-center justify-center gap-3 group"
+                >
+                  <PlusIcon className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+                  Forge New Course
+                </button>
+              )}
             </div>
 
             {/* Courses List */}
@@ -420,53 +427,55 @@ export default function CoursesManagement() {
                             </div>
 
                             {/* Actions: Three Dot Menu */}
-                            <div className="absolute top-4 left-4 z-20">
-                              <div className="relative">
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === `sub-${subject.id}` ? null : `sub-${subject.id}`); }}
-                                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                                    activeMenu === `sub-${subject.id}` ? "bg-white text-[#0F2843]" : "bg-[#0F2843]/60 backdrop-blur-md text-white hover:bg-white hover:text-[#0F2843]"
-                                  }`}
-                                >
-                                  <EllipsisVerticalIcon className="w-5 h-5" />
-                                </button>
+                            {!isPreview && (
+                              <div className="absolute top-4 left-4 z-20">
+                                <div className="relative">
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === `sub-${subject.id}` ? null : `sub-${subject.id}`); }}
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                                      activeMenu === `sub-${subject.id}` ? "bg-white text-[#0F2843]" : "bg-[#0F2843]/60 backdrop-blur-md text-white hover:bg-white hover:text-[#0F2843]"
+                                    }`}
+                                  >
+                                    <EllipsisVerticalIcon className="w-5 h-5" />
+                                  </button>
 
-                                {activeMenu === `sub-${subject.id}` && (
-                                  <>
-                                    <div className="fixed inset-0 z-30" onClick={(e) => { e.stopPropagation(); setActiveMenu(null); }}></div>
-                                    <div className="absolute left-0 mt-2 w-48 bg-white/20 dark:bg-gray-800/20 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-2 z-40 animate-in zoom-in-95 duration-200">
-                                      <button 
-                                        onClick={(e) => { 
-                                          e.stopPropagation(); 
-                                          setSelectedSubject(subject);
-                                          setActiveView("edit");
-                                          setActiveMenu(null);
-                                        }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all text-left group/item"
-                                      >
-                                        <div className="w-8 h-8 bg-[#BB9E7F]/10 rounded-lg flex items-center justify-center text-[#BB9E7F] group-hover/item:bg-[#BB9E7F] group-hover/item:text-white transition-all">
-                                          <PencilSquareIcon className="w-4 h-4" />
-                                        </div>
-                                        <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Edit</span>
-                                      </button>
-                                      <button 
-                                        onClick={(e) => { 
-                                          e.stopPropagation(); 
-                                          handleDeleteSubject(subject.id);
-                                          setActiveMenu(null);
-                                        }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all text-left group/item"
-                                      >
-                                        <div className="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-500 group-hover/item:bg-red-500 group-hover/item:text-white transition-all">
-                                          <TrashIcon className="w-4 h-4" />
-                                        </div>
-                                        <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Delete</span>
-                                      </button>
-                                    </div>
-                                  </>
-                                )}
+                                  {activeMenu === `sub-${subject.id}` && (
+                                    <>
+                                      <div className="fixed inset-0 z-30" onClick={(e) => { e.stopPropagation(); setActiveMenu(null); }}></div>
+                                      <div className="absolute left-0 mt-2 w-48 bg-white/20 dark:bg-gray-800/20 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-2 z-40 animate-in zoom-in-95 duration-200">
+                                        <button 
+                                          onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            setSelectedSubject(subject);
+                                            setActiveView("edit");
+                                            setActiveMenu(null);
+                                          }}
+                                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all text-left group/item"
+                                        >
+                                          <div className="w-8 h-8 bg-[#BB9E7F]/10 rounded-lg flex items-center justify-center text-[#BB9E7F] group-hover/item:bg-[#BB9E7F] group-hover/item:text-white transition-all">
+                                            <PencilSquareIcon className="w-4 h-4" />
+                                          </div>
+                                          <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Edit</span>
+                                        </button>
+                                        <button 
+                                          onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            handleDeleteSubject(subject.id);
+                                            setActiveMenu(null);
+                                          }}
+                                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all text-left group/item"
+                                        >
+                                          <div className="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-500 group-hover/item:bg-red-500 group-hover/item:text-white transition-all">
+                                            <TrashIcon className="w-4 h-4" />
+                                          </div>
+                                          <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Delete</span>
+                                        </button>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </div>
                         ))}
                       </div>
