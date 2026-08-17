@@ -18,7 +18,6 @@ import {
   ClipboardDocumentListIcon,
   CreditCardIcon,
   TrophyIcon,
-  UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
@@ -30,7 +29,6 @@ const adminMenuItems = [
   { label: "Dashboard", icon: HomeIcon, destination: "/staffs/dashboard" },
   { label: "Manage Staffs", icon: UsersIcon, destination: "/staffs/manage-staffs" },
   { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
-  { label: "Create Student", icon: UserPlusIcon, destination: "/staffs/create-student" },
   { label: "Manage Guardian", icon: ShieldCheckIcon },
   { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon },

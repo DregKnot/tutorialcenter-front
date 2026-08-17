@@ -57,13 +57,8 @@ export const cognitiveQuestions = [
   {
     id: 7,
     category: "English Language",
-    question: "Identify the correct sentence using the subjunctive mood:",
-    options: [
-      "If I was you, I will accept the scholarship offer.",
-      "If I were you, I would accept the scholarship offer.",
-      "If I am you, I will accept the scholarship offer.",
-      "If I had been you, I accept the scholarship offer."
-    ],
+    question: "Complete the sentence using the subjunctive mood: 'If I _____ you, I would accept the scholarship offer.'",
+    options: ["was", "were", "am", "had been"],
     correctIndex: 1,
     explanation: "Hypothetical/unreal conditions require the subjunctive past plural form 'were' followed by 'would'."
   },
@@ -78,15 +73,10 @@ export const cognitiveQuestions = [
   {
     id: 9,
     category: "English Language",
-    question: "Which of the following contains a 'dangling modifier'?",
-    options: [
-      "Walking down the street, the trees looked beautiful.",
-      "Walking down the street, I admired the beautiful trees.",
-      "While I was walking down the street, the trees looked beautiful.",
-      "As we walked down the street, we noticed the trees."
-    ],
+    question: "In the sentence 'Walking down the street, the trees looked beautiful', which grammatical error is present?",
+    options: ["Dangling modifier", "Comma splice", "Faulty parallelism", "Split infinitive"],
     correctIndex: 0,
-    explanation: "'Walking down the street, the trees looked beautiful' incorrectly implies that the trees themselves were walking down the street."
+    explanation: "'Walking down the street, the trees looked beautiful' contains a dangling modifier because it lacks a logical subject to modify."
   },
   {
     id: 10,
@@ -123,13 +113,8 @@ export const cognitiveQuestions = [
   {
     id: 14,
     category: "English Language",
-    question: "Which sentence correctly demonstrates Subject-Verb Agreement with relative clauses?",
-    options: [
-      "She is one of the candidates who has passed the interview.",
-      "She is one of the candidates who have passed the interview.",
-      "She is one of the candidates that has pass the interview.",
-      "She is the one of the candidates whom passed the interview."
-    ],
+    question: "Choose the correct verb: 'She is one of the candidates who _____ passed the interview.'",
+    options: ["has", "have", "had been", "is"],
     correctIndex: 1,
     explanation: "In 'one of the [plural noun] who [verb]', the relative pronoun 'who' refers to 'candidates' (plural), requiring the plural verb 'have'."
   },
@@ -138,10 +123,10 @@ export const cognitiveQuestions = [
     category: "English Language",
     question: "What is the meaning of the idiom 'to burn the midnight oil'?",
     options: [
-      "To waste resources recklessly",
-      "To work or study late into the night",
-      "To cause an unexpected fire accident",
-      "To complete a task prematurely"
+      "To waste resources",
+      "To study late at night",
+      "To start a fire",
+      "To finish early"
     ],
     correctIndex: 1,
     explanation: "'To burn the midnight oil' means to study or work hard late into the night."

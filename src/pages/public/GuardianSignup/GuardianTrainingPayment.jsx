@@ -17,6 +17,8 @@ export default function GuardianTrainingPayment() {
 
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+  const AFFILIATE_API_URL =
+    process.env.REACT_APP_AFFILIATE_URL || "http://tutorialcenter-affiliate.test" || "http://localhost:8000";
 
   /* ================= INIT ================= */
   useEffect(() => {
@@ -175,6 +177,38 @@ export default function GuardianTrainingPayment() {
             );
           }
         }
+      }
+
+      // 4️⃣ REFERRAL SUBMISSION (if referral code was provided during registration)
+      try {
+        const storedGuardianStudents = JSON.parse(
+          localStorage.getItem("guardianStudents") || "{}"
+        );
+        const referralCode =
+          storedGuardianStudents?.referral_code ||
+          localStorage.getItem("global_referral_code");
+
+        if (referralCode && totalAmount > 0) {
+          const firstName = storedGuardianStudents?.firstname || "";
+          const lastName = storedGuardianStudents?.surname || "";
+          const name = `${firstName} ${lastName}`.trim() || "Guardian";
+          const contact =
+            storedGuardianStudents?.tel || storedGuardianStudents?.email || "";
+          const referralEarning = totalAmount * 0.05;
+
+          await axios.post(`${AFFILIATE_API_URL}/api/referrals/register`, {
+            name,
+            contact,
+            referral_code: referralCode,
+            amount: referralEarning,
+          });
+          console.log("Guardian referral registered successfully");
+        }
+      } catch (refErr) {
+        console.error(
+          "Guardian referral submission failed:",
+          refErr.response?.data || refErr
+        );
       }
 
       // Cleanup guardian localStorage

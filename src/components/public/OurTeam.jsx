@@ -1,8 +1,8 @@
 import ProfileCard from "./ProfileCard.jsx";
 import { AllTeams } from "../../data/data.js";
 import SectionHeading from "./SectionHeading.jsx";
-import { Icon } from "@iconify/react/dist/iconify.js";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState } from "react";
+import ScrollReveal from "./ScrollReveal.jsx";
 
 const OurTeam = () => {
     // List of team departments
@@ -20,7 +20,7 @@ const OurTeam = () => {
             open: false,
         },
         {
-            developers: "marketing",
+            developers: "Marketing",
             open: false,
         },
         {
@@ -28,110 +28,43 @@ const OurTeam = () => {
             open: false,
         },
     ]);
-  
-    // Manual carousel state management
-    const [currentSlide, setCurrentSlide] = useState(0);
-    const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
     // Handle team category toggle
     const handleTeamState = (index) => {
         setListAllTeams((prev) =>
-            prev.map((items, i) => ({
-                ...items,
-                open: i === index
+            prev.map((item, i) => ({
+                ...item,
+                open: i === index,
             }))
         );
-        // Reset carousel when changing categories
-        setCurrentSlide(0);
     };
 
-    // Determine slides to show based on screen size
-    // Card math:
-    //   Container usable width at md (768px): 768 - 40px padding = 728px
-    //   2-card slot: 728/2 = 364px per slot → ~344px card width → ~479px height (capped at 440px max) ✓
-    const getSlidesToShow = () => {
-        if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 1024) return 3;  // desktop: 3 cards
-            if (window.innerWidth >= 768)  return 2;  // tablet:  2 cards
-            return 1;                                  // mobile:  1 card
-        }
-        return 3;
-    };
-
-    const [slidesToShow, setSlidesToShow] = useState(getSlidesToShow());
-
-    // Handle window resize
-    useEffect(() => {
-        const handleResize = () => {
-            setSlidesToShow(getSlidesToShow());
-        };
-
-        if (typeof window !== 'undefined') {
-            window.addEventListener('resize', handleResize);
-            return () => window.removeEventListener('resize', handleResize);
-        }
-    }, []);
+    // Active category
+    const activeCategoryObj = listallTeams.find((item) => item.open);
+    const activeCategory = activeCategoryObj ? activeCategoryObj.developers.toLowerCase() : "leadership";
 
     // Filter team members based on active category
-    const filteredTeam = AllTeams.filter((item) => 
-        listallTeams.find(team => team.developers.split(" ")[0].toLowerCase() === item.category && team.open)
+    const filteredTeam = AllTeams.filter(
+        (item) => item.category?.toLowerCase() === activeCategory
     );
-
-    const maxSlide = Math.max(0, filteredTeam.length - slidesToShow);
-
-    // Next slide function wrapped in useCallback to prevent infinite re-renders
-    const nextSlide = useCallback(() => {
-        setCurrentSlide((prev) => (prev >= maxSlide ? 0 : prev + 1));
-    }, [maxSlide]);
-
-    // Previous slide function
-    const prevSlide = () => {
-        setCurrentSlide((prev) => (prev <= 0 ? maxSlide : prev - 1));
-    };
-
-    // Autoplay functionality
-    useEffect(() => {
-        if (isAutoPlaying && filteredTeam.length > slidesToShow) {
-            const interval = setInterval(nextSlide, 4000); // Increased time before auto scrolling
-            return () => clearInterval(interval);
-        }
-    }, [isAutoPlaying, filteredTeam.length, slidesToShow, nextSlide]);
-
-    // Handle touch/click interactions for mobile to pause then resume after 3s
-    const pauseTimeoutRef = useRef(null);
-    const handleInteraction = () => {
-        setIsAutoPlaying(false);
-        if (pauseTimeoutRef.current) {
-            clearTimeout(pauseTimeoutRef.current);
-        }
-        pauseTimeoutRef.current = setTimeout(() => {
-            setIsAutoPlaying(true);
-        }, 3000);
-    };
-
-    // Reset to first slide if current slide exceeds available slides
-    useEffect(() => {
-        if (currentSlide > maxSlide) {
-            setCurrentSlide(0);
-        }
-    }, [maxSlide, currentSlide]);
 
     return (
         <>
             <SectionHeading title="Meet the team" position_right={false} fullWidth={true} />
-            <div className="Container py-14 lg:py-14">
+            <div className="Container py-12 lg:py-16">
                 <div className="area-wrapper">
                     
                     {/* Team category tabs */}
-                    <div className="flex justify-between items-center flex-wrap max-sm:gap-3">
+                    <div className="flex justify-center items-center flex-wrap gap-2 sm:gap-4 border-b border-gray-200 pb-2">
                         {listallTeams.map((items, i) => (
                             <button
                                 key={i}
+                                type="button"
                                 className={`${
                                     items.open
-                                        ? "border-solid border-b-[1.5px] border-b-ascent text-ascent"
-                                        : "text-mainGrey"
-                                } flex-1 w-full text-base max-sm:text-sm font-bold uppercase pb-0.5`}
+                                        ? "border-b-2 border-[#E83831] text-[#09314F] font-black"
+                                        : "text-gray-400 hover:text-gray-600 font-semibold"
+                                } px-4 py-2 text-sm sm:text-base uppercase tracking-wider transition-all duration-200`}
                                 onClick={() => handleTeamState(i)}
                             >
                                 {items.developers}
@@ -139,87 +72,31 @@ const OurTeam = () => {
                         ))}
                     </div>
                     
-                    <div className="text-xs mt-4 text-center">
+                    <div className="text-xs sm:text-sm mt-4 text-center text-gray-500 max-w-xl mx-auto">
                         <span>
-                            Good Teachers and teaching system Good Teachers and teaching system
-                            Good Teachers and teaching system Good Teachers and teaching system
-                            Good Teachers and teaching system Good Teachers and teaching system{" "}
+                            Meet the dedicated educators, innovators, and leaders driving academic excellence across Africa.
                         </span>
                     </div>
                     
-                    {/* Custom carousel implementation */}
+                    {/* Static Team Grid Display (No Slider) */}
                     {filteredTeam.length > 0 ? (
-                        <div className="mt-12 relative">
-                            <div className="overflow-hidden">
-                                <div 
-                                    className="flex transition-transform duration-500 ease-in-out"
-                                    style={{ 
-                                        transform: `translateX(-${currentSlide * (100 / slidesToShow)}%)` 
-                                    }}
-                                    onMouseEnter={() => setIsAutoPlaying(false)}
-                                    onMouseLeave={() => setIsAutoPlaying(true)}
-                                    onTouchStart={handleInteraction}
-                                    onClick={handleInteraction}
-                                >
-                                    {filteredTeam.map((items, i) => {
-                                        return (
-                                            <div
-                                                key={i}
-                                                style={{
-                                                    minWidth: `${100 / slidesToShow}%`,
-                                                    padding: '0 10px'
-                                                }}
-                                            >
-                                                <ProfileCard
-                                                    name={items.name}
-                                                    title={items.role}
-                                                    avatarUrl={items.avatarUrl || ""}
-                                                    linkedinUrl={items.linkedinUrl || ""}
-                                                />
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Navigation buttons - only show if more items than visible slides */}
-                            {filteredTeam.length > slidesToShow && (
-                                <>
-                                    <button
-                                        onClick={prevSlide}
-                                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
-                                        aria-label="Previous slide"
-                                    >
-                                        <Icon icon="mdi:chevron-left" width="24" height="24" />
-                                    </button>
-                                    <button
-                                        onClick={nextSlide}
-                                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
-                                        aria-label="Next slide"
-                                    >
-                                        <Icon icon="mdi:chevron-right" width="24" height="24" />
-                                    </button>
-
-                                    {/* Dot indicators */}
-                                    <div className="flex justify-center gap-2 mt-6">
-                                        {Array.from({ length: maxSlide + 1 }).map((_, index) => (
-                                            <button
-                                                key={index}
-                                                onClick={() => setCurrentSlide(index)}
-                                                className={`w-2 h-2 rounded-full transition-colors ${
-                                                    currentSlide === index ? 'bg-ascent' : 'bg-gray-300'
-                                                }`}
-                                                aria-label={`Go to slide ${index + 1}`}
-                                            />
-                                        ))}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mt-10">
+                            {filteredTeam.map((member, i) => (
+                                <ScrollReveal key={`${member.name}-${i}`} delay={0.05 * (i % 6)} direction="up" distance={20}>
+                                    <div className="w-full max-w-[360px] mx-auto">
+                                        <ProfileCard
+                                            name={member.name}
+                                            title={member.role}
+                                            avatarUrl={member.avatarUrl || ""}
+                                            linkedinUrl={member.linkedinUrl || ""}
+                                        />
                                     </div>
-                                </>
-                            )}
+                                </ScrollReveal>
+                            ))}
                         </div>
                     ) : (
-                        // Show message when no team members in category
-                        <div className="mt-18 text-center text-gray-500">
-                            <p>No team members in this category yet.</p>
+                        <div className="mt-14 text-center text-gray-400 py-10 bg-gray-50 rounded-2xl border border-gray-100">
+                            <p className="text-sm font-medium">No team members listed in this category yet.</p>
                         </div>
                     )}
                 </div>

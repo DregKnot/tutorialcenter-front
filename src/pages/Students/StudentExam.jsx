@@ -817,11 +817,12 @@ export default function StudentExam() {
       </div>
 
       {/* Custom Floating Clock Picker Modal */}
+      {/* Custom Floating Clock Picker Modal */}
       {isClockModalOpen && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsClockModalOpen(false)} />
-          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-[32px] p-8 w-[90%] max-w-md shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white">
-            <div className="text-center mb-6">
+          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-[28px] md:rounded-[32px] p-6 md:p-8 w-full max-w-md max-h-[90vh] flex flex-col overflow-y-auto shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white my-auto scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
+            <div className="text-center mb-6 shrink-0">
               <Icon icon="lucide:clock" className="w-10 h-10 text-[#C5A97A] mx-auto mb-2" />
               <h3 className="text-lg font-black uppercase tracking-widest text-[#09314F] dark:text-white">
                 Choose Practice Time
@@ -830,7 +831,7 @@ export default function StudentExam() {
             </div>
 
             {/* Hours and Minutes Adjuster */}
-            <div className="flex items-center justify-center gap-6 bg-gray-50 dark:bg-[#06243A] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6">
+            <div className="flex items-center justify-center gap-6 bg-gray-50 dark:bg-[#06243A] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6 shrink-0">
               {/* Hours section */}
               <div className="flex flex-col items-center gap-2">
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hours</span>
@@ -885,7 +886,7 @@ export default function StudentExam() {
             </div>
 
             {/* Quick Presets */}
-            <div className="mb-6">
+            <div className="mb-6 shrink-0">
               <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-3 text-center">Quick Presets</span>
               <div className="flex flex-wrap justify-center gap-2">
                 {[
@@ -911,7 +912,7 @@ export default function StudentExam() {
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-4">
+            <div className="flex gap-4 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsClockModalOpen(false)}
@@ -937,44 +938,46 @@ export default function StudentExam() {
 
       {/* Exam Integrity Warning Modal */}
       {isWarningModalOpen && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsWarningModalOpen(false)} />
-          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-[32px] p-8 w-[90%] max-w-lg shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200 dark:border-red-800/40">
-                <Icon icon="lucide:shield-alert" className="w-9 h-9 text-red-500" />
+          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-[28px] md:rounded-[32px] p-6 md:p-8 w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white my-auto">
+            {/* Modal Header */}
+            <div className="text-center shrink-0 mb-3 md:mb-4">
+              <div className="w-14 h-14 md:w-16 md:h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-3 border border-red-200 dark:border-red-800/40">
+                <Icon icon="lucide:shield-alert" className="w-8 h-8 md:w-9 md:h-9 text-red-500" />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-widest text-[#09314F] dark:text-white mb-2">
+              <h3 className="text-lg md:text-xl font-black uppercase tracking-widest text-[#09314F] dark:text-white mb-1">
                 Exam Integrity Notice
               </h3>
-              <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-[#C5A97A] to-transparent mx-auto mb-4" />
+              <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-[#C5A97A] to-transparent mx-auto" />
             </div>
 
-            <div className="space-y-4 text-sm leading-relaxed text-gray-600 dark:text-gray-300 font-medium mb-8">
+            {/* Scrollable Content Body */}
+            <div className="overflow-y-auto pr-1 space-y-3.5 text-xs md:text-sm leading-relaxed text-gray-600 dark:text-gray-300 font-medium flex-1 min-h-0 my-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
               <p>
                 Before you begin your practice attempt, please read and agree to the following conditions:
               </p>
-              <div className="bg-gray-50 dark:bg-[#06243A]/60 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 space-y-4">
+              <div className="bg-gray-50 dark:bg-[#06243A]/60 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 md:p-5 space-y-3 md:space-y-4">
                 <div className="flex gap-3">
-                  <Icon icon="lucide:lock" className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <Icon icon="lucide:lock" className="w-4 h-4 md:w-5 md:h-5 text-red-500 shrink-0 mt-0.5" />
                   <p>
                     <span className="font-bold text-[#09314F] dark:text-white">Browser Lockdown:</span> Your browser will be locked in full screen. Tab switching, copying, and right-clicking are strictly monitored and disabled.
                   </p>
                 </div>
                 <div className="flex gap-3">
-                  <Icon icon="lucide:x-circle" className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <Icon icon="lucide:x-circle" className="w-4 h-4 md:w-5 md:h-5 text-red-500 shrink-0 mt-0.5" />
                   <p>
                     <span className="font-bold text-[#09314F] dark:text-white">No AI assistance:</span> Do not use ChatGPT, Copilot, or any other AI tools during this exam.
                   </p>
                 </div>
                 <div className="flex gap-3">
-                  <Icon icon="lucide:search-slash" className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <Icon icon="lucide:search-slash" className="w-4 h-4 md:w-5 md:h-5 text-red-500 shrink-0 mt-0.5" />
                   <p>
                     <span className="font-bold text-[#09314F] dark:text-white">No search tabs:</span> Avoid researching answers in another tab or external resources.
                   </p>
                 </div>
                 <div className="flex gap-3">
-                  <Icon icon="lucide:swatch-book" className="w-5 h-5 text-[#C5A97A] shrink-0 mt-0.5" />
+                  <Icon icon="lucide:swatch-book" className="w-4 h-4 md:w-5 md:h-5 text-[#C5A97A] shrink-0 mt-0.5" />
                   <p>
                     <span className="font-bold text-[#09314F] dark:text-white">Treat this like reality:</span> In the actual exam hall, there will be no external help or tabs. Do yourself a massive favor: test your true knowledge under real conditions to build actual readiness.
                   </p>
@@ -982,11 +985,12 @@ export default function StudentExam() {
               </div>
             </div>
 
-            <div className="flex gap-4">
+            {/* Modal Footer Action Buttons */}
+            <div className="shrink-0 pt-3 flex gap-3 sm:gap-4 border-t border-gray-100 dark:border-gray-800">
               <button
                 type="button"
                 onClick={() => setIsWarningModalOpen(false)}
-                className="flex-1 py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest transition-all"
+                className="flex-1 py-3 md:py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest transition-all"
               >
                 Go Back
               </button>
@@ -996,7 +1000,7 @@ export default function StudentExam() {
                   setIsWarningModalOpen(false);
                   handleStartPractice();
                 }}
-                className="flex-1 py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md"
+                className="flex-1 py-3 md:py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md"
               >
                 I Agree & Start
               </button>

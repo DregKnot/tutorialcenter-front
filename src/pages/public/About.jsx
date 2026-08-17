@@ -19,17 +19,17 @@ const About = () => {
       <Navbar />
 
       {/* Hero Banner */}
-      <div className="relative z-30 w-full h-[373px]">
+      <div className="relative z-30 w-full h-[300px] md:h-[480px] lg:h-[520px] overflow-hidden">
         {/* background image */}
         <img
           src={conversation}
           alt="About us background"
           loading="eager"
           fetchpriority="high"
-          className="absolute inset-0 w-full h-full object-cover z-0"
+          className="absolute inset-0 w-full h-full object-cover object-[center_36%] z-0 transition-transform duration-700 hover:scale-105"
         />
         {/* overlay */}
-        <div className="overlay absolute w-full h-full bg-black opacity-40"></div>
+        <div className="overlay absolute inset-0 w-full h-full bg-gradient-to-t from-black/60 via-black/30 to-black/20"></div>
         {/* content */}
         <div className="w-full h-full flex items-center justify-center relative z-50">
           <ScrollReveal direction="up" distance={20}>

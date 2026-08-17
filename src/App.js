@@ -52,6 +52,7 @@ const CampaignBiodata = lazy(() => import("./pages/public/CampaignSignUp/Campaig
 const CampaignEmailVerification = lazy(() => import("./pages/public/CampaignSignUp/CampaignEmailVerification.jsx"));
 const CampaignPayment = lazy(() => import("./pages/public/CampaignSignUp/CampaignPayment.jsx"));
 const StaffLogin = lazy(() => import("./pages/public/StaffLogin.jsx"));
+const StaffForgotPassword = lazy(() => import("./pages/public/StaffForgotPassword.jsx"));
 const StaffDashboard = lazy(() => import("./pages/staffs/admin/StaffDashboard.jsx"));
 const StaffRegistration = lazy(() => import("./pages/staffs/admin/StaffRegistration.jsx"));
 const StaffManagement = lazy(() => import("./pages/staffs/admin/StaffManagement.jsx"));
@@ -138,6 +139,10 @@ function App() {
         <Route path="/register" element={<SignUp />} />
         <Route path="/comingsoon" element={<ComingSoon />} />
         <Route path="/staff/login" element={<StaffLogin />} />
+        <Route path="/staff/forgot-password" element={<StaffForgotPassword />} />
+        <Route path="/staffs/forgot-password" element={<StaffForgotPassword />} />
+        <Route path="/staff/reset-password" element={<StaffForgotPassword />} />
+        <Route path="/staffs/reset-password" element={<StaffForgotPassword />} />
         <Route path="/staff-verify-email" element={<StaffEmailVerification />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
