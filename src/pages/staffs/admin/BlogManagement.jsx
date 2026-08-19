@@ -4,6 +4,7 @@ import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { Icon } from "@iconify/react";
+import { getBlogImageUrl } from "../../../utils/imageUrl";
 
 export default function BlogManagement() {
   const [blogs, setBlogs] = useState([]);
@@ -69,6 +70,7 @@ export default function BlogManagement() {
           : Array.isArray(raw?.data)
           ? raw.data
           : [];
+        console.log("=== [BLOG FETCH] Fetched blogs list from backend ===", bList);
         setBlogs(bList);
       }
 
@@ -79,6 +81,7 @@ export default function BlogManagement() {
           : Array.isArray(rawCats?.data)
           ? rawCats.data
           : [];
+        console.log("=== [BLOG CATEGORIES FETCH] Fetched categories ===", cList);
         setCategories(cList);
       }
     } catch (err) {
@@ -93,17 +96,86 @@ export default function BlogManagement() {
     fetchData();
   }, [fetchData]);
 
-  // Handle Image Selection
-  const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast("Image size must be less than 5MB.", "error");
+  // Helper to compress / optimize uploaded image to lightweight WebP
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      if (!file || file.type === "image/svg+xml" || file.type === "image/gif" || file.size < 350 * 1024) {
+        resolve(file);
         return;
       }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const maxWidth = 1600;
+          const maxHeight = 1600;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const optimized = new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), {
+                  type: "image/webp",
+                  lastModified: Date.now(),
+                });
+                resolve(optimized);
+              } else {
+                resolve(file);
+              }
+            },
+            "image/webp",
+            0.85
+          );
+        };
+        img.onerror = () => resolve(file);
+      };
+      reader.onerror = () => resolve(file);
+    });
+  };
+
+  // Allowed image MIME types and extensions
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+  const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".svg"];
+
+  // Handle Image Selection
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fileExt = "." + (file.name.split(".").pop() || "").toLowerCase();
+    const isAllowed = ALLOWED_IMAGE_TYPES.includes(file.type) || ALLOWED_EXTENSIONS.includes(fileExt);
+
+    if (!isAllowed) {
+      showToast("Invalid format. Only JPG, PNG, WEBP, and SVG images are accepted.", "error");
+      e.target.value = "";
+      return;
     }
+
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("Image size must be less than 10MB.", "error");
+      e.target.value = "";
+      return;
+    }
+
+    const optimized = await compressImage(file);
+    setImageFile(optimized);
+    setImagePreview(URL.createObjectURL(optimized));
   };
 
   // Reset form
@@ -124,6 +196,7 @@ export default function BlogManagement() {
 
   // Open Edit Mode
   const handleEdit = (blog) => {
+    console.log("=== [BLOG EDIT] Editing blog ===", blog);
     setEditingBlogId(blog.id);
     setFormData({
       title: blog.title || "",
@@ -134,7 +207,7 @@ export default function BlogManagement() {
       is_featured: Boolean(blog.is_featured),
       allow_comments: blog.allow_comments !== undefined ? Boolean(blog.allow_comments) : true,
     });
-    setImagePreview(blog.featured_image || null);
+    setImagePreview(getBlogImageUrl(blog.featured_image) || null);
     setImageFile(null);
     setActiveTab("editor");
   };
@@ -203,7 +276,14 @@ export default function BlogManagement() {
       fetchData();
     } catch (err) {
       console.error("Error saving blog post:", err);
-      const msg = err.response?.data?.message || "Failed to save blog post.";
+      const errors = err.response?.data?.errors;
+      let msg = err.response?.data?.message || "Failed to save blog post.";
+      if (errors && typeof errors === "object") {
+        const firstKey = Object.keys(errors)[0];
+        if (firstKey && Array.isArray(errors[firstKey]) && errors[firstKey][0]) {
+          msg = errors[firstKey][0];
+        }
+      }
       showToast(msg, "error");
     } finally {
       setSubmitting(false);
@@ -224,15 +304,33 @@ export default function BlogManagement() {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  // Quill Toolbar Config
+  // Quill Allowed Formats Suite
+  const quillFormats = [
+    "header", "font", "size",
+    "bold", "italic", "underline", "strike", "blockquote", "code-block",
+    "list", "bullet", "indent",
+    "script",
+    "direction", "align",
+    "link", "image", "video",
+    "color", "background"
+  ];
+
+  // Quill Toolbar & Rich Clipboard Paste Config
   const quillModules = {
     toolbar: [
       [{ header: [1, 2, 3, 4, false] }],
-      ["bold", "italic", "underline", "strike", "blockquote"],
+      [{ size: ["small", false, "large", "huge"] }],
+      ["bold", "italic", "underline", "strike", "blockquote", "code-block"],
+      [{ color: [] }, { background: [] }],
       [{ list: "ordered" }, { list: "bullet" }],
+      [{ script: "sub" }, { script: "super" }],
+      [{ align: [] }],
       ["link", "image", "video"],
       ["clean"],
     ],
+    clipboard: {
+      matchVisual: false,
+    },
   };
 
   return (
@@ -363,7 +461,7 @@ export default function BlogManagement() {
                     <div className="relative h-48 bg-gray-100 dark:bg-gray-800 overflow-hidden">
                       {b.featured_image ? (
                         <img
-                          src={b.featured_image}
+                          src={getBlogImageUrl(b.featured_image)}
                           alt={b.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
@@ -529,32 +627,32 @@ export default function BlogManagement() {
 
             {/* If Preview Tab is active, render simulated reader view */}
             {activeTab === "preview" ? (
-              <div className="bg-white dark:bg-[#06243A] rounded-3xl p-8 md:p-12 border border-gray-100 dark:border-gray-800 shadow-xl max-w-4xl mx-auto space-y-6">
+              <div className="bg-white dark:bg-[#06243A] rounded-3xl p-6 sm:p-8 md:p-12 border border-gray-100 dark:border-gray-800 shadow-xl max-w-4xl w-full mx-auto space-y-6 overflow-hidden break-words">
                 <div className="flex items-center gap-2 text-xs font-bold text-[#E83831]">
                   <span className="uppercase tracking-widest">{formData.category_name || "Category"}</span>
                   <span>•</span>
                   <span className="text-gray-400">Live Article Preview</span>
                 </div>
 
-                <h1 className="text-3xl md:text-4xl font-black text-[#09314F] dark:text-white leading-tight">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#09314F] dark:text-white leading-tight break-words">
                   {formData.title || "Untitled Article"}
                 </h1>
 
                 {formData.excerpt && (
-                  <p className="text-base text-gray-500 dark:text-gray-300 italic border-l-4 border-[#C5A97A] pl-4">
+                  <p className="text-sm sm:text-base text-gray-500 dark:text-gray-300 italic border-l-4 border-[#C5A97A] pl-4 break-words">
                     {formData.excerpt}
                   </p>
                 )}
 
                 {imagePreview && (
-                  <div className="rounded-2xl overflow-hidden h-[360px] w-full">
+                  <div className="rounded-2xl overflow-hidden h-[240px] sm:h-[360px] w-full">
                     <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 )}
 
                 {/* Rendered HTML */}
                 <div 
-                  className="prose dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 leading-relaxed text-base pt-4"
+                  className="prose dark:prose-invert max-w-full text-gray-800 dark:text-gray-200 leading-relaxed text-sm sm:text-base pt-4 break-words overflow-hidden [&_p]:mb-4 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_h4]:text-base [&_img]:rounded-2xl [&_img]:max-w-full [&_img]:h-auto [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_code]:break-all [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:block"
                   dangerouslySetInnerHTML={{ __html: formData.content || "<p>No content written yet.</p>" }}
                 />
               </div>
@@ -605,7 +703,8 @@ export default function BlogManagement() {
                         value={formData.content}
                         onChange={(content) => setFormData({ ...formData, content })}
                         modules={quillModules}
-                        placeholder="Write your article here or paste rich text..."
+                        formats={quillFormats}
+                        placeholder="Write your article here, or paste rich text from Word / Google Docs..."
                         className="h-80 md:h-96 pb-12 dark:text-white"
                       />
                     </div>
@@ -616,11 +715,14 @@ export default function BlogManagement() {
                 <div className="space-y-5">
                   
                   {/* Featured Image Uploader */}
-                  <div className="bg-white dark:bg-[#09314F]/40 backdrop-blur-md p-6 rounded-3xl border border-gray-100 dark:border-[#1a4a75] shadow-sm space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-white flex items-center gap-2">
-                      <Icon icon="lucide:image" className="w-4 h-4 text-[#C5A97A]" />
-                      Featured Image / Thumbnail
-                    </h3>
+                  <div className="bg-white dark:bg-[#09314F]/40 backdrop-blur-md p-6 rounded-3xl border border-gray-100 dark:border-[#1a4a75] shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-white flex items-center gap-2">
+                        <Icon icon="lucide:image" className="w-4 h-4 text-[#C5A97A]" />
+                        Featured Image
+                      </h3>
+                      <span className="text-[10px] font-bold text-gray-400">Max 10MB</span>
+                    </div>
 
                     <div className="relative rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 h-44 overflow-hidden flex flex-col items-center justify-center text-center p-4 hover:border-[#C5A97A] transition-colors group">
                       {imagePreview ? (
@@ -638,19 +740,32 @@ export default function BlogManagement() {
                           </button>
                         </>
                       ) : (
-                        <div>
-                          <Icon icon="lucide:upload-cloud" className="w-10 h-10 text-gray-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-                          <p className="text-xs font-bold text-gray-700 dark:text-gray-300">Click to upload featured image</p>
-                          <p className="text-[10px] text-gray-400 mt-0.5">PNG, JPG, WEBP up to 5MB</p>
+                        <div className="space-y-2">
+                          <Icon icon="lucide:upload-cloud" className="w-9 h-9 text-gray-400 mx-auto group-hover:scale-110 transition-transform text-[#09314F] dark:text-[#C5A97A]" />
+                          <div>
+                            <p className="text-xs font-bold text-gray-700 dark:text-gray-200">Click to upload thumbnail</p>
+                            <p className="text-[10px] text-gray-400 mt-0.5">Drag & drop or browse from device</p>
+                          </div>
+                          {/* Format badges */}
+                          <div className="flex items-center justify-center gap-1 pt-1">
+                            {["JPG", "PNG", "WEBP", "SVG"].map((fmt) => (
+                              <span key={fmt} className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-[9px] font-black">
+                                {fmt}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       )}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept=".jpg,.jpeg,.png,.webp,.svg,image/jpeg,image/png,image/webp,image/svg+xml"
                         onChange={handleImageChange}
                         className="absolute inset-0 opacity-0 cursor-pointer"
                       />
                     </div>
+                    <p className="text-[10px] text-gray-400 font-medium">
+                      Accepted formats: <strong className="text-gray-600 dark:text-gray-300">JPG, PNG, WEBP, SVG</strong> only.
+                    </p>
                   </div>
 
                   {/* Category & Metadata */}

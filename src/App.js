@@ -1,6 +1,5 @@
 import React, { Suspense, lazy, useState, useEffect } from 'react';
 import SplashScreen from "./components/public/SplashScreen.jsx";
-import Home from "./pages/public/Home.jsx";
 import StickyButtons from "./components/public/StickyButtons.jsx";
 import { Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -8,6 +7,7 @@ import { useAuth } from "./context/AuthContext.jsx";
 import { useStaffAuth } from "./context/StaffAuthContext.jsx";
 
 // Lazy loaded components
+const Home = lazy(() => import("./pages/public/Home.jsx"));
 const About = lazy(() => import("./pages/public/About.jsx"));
 const Contact = lazy(() => import("./pages/public/Contact.jsx"));
 const Career = lazy(() => import("./pages/public/Career.jsx"));

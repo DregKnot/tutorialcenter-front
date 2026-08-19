@@ -7,6 +7,7 @@ import Footer from "../../components/public/Footer";
 import BlogHero from "../../assets/images/Blogs.webp";
 import handCup from "../../assets/images/handCup.webp";
 import ScrollReveal from "../../components/public/ScrollReveal";
+import { getBlogImageUrl } from "../../utils/imageUrl";
 
 export default function Blog() {
   const [blogs, setBlogs] = useState([]);
@@ -35,6 +36,7 @@ export default function Blog() {
           : Array.isArray(raw?.data)
           ? raw.data
           : [];
+        console.log("=== [PUBLIC BLOGS FETCH] Fetched blogs list ===", bList);
         setBlogs(bList);
       }
 
@@ -168,7 +170,7 @@ export default function Blog() {
                 <div className="bg-white dark:bg-gray-800/60 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-700 shadow-xl hover:shadow-2xl transition-all grid grid-cols-1 lg:grid-cols-12 group">
                   <div className="lg:col-span-6 relative h-64 sm:h-80 lg:h-auto overflow-hidden bg-gray-100 dark:bg-gray-900">
                     <img
-                      src={featuredPost.featured_image || handCup}
+                      src={getBlogImageUrl(featuredPost.featured_image, handCup)}
                       alt={featuredPost.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
@@ -241,7 +243,7 @@ export default function Blog() {
                         {/* Image */}
                         <div className="relative h-48 bg-gray-100 dark:bg-gray-900 overflow-hidden">
                           <img
-                            src={post.featured_image || handCup}
+                            src={getBlogImageUrl(post.featured_image, handCup)}
                             alt={post.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />

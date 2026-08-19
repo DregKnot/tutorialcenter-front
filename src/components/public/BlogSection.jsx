@@ -4,6 +4,7 @@ import axios from "axios";
 import { Icon } from "@iconify/react";
 import ScrollReveal from "./ScrollReveal";
 import handCup from "../../assets/images/handCup.webp";
+import { getBlogImageUrl } from "../../utils/imageUrl";
 
 export default function BlogSection() {
   const [blogs, setBlogs] = useState([]);
@@ -20,6 +21,7 @@ export default function BlogSection() {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/blogs?per_page=3`);
         const data = res.data?.data || res.data || [];
+        console.log("=== [HOMEPAGE BLOGS FETCH] ===", data);
         if (isMounted) {
           setBlogs(Array.isArray(data) ? data.slice(0, 3) : []);
         }
@@ -80,7 +82,7 @@ export default function BlogSection() {
                 {/* Thumbnail */}
                 <div className="relative h-48 bg-gray-100 dark:bg-gray-800 overflow-hidden">
                   <img
-                    src={post.featured_image || handCup}
+                    src={getBlogImageUrl(post.featured_image, handCup)}
                     alt={post.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

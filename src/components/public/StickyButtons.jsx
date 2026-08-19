@@ -42,17 +42,27 @@ export default function StickyButtons() {
   };
 
   const containerGlassClass = isScrolled
-    ? "bg-white/10 dark:bg-black/25 border-white/20 dark:border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.08)]"
-    : "bg-white/95 dark:bg-[#09314F] border-gray-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.12)]";
-
-  const btnStyle = `backdrop-blur-[14px] w-[60px] h-[60px] sm:w-[92px] sm:h-[92px] rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-1 sm:gap-1.5 border hover:-translate-y-1 transition-all duration-300 group ${containerGlassClass}`;
+    ? "bg-white/80 dark:bg-[#09314F]/80 backdrop-blur-md border-white/20 dark:border-white/10 shadow-lg"
+    : "bg-white dark:bg-[#09314F] border-gray-100 dark:border-white/10 shadow-md";
 
   if (shouldHide) return null;
 
   return (
     <>
-      <div className="fixed bottom-6 sm:bottom-8 right-3 sm:right-8 z-[60] flex flex-col gap-2.5 sm:gap-3">
-        {/* CHAT WITH US */}
+      <div className="fixed bottom-5 sm:bottom-7 right-4 sm:right-6 z-[60] flex flex-col items-center gap-2.5">
+        {/* Back To Top (Icon Only) */}
+        {showScrollTop && (
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#BB9E7F] hover:bg-[#a88c6e] active:scale-95 text-white flex items-center justify-center shadow-lg hover:-translate-y-0.5 transition-all duration-300 group"
+            title="Back to Top"
+            aria-label="Back to Top"
+          >
+            <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6 group-hover:-translate-y-0.5 transition-transform" />
+          </button>
+        )}
+
+        {/* CHAT WITH US (Compact Icon Button) */}
         {!isChatDisabled && (
           <button 
             onClick={() => setOpenChat(true)}
@@ -60,30 +70,11 @@ export default function StickyButtons() {
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
-            className={btnStyle}
-            title="Double click or long press to hide"
+            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#09314F] hover:bg-[#0d3e64] active:scale-95 text-white flex items-center justify-center shadow-xl hover:-translate-y-0.5 transition-all duration-300 border border-white/10 group ${containerGlassClass}`}
+            title="Chat with us (Double click to hide)"
+            aria-label="Chat with us"
           >
-            <span className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-[#09314F] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
-              <MessageSquareText className="w-4 h-4 sm:w-5 sm:h-5" />
-            </span>
-            <span className="text-[7px] sm:text-[10px] text-gray-800 dark:text-white font-black uppercase tracking-wider text-center leading-none">
-              Chat with us
-            </span>
-          </button>
-        )}
-
-        {/* Back To Top */}
-        {showScrollTop && (
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className={btnStyle}
-          >
-            <span className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-[#BB9E7F] text-white flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 shadow-sm">
-              <ChevronUp className="w-4 h-4 sm:w-6 sm:h-6" />
-            </span>
-            <span className="text-[7px] sm:text-[10px] text-gray-800 dark:text-white font-black uppercase tracking-wider text-center leading-none">
-              Back to Top
-            </span>
+            <MessageSquareText className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
           </button>
         )}
       </div>

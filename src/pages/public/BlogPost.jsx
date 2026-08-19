@@ -5,6 +5,7 @@ import { Icon } from "@iconify/react";
 import Navbar from "../../components/public/Navbar.jsx";
 import Footer from "../../components/public/Footer.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { getBlogImageUrl } from "../../utils/imageUrl";
 
 export default function BlogPost() {
   const { slug } = useParams();
@@ -32,6 +33,7 @@ export default function BlogPost() {
       setLoading(true);
       const res = await axios.get(`${API_BASE_URL}/api/blogs/${slug}`);
       const data = res.data?.data || res.data;
+      console.log("=== [BLOG ARTICLE FETCH] Fetched single article ===", data);
       setBlog(data);
       setRelated(res.data?.related || []);
       setComments(data?.comments || []);
@@ -168,7 +170,7 @@ export default function BlogPost() {
             {blog.featured_image && (
               <div className="rounded-3xl overflow-hidden shadow-xl h-[280px] sm:h-[400px] md:h-[480px] w-full bg-gray-100 dark:bg-gray-800">
                 <img
-                  src={blog.featured_image}
+                  src={getBlogImageUrl(blog.featured_image)}
                   alt={blog.title}
                   className="w-full h-full object-cover"
                 />
@@ -184,7 +186,7 @@ export default function BlogPost() {
 
             {/* Rich Content Body */}
             <div
-              className="prose dark:prose-invert prose-lg max-w-none text-gray-800 dark:text-gray-200 leading-relaxed pt-2 space-y-4"
+              className="prose dark:prose-invert prose-lg max-w-full text-gray-800 dark:text-gray-200 leading-relaxed pt-2 break-words overflow-hidden [&_img]:max-w-full [&_img]:rounded-2xl [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_code]:break-all [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:block space-y-4"
               dangerouslySetInnerHTML={{ __html: blog.content }}
             />
 
@@ -295,8 +297,17 @@ export default function BlogPost() {
                     <Link
                       key={rel.id}
                       to={`/blog/${rel.slug}`}
-                      className="p-4 rounded-2xl bg-white dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700 hover:border-[#C5A97A]/40 transition-all flex flex-col group"
+                      className="p-4 rounded-2xl bg-white dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700 hover:border-[#C5A97A]/40 transition-all flex flex-col group overflow-hidden"
                     >
+                      {rel.featured_image && (
+                        <div className="h-28 w-full rounded-xl overflow-hidden mb-3 bg-gray-100 dark:bg-gray-700">
+                          <img
+                            src={getBlogImageUrl(rel.featured_image)}
+                            alt={rel.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                      )}
                       <h5 className="text-xs font-black text-[#09314F] dark:text-white line-clamp-2 mb-2 group-hover:text-[#E83831] transition-colors">
                         {rel.title}
                       </h5>
