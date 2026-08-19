@@ -77,36 +77,41 @@ export default function Hero() {
                     {/* Right Column: Slideshow & Floating Buttons */}
                     <div className="flex-1 relative">
                         <ScrollReveal delay={0.4} direction="left" distance={30}>
-                            <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                                {slides.map((slide, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
-                                            currentSlide === idx ? "translate-y-0 opacity-100 z-20" : "-translate-y-full opacity-0 z-10"
-                                        }`}
-                                    >
-                                        <img 
-                                            src={slide} 
-                                            alt={`Slide ${idx + 1}`} 
-                                            className="w-full h-full object-cover"
-                                            loading={idx === 0 ? "eager" : "lazy"}
-                                            fetchpriority={idx === 0 ? "high" : "auto"}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="relative flex-1 aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+                                    {slides.map((slide, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                                                currentSlide === idx ? "translate-y-0 opacity-100 z-20" : "-translate-y-full opacity-0 z-10"
+                                            }`}
+                                        >
+                                            <img 
+                                                src={slide} 
+                                                alt={`Slide ${idx + 1}`} 
+                                                className="w-full h-full object-cover"
+                                                loading={idx === 0 ? "eager" : "lazy"}
+                                                fetchpriority={idx === 0 ? "high" : "auto"}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
 
-                            {/* Slideshow Pagination Dots */}
-                            <div className="flex justify-center gap-2 mt-6">
-                                {slides.map((_, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setCurrentSlide(idx)}
-                                        className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                                            currentSlide === idx ? "bg-[#E83831]" : "bg-[#BB9E7F]/30 hover:bg-[#BB9E7F]/60"
-                                        }`}
-                                    />
-                                ))}
+                                {/* Slideshow Pagination Dots (Vertical OUTSIDE the Right Side) */}
+                                <div className="flex flex-col items-center gap-2.5 bg-gray-100/90 dark:bg-gray-800/90 p-2 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm shrink-0">
+                                    {slides.map((_, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setCurrentSlide(idx)}
+                                            aria-label={`Go to slide ${idx + 1}`}
+                                            className={`w-2.5 transition-all duration-300 rounded-full ${
+                                                currentSlide === idx 
+                                                    ? "h-7 bg-[#E83831] shadow-md scale-105" 
+                                                    : "h-2.5 bg-[#BB9E7F]/40 hover:bg-[#BB9E7F]/80"
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
                             </div>
                         </ScrollReveal>
                     </div>
@@ -194,6 +199,18 @@ export const MobileHero = ({ currentSlide }) => {
                             </Link>
                         </div>
                     </ScrollReveal>
+                </div>
+
+                {/* Mobile Vertical Slide Indicators */}
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-black/40 backdrop-blur-md px-1.5 py-2.5 rounded-full border border-white/20 shadow-md">
+                    {slides.map((_, idx) => (
+                        <div
+                            key={idx}
+                            className={`w-1.5 transition-all duration-300 rounded-full ${
+                                currentSlide === idx ? "h-5 bg-[#E83831]" : "h-1.5 bg-white/60"
+                            }`}
+                        />
+                    ))}
                 </div>
             </div>
         </div>
