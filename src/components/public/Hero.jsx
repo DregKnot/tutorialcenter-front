@@ -99,8 +99,8 @@ export default function Hero() {
                                     {slides.map((slide, idx) => (
                                         <div
                                             key={idx}
-                                            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
-                                                currentSlide === idx ? "translate-y-0 opacity-100 z-20" : "-translate-y-full opacity-0 z-10"
+                                            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                                                currentSlide === idx ? "opacity-100 z-20" : "opacity-0 z-10"
                                             }`}
                                         >
                                             <img 
@@ -164,8 +164,8 @@ export const MobileHero = ({ currentSlide }) => {
                 {slides.map((slide, idx) => (
                     <div
                         key={idx}
-                        className={`w-full h-full absolute top-0 left-0 transition-all duration-1000 ease-in-out ${
-                            currentSlide === idx ? "translate-y-0 opacity-100 z-10" : "-translate-y-full opacity-0 z-0"
+                        className={`w-full h-full absolute top-0 left-0 transition-opacity duration-1000 ease-in-out ${
+                            currentSlide === idx ? "opacity-100 z-10" : "opacity-0 z-0"
                         }`}
                     >
                         <img 
