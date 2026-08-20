@@ -1,8 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-// import { MessageSquareText, ChevronUp } from "lucide-react";
 import logo1 from "../../assets/images/TC 1.webp";
-// Placeholder imports for the slideshow images — replace these with the actual images!
 import slide1 from "../../assets/images/Study_that_stays (2).webp";
 import slide2 from "../../assets/images/Hero_mobile.webp";
 import ScrollReveal from "./ScrollReveal";
@@ -11,16 +9,35 @@ const slides = [slide1, slide2];
 
 export default function Hero() {
     const [currentSlide, setCurrentSlide] = useState(0);
+    const heroRef = useRef(null);
+    const [isHeroVisible, setIsHeroVisible] = useState(true);
 
     useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setIsHeroVisible(entry.isIntersecting);
+            },
+            { threshold: 0.05 }
+        );
+
+        if (heroRef.current) {
+            observer.observe(heroRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
+        if (!isHeroVisible) return; // Pause slideshow when user scrolls past Hero
+
         const timer = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % slides.length);
         }, 5000);
         return () => clearInterval(timer);
-    }, []);
+    }, [isHeroVisible]);
 
     return (
-        <>
+        <div ref={heroRef} style={{ overflowAnchor: "none" }}>
             <div className="bg-primary py-2 text-center block max-sm:hidden">
                 <p className="text-white text-sm">
                     Click here to join our students in archiving excellence...{" "}
@@ -31,7 +48,7 @@ export default function Hero() {
             </div>
 
             {/* Hero Section for laptop and above */}
-            <div className="relative pt-16 pb-20 bg-white max-lg:hidden overflow-hidden">
+            <div className="relative pt-16 pb-20 bg-white max-lg:hidden overflow-hidden" style={{ overflowAnchor: "none" }}>
                 <div className="Container relative z-10 w-full flex items-center justify-between gap-12">
                     
                     {/* Left Column: Text Content */}
@@ -135,7 +152,7 @@ export default function Hero() {
                     </p>
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 
