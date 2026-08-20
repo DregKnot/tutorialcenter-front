@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, memo } from 'react';
 import Navbar from "../../components/public/Navbar";
 import Hero from "../../components/public/Hero";
+import ViewportDefer from "../../components/common/ViewportDefer";
 import { Helmet } from "react-helmet-async";
 
 // Lazy-loaded and Memoized below-the-fold components
@@ -13,6 +14,8 @@ const FaqSection = memo(lazy(() => import("../../components/public/FaqSection"))
 const BlogSection = memo(lazy(() => import("../../components/public/BlogSection")));
 const ContactSection = memo(lazy(() => import("../../components/public/ContactSection")));
 const Footer = memo(lazy(() => import("../../components/public/Footer")));
+
+const SectionFallback = () => <div className="h-20 w-full animate-pulse bg-gray-50/50 dark:bg-[#06243A]/20" />;
 
 const Home = memo(() => {
     return (
@@ -28,16 +31,40 @@ const Home = memo(() => {
             <Navbar />
             <Hero />
             
-            <Suspense fallback={<div className="h-24 w-full flex items-center justify-center">Loading...</div>}>
+            <Suspense fallback={<SectionFallback />}>
                 <CountdownSection />
-                <BenefitSection />
-                <LearningSection />
-                <CommunityGrowth />
-                <ProgramSection />
-                <BlogSection />
-                <FaqSection />
-                <ContactSection />
-                <Footer />
+                
+                <ViewportDefer minHeight="300px" rootMargin="350px">
+                    <BenefitSection />
+                </ViewportDefer>
+
+                <ViewportDefer minHeight="350px" rootMargin="350px">
+                    <LearningSection />
+                </ViewportDefer>
+
+                <ViewportDefer minHeight="300px" rootMargin="350px">
+                    <CommunityGrowth />
+                </ViewportDefer>
+
+                <ViewportDefer minHeight="400px" rootMargin="350px">
+                    <ProgramSection />
+                </ViewportDefer>
+
+                <ViewportDefer minHeight="350px" rootMargin="350px">
+                    <BlogSection />
+                </ViewportDefer>
+
+                <ViewportDefer minHeight="300px" rootMargin="350px">
+                    <FaqSection />
+                </ViewportDefer>
+
+                <ViewportDefer minHeight="300px" rootMargin="350px">
+                    <ContactSection />
+                </ViewportDefer>
+
+                <ViewportDefer minHeight="200px" rootMargin="200px">
+                    <Footer />
+                </ViewportDefer>
             </Suspense>
         </>
     );

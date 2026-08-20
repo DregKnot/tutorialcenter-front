@@ -3,6 +3,7 @@ import axios from "axios";
 import { Icon } from "@iconify/react";
 import DashboardLayout from "./DashboardLayout";
 import { useAuth } from "../../../context/AuthContext";
+import { getBlogImageUrl } from "../../../utils/imageUrl";
 
 export default function StudentBlog() {
   const { user } = useAuth();
@@ -39,6 +40,7 @@ export default function StudentBlog() {
           : Array.isArray(raw?.data)
           ? raw.data
           : [];
+        console.log("=== [STUDENT BLOG FETCH] ===", bList);
         setBlogs(bList);
       }
 
@@ -167,7 +169,7 @@ export default function StudentBlog() {
             {selectedArticle.featured_image && (
               <div className="rounded-2xl overflow-hidden h-72 sm:h-96 w-full bg-gray-100 dark:bg-gray-900">
                 <img
-                  src={selectedArticle.featured_image}
+                  src={getBlogImageUrl(selectedArticle.featured_image)}
                   alt={selectedArticle.title}
                   className="w-full h-full object-cover"
                 />
@@ -318,7 +320,7 @@ export default function StudentBlog() {
                     <div className="relative h-44 bg-gray-100 dark:bg-gray-900 overflow-hidden">
                       {b.featured_image ? (
                         <img
-                          src={b.featured_image}
+                          src={getBlogImageUrl(b.featured_image)}
                           alt={b.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
