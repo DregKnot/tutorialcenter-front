@@ -121,10 +121,10 @@ export default function Hero() {
                                             key={idx}
                                             onClick={() => setCurrentSlide(idx)}
                                             aria-label={`Go to slide ${idx + 1}`}
-                                            className={`w-2.5 transition-all duration-300 rounded-full ${
+                                            className={`w-2.5 h-7 transition-all duration-300 rounded-full origin-center ${
                                                 currentSlide === idx 
-                                                    ? "h-7 bg-[#E83831] shadow-md scale-105" 
-                                                    : "h-2.5 bg-[#BB9E7F]/40 hover:bg-[#BB9E7F]/80"
+                                                    ? "bg-[#E83831] shadow-md scale-105" 
+                                                    : "scale-y-[0.35] bg-[#BB9E7F]/40 hover:bg-[#BB9E7F]/80"
                                             }`}
                                         />
                                     ))}
@@ -223,8 +223,8 @@ export const MobileHero = ({ currentSlide }) => {
                     {slides.map((_, idx) => (
                         <div
                             key={idx}
-                            className={`w-1.5 transition-all duration-300 rounded-full ${
-                                currentSlide === idx ? "h-5 bg-[#E83831]" : "h-1.5 bg-white/60"
+                            className={`w-1.5 h-5 transition-all duration-300 rounded-full origin-center ${
+                                currentSlide === idx ? "bg-[#E83831]" : "scale-y-[0.3] bg-white/60"
                             }`}
                         />
                     ))}
