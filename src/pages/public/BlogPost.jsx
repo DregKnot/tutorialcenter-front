@@ -166,6 +166,55 @@ export default function BlogPost() {
               </div>
             </div>
 
+            {/* Share Article Bar */}
+            <div className="flex flex-wrap items-center gap-4 py-3 text-sm border-b border-gray-200 dark:border-gray-800 pb-5">
+              <span className="font-bold text-gray-500 dark:text-gray-400">Share this article:</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <button 
+                  onClick={() => {
+                    const url = window.location.href;
+                    if (navigator.share) {
+                      navigator.share({
+                        title: blog.title,
+                        url: url
+                      }).catch(console.error);
+                    } else {
+                      navigator.clipboard.writeText(url);
+                      alert("Link copied to clipboard!");
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <Icon icon="lucide:share-2" className="w-4 h-4" />
+                  <span className="text-xs font-bold">Share / Copy</span>
+                </button>
+                <a 
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(blog.title + " " + window.location.href)}`}
+                  target="_blank" rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors"
+                >
+                  <Icon icon="logos:whatsapp-icon" className="w-4 h-4" />
+                  <span className="text-xs font-bold">WhatsApp</span>
+                </a>
+                <a 
+                  href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(blog.title)}`}
+                  target="_blank" rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1DA1F2]/10 text-[#1DA1F2] hover:bg-[#1DA1F2]/20 transition-colors"
+                >
+                  <Icon icon="logos:twitter" className="w-4 h-4" />
+                  <span className="text-xs font-bold">Twitter</span>
+                </a>
+                <a 
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                  target="_blank" rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2]/20 transition-colors"
+                >
+                  <Icon icon="logos:facebook" className="w-4 h-4" />
+                  <span className="text-xs font-bold">Facebook</span>
+                </a>
+              </div>
+            </div>
+
             {/* Featured Image */}
             {blog.featured_image && (
               <div className="rounded-3xl overflow-hidden shadow-xl h-[280px] sm:h-[400px] md:h-[480px] w-full bg-gray-100 dark:bg-gray-800">
@@ -189,6 +238,29 @@ export default function BlogPost() {
               className="prose dark:prose-invert prose-lg max-w-full text-gray-800 dark:text-gray-200 leading-relaxed pt-2 break-words overflow-hidden [&_img]:max-w-full [&_img]:rounded-2xl [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_code]:break-all [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:block space-y-4"
               dangerouslySetInnerHTML={{ __html: blog.content }}
             />
+
+            {/* Tags (Meta Keywords) */}
+            {blog.meta_keywords && (
+              <div className="pt-8 pb-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-bold text-gray-500 dark:text-gray-400 mr-2 flex items-center gap-1.5">
+                    <Icon icon="lucide:tags" className="w-4 h-4" /> Tags:
+                  </span>
+                  {blog.meta_keywords.split(',').map((tag, index) => {
+                    const trimmed = tag.trim();
+                    if (!trimmed) return null;
+                    return (
+                      <span 
+                        key={index} 
+                        className="px-2.5 py-1 rounded-md bg-[#09314F]/10 dark:bg-[#09314F]/85 text-[#09314F] dark:text-[#C5A97A] text-[10px] font-black uppercase tracking-wider cursor-default"
+                      >
+                        #{trimmed}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* ── COMMENTS & DISCUSSION SECTION ──────────────────────── */}
             {blog.allow_comments && (

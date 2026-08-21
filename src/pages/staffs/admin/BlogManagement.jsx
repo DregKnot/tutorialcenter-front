@@ -29,6 +29,7 @@ export default function BlogManagement() {
     status: "draft",
     is_featured: false,
     allow_comments: true,
+    meta_keywords: "",
   });
 
   const [imageFile, setImageFile] = useState(null);
@@ -206,6 +207,7 @@ export default function BlogManagement() {
       status: blog.status || "draft",
       is_featured: Boolean(blog.is_featured),
       allow_comments: blog.allow_comments !== undefined ? Boolean(blog.allow_comments) : true,
+      meta_keywords: blog.meta_keywords || "",
     });
     setImagePreview(getBlogImageUrl(blog.featured_image) || null);
     setImageFile(null);
@@ -248,6 +250,7 @@ export default function BlogManagement() {
       payload.append("status", postStatus);
       payload.append("is_featured", formData.is_featured ? "1" : "0");
       payload.append("allow_comments", formData.allow_comments ? "1" : "0");
+      payload.append("meta_keywords", formData.meta_keywords.trim());
 
       if (imageFile) {
         payload.append("featured_image", imageFile);
@@ -498,9 +501,27 @@ export default function BlogManagement() {
                       <h3 className="text-base font-black text-[#09314F] dark:text-white line-clamp-2 mb-2 group-hover:text-[#E83831] transition-colors">
                         {b.title}
                       </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 font-medium mb-4 flex-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 font-medium mb-3 flex-1">
                         {b.excerpt || "No summary excerpt provided."}
                       </p>
+
+                      {/* Meta Keywords / Tags */}
+                      {b.meta_keywords && (
+                        <div className="flex flex-wrap gap-1 mb-3 h-[18px] overflow-hidden">
+                          {b.meta_keywords.split(',').slice(0, 3).map((tag, idx) => {
+                            const trimmed = tag.trim();
+                            if (!trimmed) return null;
+                            return (
+                              <span key={idx} className="px-1.5 py-0.5 rounded-md bg-[#09314F]/10 dark:bg-[#09314F]/85 text-[#09314F] dark:text-[#C5A97A] text-[8px] font-black uppercase tracking-wider max-w-[70px] truncate">
+                                #{trimmed}
+                              </span>
+                            );
+                          })}
+                          {b.meta_keywords.split(',').length > 3 && (
+                            <span className="text-[9px] text-gray-400 font-bold self-center">...</span>
+                          )}
+                        </div>
+                      )}
 
                       {/* Meta info */}
                       <div className="flex items-center justify-between text-[11px] text-gray-400 font-bold border-t border-gray-100 dark:border-gray-800/60 pt-3 mb-4">
@@ -652,9 +673,32 @@ export default function BlogManagement() {
 
                 {/* Rendered HTML */}
                 <div 
-                  className="prose dark:prose-invert max-w-full text-gray-800 dark:text-gray-200 leading-relaxed text-sm sm:text-base pt-4 break-words overflow-hidden [&_p]:mb-4 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_h4]:text-base [&_img]:rounded-2xl [&_img]:max-w-full [&_img]:h-auto [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_code]:break-all [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:block"
+                  className="prose dark:prose-invert max-w-full text-gray-800 dark:text-gray-200 leading-relaxed text-sm sm:text-base pt-4 break-words overflow-hidden [&_p]:mb-4 [&_img]:rounded-2xl [&_img]:max-w-full [&_img]:h-auto [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_code]:break-all [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:block"
                   dangerouslySetInnerHTML={{ __html: formData.content || "<p>No content written yet.</p>" }}
                 />
+
+                {/* Tags (Meta Keywords) */}
+                {formData.meta_keywords && (
+                  <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 mr-1 flex items-center gap-1">
+                        <Icon icon="lucide:tags" className="w-3 h-3" /> Tags:
+                      </span>
+                      {formData.meta_keywords.split(',').map((tag, index) => {
+                        const trimmed = tag.trim();
+                        if (!trimmed) return null;
+                        return (
+                          <span 
+                            key={index} 
+                            className="px-2 py-0.5 rounded-md bg-[#09314F]/10 dark:bg-[#09314F]/85 text-[#09314F] dark:text-[#C5A97A] text-[9px] font-black uppercase tracking-wider"
+                          >
+                            #{trimmed}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               /* Two-Column Studio Layout */
@@ -687,6 +731,21 @@ export default function BlogManagement() {
                       value={formData.excerpt}
                       onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 focus:outline-none focus:border-[#C5A97A] resize-none"
+                    />
+                  </div>
+
+                  {/* Tags / Keywords */}
+                  <div>
+                    <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center justify-between">
+                      <span>Tags & Keywords</span>
+                      <span className="text-[10px] text-gray-400 font-normal">Comma separated (e.g. jamb, math, study)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. jamb, utme, study tips, mathematics"
+                      value={formData.meta_keywords}
+                      onChange={(e) => setFormData({ ...formData, meta_keywords: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 focus:outline-none focus:border-[#C5A97A]"
                     />
                   </div>
 

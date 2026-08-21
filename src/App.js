@@ -5,6 +5,7 @@ import { Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useStaffAuth } from "./context/StaffAuthContext.jsx";
+import usePageTracking from "./hooks/usePageTracking.js";
 
 // Lazy loaded components
 const Home = lazy(() => import("./pages/public/Home.jsx"));
@@ -84,6 +85,7 @@ const StaffEmailVerification = lazy(() => import("./pages/public/StaffSignUp/Sta
 const StaffFeedback = lazy(() => import("./pages/staffs/StaffFeedback.jsx"));
 const StaffLeaderboard = lazy(() => import("./pages/staffs/admin/Leaderboard.jsx"));
 const AdminStudentManagement = lazy(() => import("./pages/staffs/admin/AdminStudentManagement.jsx"));
+const AdminGuardianManagement = lazy(() => import("./pages/staffs/admin/AdminGuardianManagement.jsx"));
 const ExamManagement = lazy(() => import("./pages/staffs/admin/ExamManagement.jsx"));
 const ExamQuestion = lazy(() => import("./components/private/staffs/exams/ExamQuestion.jsx"));
 const EditExamHeader = lazy(() => import("./components/private/staffs/exams/EditExamHeader.jsx"));
@@ -103,6 +105,9 @@ function App() {
   const { isSplashing: isUserSplashing } = useAuth();
   const { isSplashing: isStaffSplashing } = useStaffAuth();
   const [initialLoad, setInitialLoad] = useState(true);
+
+  // Initialize page tracking for Google Analytics / GTM
+  usePageTracking();
   
   const showSplash = isUserSplashing || isStaffSplashing || initialLoad;
 
@@ -224,6 +229,7 @@ function App() {
           <Route path="/staffs/staff-registration" element={<StaffRegistration />} />
           <Route path="/staffs/manage-staffs" element={<StaffManagement />} />
           <Route path="/staffs/manage-students" element={<AdminStudentManagement />} />
+          <Route path="/staffs/manage-guardians" element={<AdminGuardianManagement />} />
           <Route path="/staffs/create-student" element={<AdminCreateStudent />} />
           <Route path="/staffs/master-class" element={<StaffMasterClassList />} />
           <Route path="/staffs/manage-courses" element={<CoursesManagement />} />

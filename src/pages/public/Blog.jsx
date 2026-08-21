@@ -266,9 +266,27 @@ export default function Blog() {
                             {post.title}
                           </h4>
 
-                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed mb-4 flex-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed mb-3 flex-1">
                             {post.excerpt || "Read full educational article..."}
                           </p>
+
+                          {/* Post Tags */}
+                          {post.meta_keywords && (
+                            <div className="flex flex-wrap gap-1.5 mb-3 overflow-hidden h-[20px]">
+                              {post.meta_keywords.split(',').slice(0, 3).map((tag, idx) => {
+                                const trimmed = tag.trim();
+                                if (!trimmed) return null;
+                                return (
+                                  <span key={idx} className="px-1.5 py-0.5 rounded-md bg-[#09314F]/10 dark:bg-[#09314F]/85 text-[#09314F] dark:text-[#C5A97A] text-[8px] font-black uppercase tracking-wider truncate max-w-[80px]">
+                                    #{trimmed}
+                                  </span>
+                                );
+                              })}
+                              {post.meta_keywords.split(',').length > 3 && (
+                                <span className="text-[9px] text-gray-400 font-bold self-center">...</span>
+                              )}
+                            </div>
+                          )}
 
                           <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800 text-[11px] font-bold text-gray-400">
                             <span className="text-[#09314F] dark:text-gray-200">

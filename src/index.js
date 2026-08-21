@@ -11,7 +11,7 @@ import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
 import QueryProvider from "./providers/QueryProvider";
 
 import { HelmetProvider } from "react-helmet-async";
-import { createRoot, hydrateRoot } from "react-dom/client";
+import { createRoot } from "react-dom/client";
 
 // Intercept and ignore browser extension errors (like MetaMask) to prevent React development error overlay crashes
 window.addEventListener("error", (e) => {
@@ -57,12 +57,8 @@ const appElement = (
   </React.StrictMode>
 );
 
-if (rootElement.hasChildNodes()) {
-  hydrateRoot(rootElement, appElement);
-} else {
-  const root = createRoot(rootElement);
-  root.render(appElement);
-}
+const root = createRoot(rootElement);
+root.render(appElement);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
