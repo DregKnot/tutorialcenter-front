@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
+import StudentPaymentsRecovery from "./StudentPaymentsRecovery.jsx";
 
 /**
  * Reusable input for the student profile matching the Staff profile style
@@ -69,6 +70,8 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({});
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
@@ -88,6 +91,17 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
 
       const data = res.data?.student || res.data?.data || res.data;
       setStudent(data);
+      setEditForm({
+        firstname: data.information?.firstname || data.firstname || "",
+        surname: data.information?.surname || data.surname || "",
+        email: data.email || "",
+        tel: data.information?.tel || data.tel || "",
+        department: data.information?.department || data.department || "",
+        gender: data.information?.gender || data.gender || "",
+        date_of_birth: data.information?.date_of_birth ? data.information.date_of_birth.split('T')[0] : "",
+        location: data.information?.location || data.location || "",
+        address: data.information?.address || data.address || "",
+      });
     } catch (error) {
       console.error("Failed to fetch student details", error);
       setToast({ type: "error", message: "Failed to load student details" });
@@ -149,6 +163,29 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
   const enrolledSubjects = student?.enrolled_subjects || student?.enrolled_subject || studentInfo?.enrolled_subjects || studentInfo?.enrolled_subject || student?.subjects || [];
   const enrolledCourses = student?.courses || student?.course_enrollments || studentInfo?.courses || studentInfo?.course_enrollments || [];
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdateProfile = async () => {
+    setSubmitting(true);
+    try {
+      await axios.put(`${API_BASE_URL}/api/${apiPrefix}/students/${studentId}`, editForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setToast({ type: "success", message: "Profile updated successfully" });
+      setIsEditing(false);
+      fetchStudentDetails();
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error(error);
+      setToast({ type: "error", message: error.response?.data?.message || "Failed to update profile" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md px-4 py-8 animate-in fade-in duration-300">
       
@@ -205,32 +242,36 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
                 label="First Name" 
                 icon="heroicons:user-solid" 
                 name="firstname" 
-                value={studentInfo?.firstname} 
-                disabled={true}
+                value={isEditing ? editForm.firstname : studentInfo?.firstname} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
               />
               <ModalInput 
                 label="Last Name" 
                 icon="heroicons:user-solid" 
                 name="surname" 
-                value={studentInfo?.surname} 
-                disabled={true}
+                value={isEditing ? editForm.surname : studentInfo?.surname} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
               />
               <ModalInput 
                 label="Email" 
                 icon="heroicons:envelope-solid" 
                 name="email" 
-                value={studentInfo?.email} 
-                disabled={true}
+                value={isEditing ? editForm.email : studentInfo?.email} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
               />
               <div className="relative">
                 <ModalInput 
                   label="Phone Number" 
                   icon="heroicons:phone-solid" 
                   name="tel" 
-                  value={studentInfo?.tel || "Not Provided"} 
-                  disabled={true}
+                  value={isEditing ? editForm.tel : (studentInfo?.tel || "Not Provided")} 
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
                 />
-                {studentInfo?.tel_verified_at && (
+                {!isEditing && studentInfo?.tel_verified_at && (
                   <div className="absolute right-3 top-9 flex items-center justify-center text-green-500 bg-green-50 rounded-full p-1 shadow-sm" title={`Verified at: ${new Date(studentInfo.tel_verified_at).toLocaleDateString()}`}>
                     <Icon icon="heroicons:check-badge-solid" className="w-5 h-5" />
                   </div>
@@ -246,22 +287,28 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
                 label="Department" 
                 icon="heroicons:academic-cap-solid" 
                 name="department" 
-                value={studentInfo?.department || student.department || "Not Provided"} 
-                disabled={true}
+                value={isEditing ? editForm.department : (studentInfo?.department || student?.department || "Not Provided")} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
               />
               <ModalInput 
                 label="Date of Birth" 
                 icon="heroicons:calendar-solid" 
                 name="date_of_birth" 
-                value={studentInfo?.date_of_birth ? studentInfo.date_of_birth.split('T')[0] : "Not Provided"} 
-                disabled={true}
+                type="date"
+                value={isEditing ? editForm.date_of_birth : (studentInfo?.date_of_birth ? studentInfo.date_of_birth.split('T')[0] : "Not Provided")} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
               />
               <ModalInput 
                 label="Gender" 
                 icon="ph:gender-male-bold" 
-                name="gender" 
-                value={studentInfo?.gender || student.gender || "Unknown"} 
-                disabled={true}
+                name="gender"
+                isSelect={true}
+                options={[{value: 'male', label: 'Male'}, {value: 'female', label: 'Female'}]} 
+                value={isEditing ? editForm.gender : (studentInfo?.gender || student?.gender || "Unknown")} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
               />
               <ModalInput 
                 label="Registration Date" 
@@ -274,15 +321,17 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
                 label="Location" 
                 icon="heroicons:map-pin-solid" 
                 name="location" 
-                value={studentInfo?.location || "Not Provided"} 
-                disabled={true}
+                value={isEditing ? editForm.location : (studentInfo?.location || "Not Provided")} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
               />
               <ModalInput 
                 label="Address" 
                 icon="heroicons:home-solid" 
                 name="address" 
-                value={studentInfo?.address || "Not Provided"} 
-                disabled={true}
+                value={isEditing ? editForm.address : (studentInfo?.address || "Not Provided")} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
               />
             </div>
 
@@ -361,9 +410,22 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
                 label="Account Status" 
                 icon="heroicons:shield-check-solid" 
                 name="status" 
-                value={isSuspended ? "Suspended" : (student.account_status || "Active").toUpperCase()} 
+                value={isSuspended ? "Suspended" : (student?.account_status || "Active").toUpperCase()} 
                 disabled={true}
                 className={isSuspended ? "text-red-500" : "text-green-500"}
+              />
+            </div>
+
+            {/* Payments & Recovery */}
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Payments & Recovery</label>
+              <StudentPaymentsRecovery 
+                studentEmail={student?.email} 
+                studentId={studentId} 
+                API_BASE_URL={API_BASE_URL} 
+                token={token} 
+                apiPrefix={apiPrefix} 
+                isPreview={isPreview} 
               />
             </div>
           </div>
@@ -372,11 +434,21 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
         {/* Footer Area with Action Buttons */}
         <div className="px-8 pb-8 flex items-center gap-4">
           <button 
-            onClick={onClose}
-            className="flex-1 py-4 bg-[#0F2843] dark:bg-white text-white dark:text-[#0F2843] font-black text-sm uppercase tracking-widest rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            onClick={() => isEditing ? setIsEditing(false) : onClose()}
+            className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-black text-sm uppercase tracking-widest rounded-xl shadow-sm hover:shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
-            Close View
+            {isEditing ? "Cancel Edit" : "Close View"}
           </button>
+          
+          {!isPreview && staffRole !== "advisor" && (
+            <button 
+              onClick={isEditing ? handleUpdateProfile : () => setIsEditing(true)}
+              disabled={submitting}
+              className="flex-1 py-4 bg-[#0F2843] dark:bg-white text-white dark:text-[#0F2843] font-black text-sm uppercase tracking-widest rounded-xl shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            >
+              {submitting ? "Saving..." : isEditing ? "Save Changes" : "Edit Profile"}
+            </button>
+          )}
         </div>
 
         {/* Suspend/Restore Logic (Floating Button Overlay) */}

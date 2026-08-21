@@ -83,7 +83,14 @@
         <p>JavaScript is required to access the interactive panels and student portal on our website.</p>
       </main>
     </noscript>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Pre-React loading indicator: shown instantly on page load, replaced when React mounts -->
+      <div id="pre-react-loader" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#fff;flex-direction:column;gap:16px;">
+        <div style="width:48px;height:48px;border:4px solid #f3f3f3;border-top:4px solid #09314F;border-radius:50%;animation:tcSpin 0.8s linear infinite;"></div>
+        <p style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#09314F;letter-spacing:0.5px;">Tutorial Center</p>
+        <style>@keyframes tcSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}</style>
+      </div>
+    </div>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
