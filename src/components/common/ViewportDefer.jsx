@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 
 /**
  * ViewportDefer
@@ -8,6 +8,12 @@ import React, { useState, useEffect, useRef } from "react";
  * 
  * This drastically reduces main-thread work, TBT (Total Blocking Time),
  * and initial JavaScript evaluation on the Home Page.
+ * 
+ * Scroll-stability guarantees:
+ * - minHeight is always kept as a floor so the container never collapses.
+ * - overflowAnchor: "none" prevents browser scroll-anchoring adjustments.
+ * - Each deferred section gets its own Suspense boundary so lazy-loading
+ *   one section doesn't displace the rest of the page.
  */
 export default function ViewportDefer({
   children,
@@ -45,8 +51,29 @@ export default function ViewportDefer({
   }, [rootMargin]);
 
   return (
-    <div ref={containerRef} style={{ minHeight: isVisible ? undefined : minHeight }}>
-      {isVisible ? children : fallback}
+    <div
+      ref={containerRef}
+      style={{
+        minHeight,
+        overflowAnchor: "none",
+      }}
+    >
+      {isVisible ? (
+        <Suspense
+          fallback={
+            fallback || (
+              <div
+                style={{ minHeight }}
+                className="w-full animate-pulse bg-gray-50/50 dark:bg-[#06243A]/20"
+              />
+            )
+          }
+        >
+          {children}
+        </Suspense>
+      ) : (
+        fallback
+      )}
     </div>
   );
 }
