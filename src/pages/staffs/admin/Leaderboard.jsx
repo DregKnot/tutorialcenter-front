@@ -8,14 +8,11 @@ import {
   MagnifyingGlassIcon,
   BookOpenIcon,
   AcademicCapIcon,
-  CheckCircleIcon,
   FireIcon,
   CalendarDaysIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  BoltIcon,
   ExclamationTriangleIcon,
-  StarIcon,
   ChartPieIcon
 } from "@heroicons/react/24/outline";
 
