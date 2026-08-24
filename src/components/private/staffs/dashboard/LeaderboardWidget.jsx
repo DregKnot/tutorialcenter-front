@@ -73,15 +73,17 @@ export default function LeaderboardWidget() {
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 h-full flex flex-col overflow-hidden">
-        
+      <div className="backdrop-blur-xl bg-white/80 dark:bg-gray-800/80 rounded-2xl border border-white/40 dark:border-gray-700/60 p-5 h-full flex flex-col overflow-hidden shadow-lg relative">
+        {/* Subtle ambient light */}
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
+
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 flex-shrink-0">
+        <div className="flex items-center justify-between mb-6 flex-shrink-0 relative z-10">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white shadow-md shadow-amber-500/20">
               <Icon
                 icon="heroicons:trophy-20-solid"
-                className="w-4 h-4 text-amber-600 dark:text-amber-400"
+                className="w-4 h-4"
               />
             </div>
             <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wide">
@@ -107,7 +109,7 @@ export default function LeaderboardWidget() {
 
         {loading && students.length === 0 ? (
           <div className="flex-grow flex flex-col items-center justify-center gap-2 py-10">
-            <div className="w-8 h-8 border-2 border-[#BB9E7F] border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Loading rankings...</p>
           </div>
         ) : students.length === 0 ? (
@@ -116,25 +118,25 @@ export default function LeaderboardWidget() {
             <p className="text-xs text-gray-400 font-bold">No exam attempts completed yet.</p>
           </div>
         ) : (
-          <div className="flex-grow flex flex-col justify-between min-h-0">
+          <div className="flex-grow flex flex-col justify-between min-h-0 relative z-10">
             
-            {/* Top 3 Podium (Quick Layout) */}
-            <div className="grid grid-cols-3 gap-1 items-end bg-gray-50 dark:bg-gray-900/40 rounded-xl p-4 text-center my-auto">
+            {/* Top 3 Podium (Quick Glass Layout) */}
+            <div className="grid grid-cols-3 gap-1 items-end bg-gradient-to-b from-gray-50/80 to-gray-100/60 dark:from-gray-900/60 dark:to-gray-950/80 backdrop-blur-md rounded-2xl p-4 text-center my-auto border border-gray-100/80 dark:border-gray-700/50 shadow-inner">
               
               {/* Rank 2 */}
               <div className="flex flex-col items-center">
                 {top2 ? (
                   <>
                     <div className="relative">
-                      <span className="absolute -top-2.5 -right-1 bg-slate-300 text-slate-800 text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">2</span>
+                      <span className="absolute -top-2.5 -right-1 bg-slate-300 text-slate-900 text-[8px] font-black rounded-full w-4 h-4 flex items-center justify-center border border-white shadow-sm">2</span>
                       {top2.profile_picture ? (
                         <img 
                           src={top2.profile_picture.startsWith("http") ? top2.profile_picture : `${API_BASE_URL}/storage/${top2.profile_picture}`} 
                           alt="" 
-                          className="w-12 h-12 rounded-full object-cover border-2 border-slate-300 shadow-sm"
+                          className="w-12 h-12 rounded-full object-cover border-2 border-slate-300 shadow-md ring-2 ring-slate-300/30"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs border-2 border-slate-300 shadow-sm">
+                        <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs border-2 border-slate-300 shadow-md ring-2 ring-slate-300/30">
                           {getInitials(top2.name)}
                         </div>
                       )}
@@ -153,15 +155,15 @@ export default function LeaderboardWidget() {
                   <>
                     <div className="relative">
                       <span className="absolute -top-4.5 left-1/2 -translate-x-1/2 text-sm">👑</span>
-                      <span className="absolute -top-1 -right-1 bg-amber-400 text-white text-[9px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center border border-white">1</span>
+                      <span className="absolute -top-1 -right-1 bg-amber-400 text-amber-950 text-[9px] font-black rounded-full w-4.5 h-4.5 flex items-center justify-center border border-white shadow-sm">1</span>
                       {top1.profile_picture ? (
                         <img 
                           src={top1.profile_picture.startsWith("http") ? top1.profile_picture : `${API_BASE_URL}/storage/${top1.profile_picture}`} 
                           alt="" 
-                          className="w-16 h-16 rounded-full object-cover border-2 border-amber-400 shadow-md"
+                          className="w-16 h-16 rounded-full object-cover border-2 border-amber-400 shadow-lg ring-2 ring-amber-400/50"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 flex items-center justify-center font-bold text-sm border-2 border-amber-400 shadow-md">
+                        <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 flex items-center justify-center font-black text-sm border-2 border-amber-400 shadow-lg ring-2 ring-amber-400/50">
                           {getInitials(top1.name)}
                         </div>
                       )}
@@ -179,15 +181,15 @@ export default function LeaderboardWidget() {
                 {top3 ? (
                   <>
                     <div className="relative">
-                      <span className="absolute -top-2.5 -right-1 bg-amber-700 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">3</span>
+                      <span className="absolute -top-2.5 -right-1 bg-amber-700 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white shadow-sm">3</span>
                       {top3.profile_picture ? (
                         <img 
                           src={top3.profile_picture.startsWith("http") ? top3.profile_picture : `${API_BASE_URL}/storage/${top3.profile_picture}`} 
                           alt="" 
-                          className="w-12 h-12 rounded-full object-cover border-2 border-amber-600 shadow-sm"
+                          className="w-12 h-12 rounded-full object-cover border-2 border-amber-600 shadow-md ring-2 ring-amber-600/30"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 flex items-center justify-center font-bold text-xs border-2 border-amber-600 shadow-sm">
+                        <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 flex items-center justify-center font-bold text-xs border-2 border-amber-600 shadow-md ring-2 ring-amber-600/30">
                           {getInitials(top3.name)}
                         </div>
                       )}

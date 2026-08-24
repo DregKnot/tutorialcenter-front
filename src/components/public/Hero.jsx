@@ -4,6 +4,7 @@ import logo1 from "../../assets/images/TC 1.webp";
 import slide1 from "../../assets/images/Study_that_stays (2).webp";
 import slide2 from "../../assets/images/Hero_mobile.webp";
 import ScrollReveal from "./ScrollReveal";
+import OptimizedImage from "../common/OptimizedImage";
 
 const slides = [slide1, slide2];
 
@@ -103,12 +104,12 @@ export default function Hero() {
                                                 currentSlide === idx ? "translate-y-0 opacity-100 z-20" : "-translate-y-full opacity-0 z-10"
                                             }`}
                                         >
-                                            <img 
+                                            <OptimizedImage 
                                                 src={slide} 
                                                 alt={`Slide ${idx + 1}`} 
                                                 className="w-full h-full object-cover"
-                                                loading={idx === 0 ? "eager" : "lazy"}
-                                                fetchpriority={idx === 0 ? "high" : "auto"}
+                                                containerClassName="w-full h-full"
+                                                priority={idx === 0}
                                             />
                                         </div>
                                     ))}
@@ -168,12 +169,12 @@ export const MobileHero = ({ currentSlide }) => {
                             currentSlide === idx ? "translate-y-0 opacity-100 z-10" : "-translate-y-full opacity-0 z-0"
                         }`}
                     >
-                        <img 
+                        <OptimizedImage 
                             src={slide} 
                             alt={`Mobile Slide ${idx + 1}`} 
                             className="w-full h-full object-cover"
-                            loading={idx === 1 ? "eager" : "lazy"}
-                            fetchpriority={idx === 1 ? "high" : "auto"}
+                            containerClassName="w-full h-full"
+                            priority={idx === 1}
                         />
                     </div>
                 ))}

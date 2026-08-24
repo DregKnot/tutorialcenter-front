@@ -8,6 +8,7 @@ import {
     CheckBadgeIcon,
 } from "@heroicons/react/24/outline";
 import ScrollReveal from "./ScrollReveal";
+import OptimizedImage from "../common/OptimizedImage";
 
 const benefits = [
     {
@@ -51,11 +52,12 @@ export default function LearningSection() {
                             <ScrollReveal delay={0.15} direction="left" distance={30}>
                                 <div className="relative rounded-3xl overflow-hidden shadow-2xl">
                                     <div className="w-full h-[450px] lg:h-[800px] relative bg-gray-100">
-                                        <img
+                                        <OptimizedImage
                                             src={studyImage}
                                             alt="Student learning with Tutorial Center"
                                             className="w-full h-full object-cover"
-                                            loading="lazy"
+                                            containerClassName="w-full h-full"
+                                            priority={false}
                                         />
                                         <div className="absolute inset-0 bg-black/10 pointer-events-none" />
                                     </div>

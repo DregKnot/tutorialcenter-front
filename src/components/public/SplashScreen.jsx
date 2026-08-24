@@ -9,19 +9,22 @@ const SplashScreen = ({ isGlobal = false, isVisible = true, onInitialLoadDone })
   useEffect(() => {
     if (!isGlobal) return;
     
-    const handleLoad = () => {
-      // Allow animation to play fully before signaling done
-      setTimeout(() => {
-        if (onInitialLoadDone) onInitialLoadDone();
-      }, 4200); 
-    };
-
-    if (document.readyState === 'complete') {
-      handleLoad();
-    } else {
-      window.addEventListener('load', handleLoad);
-      return () => window.removeEventListener('load', handleLoad);
+    // If the user has already seen the splash in this session, dismiss immediately (0ms)
+    const hasSeenSplash = sessionStorage.getItem("tc_splash_seen");
+    if (hasSeenSplash) {
+      if (onInitialLoadDone) onInitialLoadDone();
+      return;
     }
+
+    // On first visit, allow a swift, elegant 850ms logo flourish, then immediately reveal the page
+    const timer = setTimeout(() => {
+      try {
+        sessionStorage.setItem("tc_splash_seen", "true");
+      } catch (e) {}
+      if (onInitialLoadDone) onInitialLoadDone();
+    }, 850);
+
+    return () => clearTimeout(timer);
   }, [isGlobal, onInitialLoadDone]);
 
   useEffect(() => {
