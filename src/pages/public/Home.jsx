@@ -3,6 +3,7 @@ import Navbar from "../../components/public/Navbar";
 import Hero from "../../components/public/Hero";
 import ViewportDefer from "../../components/common/ViewportDefer";
 import { Helmet } from "react-helmet-async";
+import SectionSkeleton from "../../components/common/SectionSkeleton";
 
 // Lazy-loaded and Memoized below-the-fold components
 const CountdownSection = memo(lazy(() => import("../../components/public/CountdownSection")));
@@ -14,8 +15,6 @@ const FaqSection = memo(lazy(() => import("../../components/public/FaqSection"))
 const BlogSection = memo(lazy(() => import("../../components/public/BlogSection")));
 const ContactSection = memo(lazy(() => import("../../components/public/ContactSection")));
 const Footer = memo(lazy(() => import("../../components/public/Footer")));
-
-const SectionFallback = () => <div className="h-20 w-full animate-pulse bg-gray-50/50 dark:bg-[#06243A]/20" />;
 
 const Home = memo(() => {
     return (
@@ -31,38 +30,38 @@ const Home = memo(() => {
             <Navbar />
             <Hero />
             
-            <Suspense fallback={<SectionFallback />}>
+            <Suspense fallback={<SectionSkeleton />}>
                 <CountdownSection />
                 
-                <ViewportDefer minHeight="300px" rootMargin="350px">
+                <ViewportDefer fallback={<SectionSkeleton />} minHeight="300px" rootMargin="350px">
                     <BenefitSection />
                 </ViewportDefer>
 
-                <ViewportDefer minHeight="350px" rootMargin="350px">
+                <ViewportDefer fallback={<SectionSkeleton />} minHeight="350px" rootMargin="350px">
                     <LearningSection />
                 </ViewportDefer>
 
-                <ViewportDefer minHeight="300px" rootMargin="350px">
+                <ViewportDefer fallback={<SectionSkeleton />} minHeight="300px" rootMargin="350px">
                     <CommunityGrowth />
                 </ViewportDefer>
 
-                <ViewportDefer minHeight="400px" rootMargin="350px">
+                <ViewportDefer fallback={<SectionSkeleton />} minHeight="400px" rootMargin="350px">
                     <ProgramSection />
                 </ViewportDefer>
 
-                <ViewportDefer minHeight="350px" rootMargin="350px">
+                <ViewportDefer fallback={<SectionSkeleton />} minHeight="350px" rootMargin="350px">
                     <BlogSection />
                 </ViewportDefer>
 
-                <ViewportDefer minHeight="300px" rootMargin="350px">
+                <ViewportDefer fallback={<SectionSkeleton />} minHeight="300px" rootMargin="350px">
                     <FaqSection />
                 </ViewportDefer>
 
-                <ViewportDefer minHeight="300px" rootMargin="350px">
+                <ViewportDefer fallback={<SectionSkeleton />} minHeight="300px" rootMargin="350px">
                     <ContactSection />
                 </ViewportDefer>
 
-                <ViewportDefer minHeight="200px" rootMargin="200px">
+                <ViewportDefer fallback={<div className="h-[200px] w-full animate-pulse bg-gray-100 dark:bg-gray-800" />} minHeight="200px" rootMargin="200px">
                     <Footer />
                 </ViewportDefer>
             </Suspense>

@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useState, useEffect } from 'react';
 import SplashScreen from "./components/public/SplashScreen.jsx";
+import PageLoader from "./components/common/PageLoader.jsx";
 import StickyButtons from "./components/public/StickyButtons.jsx";
 import { Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -100,6 +101,8 @@ const AdminCreateStudent = lazy(() => import("./pages/staffs/admin/AdminCreateSt
 const BlogPost = lazy(() => import("./pages/public/BlogPost.jsx"));
 const CooDashboard = lazy(() => import("./pages/staffs/coo/CooDashboard.jsx"));
 const BlogManagement = lazy(() => import("./pages/staffs/admin/BlogManagement.jsx"));
+const AdminCalendar = lazy(() => import("./pages/staffs/admin/AdminCalendar.jsx"));
+const BadgeDemo = lazy(() => import("./pages/public/BadgeDemo.jsx"));
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
@@ -129,7 +132,7 @@ function App() {
 
       <StickyButtons />
 
-      <Suspense fallback={<SplashScreen />}>
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
@@ -138,6 +141,7 @@ function App() {
         <Route path="/guardian/dashboard" element={<GuardianDashboard />} />
         <Route path="*" element={<NotFound />} />
         <Route path="/login" element={<LoginSelection />} />
+        <Route path="/badge-demo" element={<BadgeDemo />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/career" element={<Career />} />
@@ -232,6 +236,7 @@ function App() {
           <Route path="/staffs/manage-guardians" element={<AdminGuardianManagement />} />
           <Route path="/staffs/create-student" element={<AdminCreateStudent />} />
           <Route path="/staffs/master-class" element={<StaffMasterClassList />} />
+          <Route path="/staffs/calendar" element={<AdminCalendar />} />
           <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
           <Route path="/staffs/manage-exams" element={<ExamManagement />} />
           <Route path="/staffs/school-tests" element={<SchoolCognitiveTests />} />

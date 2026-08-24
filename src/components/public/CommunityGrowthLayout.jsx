@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import ScrollReveal from "./ScrollReveal";
+import OptimizedImage from "../common/OptimizedImage";
 
 export default function CommunityGrowthLayout({
     title,
@@ -47,9 +48,9 @@ export default function CommunityGrowthLayout({
                         </ScrollReveal>
                     </div>
                 </div>
-                <div className="w-full h-full relative overflow-hidden">
+                <div className="w-full h-full relative overflow-hidden min-h-[300px]">
                     <div className={`absolute left-0 bottom-0 bg-gradient-to-t md:bg-gradient-to-r ${overlayGradient} to-transparent w-full h-full z-10`}></div>
-                    <img src={imgPath} loading="lazy" className="w-full h-full object-cover" alt={title} />
+                    <OptimizedImage src={imgPath} priority={false} containerClassName="w-full h-full" className="w-full h-full object-cover" alt={title} />
                 </div>
             </div>
         </>

@@ -73,11 +73,70 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
 
+  const [allCourses, setAllCourses] = useState([]);
+  const [allSubjects, setAllSubjects] = useState([]);
+  const [allGuardians, setAllGuardians] = useState([]);
+  const [allAdvisors, setAllAdvisors] = useState([]);
+
+  // Modals for adding Guardian / Advisor
+  const [showGuardianModal, setShowGuardianModal] = useState(false);
+  const [guardianMode, setGuardianMode] = useState("existing"); // "existing" | "new"
+  const [selectedGuardianId, setSelectedGuardianId] = useState("");
+  const [guardianRelationship, setGuardianRelationship] = useState("parent");
+  const [newGuardianForm, setNewGuardianForm] = useState({
+    firstname: "",
+    surname: "",
+    email: "",
+    tel: "",
+    gender: "male",
+    date_of_birth: "",
+    location: "",
+    address: "",
+  });
+
+  const [showAdvisorModal, setShowAdvisorModal] = useState(false);
+  const [selectedAdvisorId, setSelectedAdvisorId] = useState("");
+  const [advisorRole, setAdvisorRole] = useState("advisor");
+  const [actionLoading, setActionLoading] = useState(false);
+
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
   const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
   const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
   const apiPrefix = staffRole === "advisor" ? "advisor" : "admin";
+
+  // Fetch courses, subjects, guardians, and advisors directory
+  useEffect(() => {
+    const fetchDirectories = async () => {
+      try {
+        const [cRes, sRes, gRes, aRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/courses`).catch(() => ({ data: [] })),
+          axios.get(`${API_BASE_URL}/api/admin/subjects/all`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => ({ data: [] })),
+          axios.get(`${API_BASE_URL}/api/admin/guardians/all`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => ({ data: [] })),
+          axios.get(`${API_BASE_URL}/api/admin/advisors/all`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => ({ data: [] })),
+        ]);
+
+        const rawCourses = cRes.data?.courses || cRes.data?.data || cRes.data || [];
+        const rawSubjects = sRes.data?.subjects || sRes.data?.data || sRes.data || [];
+        const rawGuardians = gRes.data?.guardians || gRes.data?.data || gRes.data || [];
+        const rawAdvisors = aRes.data?.advisors || aRes.data?.data || aRes.data || [];
+
+        setAllCourses(Array.isArray(rawCourses) ? rawCourses : []);
+        setAllSubjects(Array.isArray(rawSubjects) ? rawSubjects : []);
+        setAllGuardians(Array.isArray(rawGuardians) ? rawGuardians : []);
+        setAllAdvisors(Array.isArray(rawAdvisors) ? rawAdvisors : []);
+      } catch (err) {
+        console.warn("Failed to load reference directories:", err);
+      }
+    };
+    fetchDirectories();
+  }, [API_BASE_URL, token]);
 
   // Fetch full student details
   const fetchStudentDetails = useCallback(async () => {
@@ -87,8 +146,6 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      console.log("🎓 STUDENT PROFILE API RESPONSE:", res.data);
-
       const data = res.data?.student || res.data?.data || res.data;
       setStudent(data);
       setEditForm({
@@ -114,6 +171,95 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
     if (studentId) fetchStudentDetails();
   }, [studentId, fetchStudentDetails]);
 
+  // Handle Linking / Creating Guardian
+  const handleAddGuardian = async (e) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      const payload = guardianMode === "existing" 
+        ? { guardian_id: selectedGuardianId, relationship: guardianRelationship }
+        : { ...newGuardianForm, relationship: guardianRelationship };
+
+      await axios.post(`${API_BASE_URL}/api/admin/students/${studentId}/guardians`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setToast({ type: "success", message: "Guardian linked successfully!" });
+      setShowGuardianModal(false);
+      setSelectedGuardianId("");
+      setNewGuardianForm({ firstname: "", surname: "", email: "", tel: "" });
+      fetchStudentDetails();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      setToast({ type: "error", message: err.response?.data?.message || "Failed to link guardian" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Handle Unlinking Guardian
+  const handleRemoveGuardian = async (guardianId) => {
+    if (!window.confirm("Are you sure you want to unlink this guardian?")) return;
+    setActionLoading(true);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/admin/students/${studentId}/guardians/${guardianId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setToast({ type: "success", message: "Guardian unlinked successfully" });
+      fetchStudentDetails();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      setToast({ type: "error", message: err.response?.data?.message || "Failed to unlink guardian" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Handle Assigning Advisor
+  const handleAssignAdvisor = async (e) => {
+    e.preventDefault();
+    if (!selectedAdvisorId) {
+      setToast({ type: "error", message: "Please select an advisor" });
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await axios.post(`${API_BASE_URL}/api/admin/students/${studentId}/advisors`, {
+        staff_id: selectedAdvisorId,
+        role: advisorRole
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setToast({ type: "success", message: "Advisor assigned successfully!" });
+      setShowAdvisorModal(false);
+      setSelectedAdvisorId("");
+      fetchStudentDetails();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      setToast({ type: "error", message: err.response?.data?.message || "Failed to assign advisor" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Handle Unassigning Advisor
+  const handleRemoveAdvisor = async (staffId) => {
+    if (!window.confirm("Are you sure you want to unassign this advisor?")) return;
+    setActionLoading(true);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/admin/students/${studentId}/advisors/${staffId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setToast({ type: "success", message: "Advisor unassigned successfully" });
+      fetchStudentDetails();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      setToast({ type: "error", message: err.response?.data?.message || "Failed to unassign advisor" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleSuspend = async () => {
     if (!window.confirm("Are you sure you want to suspend this student?")) return;
@@ -162,6 +308,8 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
 
   const enrolledSubjects = student?.enrolled_subjects || student?.enrolled_subject || studentInfo?.enrolled_subjects || studentInfo?.enrolled_subject || student?.subjects || [];
   const enrolledCourses = student?.courses || student?.course_enrollments || studentInfo?.courses || studentInfo?.course_enrollments || [];
+  const guardiansList = student?.guardians || studentInfo?.guardians || [];
+  const advisorsList = student?.advisors || studentInfo?.advisors || [];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -205,7 +353,7 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#131320] w-full max-w-[800px] rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] relative text-[#0F2843] dark:text-gray-100 font-sans">
+      <div className="bg-white dark:bg-[#131320] w-full max-w-[850px] rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] relative text-[#0F2843] dark:text-gray-100 font-sans">
         
         {/* Main Content Scrollable Area */}
         <div className={`flex-1 overflow-y-auto p-8 md:p-10 ${isSuspended ? "opacity-60 grayscale-[0.2]" : ""}`}>
@@ -335,22 +483,130 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
               />
             </div>
 
-            {/* Guardians */}
+            {/* GUARDIANS MANAGEMENT SECTION */}
             <div className="space-y-3">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Guardians</label>
-              <div className="flex flex-col gap-2">
-                {student?.guardians?.length > 0 || studentInfo?.guardians?.length > 0 ? (
-                  (student.guardians || studentInfo.guardians).map((g, idx) => (
-                    <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-between border border-gray-100 dark:border-gray-700">
-                       <div>
-                         <p className="font-bold text-sm text-[#0F2843] dark:text-white">{g.firstname} {g.surname}</p>
-                         <p className="text-xs text-gray-400">{g.email} • {g.tel}</p>
-                       </div>
-                    </div>
-                  ))
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">
+                  Guardians ({guardiansList.length})
+                </label>
+                {!isPreview && (
+                  <button
+                    type="button"
+                    onClick={() => setShowGuardianModal(true)}
+                    className="px-3 py-1.5 bg-[#0F2843]/10 hover:bg-[#0F2843]/20 dark:bg-white/10 dark:hover:bg-white/20 text-[#0F2843] dark:text-white rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                  >
+                    <Icon icon="heroicons:plus-solid" className="w-3.5 h-3.5" />
+                    Add Guardian
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                {guardiansList.length > 0 ? (
+                  guardiansList.map((g, idx) => {
+                    const relationship = g.pivot?.relationship || g.relationship || "Guardian";
+                    return (
+                      <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-between border border-gray-200/80 dark:border-gray-700 shadow-sm">
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300 flex items-center justify-center font-black text-sm border border-amber-500/30">
+                            {g.firstname?.[0]?.toUpperCase() || "G"}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-extrabold text-sm text-[#0F2843] dark:text-white">{g.firstname} {g.surname}</p>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                {relationship}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{g.email || "No Email"} • {g.tel || "No Phone"}</p>
+                          </div>
+                        </div>
+
+                        {!isPreview && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveGuardian(g.id)}
+                            disabled={actionLoading}
+                            title="Unlink Guardian"
+                            className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-all"
+                          >
+                            <Icon icon="heroicons:trash-solid" className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })
                 ) : (
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-gray-700">
-                    <p className="text-sm font-semibold text-gray-500">No guardian information provided</p>
+                  <div className="p-6 bg-gray-50/70 dark:bg-gray-800/40 rounded-2xl flex flex-col items-center justify-center border border-dashed border-gray-200 dark:border-gray-700 gap-2">
+                    <Icon icon="heroicons:user-group" className="w-8 h-8 text-gray-400" />
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400">No guardian assigned to this student yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ADVISORS MANAGEMENT SECTION */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">
+                  Assigned Advisors ({advisorsList.length})
+                </label>
+                {!isPreview && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvisorModal(true)}
+                    className="px-3 py-1.5 bg-[#0F2843]/10 hover:bg-[#0F2843]/20 dark:bg-white/10 dark:hover:bg-white/20 text-[#0F2843] dark:text-white rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                  >
+                    <Icon icon="heroicons:plus-solid" className="w-3.5 h-3.5" />
+                    Assign Advisor
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                {advisorsList.length > 0 ? (
+                  advisorsList.map((adv, idx) => {
+                    const roleBadge = adv.pivot?.role || adv.role || "Advisor";
+                    const assignedAt = adv.pivot?.assigned_at ? new Date(adv.pivot.assigned_at).toLocaleDateString() : null;
+
+                    return (
+                      <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-between border border-gray-200/80 dark:border-gray-700 shadow-sm">
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-700 dark:text-purple-300 flex items-center justify-center font-black text-sm border border-purple-500/30">
+                            {adv.firstname?.[0]?.toUpperCase() || "A"}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-extrabold text-sm text-[#0F2843] dark:text-white">{adv.firstname} {adv.surname}</p>
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                {roleBadge}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                              {adv.email || "No Email"} • Staff ID: {adv.staff_id || `#${adv.id}`}
+                              {assignedAt && ` • Assigned: ${assignedAt}`}
+                            </p>
+                          </div>
+                        </div>
+
+                        {!isPreview && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAdvisor(adv.id)}
+                            disabled={actionLoading}
+                            title="Unassign Advisor"
+                            className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-all"
+                          >
+                            <Icon icon="heroicons:trash-solid" className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="p-6 bg-gray-50/70 dark:bg-gray-800/40 rounded-2xl flex flex-col items-center justify-center border border-dashed border-gray-200 dark:border-gray-700 gap-2">
+                    <Icon icon="heroicons:academic-cap" className="w-8 h-8 text-gray-400" />
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400">No advisor assigned to this student yet.</p>
                   </div>
                 )}
               </div>
@@ -367,7 +623,9 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
                       <p className="text-[11px] font-black uppercase text-gray-400 tracking-wider mb-2.5">Enrolled Courses ({enrolledCourses.length})</p>
                       <div className="flex flex-wrap gap-2">
                         {enrolledCourses.map((ce, idx) => {
-                          const courseName = ce?.title || ce?.name || ce?.course?.title || ce?.course?.name || `Course ID: ${ce?.id || ce?.course_id}`;
+                          const cId = typeof ce === 'object' ? (ce?.course_id || ce?.id) : ce;
+                          const foundCourse = allCourses.find(c => String(c.id) === String(cId) || String(c.course_id) === String(cId));
+                          const courseName = ce?.title || ce?.name || ce?.course?.title || ce?.course?.name || foundCourse?.title || foundCourse?.name || `Course #${cId}`;
                           return (
                             <span key={idx} className="px-3 py-1.5 bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-white rounded-lg text-xs font-bold border border-[#0F2843]/20 dark:border-white/20 flex items-center gap-1.5">
                               <Icon icon="heroicons:academic-cap-solid" className="w-3.5 h-3.5" />
@@ -385,7 +643,9 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
                       <p className="text-[11px] font-black uppercase text-gray-400 tracking-wider mb-2.5">Enrolled Subjects ({enrolledSubjects.length})</p>
                       <div className="flex flex-wrap gap-2">
                         {enrolledSubjects.map((sub, idx) => {
-                          const subName = sub?.title || sub?.name || sub?.subject?.title || sub?.subject?.name || sub?.subject_name || `Subject ID: ${sub?.id || sub?.subject_id}`;
+                          const sId = typeof sub === 'object' ? (sub?.subject_id || sub?.id) : sub;
+                          const foundSubject = allSubjects.find(s => String(s.id) === String(sId) || String(s.subject_id) === String(sId));
+                          const subName = sub?.title || sub?.name || sub?.subject?.title || sub?.subject?.name || sub?.subject_name || foundSubject?.title || foundSubject?.name || `Subject #${sId}`;
                           return (
                             <span key={idx} className="px-3 py-1.5 bg-[#BB9E7F]/15 text-[#BB9E7F] dark:text-[#d4b592] rounded-lg text-xs font-bold border border-[#BB9E7F]/30 shadow-sm flex items-center gap-1.5">
                               <Icon icon="heroicons:book-open-solid" className="w-3.5 h-3.5" />
@@ -466,6 +726,277 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
           </button>
         )}
       </div>
+
+      {/* MODAL: ADD / LINK GUARDIAN */}
+      {showGuardianModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-md px-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#131320] w-full max-w-lg rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-200 dark:border-gray-700 space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#0F2843] text-white flex items-center justify-center">
+                  <Icon icon="heroicons:user-group-solid" className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-[#0F2843] dark:text-white uppercase tracking-tight">Add Guardian</h3>
+                  <p className="text-[11px] text-gray-400 font-bold">Link or register a guardian for {studentInfo?.firstname}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowGuardianModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
+              >
+                <Icon icon="heroicons:x-mark-20-solid" className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Mode Switcher */}
+            <div className="flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
+              <button
+                type="button"
+                onClick={() => setGuardianMode("existing")}
+                className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                  guardianMode === "existing"
+                    ? "bg-[#0F2843] text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
+                }`}
+              >
+                Select Existing
+              </button>
+              <button
+                type="button"
+                onClick={() => setGuardianMode("new")}
+                className={`flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                  guardianMode === "new"
+                    ? "bg-[#0F2843] text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
+                }`}
+              >
+                Create New
+              </button>
+            </div>
+
+            <form onSubmit={handleAddGuardian} className="space-y-4">
+              {guardianMode === "existing" ? (
+                <div>
+                  <label className="text-[11px] font-bold text-gray-400 ml-1 block mb-1.5">Choose Registered Guardian</label>
+                  <select
+                    value={selectedGuardianId}
+                    onChange={(e) => setSelectedGuardianId(e.target.value)}
+                    required
+                    className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                  >
+                    <option value="" disabled>Select guardian from directory...</option>
+                    {allGuardians.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.firstname} {g.surname} ({g.email || g.tel || `#${g.id}`})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 ml-1 block mb-1">First Name *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Adebayo"
+                        required
+                        value={newGuardianForm.firstname}
+                        onChange={(e) => setNewGuardianForm(prev => ({ ...prev, firstname: e.target.value }))}
+                        className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 ml-1 block mb-1">Surname *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Ogunlesi"
+                        required
+                        value={newGuardianForm.surname}
+                        onChange={(e) => setNewGuardianForm(prev => ({ ...prev, surname: e.target.value }))}
+                        className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 ml-1 block mb-1">Email Address</label>
+                      <input
+                        type="email"
+                        placeholder="e.g. guardian@example.com"
+                        value={newGuardianForm.email}
+                        onChange={(e) => setNewGuardianForm(prev => ({ ...prev, email: e.target.value }))}
+                        className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 ml-1 block mb-1">Phone Number</label>
+                      <input
+                        type="tel"
+                        placeholder="e.g. 08012345678"
+                        value={newGuardianForm.tel}
+                        onChange={(e) => setNewGuardianForm(prev => ({ ...prev, tel: e.target.value }))}
+                        className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 ml-1 block mb-1">Gender *</label>
+                      <select
+                        value={newGuardianForm.gender}
+                        onChange={(e) => setNewGuardianForm(prev => ({ ...prev, gender: e.target.value }))}
+                        className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                      >
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="others">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 ml-1 block mb-1">Date of Birth</label>
+                      <input
+                        type="date"
+                        value={newGuardianForm.date_of_birth}
+                        onChange={(e) => setNewGuardianForm(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                        className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 ml-1 block mb-1">Location (State/Country)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Lagos, Nigeria"
+                        value={newGuardianForm.location}
+                        onChange={(e) => setNewGuardianForm(prev => ({ ...prev, location: e.target.value }))}
+                        className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 ml-1 block mb-1">Residential Address</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 12 Broad Street, Ikeja"
+                        value={newGuardianForm.address}
+                        onChange={(e) => setNewGuardianForm(prev => ({ ...prev, address: e.target.value }))}
+                        className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="text-[11px] font-bold text-gray-400 ml-1 block mb-1.5">Relationship to Student</label>
+                <select
+                  value={guardianRelationship}
+                  onChange={(e) => setGuardianRelationship(e.target.value)}
+                  className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                >
+                  <option value="parent">Parent</option>
+                  <option value="relative">Relative</option>
+                  <option value="other">Other / Guardian</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setShowGuardianModal(false)}
+                  className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-black text-xs uppercase rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="flex-1 py-3 bg-[#0F2843] hover:bg-[#09314F] text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  {actionLoading ? "Linking..." : "Link Guardian"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ASSIGN ADVISOR */}
+      {showAdvisorModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-md px-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#131320] w-full max-w-lg rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-200 dark:border-gray-700 space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center">
+                  <Icon icon="heroicons:academic-cap-solid" className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-[#0F2843] dark:text-white uppercase tracking-tight">Assign Advisor</h3>
+                  <p className="text-[11px] text-gray-400 font-bold">Assign an academic advisor to {studentInfo?.firstname}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowAdvisorModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
+              >
+                <Icon icon="heroicons:x-mark-20-solid" className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAssignAdvisor} className="space-y-4">
+              <div>
+                <label className="text-[11px] font-bold text-gray-400 ml-1 block mb-1.5">Select Advisor</label>
+                <select
+                  value={selectedAdvisorId}
+                  onChange={(e) => setSelectedAdvisorId(e.target.value)}
+                  required
+                  className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                >
+                  <option value="" disabled>Choose advisor from staff directory...</option>
+                  {allAdvisors.map((adv) => (
+                    <option key={adv.id} value={adv.id}>
+                      {adv.firstname} {adv.surname} ({adv.email || `Staff ID: ${adv.staff_id}`})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-gray-400 ml-1 block mb-1.5">Advisory Role Designation</label>
+                <input
+                  type="text"
+                  value={advisorRole}
+                  onChange={(e) => setAdvisorRole(e.target.value)}
+                  placeholder="e.g. Primary Advisor, Career Advisor"
+                  className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvisorModal(false)}
+                  className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-black text-xs uppercase rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  {actionLoading ? "Assigning..." : "Assign Advisor"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
