@@ -272,18 +272,18 @@ export default function Blog() {
 
                           {/* Post Tags */}
                           {post.meta_keywords && (
-                            <div className="flex flex-wrap gap-1.5 mb-3 overflow-hidden h-[20px]">
+                            <div className="flex flex-wrap gap-1.5 mb-3 overflow-hidden h-[22px]">
                               {post.meta_keywords.split(',').slice(0, 3).map((tag, idx) => {
                                 const trimmed = tag.trim();
                                 if (!trimmed) return null;
                                 return (
-                                  <span key={idx} className="px-1.5 py-0.5 rounded-md bg-[#09314F]/10 dark:bg-[#09314F]/85 text-[#09314F] dark:text-[#C5A97A] text-[8px] font-black uppercase tracking-wider truncate max-w-[80px]">
+                                  <span key={idx} className="px-2 py-0.5 rounded-full bg-gray-100/90 dark:bg-white/10 backdrop-blur-sm border border-gray-200/60 dark:border-white/10 text-[#09314F] dark:text-[#C5A97A] text-[9px] font-bold tracking-wide truncate max-w-[90px]">
                                     #{trimmed}
                                   </span>
                                 );
                               })}
                               {post.meta_keywords.split(',').length > 3 && (
-                                <span className="text-[9px] text-gray-400 font-bold self-center">...</span>
+                                <span className="text-[9px] text-gray-400 font-bold self-center">+{post.meta_keywords.split(',').length - 3}</span>
                               )}
                             </div>
                           )}

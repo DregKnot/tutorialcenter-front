@@ -41,6 +41,7 @@ export default function CoursesManagement() {
   const [isSubjectDetailModalOpen, setIsSubjectDetailModalOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [expandedCourseIds, setExpandedCourseIds] = useState(new Set());
+  const [initialEditItem, setInitialEditItem] = useState(null);
 
   const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
   const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
@@ -179,7 +180,12 @@ export default function CoursesManagement() {
                 Back / <span className="font-bold text-[#0F2843] dark:text-white">{activeTab === "courses" ? "Edit Courses" : "Edit Subjects"}</span>
               </span>
             </button>
-            <CourseEdit mode={activeTab} showToast={setToast} />
+            <CourseEdit 
+              mode={activeTab} 
+              showToast={setToast} 
+              initialEditItem={initialEditItem} 
+              onClearInitialEditItem={() => setInitialEditItem(null)} 
+            />
           </div>
         )}
 
@@ -447,6 +453,8 @@ export default function CoursesManagement() {
                                           onClick={(e) => { 
                                             e.stopPropagation(); 
                                             setSelectedSubject(subject);
+                                            setInitialEditItem({ type: "subject", data: subject });
+                                            setActiveTab("subjects");
                                             setActiveView("edit");
                                             setActiveMenu(null);
                                           }}
@@ -519,8 +527,8 @@ export default function CoursesManagement() {
           setIsDetailModalOpen(false);
         }}
         onEdit={(course) => {
-          // You could open another modal or switch view here
-          setSelectedCourse(course);
+          setInitialEditItem({ type: "course", data: course });
+          setActiveTab("courses");
           setActiveView("edit");
           setIsDetailModalOpen(false);
         }}
@@ -547,7 +555,8 @@ export default function CoursesManagement() {
           setIsSubjectDetailModalOpen(false);
         }}
         onEdit={(subject) => {
-          setSelectedSubject(subject);
+          setInitialEditItem({ type: "subject", data: subject });
+          setActiveTab("subjects");
           setActiveView("edit");
           setIsSubjectDetailModalOpen(false);
         }}

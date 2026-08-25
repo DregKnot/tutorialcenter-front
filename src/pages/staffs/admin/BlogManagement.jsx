@@ -32,8 +32,112 @@ export default function BlogManagement() {
     meta_keywords: "",
   });
 
+  const [tagInput, setTagInput] = useState("");
+  const [showAllPreviousTags, setShowAllPreviousTags] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+
+  // Extract all unique existing tags across all blog posts
+  const allExistingTags = useMemo(() => {
+    const tagSet = new Set();
+    blogs.forEach((b) => {
+      if (b.meta_keywords) {
+        b.meta_keywords.split(",").forEach((t) => {
+          const clean = t.trim().toLowerCase().replace(/^#+/, "");
+          if (clean) tagSet.add(clean);
+        });
+      }
+    });
+    return Array.from(tagSet);
+  }, [blogs]);
+
+  // Current post's active tags
+  const currentTags = useMemo(() => {
+    if (!formData.meta_keywords) return [];
+    return formData.meta_keywords
+      .split(",")
+      .map((t) => t.trim().toLowerCase().replace(/^#+/, ""))
+      .filter(Boolean);
+  }, [formData.meta_keywords]);
+
+  // Tag helper handlers - preserves spaces within a single tag phrase
+  const handleAddTag = useCallback((rawText) => {
+    if (!rawText) return;
+    const tokens = rawText
+      .split(/[,;\n]|\s{2,}/)
+      .map((t) => t.trim().toLowerCase().replace(/^#+/, ""))
+      .filter(Boolean);
+
+    if (tokens.length === 0) return;
+
+    setFormData((prev) => {
+      const existing = prev.meta_keywords
+        ? prev.meta_keywords
+            .split(",")
+            .map((t) => t.trim().toLowerCase().replace(/^#+/, ""))
+            .filter(Boolean)
+        : [];
+      const updated = Array.from(new Set([...existing, ...tokens]));
+      return { ...prev, meta_keywords: updated.join(", ") };
+    });
+    setTagInput("");
+  }, []);
+
+  const handleRemoveTag = useCallback((tagToRemove) => {
+    setFormData((prev) => {
+      const existing = prev.meta_keywords
+        ? prev.meta_keywords
+            .split(",")
+            .map((t) => t.trim().toLowerCase().replace(/^#+/, ""))
+            .filter(Boolean)
+        : [];
+      const updated = existing.filter((t) => t !== tagToRemove);
+      return { ...prev, meta_keywords: updated.join(", ") };
+    });
+  }, []);
+
+  const handleTogglePreviousTag = (tag) => {
+    if (currentTags.includes(tag)) {
+      handleRemoveTag(tag);
+    } else {
+      handleAddTag(tag);
+    }
+  };
+
+  // Group tag after 2 space clicks or Enter
+  const handleTagInputKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (tagInput.trim()) {
+        handleAddTag(tagInput.trim());
+      }
+    } else if (e.key === " " || e.key === "Spacebar") {
+      // If tag input already has a trailing space and user presses space again (2 space clicks)
+      if (tagInput.endsWith(" ") && tagInput.trim().length > 0) {
+        e.preventDefault();
+        handleAddTag(tagInput.trim());
+      }
+    } else if (e.key === "Backspace" && !tagInput && currentTags.length > 0) {
+      e.preventDefault();
+      handleRemoveTag(currentTags[currentTags.length - 1]);
+    }
+  };
+
+  const handleTagInputChange = (e) => {
+    const val = e.target.value;
+    // Catch double-space typed/pasted or comma/newlines
+    if (val.includes("  ") || val.includes(",") || val.includes("\n")) {
+      handleAddTag(val);
+    } else {
+      setTagInput(val);
+    }
+  };
+
+  const handleTagInputBlur = () => {
+    if (tagInput.trim()) {
+      handleAddTag(tagInput.trim());
+    }
+  };
 
   const API_BASE_URL =
     process.env.REACT_APP_API_URL ||
@@ -189,7 +293,9 @@ export default function BlogManagement() {
       status: "draft",
       is_featured: false,
       allow_comments: true,
+      meta_keywords: "",
     });
+    setTagInput("");
     setImageFile(null);
     setImagePreview(null);
     setEditingBlogId(null);
@@ -250,7 +356,21 @@ export default function BlogManagement() {
       payload.append("status", postStatus);
       payload.append("is_featured", formData.is_featured ? "1" : "0");
       payload.append("allow_comments", formData.allow_comments ? "1" : "0");
-      payload.append("meta_keywords", formData.meta_keywords.trim());
+      let finalKeywords = (formData.meta_keywords || "").trim();
+      if (tagInput.trim()) {
+        const extraTokens = tagInput
+          .split(/[,;\n]|\s{2,}/)
+          .map((t) => t.trim().toLowerCase().replace(/^#+/, ""))
+          .filter(Boolean);
+        if (extraTokens.length > 0) {
+          const existing = finalKeywords
+            ? finalKeywords.split(",").map((t) => t.trim().toLowerCase().replace(/^#+/, "")).filter(Boolean)
+            : [];
+          finalKeywords = Array.from(new Set([...existing, ...extraTokens])).join(", ");
+        }
+      }
+
+      payload.append("meta_keywords", finalKeywords);
 
       if (imageFile) {
         payload.append("featured_image", imageFile);
@@ -311,7 +431,7 @@ export default function BlogManagement() {
   const quillFormats = [
     "header", "font", "size",
     "bold", "italic", "underline", "strike", "blockquote", "code-block",
-    "list", "bullet", "indent",
+    "list", "indent",
     "script",
     "direction", "align",
     "link", "image", "video",
@@ -673,29 +793,25 @@ export default function BlogManagement() {
 
                 {/* Rendered HTML */}
                 <div 
-                  className="prose dark:prose-invert max-w-full text-gray-800 dark:text-gray-200 leading-relaxed text-sm sm:text-base pt-4 break-words overflow-hidden [&_p]:mb-4 [&_img]:rounded-2xl [&_img]:max-w-full [&_img]:h-auto [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_code]:break-all [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:block"
+                  className="quill-content blog-article-content prose dark:prose-invert max-w-full text-gray-800 dark:text-gray-200 leading-relaxed text-sm sm:text-base pt-4 break-words overflow-hidden [&_p]:mb-4 [&_img]:rounded-2xl [&_img]:max-w-full [&_img]:h-auto [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_code]:break-all [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:block"
                   dangerouslySetInnerHTML={{ __html: formData.content || "<p>No content written yet.</p>" }}
                 />
 
-                {/* Tags (Meta Keywords) */}
+                {/* Tags (Meta Keywords) Preview */}
                 {formData.meta_keywords && (
                   <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-bold text-gray-500 dark:text-gray-400 mr-1 flex items-center gap-1">
-                        <Icon icon="lucide:tags" className="w-3 h-3" /> Tags:
+                        <Icon icon="lucide:tags" className="w-3 h-3 text-[#C5A97A]" /> Tags:
                       </span>
-                      {formData.meta_keywords.split(',').map((tag, index) => {
-                        const trimmed = tag.trim();
-                        if (!trimmed) return null;
-                        return (
-                          <span 
-                            key={index} 
-                            className="px-2 py-0.5 rounded-md bg-[#09314F]/10 dark:bg-[#09314F]/85 text-[#09314F] dark:text-[#C5A97A] text-[9px] font-black uppercase tracking-wider"
-                          >
-                            #{trimmed}
-                          </span>
-                        );
-                      })}
+                      {currentTags.map((tag, index) => (
+                        <span 
+                          key={index} 
+                          className="px-3 py-1 rounded-full bg-gray-100/80 dark:bg-white/10 backdrop-blur-md border border-gray-200/80 dark:border-white/15 text-[#09314F] dark:text-[#C5A97A] text-[11px] font-bold shadow-sm"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -734,19 +850,92 @@ export default function BlogManagement() {
                     />
                   </div>
 
-                  {/* Tags / Keywords */}
-                  <div>
-                    <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center justify-between">
-                      <span>Tags & Keywords</span>
-                      <span className="text-[10px] text-gray-400 font-normal">Comma separated (e.g. jamb, math, study)</span>
+                  {/* Interactive Tags & Keywords Creator */}
+                  <div className="space-y-2.5">
+                    <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Icon icon="lucide:tags" className="w-3.5 h-3.5 text-[#C5A97A]" /> Tags & Keywords
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-normal">Type and press <span className="font-bold text-[#09314F] dark:text-white">Double Space</span> or <span className="font-bold text-[#09314F] dark:text-white">Enter</span> to group</span>
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. jamb, utme, study tips, mathematics"
-                      value={formData.meta_keywords}
-                      onChange={(e) => setFormData({ ...formData, meta_keywords: e.target.value })}
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 focus:outline-none focus:border-[#C5A97A]"
-                    />
+
+                    {/* Tag Box with Glass Badges and Inline Typing */}
+                    <div className="min-h-[52px] p-2.5 bg-gray-50 dark:bg-[#06243A] rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-2 focus-within:border-[#C5A97A] transition-colors">
+                      {currentTags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 dark:bg-white/10 backdrop-blur-md border border-gray-200/90 dark:border-white/15 text-[#09314F] dark:text-[#C5A97A] text-xs font-extrabold shadow-sm transition-all animate-in zoom-in-95 duration-200 group"
+                        >
+                          <span>#{tag}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="w-4 h-4 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
+                          >
+                            <Icon icon="lucide:x" className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+
+                      <input
+                        type="text"
+                        placeholder={currentTags.length === 0 ? "Type tag name (press Double Space or Enter)..." : "Add another tag (Double Space or Enter)..."}
+                        value={tagInput}
+                        onChange={handleTagInputChange}
+                        onKeyDown={handleTagInputKeyDown}
+                        onBlur={handleTagInputBlur}
+                        className="flex-1 min-w-[160px] bg-transparent text-xs font-medium text-gray-800 dark:text-gray-200 focus:outline-none px-2 py-1"
+                      />
+                    </div>
+
+                    {/* Existing Database Tags Shelf */}
+                    <div className="pt-1">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                          <Icon icon="lucide:database" className="w-3 h-3 text-[#C5A97A]" /> Existing Database Tags ({allExistingTags.length}):
+                        </span>
+                        {allExistingTags.length > 10 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowAllPreviousTags(!showAllPreviousTags)}
+                            className="text-[10px] font-bold text-[#C5A97A] hover:underline"
+                          >
+                            {showAllPreviousTags ? "Show Less" : "Show All"}
+                          </button>
+                        )}
+                      </div>
+
+                      {allExistingTags.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1.5 max-h-28 overflow-y-auto pr-1">
+                          {(showAllPreviousTags ? allExistingTags : allExistingTags.slice(0, 12)).map((prevTag, pIdx) => {
+                            const isSelected = currentTags.includes(prevTag);
+                            return (
+                              <button
+                                key={pIdx}
+                                type="button"
+                                onClick={() => handleTogglePreviousTag(prevTag)}
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all flex items-center gap-1 ${
+                                  isSelected
+                                    ? "bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] shadow-sm scale-[1.02]"
+                                    : "bg-gray-200/60 dark:bg-white/5 hover:bg-gray-300/60 dark:hover:bg-white/15 text-gray-600 dark:text-gray-300 border border-transparent dark:border-white/5"
+                                }`}
+                              >
+                                <span>#{prevTag}</span>
+                                {isSelected ? (
+                                  <Icon icon="lucide:check" className="w-2.5 h-2.5" />
+                                ) : (
+                                  <Icon icon="lucide:plus" className="w-2.5 h-2.5 opacity-60" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#06243A] border border-dashed border-gray-200 dark:border-gray-700/60 text-xs font-semibold text-gray-400 dark:text-gray-500">
+                          None
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Rich Text Editor */}

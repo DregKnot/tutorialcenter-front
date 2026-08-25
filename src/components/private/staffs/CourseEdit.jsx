@@ -11,7 +11,7 @@ import {
   CheckIcon 
 } from "@heroicons/react/24/outline";
 
-export default function CourseEdit({ mode = "courses", showToast }) {
+export default function CourseEdit({ mode = "courses", showToast, initialEditItem, onClearInitialEditItem }) {
   const [courses, setCourses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +73,9 @@ export default function CourseEdit({ mode = "courses", showToast }) {
     fetchData();
   }, [fetchData]);
 
-  const handleEditClick = (type, item) => {
+  // Handle opening edit modal
+  const handleEditClick = useCallback((type, item) => {
+    if (!item) return;
     setEditingItem({ type, data: item });
     setNewName(type === "course" ? item.title : item.name);
     
@@ -107,7 +109,15 @@ export default function CourseEdit({ mode = "courses", showToast }) {
     
     setShowConfirmSave(false);
     setIsModalOpen(true);
-  };
+  }, [API_BASE_URL]);
+
+  // Automatically open the targeted course or subject modal when initialEditItem is provided
+  useEffect(() => {
+    if (initialEditItem && initialEditItem.data) {
+      const type = initialEditItem.type || (mode === "subjects" ? "subject" : "course");
+      handleEditClick(type, initialEditItem.data);
+    }
+  }, [initialEditItem, mode, handleEditClick]);
 
   const handleBannerChange = (e) => {
     const file = e.target.files[0];
@@ -471,7 +481,7 @@ export default function CourseEdit({ mode = "courses", showToast }) {
                       }}
                       formats={[
                         "header", "bold", "italic", "underline", "strike",
-                        "script", "list", "bullet", "blockquote", "link"
+                        "script", "list", "blockquote", "link"
                       ]}
                     />
                   </div>
