@@ -49,6 +49,100 @@ export default function BlogPost() {
     window.scrollTo(0, 0);
   }, [fetchArticle]);
 
+  // Sync dynamic OpenGraph and Twitter card thumbnail meta tags for social crawlers & link previews
+  useEffect(() => {
+    if (!blog) return;
+
+    document.title = `${blog.title} | Tutorial Center`;
+
+    const imageUrl = blog.featured_image
+      ? getBlogImageUrl(blog.featured_image)
+      : `${window.location.origin}/TC 1.png`;
+    const description =
+      blog.excerpt ||
+      (blog.content
+        ? blog.content.replace(/<[^>]+>/g, "").slice(0, 160)
+        : "Read this educational publication on Tutorial Center.");
+    const currentUrl = window.location.href;
+
+    const setMetaTag = (selector, attributeName, attributeValue, content) => {
+      let element = document.querySelector(selector);
+      if (!element) {
+        element = document.createElement("meta");
+        element.setAttribute(attributeName, attributeValue);
+        document.head.appendChild(element);
+      }
+      element.setAttribute("content", content);
+    };
+
+    // Standard meta
+    setMetaTag("meta[name='description']", "name", "description", description);
+
+    // OpenGraph meta tags (WhatsApp, Facebook, LinkedIn, Discord, Telegram, iMessage)
+    setMetaTag("meta[property='og:title']", "property", "og:title", blog.title);
+    setMetaTag("meta[property='og:description']", "property", "og:description", description);
+    setMetaTag("meta[property='og:image']", "property", "og:image", imageUrl);
+    setMetaTag("meta[property='og:image:secure_url']", "property", "og:image:secure_url", imageUrl);
+    setMetaTag("meta[property='og:image:alt']", "property", "og:image:alt", blog.title);
+    setMetaTag("meta[property='og:url']", "property", "og:url", currentUrl);
+    setMetaTag("meta[property='og:type']", "property", "og:type", "article");
+    setMetaTag("meta[property='og:site_name']", "property", "og:site_name", "Tutorial Center");
+
+    // Twitter card meta tags (Twitter / X Large Image Card)
+    setMetaTag("meta[name='twitter:card']", "name", "twitter:card", "summary_large_image");
+    setMetaTag("meta[name='twitter:title']", "name", "twitter:title", blog.title);
+    setMetaTag("meta[name='twitter:description']", "name", "twitter:description", description);
+    setMetaTag("meta[name='twitter:image']", "name", "twitter:image", imageUrl);
+
+    // Image link hint
+    let linkImg = document.querySelector("link[rel='image_src']");
+    if (!linkImg) {
+      linkImg = document.createElement("link");
+      linkImg.setAttribute("rel", "image_src");
+      document.head.appendChild(linkImg);
+    }
+    linkImg.setAttribute("href", imageUrl);
+  }, [blog]);
+
+  // Enhanced Social & Native Web Share with Thumbnail Support
+  const handleShare = async () => {
+    if (!blog) return;
+    const url = window.location.href;
+    const shareData = {
+      title: blog.title,
+      text: blog.excerpt ? `${blog.title}\n\n${blog.excerpt}` : blog.title,
+      url: url,
+    };
+
+    if (navigator.share) {
+      try {
+        if (blog.featured_image && navigator.canShare) {
+          const imageUrl = getBlogImageUrl(blog.featured_image);
+          try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const file = new File([blob], "thumbnail.jpg", { type: blob.type || "image/jpeg" });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({ ...shareData, files: [file] });
+              return;
+            }
+          } catch (e) {
+            // Fallback to URL + text share
+          }
+        }
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Error sharing:", err);
+        }
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      setCommentToast({ message: "Link copied to clipboard with thumbnail metadata!", type: "success" });
+      setTimeout(() => setCommentToast(null), 3500);
+    }
+  };
+
   // Submit Comment
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
@@ -167,50 +261,54 @@ export default function BlogPost() {
             </div>
 
             {/* Share Article Bar */}
-            <div className="flex flex-wrap items-center gap-4 py-3 text-sm border-b border-gray-200 dark:border-gray-800 pb-5">
-              <span className="font-bold text-gray-500 dark:text-gray-400">Share this article:</span>
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 py-3 border-b border-gray-200 dark:border-gray-800 pb-5">
+              <div className="flex flex-wrap items-center gap-2 w-full">
                 <button 
-                  onClick={() => {
-                    const url = window.location.href;
-                    if (navigator.share) {
-                      navigator.share({
-                        title: blog.title,
-                        url: url
-                      }).catch(console.error);
-                    } else {
-                      navigator.clipboard.writeText(url);
-                      alert("Link copied to clipboard!");
-                    }
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  onClick={handleShare}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#09314F] text-white hover:bg-[#09314F]/90 transition-all shadow-sm active:scale-95"
                 >
-                  <Icon icon="lucide:share-2" className="w-4 h-4" />
+                  <Icon icon="lucide:share-2" className="w-4 h-4 text-[#C5A97A]" />
                   <span className="text-xs font-bold">Share / Copy</span>
                 </button>
                 <a 
-                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(blog.title + " " + window.location.href)}`}
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${blog.title}\n\n${window.location.href}`)}`}
                   target="_blank" rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/25 transition-all active:scale-95 font-bold text-xs"
                 >
                   <Icon icon="logos:whatsapp-icon" className="w-4 h-4" />
-                  <span className="text-xs font-bold">WhatsApp</span>
+                  <span>WhatsApp</span>
                 </a>
                 <a 
                   href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(blog.title)}`}
                   target="_blank" rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1DA1F2]/10 text-[#1DA1F2] hover:bg-[#1DA1F2]/20 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1DA1F2]/10 text-[#1DA1F2] hover:bg-[#1DA1F2]/25 transition-all active:scale-95 font-bold text-xs"
                 >
                   <Icon icon="logos:twitter" className="w-4 h-4" />
-                  <span className="text-xs font-bold">Twitter</span>
+                  <span>Twitter</span>
                 </a>
                 <a 
                   href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
                   target="_blank" rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2]/20 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2]/25 transition-all active:scale-95 font-bold text-xs"
                 >
                   <Icon icon="logos:facebook" className="w-4 h-4" />
-                  <span className="text-xs font-bold">Facebook</span>
+                  <span>Facebook</span>
+                </a>
+                <a 
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
+                  target="_blank" rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0A66C2]/10 text-[#0A66C2] hover:bg-[#0A66C2]/25 transition-all active:scale-95 font-bold text-xs"
+                >
+                  <Icon icon="logos:linkedin-icon" className="w-4 h-4" />
+                  <span>LinkedIn</span>
+                </a>
+                <a 
+                  href={`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(blog.title)}`}
+                  target="_blank" rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#24A1DE]/10 text-[#24A1DE] hover:bg-[#24A1DE]/25 transition-all active:scale-95 font-bold text-xs"
+                >
+                  <Icon icon="logos:telegram" className="w-4 h-4" />
+                  <span>Telegram</span>
                 </a>
               </div>
             </div>
@@ -235,16 +333,16 @@ export default function BlogPost() {
 
             {/* Rich Content Body */}
             <div
-              className="prose dark:prose-invert prose-lg max-w-full text-gray-800 dark:text-gray-200 leading-relaxed pt-2 break-words overflow-hidden [&_img]:max-w-full [&_img]:rounded-2xl [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_code]:break-all [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:block space-y-4"
+              className="quill-content blog-article-content prose dark:prose-invert prose-lg max-w-full text-gray-800 dark:text-gray-200 leading-relaxed pt-2 break-words overflow-hidden [&_img]:max-w-full [&_img]:rounded-2xl [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_code]:break-all [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:block space-y-4"
               dangerouslySetInnerHTML={{ __html: blog.content }}
             />
 
             {/* Tags (Meta Keywords) */}
             {blog.meta_keywords && (
-              <div className="pt-8 pb-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-bold text-gray-500 dark:text-gray-400 mr-2 flex items-center gap-1.5">
-                    <Icon icon="lucide:tags" className="w-4 h-4" /> Tags:
+              <div className="pt-8 pb-4 border-t border-gray-100 dark:border-gray-800/80 mt-8">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="text-xs font-black text-gray-400 uppercase tracking-widest mr-1 flex items-center gap-1.5">
+                    <Icon icon="lucide:tags" className="w-4 h-4 text-[#C5A97A]" /> Tags:
                   </span>
                   {blog.meta_keywords.split(',').map((tag, index) => {
                     const trimmed = tag.trim();
@@ -252,7 +350,7 @@ export default function BlogPost() {
                     return (
                       <span 
                         key={index} 
-                        className="px-2.5 py-1 rounded-md bg-[#09314F]/10 dark:bg-[#09314F]/85 text-[#09314F] dark:text-[#C5A97A] text-[10px] font-black uppercase tracking-wider cursor-default"
+                        className="px-3.5 py-1.5 rounded-full bg-gray-100/80 dark:bg-white/10 backdrop-blur-md border border-gray-200/80 dark:border-white/15 text-[#09314F] dark:text-[#C5A97A] text-xs font-bold shadow-sm transition-transform hover:scale-105"
                       >
                         #{trimmed}
                       </span>

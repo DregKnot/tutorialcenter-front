@@ -259,7 +259,7 @@ export default function CourseCreate({ isOpen, onClose, onSuccess, showToast }) 
                   }}
                   formats={[
                     "header", "bold", "italic", "underline", "strike",
-                    "script", "list", "bullet", "blockquote", "link"
+                    "script", "list", "blockquote", "link"
                   ]}
                 />
               </div>

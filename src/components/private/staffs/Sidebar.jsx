@@ -39,7 +39,7 @@ const adminMenuItems = [
   { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
   { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
   { label: "Blogs", icon: DocumentTextIcon, destination: "/staffs/manage-blogs" },
-  { label: "Audit Log", icon: ChartBarIcon },
+  { label: "Audit Log", icon: ChartBarIcon, destination: "/staffs/audit-logs" },
   { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon },
 ];
@@ -57,6 +57,7 @@ const cooMenuItems = [
   { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
   { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
   { label: "Blogs", icon: DocumentTextIcon, destination: "/staffs/manage-blogs" },
+  { label: "Audit Log", icon: ChartBarIcon, destination: "/staffs/audit-logs" },
   { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon },
 ];
@@ -68,7 +69,6 @@ const tutorMenuItems = [
   { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
   { label: "Assessment", icon: ClipboardDocumentListIcon },
   { label: "Exams", icon: ClipboardDocumentCheckIcon },
-  { label: "Feedback", icon: ClipboardDocumentCheckIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon },
 ];
 
@@ -80,7 +80,6 @@ const courseAdvisorMenuItems = [
   { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/calendar" },
   { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon },
-  { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
   { label: "Settings", icon: Cog6ToothIcon },
 ];
 

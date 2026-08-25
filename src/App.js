@@ -101,6 +101,7 @@ const AdminCreateStudent = lazy(() => import("./pages/staffs/admin/AdminCreateSt
 const BlogPost = lazy(() => import("./pages/public/BlogPost.jsx"));
 const CooDashboard = lazy(() => import("./pages/staffs/coo/CooDashboard.jsx"));
 const BlogManagement = lazy(() => import("./pages/staffs/admin/BlogManagement.jsx"));
+const AuditLog = lazy(() => import("./pages/staffs/admin/AuditLog.jsx"));
 const AdminCalendar = lazy(() => import("./pages/staffs/admin/AdminCalendar.jsx"));
 const BadgeDemo = lazy(() => import("./pages/public/BadgeDemo.jsx"));
 
@@ -215,6 +216,7 @@ function App() {
           <Route path="/staffs/dashboard" element={<StaffDashboard />} />
           <Route path="/staffs/coo/dashboard" element={<CooDashboard />} />
           <Route path="/staffs/manage-blogs" element={<BlogManagement />} />
+          <Route path="/staffs/audit-logs" element={<AuditLog />} />
           <Route path="/staffs/feedback" element={<StaffFeedback />} />
           <Route path="/staffs/leaderboard" element={<StaffLeaderboard />} />
           <Route path="/staffs/notifications" element={<StaffNotification />} />

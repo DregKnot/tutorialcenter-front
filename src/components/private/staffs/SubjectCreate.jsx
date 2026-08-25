@@ -314,7 +314,7 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses, sho
                   }}
                   formats={[
                     "header", "bold", "italic", "underline", "strike",
-                    "script", "list", "bullet", "blockquote", "link"
+                    "script", "list", "blockquote", "link"
                   ]}
                 />
               </div>
