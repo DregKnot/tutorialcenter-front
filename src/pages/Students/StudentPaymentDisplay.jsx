@@ -1,6 +1,6 @@
 // pages/Students/StudentPaymentDisplay.jsx
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import RemoveTraining from "../../components/private/Students/RemoveTraining.jsx";
@@ -9,6 +9,7 @@ import PaymentMethodModal from "../../components/private/Students/PaymentMethodM
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { clearDashboardCache } from "../../utils/dashboardCache.js";
 
 export default function StudentPaymentDisplay() {
   const { student, token } = useAuth();
@@ -170,6 +171,10 @@ export default function StudentPaymentDisplay() {
           Accept: "application/json"
         }
       });
+
+      if (student?.id) {
+        clearDashboardCache(student.id);
+      }
 
       setToast({ type: "success", message: "Payment renewed successfully!" });
       setShowPaymentModal(false);
@@ -412,6 +417,55 @@ export default function StudentPaymentDisplay() {
     );
   };
 
+  // Combine all active courses and any previous courses from payment history for complete renewal coverage
+  const renewableCourses = useMemo(() => {
+    const map = new Map();
+
+    // 1. Add all courses from activeCourses (students/courses endpoint)
+    activeCourses.forEach((c) => {
+      const courseId = Number(c.course_id || c.course?.id || c.id);
+      const title = c.course?.title || c.course_name || c.title;
+      const key = courseId ? `cid-${courseId}` : (title ? `title-${title.toLowerCase()}` : `enrollment-${c.enrollment_id || c.id}`);
+      
+      map.set(key, {
+        ...c,
+        course_id: courseId,
+        enrollment_id: c.enrollment_id || c.id,
+        course: c.course || { id: courseId, title: title },
+        course_name: title || c.course?.title,
+        title: title || c.course?.title || `Enrollment #${c.enrollment_id || c.id}`,
+        source: 'active_courses'
+      });
+    });
+
+    // 2. Add any courses from payment history (students/payments endpoint) that might not be in activeCourses
+    payments.forEach((p) => {
+      const courseId = Number(p.course_id || p.course?.id);
+      const title = p.course?.title || p.course_name || p.course_title || p.name;
+      const key = courseId ? `cid-${courseId}` : (title ? `title-${title.toLowerCase()}` : null);
+      
+      if (key && !map.has(key)) {
+        const matchedCourse = allCourses.find((ac) => 
+          (courseId && Number(ac.id) === courseId) || 
+          (title && ac.title?.toLowerCase() === title.toLowerCase())
+        );
+
+        map.set(key, {
+          ...p,
+          course_id: courseId || matchedCourse?.id,
+          enrollment_id: p.course_enrollment_id || p.enrollment_id || p.id,
+          course: matchedCourse || p.course || { id: courseId, title: title || `Course #${courseId}` },
+          course_name: title || matchedCourse?.title,
+          title: title || matchedCourse?.title || `Course #${courseId}`,
+          status: p.status === 'successful' || p.status === 'paid' ? 'expired' : (p.status || 'expired'),
+          source: 'payment_history'
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [activeCourses, payments, allCourses]);
+
   // ===================== RENEW VIEW (ON-GOING TRAINING) =====================
   const RenewView = () => (
     <>
@@ -426,47 +480,67 @@ export default function StudentPaymentDisplay() {
       </button>
 
       <div>
-        <h3 className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-5">On-going Training</h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+          <h3 className="text-sm font-bold text-gray-600 dark:text-gray-300">Registered Trainings & Subscriptions</h3>
+          <span className="text-xs text-gray-400 font-medium">Select a training below to extend or reactivate</span>
+        </div>
 
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-[#09314F] dark:border-white mx-auto" />
           </div>
-        ) : activeCourses.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-400 font-bold">No active trainings found.</p>
+        ) : renewableCourses.length === 0 ? (
+          <div className="text-center py-16 bg-white dark:bg-[#09314F]/30 rounded-3xl border border-gray-100 dark:border-[#09314F] p-8">
+            <p className="text-gray-400 font-bold text-sm">No registered trainings found.</p>
+            <p className="text-xs text-gray-400 mt-1">Enroll in a new course under "Add Training" to get started.</p>
           </div>
         ) : (
           <div className="space-y-4 mb-8">
-            {activeCourses.map((item, index) => {
+            {renewableCourses.map((item, index) => {
               const iStatus = item.status?.toLowerCase();
-              const isCancelled = iStatus === 'cancelled' || iStatus === 'removed' || iStatus === 'inactive';
+              const isCancelled = iStatus === 'cancelled' || iStatus === 'removed';
+              const isExpired = iStatus === 'inactive' || iStatus === 'expired' || iStatus === 'unpaid' || item.source === 'payment_history';
               
               return (
                 <div
                   key={item.enrollment_id || item.id || `active-${index}`}
-                  className={`bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md border rounded-xl p-5 hover:shadow-sm transition-all ${isCancelled ? 'border-red-100 bg-red-50/10 dark:bg-red-900/10 dark:border-red-900/30' : 'border-gray-200 dark:border-[#09314F]'}`}
+                  className={`bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md border rounded-2xl p-6 hover:shadow-md transition-all ${
+                    isCancelled 
+                      ? 'border-red-200 bg-red-50/20 dark:bg-red-900/10 dark:border-red-900/30' 
+                      : isExpired
+                      ? 'border-amber-200 bg-amber-50/20 dark:bg-amber-900/10 dark:border-amber-900/30'
+                      : 'border-gray-200 dark:border-[#09314F]'
+                  }`}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="flex flex-col gap-2">
-                      <h4 className="text-[15px] font-bold text-[#09314F] dark:text-white">
-                        {item.course?.title || item.course_name || `Enrollment #${item.enrollment_id}`}
+                      <h4 className="text-base font-black text-[#09314F] dark:text-white uppercase tracking-tight">
+                        {item.course?.title || item.course_name || item.title || `Enrollment #${item.enrollment_id || item.id}`}
                       </h4>
-                      <div>
+                      <div className="flex items-center gap-2">
                         {isCancelled ? (
-                          <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-tighter border border-red-100 shadow-sm">
+                          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-[9px] font-black uppercase tracking-wider border border-red-200 shadow-sm">
                             Cancelled
                           </span>
+                        ) : isExpired ? (
+                          <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-[9px] font-black uppercase tracking-wider border border-amber-200 shadow-sm">
+                            {item.source === 'payment_history' ? 'Paid Before • Expired' : 'Expired / Inactive'}
+                          </span>
                         ) : (
-                          <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-[9px] font-black uppercase tracking-tighter border border-green-100 shadow-sm">
+                          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[9px] font-black uppercase tracking-wider border border-green-200 shadow-sm">
                             Active
+                          </span>
+                        )}
+                        {item.department && (
+                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                            • {item.department}
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Sub: <span className="font-bold text-gray-700 dark:text-gray-200 ml-2 capitalize">{item.billing_cycle || "—"}</span>
+                        Cycle: <span className="font-bold text-gray-700 dark:text-gray-200 ml-1 capitalize">{item.billing_cycle || "—"}</span>
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
                         {formatDate(item.start_date)} - {formatDate(item.end_date)}
@@ -475,9 +549,18 @@ export default function StudentPaymentDisplay() {
                   </div>
                   <button
                     onClick={() => handleRenewClick(item)}
-                    className={`mt-4 w-full py-3.5 md:py-2 text-white text-sm md:text-xs font-black rounded-xl transition-all shadow-md active:scale-[0.99] ${isCancelled ? 'bg-red-500 hover:bg-red-600' : 'bg-[#09314F] hover:bg-[#0a3d63]'}`}
+                    className={`mt-5 w-full py-3.5 md:py-2.5 text-white text-sm md:text-xs font-black rounded-xl transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2 ${
+                      isCancelled 
+                        ? 'bg-red-600 hover:bg-red-700' 
+                        : isExpired
+                        ? 'bg-amber-600 hover:bg-amber-700'
+                        : 'bg-[#09314F] hover:bg-[#0a3d63]'
+                    }`}
                   >
-                    {isCancelled ? "Re-enroll Training" : "Renew Training"}
+                    <span>↻</span>
+                    <span>
+                      {isCancelled ? "Reactivate & Renew Training" : isExpired ? "Renew Training" : "Extend / Renew Training"}
+                    </span>
                   </button>
                 </div>
               );
@@ -490,12 +573,14 @@ export default function StudentPaymentDisplay() {
 
   // ===================== MODAL =====================
   const DurationModal = () => {
-    const courseInfo = allCourses.find(c => Number(c.id) === Number(selectedPayment?.course_id));
+    const courseId = selectedPayment?.course_id || selectedPayment?.course?.id || selectedPayment?.id;
+    const courseInfo = allCourses.find(c => Number(c.id) === Number(courseId));
+    const basePrice = courseInfo?.price || selectedPayment?.course?.price || selectedPayment?.amount || 0;
     
     const handleSelect = (key) => {
       setSelectedDuration(key);
       const option = DURATION_OPTIONS.find(d => d.key === key);
-      const price = calculatePrice(courseInfo?.price || 0, option.months);
+      const price = calculatePrice(basePrice, option.months);
       setCalculatedPrice(price);
     };
 
@@ -507,7 +592,7 @@ export default function StudentPaymentDisplay() {
           <h2 className="text-2xl font-black text-[#09314F] mb-6 text-center">Select Duration</h2>
           <div className="bg-gray-50 rounded-2xl p-4 mb-6">
             <p className="text-xs text-gray-500 mb-1">Training</p>
-            <p className="font-black text-[#09314F]">{selectedPayment?.course?.title || selectedPayment?.course_name}</p>
+            <p className="font-black text-[#09314F]">{selectedPayment?.course?.title || selectedPayment?.course_name || `Course #${courseId}`}</p>
           </div>
           <div className="space-y-3 mb-8">
             {DURATION_OPTIONS.map((opt) => (
@@ -547,6 +632,9 @@ export default function StudentPaymentDisplay() {
               fetchData();
               setActiveView("main");
             }}
+            onRenewCourse={(enrolledCourse) => {
+              handleRenewClick(enrolledCourse);
+            }}
           />
         ) : (
           <RemoveTraining 
@@ -579,3 +667,4 @@ export default function StudentPaymentDisplay() {
     </DashboardLayout>
   );
 }
+

@@ -109,9 +109,10 @@ export default function StudentExam() {
         Accept: "application/json",
       };
 
-      const [coursesRes, availableRes] = await Promise.all([
+      const [coursesRes, availableRes, paymentsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/students/courses`, { headers }),
         axios.get(`${API_BASE_URL}/api/students/exams/available`, { headers }),
+        axios.get(`${API_BASE_URL}/api/students/payments`, { headers }).catch(() => ({ data: { payments: [] } })),
       ]);
 
       console.log("Students Courses Response:", coursesRes.data);
@@ -121,8 +122,71 @@ export default function StudentExam() {
       const availableData = Array.isArray(availableRes.data)
         ? availableRes.data
         : availableRes.data?.exams || availableRes.data?.data || [];
+      const paymentsList = paymentsRes.data?.payments || paymentsRes.data?.courses || paymentsRes.data?.data || [];
 
-      setCourses(coursesData);
+      const isCourseExpired = (c) => {
+        const status = c.status?.toLowerCase();
+        if (status === 'cancelled' || status === 'removed' || status === 'inactive' || status === 'expired' || status === 'unpaid') {
+          return true;
+        }
+        if (c.end_date) {
+          const end = new Date(c.end_date);
+          if (!isNaN(end.getTime()) && end < new Date()) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      const activeMap = new Map();
+      coursesData.forEach((c) => {
+        if (!isCourseExpired(c)) {
+          const cid = Number(c.course_id || c.course?.id || c.id);
+          if (cid) activeMap.set(cid, c);
+        }
+      });
+
+      paymentsList.forEach((p) => {
+        if (p.status === 'successful' || p.status === 'paid') {
+          const cid = Number(p.course_id || p.course?.id || p.enrollment?.course_id);
+          if (cid && !activeMap.has(cid)) {
+            const paidAt = p.paid_at || p.created_at;
+            let isPaymentExpired = false;
+
+            if (paidAt) {
+              const pDate = new Date(paidAt);
+              const monthsMap = { weekly: 0.25, monthly: 1, quarterly: 3, semi_annual: 6, annual: 12 };
+              const months = monthsMap[p.billing_cycle?.toLowerCase()] || 1;
+              const paymentExpiry = new Date(pDate);
+              paymentExpiry.setDate(paymentExpiry.getDate() + Math.round(months * 30));
+              
+              if (paymentExpiry < new Date()) {
+                isPaymentExpired = true;
+              }
+            }
+
+            if (!isPaymentExpired) {
+              const enrollmentObj = p.enrollment || {};
+              const courseObj = p.enrollment?.course || p.course || { id: cid, title: p.course_title || p.course_name };
+              
+              activeMap.set(cid, {
+                ...enrollmentObj,
+                id: enrollmentObj.id || p.course_enrollment_id || cid,
+                course_id: cid,
+                course: courseObj,
+                course_name: courseObj.title || p.course_title || p.course_name,
+                title: courseObj.title || p.course_title || p.course_name,
+                status: 'active',
+                billing_cycle: p.billing_cycle || enrollmentObj.billing_cycle,
+                subjects: enrollmentObj.subjects || p.subjects || courseObj.subjects || []
+              });
+            }
+          }
+        }
+      });
+
+      const mergedCourses = Array.from(activeMap.values());
+      setCourses(mergedCourses);
       setAvailableExams(availableData);
 
       // Handle pre-filling from Dashboard recommended practice
