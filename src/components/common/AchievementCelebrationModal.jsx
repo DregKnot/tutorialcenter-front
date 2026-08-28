@@ -23,6 +23,8 @@ export default function AchievementCelebrationModal({
   const name = achievement.name || "Achievement Unlocked!";
   const category = achievement.category || "Milestone";
 
+  const count = Number(achievement.earned_count ?? achievement.multiplier ?? achievement.awards?.length ?? 1);
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden select-none animate-in fade-in duration-300">
       {/* Dark Blurred Backdrop */}
@@ -69,7 +71,7 @@ export default function AchievementCelebrationModal({
         {/* Top Header Tag */}
         <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-black uppercase tracking-widest shadow-inner">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>New Achievement Unlocked!</span>
+          <span>{count > 1 ? `Achievement Unlocked (x${count})!` : "New Achievement Unlocked!"}</span>
         </div>
 
         {/* Big 3D Medal Showcase with Full Live Animations */}
@@ -88,13 +90,18 @@ export default function AchievementCelebrationModal({
             {name}
           </h2>
           
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="px-3 py-1 rounded-full bg-white/10 text-cyan-300 text-[11px] font-bold uppercase tracking-wider">
               {category.replace('_', ' ')}
             </span>
             {tier && (
               <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-black uppercase tracking-wider border border-amber-500/30">
                 {tier} Tier
+              </span>
+            )}
+            {count > 1 && (
+              <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-black uppercase tracking-wider border border-amber-500/30">
+                Unlocked x{count}
               </span>
             )}
           </div>

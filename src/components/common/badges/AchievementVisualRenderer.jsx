@@ -213,6 +213,7 @@ export default function AchievementVisualRenderer({
   achievement,
   size = 140,
   earned = true,
+  earnedCount = null,
   showLabel = false,
   animated = false,
   onClick = null,
@@ -220,6 +221,7 @@ export default function AchievementVisualRenderer({
 }) {
   if (!achievement) return null;
 
+  const count = Number(earnedCount ?? achievement.earned_count ?? achievement.awards?.length ?? 1);
   const category = (achievement.category || "onboarding").toLowerCase();
   const type = (achievement.type || "badge").toLowerCase();
   const tier = (achievement.tier || "").toLowerCase();
@@ -242,7 +244,7 @@ export default function AchievementVisualRenderer({
   return (
     <div 
       onClick={onClick}
-      title={`${name} — ${condition}`}
+      title={`${name} — ${condition}${count > 1 ? ` (Unlocked *${count})` : ''}`}
       className={`group relative flex flex-col items-center justify-center transition-transform duration-300 ${
         onClick ? "cursor-pointer hover:scale-105 active:scale-95" : ""
       } ${className}`}

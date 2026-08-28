@@ -293,6 +293,7 @@ export default function StudentAchievements() {
               const condition = getAchievementCondition(item);
               const isEarned = Boolean(item.earned);
               const awards = item.awards || [];
+              const earnedCount = Number(item.earned_count ?? awards.length ?? 1);
               const latestAward = awards[0];
 
               return (
@@ -305,6 +306,15 @@ export default function StudentAchievements() {
                       : "border-gray-100 dark:border-gray-800 hover:border-gray-300 opacity-70 hover:opacity-95"
                   }`}
                 >
+                  {/* Multiplier badge on top right of the card if unlocked more than once */}
+                  {isEarned && earnedCount > 1 && (
+                    <div className="absolute top-4 right-4 z-20">
+                      <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 text-xs font-black tracking-tight shadow-sm">
+                        x{earnedCount}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Badge Display */}
                   <div className="py-4 flex justify-center">
                     <AchievementVisualRenderer
@@ -337,9 +347,9 @@ export default function StudentAchievements() {
                     <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 text-left">
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1 mb-1">
                         {isEarned ? (
-                          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                         ) : (
-                          <Lock className="w-3 h-3 text-gray-400" />
+                          <Lock className="w-3.5 h-3.5 text-gray-400" />
                         )}
                         <span>{isEarned ? "Requirement Met:" : "Unlock Requirement:"}</span>
                       </p>
@@ -351,9 +361,13 @@ export default function StudentAchievements() {
                     {/* Status Badge */}
                     <div className="flex items-center justify-between text-[11px] pt-1">
                       {isEarned ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Unlocked {latestAward?.awarded_at ? new Date(latestAward.awarded_at).toLocaleDateString() : ""}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 truncate">
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">
+                            {earnedCount > 1 
+                              ? `Unlocked (x${earnedCount})` 
+                              : `Unlocked ${latestAward?.awarded_at ? new Date(latestAward.awarded_at).toLocaleDateString() : ''}`}
+                          </span>
                         </span>
                       ) : (
                         <span className="text-gray-400 font-medium flex items-center gap-1">
@@ -362,7 +376,7 @@ export default function StudentAchievements() {
                         </span>
                       )}
 
-                      <span className="text-xs font-bold text-amber-500 group-hover:translate-x-0.5 transition-transform">
+                      <span className="text-xs font-bold text-amber-500 group-hover:translate-x-0.5 transition-transform shrink-0">
                         Inspect →
                       </span>
                     </div>
@@ -378,7 +392,7 @@ export default function StudentAchievements() {
       {/* ── INSPECT MODAL ───────────────────────────────────────────── */}
       {inspectingItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-white dark:bg-[#0e1726] rounded-3xl p-8 border border-gray-100 dark:border-white/15 shadow-2xl text-center space-y-6 animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-md bg-white dark:bg-[#0e1726] rounded-3xl p-8 border border-gray-100 dark:border-white/15 shadow-2xl text-center space-y-6 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             
             {/* Close button */}
             <button
@@ -394,19 +408,25 @@ export default function StudentAchievements() {
                 achievement={inspectingItem}
                 size={170}
                 earned={Boolean(inspectingItem.earned)}
+                earnedCount={Number(inspectingItem.earned_count ?? inspectingItem.awards?.length ?? 1)}
                 animated={true}
               />
             </div>
 
             {/* Details */}
             <div className="space-y-2">
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 <span className="px-3 py-1 rounded-full bg-[#09314F]/10 dark:bg-white/10 text-[#09314F] dark:text-cyan-300 text-[11px] font-bold uppercase tracking-wider">
                   {inspectingItem.category?.replace('_', ' ')}
                 </span>
                 {inspectingItem.tier && (
                   <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300 text-[11px] font-black uppercase tracking-wider border border-amber-500/30">
                     {inspectingItem.tier} Tier
+                  </span>
+                )}
+                {inspectingItem.earned && (inspectingItem.earned_count > 1 || (inspectingItem.awards?.length || 0) > 1) && (
+                  <span className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-300 text-[11px] font-black uppercase tracking-wider border border-amber-500/30">
+                    Unlocked x{inspectingItem.earned_count || inspectingItem.awards?.length}
                   </span>
                 )}
               </div>
@@ -430,6 +450,27 @@ export default function StudentAchievements() {
                 {getAchievementCondition(inspectingItem)}
               </p>
             </div>
+
+            {/* Awards History (if earned multiple times) */}
+            {inspectingItem.earned && inspectingItem.awards && inspectingItem.awards.length > 1 && (
+              <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 text-left space-y-2">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                  Unlock History (*{inspectingItem.awards.length})
+                </p>
+                <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
+                  {inspectingItem.awards.map((award, index) => (
+                    <div key={award.id || index} className="flex items-center justify-between text-[11px] bg-white dark:bg-white/5 p-2 rounded-xl border border-gray-100 dark:border-white/5">
+                      <span className="font-bold text-gray-700 dark:text-gray-200">
+                        Award #{inspectingItem.awards.length - index} {award.subject?.name ? `(${award.subject.name})` : ''}
+                      </span>
+                      <span className="text-gray-400 font-medium">
+                        {award.awarded_at ? new Date(award.awarded_at).toLocaleDateString() : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Test Trigger / Share Action */}
             <div className="flex items-center gap-3 pt-2">
