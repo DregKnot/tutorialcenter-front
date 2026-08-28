@@ -85,7 +85,7 @@ export default function StudentAchievements() {
   });
 
   return (
-    <DashboardLayout>
+    <DashboardLayout pagetitle="Achievements & Badges" hideRightPanel={true}>
       <div className="space-y-8 pb-16 select-none animate-in fade-in duration-300">
         
         {/* ── TOP HERO BANNER: TROPHY ROOM & LIVE PROGRESS ─────────────────── */}
