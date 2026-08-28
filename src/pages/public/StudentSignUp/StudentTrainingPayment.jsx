@@ -19,9 +19,6 @@ export const StudentTrainingPayment = () => {
   // Base URL for API, using environment variable with fallback
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
     
-  // Base URL for Affiliate API
-  const AFFILIATE_API_URL = process.env.REACT_APP_AFFILIATE_URL || "http://tutorialcenter-affiliate.test" || "http://localhost:8000";
-    
   /* ================= INIT ================= */
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("studentdata"));
@@ -68,145 +65,55 @@ export const StudentTrainingPayment = () => {
     }
   };
 
+  /* ================= PAYSTACK METADATA ================= */
+  const paystackMetadata = useMemo(() => {
+    const studentId = studentData?.data?.id;
+    const selectedSubjects = studentData?.selectedSubjects || {};
+    const referralCode = studentData?.referral_code;
+
+    const courses = Object.entries(selectedDurations)
+      .filter(([_, duration]) => Boolean(duration))
+      .map(([courseId, duration]) => ({
+        course_id: Number(courseId),
+        billing_cycle: duration.duration,
+        price: Number(duration.price || 0),
+        subjects: selectedSubjects[courseId] || [],
+      }));
+
+    return {
+      type: "student_enrollment",
+      student_id: studentId,
+      courses,
+      referral_code: referralCode,
+    };
+  }, [studentData, selectedDurations]);
+
   /* ================= PAYSTACK SUCCESS ================= */
   const handlePaystackSuccess = async (response) => {
-    // Robust email retrieval from localStorage
-    const storedData = JSON.parse(localStorage.getItem("studentdata"));
-    const storedInfo = JSON.parse(localStorage.getItem("student_info"));
-    const studentEmail = storedData?.data?.email || storedInfo?.email || storedInfo?.data?.email;
-    const studentTel = storedData?.data?.tel || storedInfo?.tel || storedInfo?.data?.tel; 
-
-    
-    if (!studentEmail && !studentTel) {
-      alert("Student email or phone number not found. Please re-register or log in.");
-      return;
-    }
-
     setProcessing(true);
 
     try {
-      const studentId = studentData.data.id;
-      const selectedSubjects = studentData.selectedSubjects;
-
-      // Loop through courses sequentially
-      for (const [courseId, duration] of Object.entries(selectedDurations)) {
-        console.log(`Starting enrollment for course ${courseId}...`);
-
-        // 1️⃣ COURSE ENROLLMENT
-        let courseEnrollmentId;
-        try {
-          const courseRes = await axios.post(
-            `${API_BASE_URL}/api/course/enrollment`,
-            {
-              student_id: studentId,
-              course_id: Number(courseId),
-              billing_cycle: duration.duration,
-            },
-          );
-          courseEnrollmentId = courseRes.data.enrollment.id;
-          console.log(
-            `Course ${courseId} enrolled successfully with ID ${courseEnrollmentId}`,
-          );
-        } catch (err) {
-          console.error(
-            `Course enrollment failed for course ${courseId}:`,
-            err.response?.data || err,
-          );
-          alert(
-            `Enrollment failed for course ${courseId}. Skipping to next course.`,
-          );
-          continue; // Skip to next course
-        }
-        const paymentReference = `TC-${Date.now()}-${courseId}-${Math.floor(Math.random() * 1000)}`;
-        // 2️⃣ SUBJECT ENROLLMENT (sequentially)
-        const subjects = selectedSubjects?.[courseId] || [];
-        for (const subjectId of subjects) {
-          try {
-            await axios.post(`${API_BASE_URL}/api/subject/enrollment`, {
-              student_id: studentId,
-              course_enrollment_id: courseEnrollmentId,
-              subject_id: subjectId,
-            });
-            console.log(`Subject ${subjectId} enrolled successfully`);
-          } catch (err) {
-            console.error(
-              `Subject enrollment failed for subject ${subjectId}:`,
-              err.response?.data || err,
-            );
-            alert(`Enrollment failed for subject ${subjectId}.`);
-          }
-        }
-
-        
-
-        // 3️⃣ PAYMENT RECORD
-        try {
-          await axios.post(`${API_BASE_URL}/api/payments`, {
-            student_id: studentId,
-            course_enrollment_id: courseEnrollmentId,
-            amount: duration.price,
-            billing_cycle: duration.duration,
-            payment_method: "card",
-            gateway: "paystack",
-            status: "successful",
-            gateway_reference: paymentReference,
-            paid_at: new Date().toISOString(),
-            email: studentEmail || studentTel,
-            meta: {
-              channel: response.channel,
-              paid_at: response.paid_at,
-            },
-          });
-          console.log(`Payment recorded for course ${courseId}`);
-        } catch (err) {
-          console.error(
-            `Payment recording failed for course ${courseId}:`,
-            err.response?.data || err,
-          );
-          alert(
-            `Payment was successful for course ${courseId}, but logging failed.`,
-          );
-        }
+      const reference = response?.reference;
+      if (!reference) {
+        throw new Error("No payment reference returned from Paystack.");
       }
 
-      // 4️⃣ REFERRAL SUBMISSION (only if referral code was provided)
-      const referralCode = storedData?.referral_code;
-      if (referralCode) {
-        try {
-          const firstName = storedData?.data?.firstname || "";
-          const lastName = storedData?.data?.surname || "";
-          const name = `${firstName} ${lastName}`.trim();
+      console.log("Verifying payment with backend for reference:", reference);
 
-          // Contact: if both email and tel exist, use tel; otherwise use whichever is available
-          const contact = (studentEmail && studentTel) ? studentTel : (studentEmail || studentTel);
-
-          // Calculate 5% of total payment amount for affiliate earning
-          let totalAmount = 0;
-          for (const duration of Object.values(selectedDurations)) {
-            totalAmount += Number(duration.price);
-          }
-          const referralEarning = totalAmount * 0.05;
-
-          await axios.post(`${AFFILIATE_API_URL}/api/referrals/register`, {
-            name,
-            contact,
-            referral_code: referralCode,
-            amount: referralEarning,
-          });
-          console.log("Referral submitted successfully");
-        } catch (err) {
-          console.error("Referral submission failed:", err.response?.data || err);
-          // Non-blocking: don't alert the user since the payment already succeeded
-        }
-      }
+      await axios.post(`${API_BASE_URL}/api/payments/verify-paystack`, {
+        reference: reference,
+        fallback_metadata: paystackMetadata,
+      });
 
       // Cleanup
       localStorage.removeItem("studentEmail");
       localStorage.removeItem("studentTel");
       navigate("/register/student/training/payment/success");
     } catch (err) {
-      console.error("Unexpected error during enrollment/payment:", err);
-      alert("An unexpected error occurred. Please contact support.");
+      console.error("Unexpected error during verification:", err.response?.data || err);
+      // Even if network blips on frontend, backend webhook handles it automatically
+      alert(err.response?.data?.message || "Payment received! We are setting up your courses.");
+      navigate("/register/student/training/payment/success");
     } finally {
       setProcessing(false);
       closeModal();
@@ -337,7 +244,8 @@ export const StudentTrainingPayment = () => {
               <Paystack
                 amount={totalAmount}
                 email={payerEmail}
-                reference={`TC-${Date.now()}`}
+                reference={`TC-${Date.now()}-${studentData?.data?.id || 'std'}`}
+                metadata={paystackMetadata}
                 onSuccess={handlePaystackSuccess}
                 onClose={closeModal}
               />

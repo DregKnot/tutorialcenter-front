@@ -150,22 +150,23 @@ export default function StudentPaymentDisplay() {
 
     setRenewLoading(true);
     try {
-      const payload = {
+      const reference = response?.reference || `TC-REN-${Date.now()}-${student?.id}`;
+      const courseId = selectedPayment?.enrollment?.course_id || selectedPayment?.course_id;
+
+      const fallbackMetadata = {
+        type: "course_renewal",
         student_id: student?.id,
-        course_enrollment_id: selectedPayment.enrollment_id,
-        amount: calculatedPrice,
+        course_id: courseId,
         billing_cycle: selectedDuration,
-        payment_method: "card",
-        gateway: selectedMethod,
-        status: "successful",
-        gateway_reference: response?.reference || `TC-REN-${Date.now()}-${student?.id}`,
-        paid_at: new Date().toISOString(),
-        email: student?.email
+        price: calculatedPrice,
       };
 
-      console.log("Sending renewal payment:", payload);
+      console.log("Verifying renewal payment with backend:", reference);
 
-      await axios.post(`${API_BASE_URL}/api/payments`, payload, {
+      await axios.post(`${API_BASE_URL}/api/payments/verify-paystack`, {
+        reference: reference,
+        fallback_metadata: fallbackMetadata,
+      }, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json"
@@ -658,6 +659,13 @@ export default function StudentPaymentDisplay() {
           selectedDuration={selectedDuration}
           amount={calculatedPrice}
           email={student?.email}
+          metadata={{
+            type: "course_renewal",
+            student_id: student?.id,
+            course_id: selectedPayment?.enrollment?.course_id || selectedPayment?.course_id,
+            billing_cycle: selectedDuration,
+            price: calculatedPrice,
+          }}
           selectedMethod={selectedMethod}
           setSelectedMethod={setSelectedMethod}
           onContinue={handleRenewContinue}

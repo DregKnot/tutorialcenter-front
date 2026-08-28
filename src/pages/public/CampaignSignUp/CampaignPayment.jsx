@@ -17,7 +17,6 @@ export default function CampaignPayment() {
 
   // Base URL for API, using environment variable with fallback
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
-  const AFFILIATE_API_URL = process.env.REACT_APP_AFFILIATE_URL || "http://tutorialcenter-affiliate.test" || "http://localhost:8000";
 
   /* ================= CONSTANTS ================= */
   const DURATION_OPTIONS = [
@@ -88,103 +87,48 @@ export default function CampaignPayment() {
     }
   };
 
+  /* ================= PAYSTACK METADATA ================= */
+  const paystackMetadata = useMemo(() => {
+    const studentId = studentData?.data?.id;
+    const selectedSubjects = studentData?.selectedSubjects || {};
+    const referralCode = studentData?.referral_code;
+    const courseId = course?.id;
+
+    return {
+      type: "campaign_enrollment",
+      student_id: studentId,
+      courses: courseId ? [{
+        course_id: Number(courseId),
+        billing_cycle: currentOption.key,
+        price: totalAmount,
+        subjects: selectedSubjects[courseId] || [],
+      }] : [],
+      referral_code: referralCode,
+    };
+  }, [studentData, course, currentOption, totalAmount]);
+
   /* ================= PAYSTACK SUCCESS ================= */
   const handlePaystackSuccess = async (response) => {
-    const studentEmail = studentData?.data?.email;
-    const studentTel = studentData?.data?.tel; 
-
     setPaymentStatus("processing");
 
     try {
-      const studentId = studentData.data.id;
-      const selectedSubjects = studentData.selectedSubjects;
-      const courseId = course.id;
-
-      // 1️⃣ COURSE ENROLLMENT
-      let courseEnrollmentId;
-      try {
-        const courseRes = await axios.post(
-          `${API_BASE_URL}/api/course/enrollment`,
-          {
-            student_id: studentId,
-            course_id: Number(courseId),
-            billing_cycle: currentOption.key,
-          },
-        );
-        courseEnrollmentId = courseRes.data.enrollment.id;
-      } catch (err) {
-        console.error("Course enrollment failed:", err);
-        alert("Enrollment failed. Please contact support.");
-        setPaymentStatus("idle");
-        closeModal();
-        return;
+      const reference = response?.reference;
+      if (!reference) {
+        throw new Error("No payment reference returned from Paystack.");
       }
 
-      const paymentReference = `TC-${Date.now()}-${courseId}-${Math.floor(Math.random() * 1000)}`;
-      
-      // 2️⃣ SUBJECT ENROLLMENT (sequentially)
-      const subjects = selectedSubjects?.[courseId] || [];
-      for (const subjectId of subjects) {
-        try {
-          await axios.post(`${API_BASE_URL}/api/subject/enrollment`, {
-            student_id: studentId,
-            course_enrollment_id: courseEnrollmentId,
-            subject_id: subjectId,
-          });
-        } catch (err) {
-          console.error(`Subject enrollment failed for subject ${subjectId}:`, err);
-        }
-      }
+      console.log("Verifying campaign payment with backend for reference:", reference);
 
-      // 3️⃣ PAYMENT RECORD
-      try {
-        await axios.post(`${API_BASE_URL}/api/payments`, {
-          student_id: studentId,
-          course_enrollment_id: courseEnrollmentId,
-          amount: totalAmount,
-          billing_cycle: currentOption.key,
-          payment_method: "card",
-          gateway: "paystack",
-          status: "successful",
-          gateway_reference: paymentReference,
-          paid_at: new Date().toISOString(),
-          email: studentEmail || studentTel,
-          meta: {
-            channel: response.channel,
-            paid_at: response.paid_at,
-          },
-        });
-      } catch (err) {
-        console.error("Payment recording failed:", err);
-      }
+      await axios.post(`${API_BASE_URL}/api/payments/verify-paystack`, {
+        reference: reference,
+        fallback_metadata: paystackMetadata,
+      });
 
-      // 4️⃣ REFERRAL SUBMISSION (only if referral code was provided)
-      const referralCode = studentData?.referral_code;
-      if (referralCode) {
-        try {
-          const firstName = studentData?.data?.firstname || "";
-          const lastName = studentData?.data?.surname || "";
-          const name = `${firstName} ${lastName}`.trim();
-          const contact = (studentEmail && studentTel) ? studentTel : (studentEmail || studentTel);
-
-          const referralEarning = totalAmount * 0.05;
-
-          await axios.post(`${AFFILIATE_API_URL}/api/referrals/register`, {
-            name,
-            contact,
-            referral_code: referralCode,
-            amount: referralEarning,
-          });
-        } catch (err) {}
-      }
-
-      // Cleanup (we don't navigate away, we show success screen)
-      // localStorage.removeItem("studentdata");
       setPaymentStatus("success");
     } catch (err) {
-      console.error("Unexpected error during enrollment/payment:", err);
-      alert("An unexpected error occurred. Please contact support.");
-      setPaymentStatus("idle");
+      console.error("Unexpected error during verification:", err.response?.data || err);
+      // Even if network blips on client, webhook handles it automatically
+      setPaymentStatus("success");
     } finally {
       closeModal();
     }
@@ -350,6 +294,8 @@ export default function CampaignPayment() {
                   <Paystack
                     email={payerEmail}
                     amount={totalAmount}
+                    reference={`TC-CAMP-${Date.now()}-${studentData?.data?.id || 'std'}`}
+                    metadata={paystackMetadata}
                     onSuccess={handlePaystackSuccess}
                     onClose={closeModal}
                   />

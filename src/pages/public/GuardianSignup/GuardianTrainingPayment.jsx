@@ -17,8 +17,6 @@ export default function GuardianTrainingPayment() {
 
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
-  const AFFILIATE_API_URL =
-    process.env.REACT_APP_AFFILIATE_URL || "http://tutorialcenter-affiliate.test" || "http://localhost:8000";
 
   /* ================= INIT ================= */
   useEffect(() => {
@@ -70,146 +68,58 @@ export default function GuardianTrainingPayment() {
     }
   };
 
+  /* ================= PAYSTACK METADATA ================= */
+  const paystackMetadata = useMemo(() => {
+    if (!guardianData || !Array.isArray(guardianData)) return {};
+
+    const storedGuardianStudents = JSON.parse(
+      localStorage.getItem("guardianStudents") || "{}"
+    );
+    const referralCode =
+      storedGuardianStudents?.referral_code ||
+      localStorage.getItem("global_referral_code");
+
+    const students = guardianData.map((student) => {
+      const selectedSubjects = student.selectedSubjects || {};
+      const courses = Object.entries(student.selectedDurations || {})
+        .filter(([_, duration]) => Boolean(duration))
+        .map(([courseId, duration]) => ({
+          course_id: Number(courseId),
+          billing_cycle: duration.duration,
+          price: Number(duration.price || 0),
+          subjects: selectedSubjects[courseId] || [],
+        }));
+
+      return {
+        student_id: student.id,
+        courses,
+      };
+    });
+
+    return {
+      type: "guardian_enrollment",
+      guardian_id: storedGuardianStudents?.id || storedGuardianStudents?.guardian_id,
+      students,
+      referral_code: referralCode,
+    };
+  }, [guardianData]);
+
   /* ================= PAYSTACK SUCCESS ================= */
   const handlePaystackSuccess = async (response) => {
-    if (!guardianData) return;
-
     setProcessing(true);
 
     try {
-      // Loop through each guardian's student
-      for (const student of guardianData) {
-        const selectedSubjects = student.selectedSubjects;
-        const studentId = student.id; 
-
-        if (!studentId) {
-          console.error(`No student ID found for ${student.firstname}`);
-          alert(`Missing ID for ${student.firstname}. Skipping enrollment.`);
-          continue;
-        }
-
-        // Loop through courses for this student
-        for (const [courseId, duration] of Object.entries(
-          student.selectedDurations
-        )) {
-          if (!duration) continue;
-
-          console.log(
-            `Starting enrollment for ${student.firstname} (ID: ${studentId}) - course ${courseId}...`
-          );
-
-          // 1️⃣ COURSE ENROLLMENT
-          let courseEnrollmentId;
-          try {
-            const courseRes = await axios.post(
-              `${API_BASE_URL}/api/course/enrollment`,
-              {
-                student_id: studentId,
-                course_id: Number(courseId),
-                billing_cycle: duration.duration,
-              }
-            );
-            courseEnrollmentId = courseRes.data.enrollment.id;
-            console.log(
-              `Course ${courseId} enrolled successfully with ID ${courseEnrollmentId}`
-            );
-          } catch (err) {
-            console.error(
-              `Course enrollment failed for ${student.firstname} - course ${courseId}:`,
-              err.response?.data || err
-            );
-            alert(
-              `Enrollment failed for ${student.firstname} - course ${courseId}. Skipping.`
-            );
-            continue;
-          }
-
-          const paymentReference = `TC-G-${Date.now()}-${courseId}-${Math.floor(
-            Math.random() * 1000
-          )}`;
-
-          // 2️⃣ SUBJECT ENROLLMENT
-          const subjects = selectedSubjects?.[courseId] || [];
-          for (const subjectId of subjects) {
-            try {
-              await axios.post(`${API_BASE_URL}/api/subject/enrollment`, {
-                student_id: studentId,
-                course_enrollment_id: courseEnrollmentId,
-                subject_id: subjectId,
-              });
-              console.log(`Subject ${subjectId} enrolled successfully`);
-            } catch (err) {
-              console.error(
-                `Subject enrollment failed for subject ${subjectId}:`,
-                err.response?.data || err
-              );
-              alert(`Enrollment failed for subject ${subjectId}.`);
-            }
-          }
-
-          // 3️⃣ PAYMENT RECORD
-          try {
-            await axios.post(`${API_BASE_URL}/api/payments`, {
-              student_id: studentId,
-              course_enrollment_id: courseEnrollmentId,
-              amount: duration.price,
-              billing_cycle: duration.duration,
-              payment_method: "card",
-              gateway: "paystack",
-              status: "successful",
-              gateway_reference: paymentReference,
-              paid_at: new Date().toISOString(),
-              meta: {
-                channel: response.channel,
-                paid_at: response.paid_at,
-              },
-            });
-            console.log(
-              `Payment recorded for ${student.firstname} - course ${courseId}`
-            );
-          } catch (err) {
-            console.error(
-              `Payment recording failed for course ${courseId}:`,
-              err.response?.data || err
-            );
-            alert(
-              `Payment was successful for course ${courseId}, but logging failed.`
-            );
-          }
-        }
+      const reference = response?.reference;
+      if (!reference) {
+        throw new Error("No payment reference returned from Paystack.");
       }
 
-      // 4️⃣ REFERRAL SUBMISSION (if referral code was provided during registration)
-      try {
-        const storedGuardianStudents = JSON.parse(
-          localStorage.getItem("guardianStudents") || "{}"
-        );
-        const referralCode =
-          storedGuardianStudents?.referral_code ||
-          localStorage.getItem("global_referral_code");
+      console.log("Verifying guardian payment with backend for reference:", reference);
 
-        if (referralCode && totalAmount > 0) {
-          const firstName = storedGuardianStudents?.firstname || "";
-          const lastName = storedGuardianStudents?.surname || "";
-          const name = `${firstName} ${lastName}`.trim() || "Guardian";
-          const contact =
-            storedGuardianStudents?.tel || storedGuardianStudents?.email || "";
-          const referralEarning = totalAmount * 0.05;
-
-          await axios.post(`${AFFILIATE_API_URL}/api/referrals/register`, {
-            name,
-            contact,
-            referral_code: referralCode,
-            amount: referralEarning,
-          });
-          console.log("Guardian referral registered successfully");
-        }
-      } catch (refErr) {
-        console.error(
-          "Guardian referral submission failed:",
-          refErr.response?.data || refErr
-        );
-      }
+      await axios.post(`${API_BASE_URL}/api/payments/verify-paystack`, {
+        reference: reference,
+        fallback_metadata: paystackMetadata,
+      });
 
       // Cleanup guardian localStorage
       localStorage.removeItem("guardianTel");
@@ -218,10 +128,11 @@ export default function GuardianTrainingPayment() {
       localStorage.removeItem("guardianStudentsTraining");
       localStorage.removeItem("guardianStudentsSubjects");
       localStorage.removeItem("guardianStudentsDuration");
-      navigate("/login");
+      navigate("/guardian/login");
     } catch (err) {
-      console.error("Unexpected error during enrollment/payment:", err);
-      alert("An unexpected error occurred. Please contact support.");
+      console.error("Guardian payment verification error:", err.response?.data || err);
+      alert(err.response?.data?.message || "Payment received! We are setting up your wards.");
+      navigate("/guardian/login");
     } finally {
       setProcessing(false);
       closeModal();
@@ -296,6 +207,7 @@ export default function GuardianTrainingPayment() {
                 amount={totalAmount}
                 email={payerEmail}
                 reference={`TC-G-${Date.now()}`}
+                metadata={paystackMetadata}
                 onSuccess={handlePaystackSuccess}
                 onClose={closeModal}
               />
