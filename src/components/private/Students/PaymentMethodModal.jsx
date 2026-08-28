@@ -7,6 +7,7 @@ export default function PaymentMethodModal({
   selectedDuration, 
   amount, 
   email,
+  metadata = {},
   selectedMethod, 
   setSelectedMethod, 
   onContinue, 
@@ -74,6 +75,7 @@ export default function PaymentMethodModal({
             amount={amount}
             email={email}
             reference={reference}
+            metadata={metadata}
             onSuccess={onContinue}
             onClose={() => {}}
           />

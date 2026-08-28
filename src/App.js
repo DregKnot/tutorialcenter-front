@@ -6,6 +6,7 @@ import { Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useStaffAuth } from "./context/StaffAuthContext.jsx";
+import { AchievementProvider } from "./context/AchievementContext.jsx";
 import usePageTracking from "./hooks/usePageTracking.js";
 
 // Lazy loaded components
@@ -104,6 +105,7 @@ const BlogManagement = lazy(() => import("./pages/staffs/admin/BlogManagement.js
 const AuditLog = lazy(() => import("./pages/staffs/admin/AuditLog.jsx"));
 const AdminCalendar = lazy(() => import("./pages/staffs/admin/AdminCalendar.jsx"));
 const BadgeDemo = lazy(() => import("./pages/public/BadgeDemo.jsx"));
+const StudentAchievements = lazy(() => import("./pages/Students/StudentAchievements.jsx"));
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
@@ -133,8 +135,9 @@ function App() {
 
       <StickyButtons />
 
-      <Suspense fallback={<PageLoader />}>
-      <Routes>
+      <AchievementProvider>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/cognitive-test" element={<CognitiveTest />} />
@@ -208,6 +211,7 @@ function App() {
           <Route path="/student/recorded-classes" element={<RecordedClasses />} />
           <Route path="/student/games" element={<StudentGames />} />
           <Route path="/student/exams" element={<StudentExam />} />
+          <Route path="/student/achievements" element={<StudentAchievements />} />
           <Route path="/student/scholarship" element={<StudentScholarship />} />
           <Route path="/student/leaderboard" element={<StudentLeaderboard />} />
           <Route path="/student/blog" element={<StudentBlog />} />
@@ -253,8 +257,9 @@ function App() {
             element={<AdminPaymentHistory />}
           />
         </Route>
-      </Routes>
-      </Suspense>
+        </Routes>
+        </Suspense>
+      </AchievementProvider>
     </>
   );
 }

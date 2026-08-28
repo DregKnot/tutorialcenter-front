@@ -13,15 +13,16 @@ export default function useExaminationAnalysis(attempts = []) {
 
     const subjectsSet = new Set();
     const todaySubjectsSet = new Set();
-    
-    const subjectAttemptsMap = {}; // { [subjectName]: count }
-    const timeSpentByHourTodayMap = {}; // { [hour 0-23]: minutes }
-    const timeSpentByDayMap = {}; // { [YYYY-MM-DD]: minutes }
-    const timeSpentByMonthMap = {}; // { [YYYY-MM]: minutes }
-    const timeSpentByYearMap = {}; // { [YYYY]: minutes }
 
-    attempts.forEach(attempt => {
-      // Exclude abandoned or incomplete? Usually we only count completed, but we'll check if submitted_at exists
+    const subjectAttemptsMap = {}; // { [subjectName]: count }
+    const subjectTimeMap = {}; // { [subjectName]: totalMinutes }
+    const timeSpentByHourTodayMap = {}; // { [hour 0-23]: { totalMinutes: number, subjects: { [subjectName]: minutes } } }
+    const timeSpentByDayMap = {}; // { [YYYY-MM-DD]: { totalMinutes: number, subjects: { [subjectName]: minutes } } }
+    const timeSpentByMonthMap = {}; // { [YYYY-MM]: { totalMinutes: number, subjects: { [subjectName]: minutes } } }
+    const timeSpentByYearMap = {}; // { [YYYY]: { totalMinutes: number, subjects: { [subjectName]: minutes } } }
+
+    attempts.forEach((attempt) => {
+      // Exclude abandoned or incomplete
       if (!attempt.submitted_at || attempt.status === "abandoned") return;
 
       const started = new Date(attempt.started_at);
@@ -31,12 +32,6 @@ export default function useExaminationAnalysis(attempts = []) {
       const submittedStr = submitted.toISOString().split("T")[0]; // YYYY-MM-DD
       const submittedMonth = submittedStr.substring(0, 7); // YYYY-MM
       const submittedYear = submittedStr.substring(0, 4); // YYYY
-
-      // Track time spent
-      timeSpentByDayMap[submittedStr] = (timeSpentByDayMap[submittedStr] || 0) + diffMinutes;
-      timeSpentByMonthMap[submittedMonth] = (timeSpentByMonthMap[submittedMonth] || 0) + diffMinutes;
-      timeSpentByYearMap[submittedYear] = (timeSpentByYearMap[submittedYear] || 0) + diffMinutes;
-      totalTimeSpentMinutes += diffMinutes;
 
       // Subject tracking helper to resolve subject name across various API payload structures
       const extractSubjectName = (att) => {
@@ -74,12 +69,39 @@ export default function useExaminationAnalysis(attempts = []) {
       const subjectName = extractSubjectName(attempt);
       subjectsSet.add(subjectName);
       subjectAttemptsMap[subjectName] = (subjectAttemptsMap[subjectName] || 0) + 1;
+      subjectTimeMap[subjectName] = (subjectTimeMap[subjectName] || 0) + diffMinutes;
+
+      // Track time spent by day
+      if (!timeSpentByDayMap[submittedStr]) {
+        timeSpentByDayMap[submittedStr] = { totalMinutes: 0, subjects: {} };
+      }
+      timeSpentByDayMap[submittedStr].totalMinutes += diffMinutes;
+      timeSpentByDayMap[submittedStr].subjects[subjectName] =
+        (timeSpentByDayMap[submittedStr].subjects[subjectName] || 0) + diffMinutes;
+
+      // Track time spent by month
+      if (!timeSpentByMonthMap[submittedMonth]) {
+        timeSpentByMonthMap[submittedMonth] = { totalMinutes: 0, subjects: {} };
+      }
+      timeSpentByMonthMap[submittedMonth].totalMinutes += diffMinutes;
+      timeSpentByMonthMap[submittedMonth].subjects[subjectName] =
+        (timeSpentByMonthMap[submittedMonth].subjects[subjectName] || 0) + diffMinutes;
+
+      // Track time spent by year
+      if (!timeSpentByYearMap[submittedYear]) {
+        timeSpentByYearMap[submittedYear] = { totalMinutes: 0, subjects: {} };
+      }
+      timeSpentByYearMap[submittedYear].totalMinutes += diffMinutes;
+      timeSpentByYearMap[submittedYear].subjects[subjectName] =
+        (timeSpentByYearMap[submittedYear].subjects[subjectName] || 0) + diffMinutes;
+
+      totalTimeSpentMinutes += diffMinutes;
 
       // Overall scores
       const score = parseFloat(attempt.percentage) || 0;
       totalScoresSum += score;
 
-      // Today stats
+      // Today stats & Hourly breakdown
       if (submittedStr === todayStr) {
         todayAttemptsCount++;
         todayScoresSum += score;
@@ -87,7 +109,12 @@ export default function useExaminationAnalysis(attempts = []) {
         todayTimeSpentMinutes += diffMinutes;
 
         const hour = submitted.getHours();
-        timeSpentByHourTodayMap[hour] = (timeSpentByHourTodayMap[hour] || 0) + diffMinutes;
+        if (!timeSpentByHourTodayMap[hour]) {
+          timeSpentByHourTodayMap[hour] = { totalMinutes: 0, subjects: {} };
+        }
+        timeSpentByHourTodayMap[hour].totalMinutes += diffMinutes;
+        timeSpentByHourTodayMap[hour].subjects[subjectName] =
+          (timeSpentByHourTodayMap[hour].subjects[subjectName] || 0) + diffMinutes;
       }
     });
 
@@ -96,14 +123,23 @@ export default function useExaminationAnalysis(attempts = []) {
     const averageScoreOverall = totalAttemptsCount > 0 ? (totalScoresSum / totalAttemptsCount).toFixed(1) : 0;
     const averageScoreToday = todayAttemptsCount > 0 ? (todayScoresSum / todayAttemptsCount).toFixed(1) : 0;
 
-    // Formatting chart data
+    // Formatting chart data with per-subject breakdowns
+
     // Today chart: 24 hours
     const todayChartData = [];
     for (let i = 0; i < 24; i++) {
       const label = i === 0 ? "12am" : i === 12 ? "12pm" : i < 12 ? `${i}am` : `${i - 12}pm`;
+      const hourObj = timeSpentByHourTodayMap[i] || { totalMinutes: 0, subjects: {} };
+      const subjectsList = Object.entries(hourObj.subjects || {}).map(([name, mins]) => ({
+        name,
+        minutes: Math.round(mins),
+        hours: parseFloat((mins / 60).toFixed(1)),
+      }));
+
       todayChartData.push({
         label,
-        minutes: Math.round(timeSpentByHourTodayMap[i] || 0)
+        minutes: Math.round(hourObj.totalMinutes || 0),
+        subjects: subjectsList,
       });
     }
 
@@ -114,9 +150,21 @@ export default function useExaminationAnalysis(attempts = []) {
       d.setDate(d.getDate() - i);
       const dStr = d.toISOString().split("T")[0];
       const shortDay = d.toLocaleDateString("en-US", { weekday: "short" });
+      const fullDate = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      
+      const dayObj = timeSpentByDayMap[dStr] || { totalMinutes: 0, subjects: {} };
+      const subjectsList = Object.entries(dayObj.subjects || {}).map(([name, mins]) => ({
+        name,
+        minutes: Math.round(mins),
+        hours: parseFloat((mins / 60).toFixed(1)),
+      }));
+
       dayChartData.push({
         label: i === 0 ? "Today" : shortDay,
-        minutes: Math.round(timeSpentByDayMap[dStr] || 0)
+        fullDate,
+        dateStr: dStr,
+        minutes: Math.round(dayObj.totalMinutes || 0),
+        subjects: subjectsList,
       });
     }
 
@@ -126,19 +174,41 @@ export default function useExaminationAnalysis(attempts = []) {
     for (let i = 0; i < 12; i++) {
       const mStr = `${currentYear}-${String(i + 1).padStart(2, "0")}`;
       const shortMonth = new Date(currentYear, i, 1).toLocaleDateString("en-US", { month: "short" });
+      const monthObj = timeSpentByMonthMap[mStr] || { totalMinutes: 0, subjects: {} };
+      const subjectsList = Object.entries(monthObj.subjects || {}).map(([name, mins]) => ({
+        name,
+        minutes: Math.round(mins),
+        hours: parseFloat((mins / 60).toFixed(1)),
+      }));
+
       monthChartData.push({
         label: shortMonth,
-        minutes: Math.round(timeSpentByMonthMap[mStr] || 0),
-        hours: parseFloat(((timeSpentByMonthMap[mStr] || 0) / 60).toFixed(1))
+        minutes: Math.round(monthObj.totalMinutes || 0),
+        hours: parseFloat(((monthObj.totalMinutes || 0) / 60).toFixed(1)),
+        subjects: subjectsList,
       });
     }
 
-    // Subject Pie Chart Data
-    const COLORS = ["#09314F", "#E83831", "#BB9E7F", "#10B981", "#F59E0B", "#3B82F6"];
+    // Subject Pie Chart Data with vibrant, accessible color palette
+    const COLORS = [
+      "#09314F",
+      "#C5A97A",
+      "#E83831",
+      "#10B981",
+      "#3B82F6",
+      "#8B5CF6",
+      "#EC4899",
+      "#F59E0B",
+      "#06B6D4",
+      "#84CC16",
+    ];
+
     const subjectPieData = Object.entries(subjectAttemptsMap).map(([name, count], index) => ({
       name,
       value: count,
-      fill: COLORS[index % COLORS.length]
+      totalTimeMinutes: Math.round(subjectTimeMap[name] || 0),
+      percentage: totalAttemptsCount > 0 ? Math.round((count / totalAttemptsCount) * 100) : 0,
+      fill: COLORS[index % COLORS.length],
     }));
 
     return {
@@ -157,7 +227,7 @@ export default function useExaminationAnalysis(attempts = []) {
         dayData: dayChartData,
         monthData: monthChartData,
         subjectPieData,
-      }
+      },
     };
   }, [attempts]);
 }

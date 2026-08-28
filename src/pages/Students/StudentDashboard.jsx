@@ -107,18 +107,95 @@ export default function StudentDashboard({ blogs = [] }) {
 
     const fetchActiveCourses = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/students/courses`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            Accept: "application/json",
-          },
+        const [res, paymentsRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/students/courses`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+              Accept: "application/json",
+            },
+          }),
+          axios.get(`${API_BASE_URL}/api/students/payments`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+              Accept: "application/json",
+            },
+          }).catch(() => ({ data: { payments: [] } }))
+        ]);
+
+        const fetchedCourses = res?.data?.courses || res?.data?.data || [];
+        const paymentsList = paymentsRes?.data?.payments || paymentsRes?.data?.courses || paymentsRes?.data?.data || [];
+
+        const isCourseExpired = (c) => {
+          const status = c.status?.toLowerCase();
+          if (status === 'cancelled' || status === 'removed' || status === 'inactive' || status === 'expired' || status === 'unpaid') {
+            return true;
+          }
+          if (c.end_date) {
+            const end = new Date(c.end_date);
+            if (!isNaN(end.getTime()) && end < new Date()) {
+              return true;
+            }
+          }
+          return false;
+        };
+
+        const activeMap = new Map();
+        fetchedCourses.forEach((c) => {
+          if (!isCourseExpired(c)) {
+            const cid = Number(c.course_id || c.course?.id || c.id);
+            if (cid) activeMap.set(cid, c);
+          }
         });
-        if (res?.status !== 200) throw new Error(res?.data?.message);
-        const fetchedCourses = res?.data?.courses || [];
-        currentCourses = fetchedCourses;
-        setCourses(fetchedCourses);
-        const hasSubjects = fetchedCourses.some((c) => c.subjects && c.subjects.length > 0);
-        if (!hasSubjects) setShowNoCoursePopup(true);
+
+        // Add any course from recent successful payments that might be omitted from /api/students/courses
+        paymentsList.forEach((p) => {
+          if (p.status === 'successful' || p.status === 'paid') {
+            const cid = Number(p.course_id || p.course?.id || p.enrollment?.course_id);
+            if (cid && !activeMap.has(cid)) {
+              const paidAt = p.paid_at || p.created_at;
+              let isPaymentExpired = false;
+              let computedEndDate = p.enrollment?.end_date;
+
+              if (paidAt) {
+                const pDate = new Date(paidAt);
+                const monthsMap = { weekly: 0.25, monthly: 1, quarterly: 3, semi_annual: 6, annual: 12 };
+                const months = monthsMap[p.billing_cycle?.toLowerCase()] || 1;
+                const paymentExpiry = new Date(pDate);
+                paymentExpiry.setDate(paymentExpiry.getDate() + Math.round(months * 30));
+                
+                computedEndDate = paymentExpiry.toISOString();
+                if (paymentExpiry < new Date()) {
+                  isPaymentExpired = true;
+                }
+              }
+
+              if (!isPaymentExpired) {
+                const enrollmentObj = p.enrollment || {};
+                const courseObj = p.enrollment?.course || p.course || { id: cid, title: p.course_title || p.course_name };
+                
+                activeMap.set(cid, {
+                  ...enrollmentObj,
+                  id: enrollmentObj.id || p.course_enrollment_id || cid,
+                  course_id: cid,
+                  course: courseObj,
+                  course_name: courseObj.title || p.course_title || p.course_name,
+                  title: courseObj.title || p.course_title || p.course_name,
+                  status: 'active',
+                  billing_cycle: p.billing_cycle || enrollmentObj.billing_cycle,
+                  start_date: p.paid_at || p.created_at,
+                  end_date: computedEndDate,
+                  subjects: enrollmentObj.subjects || p.subjects || courseObj.subjects || []
+                });
+              }
+            }
+          }
+        });
+
+        const mergedCourses = Array.from(activeMap.values());
+        currentCourses = mergedCourses;
+        setCourses(mergedCourses);
+        if (mergedCourses.length === 0) setShowNoCoursePopup(true);
+        else setShowNoCoursePopup(false);
       } catch (error) {
         console.log(error);
       } finally {
@@ -238,10 +315,10 @@ export default function StudentDashboard({ blogs = [] }) {
   // Generate highlights
   const highlights = [];
   
-  // 1. Payment expirations
+  // 1. Payment expirations (only upcoming active warnings within 7 days, no expired ones)
   courses.forEach(course => {
     const status = course.status?.toLowerCase();
-    if (status === 'cancelled' || status === 'removed' || status === 'inactive') return;
+    if (status === 'cancelled' || status === 'removed' || status === 'inactive' || status === 'expired') return;
     
     let expiry = null;
     if (course.end_date) {
@@ -264,14 +341,6 @@ export default function StudentDashboard({ blogs = [] }) {
         highlights.push({
           type: "payment",
           text: `Subscription for ${title} expires in ${diffDays} day${diffDays !== 1 ? 's' : ''}.`,
-          actionLabel: "Renew Now",
-          actionUrl: "/student/payments?action=renew"
-        });
-      } else if (diffDays < 0) {
-        const title = course.course?.title || course.course_name || "your course";
-        highlights.push({
-          type: "payment",
-          text: `Subscription for ${title} has expired!`,
           actionLabel: "Renew Now",
           actionUrl: "/student/payments?action=renew"
         });

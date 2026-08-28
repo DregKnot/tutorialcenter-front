@@ -26,6 +26,11 @@ const menuItems = [
     destination: "/student/leaderboard",
   },
   {
+    label: "Achievements",
+    icon: "solar:cup-star-bold",
+    destination: "/student/achievements",
+  },
+  {
     label: "Courses",
     icon: "mdi:book-open-page-variant",
     // destination: "/student/courses",
