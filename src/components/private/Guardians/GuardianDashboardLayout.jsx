@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import GuardianSidebar from "./GuardianSidebar";
@@ -11,7 +11,6 @@ export default function GuardianDashboardLayout({
   guardianData = null,
 }) {
   const navigate = useNavigate();
-  const location = useLocation();
   
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem("guardian_sidebar_collapsed");
