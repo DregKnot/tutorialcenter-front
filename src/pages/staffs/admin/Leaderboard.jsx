@@ -404,10 +404,32 @@ export default function Leaderboard() {
                           <div className="text-[11px] text-gray-600 dark:text-white/70 mt-1 flex items-center gap-2 flex-wrap">
                             <span>Attempts: <strong>{sb.total_attempts}</strong></span>
                             <span>•</span>
-                            <span>Correct: <strong>{sb.total_correct || Math.round(sb.accumulated_score * 0.9)}</strong></span>
+                            <span>Correct: <strong className="text-emerald-600 dark:text-emerald-400">{sb.total_correct}</strong> / {sb.total_questions || "—"}</span>
+                            {sb.accuracy_percentage !== undefined && (
+                              <>
+                                <span>•</span>
+                                <span>Acc: <strong>{sb.accuracy_percentage}%</strong></span>
+                              </>
+                            )}
                             <span>•</span>
                             <span>High: <strong>{sb.highest_score}%</strong></span>
                           </div>
+
+                          {/* Question Bank Coverage Bar (if bank data available) */}
+                          {sb.total_questions_in_bank > 0 && (
+                            <div className="mt-2 pt-2 border-t border-gray-200/50 dark:border-white/10 space-y-1">
+                              <div className="flex justify-between items-center text-[10px] text-gray-500 dark:text-white/60">
+                                <span>Bank Coverage ({sb.unique_questions_answered || sb.total_questions} / {sb.total_questions_in_bank} Qs)</span>
+                                <strong className="text-[#0F2843] dark:text-[#C5A97A] font-mono">{sb.bank_coverage_percentage}%</strong>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full"
+                                  style={{ width: `${Math.min(100, sb.bank_coverage_percentage || 0)}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 

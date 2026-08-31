@@ -27,6 +27,10 @@ const StudentSubjectSelection = lazy(() => import("./pages/public/StudentSignUp/
 const StudentPaymentSuccessScreen = lazy(() => import("./pages/public/StudentSignUp/StudentPaymentSuccessScreen.jsx").then(module => ({ default: module.StudentPaymentSuccessScreen })));
 const GuardianLogin = lazy(() => import("./pages/public/GuardianLogin.jsx"));
 const GuardianDashboard = lazy(() => import("./pages/Guardians/GuardianDashboard.jsx"));
+const GuardianPerformance = lazy(() => import("./pages/Guardians/GuardianPerformance.jsx"));
+const GuardianAuditLogs = lazy(() => import("./pages/Guardians/GuardianAuditLogs.jsx"));
+const GuardianPayments = lazy(() => import("./pages/Guardians/GuardianPayments.jsx"));
+const GuardianAddWard = lazy(() => import("./pages/Guardians/GuardianAddWard.jsx"));
 const GuardianRegistration = lazy(() => import("./pages/public/GuardianSignup/GuardianRegistration.jsx").then(module => ({ default: module.GuardianRegistration })));
 const GuardianPhoneVerification = lazy(() => import("./pages/public/GuardianSignup/GuardianPhoneVerification.jsx"));
 const GuardianEmailVerification = lazy(() => import("./pages/public/GuardianSignup/GuardianEmailVerification.jsx"));
@@ -97,7 +101,7 @@ const ExamQuestionList = lazy(() => import("./components/private/staffs/exams/Ex
 const Training = lazy(() => import("./pages/public/Training.jsx"));
 const CourseDetails = lazy(() => import("./pages/public/CourseDetails.jsx"));
 const CognitiveTest = lazy(() => import("./pages/public/CognitiveTest.jsx"));
-const SchoolCognitiveTests = lazy(() => import("./pages/staffs/admin/SchoolCognitiveTests.jsx"));// import { StaffAuthProvider } from "./context/StaffAuthContext.jsx";
+const SchoolCognitiveTests = lazy(() => import("./pages/staffs/admin/SchoolCognitiveTests.jsx"));
 const AdminCreateStudent = lazy(() => import("./pages/staffs/admin/AdminCreateStudent.jsx"));
 const BlogPost = lazy(() => import("./pages/public/BlogPost.jsx"));
 const CooDashboard = lazy(() => import("./pages/staffs/coo/CooDashboard.jsx"));
@@ -109,7 +113,7 @@ const StudentAchievements = lazy(() => import("./pages/Students/StudentAchieveme
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
-  const { isSplashing: isStaffSplashing } = useStaffAuth();
+  const { isStaffSplashing } = useStaffAuth();
   const [initialLoad, setInitialLoad] = useState(true);
 
   // Initialize page tracking for Google Analytics / GTM
@@ -138,126 +142,128 @@ function App() {
       <AchievementProvider>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/cognitive-test" element={<CognitiveTest />} />
-        <Route path="/guardian/login" element={<GuardianLogin />} />
-        <Route path="/guardian/dashboard" element={<GuardianDashboard />} />
-        <Route path="*" element={<NotFound />} />
-        <Route path="/login" element={<LoginSelection />} />
-        <Route path="/badge-demo" element={<BadgeDemo />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/career" element={<Career />} />
-        <Route path="/training" element={<Training />} />
-        <Route path="/program/:slug" element={<CourseDetails />} />
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/blog/:slug" element={<BlogPost />} />
-        <Route path="/register" element={<SignUp />} />
-        <Route path="/comingsoon" element={<ComingSoon />} />
-        <Route path="/staff/login" element={<StaffLogin />} />
-        <Route path="/staff/forgot-password" element={<StaffForgotPassword />} />
-        <Route path="/staffs/forgot-password" element={<StaffForgotPassword />} />
-        <Route path="/staff/reset-password" element={<StaffForgotPassword />} />
-        <Route path="/staffs/reset-password" element={<StaffForgotPassword />} />
-        <Route path="/staff-verify-email" element={<StaffEmailVerification />} />
-        <Route path="/unauthorized" element={<Unauthorized />} />
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/cognitive-test" element={<CognitiveTest />} />
+            <Route path="/guardian/login" element={<GuardianLogin />} />
+            <Route path="/guardian/dashboard" element={<GuardianDashboard />} />
+            <Route path="/guardian/performance" element={<GuardianPerformance />} />
+            <Route path="/guardian/audit-logs" element={<GuardianAuditLogs />} />
+            <Route path="/guardian/payments" element={<GuardianPayments />} />
+            <Route path="/guardian/add-ward" element={<GuardianAddWard />} />
+            <Route path="/login" element={<LoginSelection />} />
+            <Route path="/badge-demo" element={<BadgeDemo />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/career" element={<Career />} />
+            <Route path="/training" element={<Training />} />
+            <Route path="/program/:slug" element={<CourseDetails />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/register" element={<SignUp />} />
+            <Route path="/comingsoon" element={<ComingSoon />} />
+            <Route path="/staff/login" element={<StaffLogin />} />
+            <Route path="/staff/forgot-password" element={<StaffForgotPassword />} />
+            <Route path="/staffs/forgot-password" element={<StaffForgotPassword />} />
+            <Route path="/staff/reset-password" element={<StaffForgotPassword />} />
+            <Route path="/staffs/reset-password" element={<StaffForgotPassword />} />
+            <Route path="/staff-verify-email" element={<StaffEmailVerification />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
 
+            {/* Guardian Registration Routes */}
+            <Route path="/register/guardian" element={<GuardianRegistration />} />
+            <Route path="/register/guardian/phone/verify" element={<GuardianPhoneVerification />} />
+            <Route path="/register/guardian/email/verify" element={<GuardianEmailVerification />} />
+            <Route path="/register/guardian/addstudent" element={<GuardianAddStudents />} />
+            <Route path="/register/guardian/student/otp-verification" element={<AddedStudentOTP />} />
+            <Route path="/register/guardian/student/registration" element={<GuardianStudentRegistration />} />
+            <Route path="/register/guardian/training/selection" element={<GuardianTrainingSelection />} />
+            <Route path="/register/guardian/subject/selection" element={<GuardianSubjectSelection />} />
+            <Route path="/register/guardian/training/duration" element={<GuardianTrainingDuration />} />
+            <Route path="/register/guardian/training/payment" element={<GuardianTrainingPayment />} />
 
-        {/* Guardian Registration Routes */}
-        <Route path="/register/guardian" element={<GuardianRegistration />} />
-        <Route path="/register/guardian/phone/verify" element={<GuardianPhoneVerification />} />
-        <Route path="/register/guardian/email/verify" element={<GuardianEmailVerification />} />
-        <Route path="/register/guardian/addstudent" element={<GuardianAddStudents />} />
-        <Route path="/register/guardian/student/otp-verification" element={<AddedStudentOTP />} />
-        <Route path="/register/guardian/student/registration" element={<GuardianStudentRegistration />} />
-        <Route path="/register/guardian/training/selection" element={<GuardianTrainingSelection />} />
-        <Route path="/register/guardian/subject/selection" element={<GuardianSubjectSelection />} />
-        <Route path="/register/guardian/training/duration" element={<GuardianTrainingDuration />} />
-        <Route path="/register/guardian/training/payment" element={<GuardianTrainingPayment />} />
+            {/* Campaign Public Registration Routes */}
+            <Route path="/campaign/gce/department" element={<CampaignDepartmentSelection />} />
+            <Route path="/campaign/gce/subjects" element={<CampaignSubjectSelection />} />
+            <Route path="/campaign/gce/biodata" element={<CampaignBiodata />} />
+            <Route path="/campaign/gce/email-verify" element={<CampaignEmailVerification />} />
+            <Route path="/campaign/gce/payment" element={<CampaignPayment />} />
 
-        {/* Campaign Public Registration Routes */}
-        <Route path="/campaign/gce/department" element={<CampaignDepartmentSelection />} />
-        <Route path="/campaign/gce/subjects" element={<CampaignSubjectSelection />} />
-        <Route path="/campaign/gce/biodata" element={<CampaignBiodata />} />
-        <Route path="/campaign/gce/email-verify" element={<CampaignEmailVerification />} />
-        <Route path="/campaign/gce/payment" element={<CampaignPayment />} />
+            {/* Student Public Registration Routes */}
+            <Route path="/student/login" element={<StudentLogin />} />
+            <Route path="/register/student" element={<StudentRegistration />} />
+            <Route path="/register/student/biodata" element={<StudentBiodata />} />
+            <Route path="/register/student/phone/verify" element={<StudentPhoneVerification />} />
+            <Route path="/register/student/email/verify" element={<StudentEmailVerification />} />
+            <Route path="/register/student/training/selection" element={<StudentTrainingSelection />} />
+            <Route path="/register/student/subject/selection" element={<StudentSubjectSelection />} />
+            <Route path="/register/student/training/duration" element={<StudentTrainingDuration />} />
+            <Route path="/register/student/training/payment" element={<StudentTrainingPayment />} />
+            <Route path="/register/student/training/payment/success" element={<StudentPaymentSuccessScreen />} />
 
-        {/* Student Public Registration Routes */}
-        <Route path="/student/login" element={<StudentLogin />} />
-        <Route path="/register/student" element={<StudentRegistration />} />
-        <Route path="/register/student/biodata" element={<StudentBiodata />} />
-        <Route path="/register/student/phone/verify" element={<StudentPhoneVerification />} />
-        <Route path="/register/student/email/verify" element={<StudentEmailVerification />} />
-        <Route path="/register/student/training/selection" element={<StudentTrainingSelection />} />
-        <Route path="/register/student/subject/selection" element={<StudentSubjectSelection />} />
-        <Route path="/register/student/training/duration" element={<StudentTrainingDuration />} />
-        <Route path="/register/student/training/payment" element={<StudentTrainingPayment />} />
-        <Route path="/register/student/training/payment/success" element={<StudentPaymentSuccessScreen />} />
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/classroom/:classSessionId" element={<ClassRoom />} />
+              {/* Student Routes */}
+              <Route path="/student/dashboard" element={<StudentDashboard />} />
+              <Route path="/student/notifications" element={<StudentNotifications />} />
+              <Route path="/student/payments" element={<StudentPaymentDisplay />} />
+              <Route path="/student/payment-history" element={<StudentPaymentHistory />} />
+              <Route path="/student/class-schedule" element={<StudentClassSchedule />} />
+              <Route path="/student/calendar" element={<StudentCalendar />} />
+              <Route path="/student/meet" element={<StudentMeetWrapper />} />
+              <Route path="/student/settings" element={<StudentSettings />} />
+              <Route path="/student/feedback" element={<StudentFeedback />} />
+              <Route path="/student/recorded-classes" element={<RecordedClasses />} />
+              <Route path="/student/games" element={<StudentGames />} />
+              <Route path="/student/exams" element={<StudentExam />} />
+              <Route path="/student/achievements" element={<StudentAchievements />} />
+              <Route path="/student/scholarship" element={<StudentScholarship />} />
+              <Route path="/student/leaderboard" element={<StudentLeaderboard />} />
+              <Route path="/student/blog" element={<StudentBlog />} />
 
-        {/* Protected Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/classroom/:classSessionId" element={<ClassRoom />} />
-          {/* Student Routes */}
-          <Route path="/student/dashboard" element={<StudentDashboard />} />
-          <Route path="/student/notifications" element={<StudentNotifications />} />
-          <Route path="/student/payments" element={<StudentPaymentDisplay />} />
-          <Route path="/student/payment-history" element={<StudentPaymentHistory />} />
-          <Route path="/student/class-schedule" element={<StudentClassSchedule />} />
-          <Route path="/student/calendar" element={<StudentCalendar />} />
-          <Route path="/student/meet" element={<StudentMeetWrapper />} />
-          <Route path="/student/settings" element={<StudentSettings />} />
-          <Route path="/student/feedback" element={<StudentFeedback />} />
-          <Route path="/student/recorded-classes" element={<RecordedClasses />} />
-          <Route path="/student/games" element={<StudentGames />} />
-          <Route path="/student/exams" element={<StudentExam />} />
-          <Route path="/student/achievements" element={<StudentAchievements />} />
-          <Route path="/student/scholarship" element={<StudentScholarship />} />
-          <Route path="/student/leaderboard" element={<StudentLeaderboard />} />
-          <Route path="/student/blog" element={<StudentBlog />} />
+              {/* Staff Routes */}
+              <Route path="/staffs/dashboard" element={<StaffDashboard />} />
+              <Route path="/staffs/coo/dashboard" element={<CooDashboard />} />
+              <Route path="/staffs/manage-blogs" element={<BlogManagement />} />
+              <Route path="/staffs/audit-logs" element={<AuditLog />} />
+              <Route path="/staffs/feedback" element={<StaffFeedback />} />
+              <Route path="/staffs/leaderboard" element={<StaffLeaderboard />} />
+              <Route path="/staffs/notifications" element={<StaffNotification />} />
+              <Route path="/staffs/meet" element={<StaffMeetWrapper />} />
+              <Route path="/staffs/meet/app" element={<StaffAppMeetWrapper />} />
+              <Route path="/staffs/tutor/dashboard" element={<TutorDashboard />} />
+              <Route path="/staffs/tutor/master-class" element={<TutorMasterClass />} />
+              <Route path="/staffs/tutor/calendar" element={<TutorCalendar />} />
+              <Route path="/staffs/course-advisor/dashboard" element={<CourseAdvisorDashboard />} />
+              <Route path="/staffs/course-advisor/students" element={<CourseAdvisorStudentManagement />} />
+              <Route path="/staffs/course-advisor/guardians" element={<CourseAdvisorGuardianManagement />} />
+              <Route path="/staffs/course-advisor/master-class" element={<CourseAdvisorMasterClass />} />
+              <Route path="/staffs/course-advisor/calendar" element={<CourseAdvisorCalendar />} />
+              <Route path="/staffs/course-advisor/exams" element={<CourseAdvisorComingSoon title="Exams" />} />
+              <Route path="/staffs/course-advisor/settings" element={<CourseAdvisorComingSoon title="Settings" />} />
+              <Route path="/staffs/staff-registration" element={<StaffRegistration />} />
+              <Route path="/staffs/manage-staffs" element={<StaffManagement />} />
+              <Route path="/staffs/manage-students" element={<AdminStudentManagement />} />
+              <Route path="/staffs/manage-guardians" element={<AdminGuardianManagement />} />
+              <Route path="/staffs/create-student" element={<AdminCreateStudent />} />
+              <Route path="/staffs/master-class" element={<StaffMasterClassList />} />
+              <Route path="/staffs/calendar" element={<AdminCalendar />} />
+              <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
+              <Route path="/staffs/manage-exams" element={<ExamManagement />} />
+              <Route path="/staffs/school-tests" element={<SchoolCognitiveTests />} />
+              <Route path="/staffs/manage-exams/question" element={<ExamQuestion />} />
+              <Route path="/staffs/manage-exams/question/:id" element={<ExamQuestion />} />
+              <Route path="/staffs/manage-exams/edit/:id" element={<EditExamHeader />} />
+              <Route path="/staffs/manage-exams/:bodyId/subjects" element={<ExamSubjectList />} />
+              <Route path="/staffs/manage-exams/:bodyId/subjects/:subjectId/years" element={<ExamYearList />} />
+              <Route path="/staffs/manage-exams/:bodyId/subjects/:subjectId/years/:yearId/questions" element={<ExamQuestionList />} />
+              <Route path="/staffs/payments" element={<AdminPaymentHistory />} />
+            </Route>
 
-          {/* Staff Routes */}
-          <Route path="/staffs/dashboard" element={<StaffDashboard />} />
-          <Route path="/staffs/coo/dashboard" element={<CooDashboard />} />
-          <Route path="/staffs/manage-blogs" element={<BlogManagement />} />
-          <Route path="/staffs/audit-logs" element={<AuditLog />} />
-          <Route path="/staffs/feedback" element={<StaffFeedback />} />
-          <Route path="/staffs/leaderboard" element={<StaffLeaderboard />} />
-          <Route path="/staffs/notifications" element={<StaffNotification />} />
-          <Route path="/staffs/meet" element={<StaffMeetWrapper />} />
-          <Route path="/staffs/meet/app" element={<StaffAppMeetWrapper />} />
-          <Route path="/staffs/tutor/dashboard" element={<TutorDashboard />} />
-          <Route path="/staffs/tutor/master-class" element={<TutorMasterClass />} />
-          <Route path="/staffs/tutor/calendar" element={<TutorCalendar />} />
-          <Route path="/staffs/course-advisor/dashboard" element={<CourseAdvisorDashboard />} />
-          <Route path="/staffs/course-advisor/students" element={<CourseAdvisorStudentManagement />} />
-          <Route path="/staffs/course-advisor/guardians" element={<CourseAdvisorGuardianManagement />} />
-          <Route path="/staffs/course-advisor/master-class" element={<CourseAdvisorMasterClass />} />
-          <Route path="/staffs/course-advisor/calendar" element={<CourseAdvisorCalendar />} />
-          <Route path="/staffs/course-advisor/exams" element={<CourseAdvisorComingSoon title="Exams" />} />
-          <Route path="/staffs/course-advisor/settings" element={<CourseAdvisorComingSoon title="Settings" />} />
-          <Route path="/staffs/staff-registration" element={<StaffRegistration />} />
-          <Route path="/staffs/manage-staffs" element={<StaffManagement />} />
-          <Route path="/staffs/manage-students" element={<AdminStudentManagement />} />
-          <Route path="/staffs/manage-guardians" element={<AdminGuardianManagement />} />
-          <Route path="/staffs/create-student" element={<AdminCreateStudent />} />
-          <Route path="/staffs/master-class" element={<StaffMasterClassList />} />
-          <Route path="/staffs/calendar" element={<AdminCalendar />} />
-          <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
-          <Route path="/staffs/manage-exams" element={<ExamManagement />} />
-          <Route path="/staffs/school-tests" element={<SchoolCognitiveTests />} />
-          <Route path="/staffs/manage-exams/question" element={<ExamQuestion />} />
-          <Route path="/staffs/manage-exams/question/:id" element={<ExamQuestion />} />
-          <Route path="/staffs/manage-exams/edit/:id" element={<EditExamHeader />} />
-          <Route path="/staffs/manage-exams/:bodyId/subjects" element={<ExamSubjectList />} />
-          <Route path="/staffs/manage-exams/:bodyId/subjects/:subjectId/years" element={<ExamYearList />} />
-          <Route path="/staffs/manage-exams/:bodyId/subjects/:subjectId/years/:yearId/questions" element={<ExamQuestionList />} />
-          <Route
-            path="/staffs/payments"
-            element={<AdminPaymentHistory />}
-          />
-        </Route>
-        </Routes>
+            {/* Catch-all Not Found Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </Suspense>
       </AchievementProvider>
     </>
