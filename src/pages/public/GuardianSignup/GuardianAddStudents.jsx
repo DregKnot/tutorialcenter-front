@@ -210,8 +210,16 @@ export default function GuardianAddStudents() {
         {/* Navigation */}
         <div className="w-full max-w-[480px] flex items-center justify-between mb-12">
           <button
-            onClick={() => navigate("/register/guardian")}
+            onClick={() => {
+              const token = localStorage.getItem("guardian_token");
+              if (token) {
+                navigate("/guardian/dashboard");
+              } else {
+                navigate("/register/guardian");
+              }
+            }}
             className="p-3 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-black/5"
+            title="Back to Dashboard"
           >
             <ChevronLeftIcon className="h-5 w-5 text-[#09314F]" />
           </button>
