@@ -123,15 +123,18 @@ export default function TutorCalendar() {
       const rawDate = s.session_date || s.date || s.scheduled_date || s.start_date || s.created_at;
       const dateStr = rawDate ? String(rawDate).split("T")[0].split(" ")[0] : new Date().toISOString().split("T")[0];
 
+      const rawSubject = source.subject || s.subject;
+      const subjectName = typeof rawSubject === "object" ? rawSubject?.name : rawSubject;
+
       list.push({
         ...s,
         id: s.id,
         session_date: dateStr,
         starts_at: s.starts_at ? String(s.starts_at).substring(0, 5) : (s.start_time ? String(s.start_time).substring(0, 5) : "10:00"),
         ends_at: s.ends_at ? String(s.ends_at).substring(0, 5) : (s.end_time ? String(s.end_time).substring(0, 5) : "11:30"),
-        topic: s.title || source.title || `${source.subject?.name || "Master Class"}`,
+        topic: s.title || source.title || `${subjectName || "Master Class"}`,
         class: source,
-        subject: source.subject || s.subject,
+        subject: subjectName || source.title || "Class",
       });
     };
 
@@ -817,7 +820,7 @@ export default function TutorCalendar() {
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${colors.text} bg-white/60 dark:bg-black/30 backdrop-blur-sm`}>
-                            {s.subject || s.class?.title || "Class"}
+                            {(typeof s.subject === "object" ? s.subject?.name : s.subject) || s.class?.title || "Class"}
                           </span>
                           <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
                             past ? "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
