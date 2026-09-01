@@ -600,41 +600,80 @@ export default function StaffFeedback() {
                   </div>
 
                   {/* Target Entity Title */}
-                  <div className="bg-gray-50/70 dark:bg-gray-900/40 p-2.5 rounded-2xl border border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Reviewing:</span>
-                      <span className="font-bold text-gray-800 dark:text-gray-200 truncate">{item.target_title}</span>
-                    </div>
-                    {item.would_recommend ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
-                        <Icon icon="lucide:thumbs-up" className="w-3 h-3" /> Recommends
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-rose-500 text-[10px] font-black">
-                        <Icon icon="lucide:thumbs-down" className="w-3 h-3" /> Neutral
-                      </span>
-                    )}
-                  </div>
+                  {(() => {
+                    const isCardTutorReport = Boolean(
+                      item.ratings?.session_metadata ||
+                      item.ratings?.lesson_delivery ||
+                      item.title?.toLowerCase().includes("post-class report")
+                    );
 
-                  {/* Stars & Comment Content */}
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center justify-between">
-                      {renderStars(item.rating)}
-                      <span className="text-xs font-black text-gray-700 dark:text-gray-300">
-                        {item.rating}.0 / 5.0
-                      </span>
-                    </div>
+                    return (
+                      <>
+                        <div className="bg-gray-50/70 dark:bg-gray-900/40 p-2.5 rounded-2xl border border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">
+                              {isCardTutorReport ? "Class:" : "Reviewing:"}
+                            </span>
+                            <span className="font-bold text-gray-800 dark:text-gray-200 truncate">{item.target_title}</span>
+                          </div>
+                          {isCardTutorReport ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black border border-indigo-500/20">
+                              <Icon icon="lucide:clipboard-check" className="w-3 h-3" /> Post-Class Report
+                            </span>
+                          ) : item.would_recommend ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
+                              <Icon icon="lucide:thumbs-up" className="w-3 h-3" /> Recommends
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-rose-500 text-[10px] font-black">
+                              <Icon icon="lucide:thumbs-down" className="w-3 h-3" /> Neutral
+                            </span>
+                          )}
+                        </div>
 
-                    {item.title && (
-                      <h5 className="font-black text-sm text-gray-900 dark:text-white leading-snug">
-                        "{item.title}"
-                      </h5>
-                    )}
+                        {/* Stars & Comment Content */}
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center justify-between">
+                            {renderStars(item.rating)}
+                            <span className="text-xs font-black text-gray-700 dark:text-gray-300">
+                              {item.rating}.0 / 5.0 {isCardTutorReport && <span className="text-[10px] font-normal text-gray-400">(Self-Rating)</span>}
+                            </span>
+                          </div>
 
-                    <p className="text-gray-600 dark:text-gray-300 text-xs leading-relaxed line-clamp-3 italic">
-                      {item.comment ? `“${item.comment}”` : "No written comment provided."}
-                    </p>
-                  </div>
+                          {item.title && (
+                            <h5 className="font-black text-sm text-gray-900 dark:text-white leading-snug">
+                              "{item.title}"
+                            </h5>
+                          )}
+
+                          {/* Quick Report Metric Badges */}
+                          {isCardTutorReport && item.ratings && (
+                            <div className="flex flex-wrap gap-1.5 py-1">
+                              {item.ratings.attendance?.present_count !== undefined && (
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 text-[10px] font-bold">
+                                  👥 {item.ratings.attendance.present_count} Present
+                                </span>
+                              )}
+                              {item.ratings.lesson_delivery?.completion_status && (
+                                <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-300 text-[10px] font-bold">
+                                  📖 {item.ratings.lesson_delivery.completion_status}
+                                </span>
+                              )}
+                              {item.ratings.assessment?.general_performance && (
+                                <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-300 text-[10px] font-bold">
+                                  📊 Performance: {item.ratings.assessment.general_performance}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          <p className="text-gray-600 dark:text-gray-300 text-xs leading-relaxed line-clamp-3 italic">
+                            {item.comment ? `“${item.comment}”` : "No written summary provided."}
+                          </p>
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   {/* Moderation Controls Footer */}
                   <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs">
@@ -807,33 +846,374 @@ export default function StaffFeedback() {
                 </div>
               </div>
 
-              {/* Full Comment */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-black uppercase tracking-wider text-gray-400">Written Review</h4>
-                <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-2">
-                  {selectedFeedback.title && (
-                    <h5 className="font-black text-sm text-[#09314F] dark:text-[#C5A97A]">{selectedFeedback.title}</h5>
-                  )}
-                  <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                    {selectedFeedback.comment || "No detailed comment was provided."}
-                  </p>
-                </div>
-              </div>
+              {/* Modal Body: Check if Post-Class Tutor Report or Standard Review */}
+              {(() => {
+                const isTutorReport = Boolean(
+                  selectedFeedback.ratings?.session_metadata ||
+                  selectedFeedback.ratings?.lesson_delivery ||
+                  selectedFeedback.title?.toLowerCase().includes("post-class report")
+                );
 
-              {/* Sub-ratings Breakdown if present */}
-              {selectedFeedback.ratings && Object.keys(selectedFeedback.ratings).length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-400">Sub-Ratings Breakdown</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(selectedFeedback.ratings).map(([key, val]) => (
-                      <div key={key} className="p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs">
-                        <span className="font-bold capitalize text-gray-600 dark:text-gray-400">{key.replace(/_/g, " ")}:</span>
-                        <span className="font-black text-gray-900 dark:text-white">{val} / 5</span>
+                if (isTutorReport) {
+                  const r = selectedFeedback.ratings || {};
+                  const meta = r.session_metadata || {};
+                  const att = r.attendance || {};
+                  const delivery = r.lesson_delivery || {};
+                  const und = r.student_understanding || {};
+                  const eng = r.student_engagement || {};
+                  const assess = r.assessment || {};
+                  const chal = r.class_challenges || {};
+                  const next = r.next_steps || {};
+                  const overall = r.overall_assessment || {};
+
+                  return (
+                    <div className="space-y-5">
+                      {/* Metadata Header Box */}
+                      <div className="p-5 bg-gradient-to-r from-[#09314F] to-[#1E3A5F] text-white rounded-3xl space-y-2 shadow-lg border border-white/10">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-[#C5A97A] flex items-center gap-1.5">
+                            <Icon icon="lucide:clipboard-check" className="w-4 h-4" /> Official Post-Class Tutor Report
+                          </span>
+                          <span className="text-xs text-white/80 font-bold">
+                            {meta.date || "Today"}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-black text-white">
+                          {meta.class_title || selectedFeedback.title || "Masterclass Lesson"}
+                        </h3>
+                        <div className="flex items-center gap-3 text-xs text-white/80 flex-wrap pt-1 border-t border-white/10">
+                          <span>Subject: <strong className="text-white">{meta.subject || "N/A"}</strong></span>
+                          <span>&bull;</span>
+                          <span>Time: <strong className="text-white">{meta.time || "N/A"}</strong></span>
+                          <span>&bull;</span>
+                          <span>Tutor: <strong className="text-[#C5A97A]">{meta.tutor_name || selectedFeedback.author_name}</strong></span>
+                        </div>
                       </div>
-                    ))}
+
+                      {/* 1. Attendance */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">1</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-[#C5A97A]">Attendance</h4>
+                        </div>
+
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              How many students were present in class today?
+                            </p>
+                            <div className="px-3.5 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-black text-[#09314F] dark:text-emerald-400 inline-block shadow-sm">
+                              {att.present_count ?? 0} Students Present
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Were there any notable attendance issues?
+                            </p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-800 dark:text-gray-200 font-medium shadow-sm">
+                              {att.has_issues ? (
+                                <span className="text-amber-600 dark:text-amber-400 font-bold">
+                                  Yes — {att.issues_detail || "No details provided"}
+                                </span>
+                              ) : (
+                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">No issues reported</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. Lesson Delivery */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">2</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-[#C5A97A]">Lesson Delivery</h4>
+                        </div>
+
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Which specific topic / subtopics or aspects of the curriculum were covered today?
+                            </p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                              {delivery.aspects_covered || "N/A"}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Was the planned lesson fully completed during this session?
+                            </p>
+                            <div className="px-3.5 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs font-black text-blue-600 dark:text-blue-400 inline-block shadow-sm">
+                              {delivery.completion_status || "Completed"}
+                            </div>
+                          </div>
+
+                          {delivery.left_reason && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                                If partially or not completed, what was left and why?
+                              </p>
+                              <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                                {delivery.left_reason}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 3. Student Understanding */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">3</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-[#C5A97A]">Student Understanding</h4>
+                        </div>
+
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              What observable evidence demonstrated that students understood the lesson?
+                            </p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                              {und.evidence || "No evidence recorded."}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Were there concepts students struggled with?
+                            </p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                              {und.struggled_concepts || "None"}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Are there specific students who require additional follow-up or attention?
+                            </p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                              {und.students_needing_attention || "None"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 4. Student Engagement */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">4</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-[#C5A97A]">Student Engagement</h4>
+                        </div>
+
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              How would you rate student engagement and participation today?
+                            </p>
+                            <div className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-black text-emerald-600 dark:text-emerald-400 inline-block shadow-sm">
+                              {eng.participation_level || "Active"} Participation
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Which aspects or activities did students respond to best?
+                            </p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                              {eng.responded_well_to || "N/A"}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Were there any issues affecting participation or concentration?
+                            </p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                              {eng.issues_affecting_concentration || "None"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 5. Assessment */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">5</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-[#C5A97A]">Assessment</h4>
+                        </div>
+
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Did you assess students' understanding today?
+                            </p>
+                            <div className={`px-3.5 py-1.5 rounded-xl border text-xs font-black inline-block shadow-sm ${
+                              assess.assessed_today
+                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"
+                            }`}>
+                              {assess.assessed_today ? "Yes" : "No"}
+                            </div>
+                          </div>
+
+                          {assess.assessed_today && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                                If yes, what was the general performance?
+                              </p>
+                              <div className="px-3.5 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs font-black text-purple-600 dark:text-purple-400 inline-block shadow-sm">
+                                {assess.general_performance || "Good"}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 6. Class Challenges */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">6</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-[#C5A97A]">Class Challenges</h4>
+                        </div>
+
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5">
+                              What was the biggest challenge encountered during the class?
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {Array.isArray(chal.challenges) && chal.challenges.length > 0 ? (
+                                chal.challenges.map((ch, idx) => (
+                                  <span key={idx} className="px-3 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 font-black text-xs shadow-sm">
+                                    {ch}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-gray-400 text-xs italic">No specific challenges selected</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Challenge Explanation & Context:
+                            </p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                              {chal.explanation || "None"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 7. Next Steps */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">7</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-[#C5A97A]">Next Steps</h4>
+                        </div>
+
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              What should be done in the next class to improve students' learning?
+                            </p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                              {next.improvement_plan || "None specified"}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Is any intervention or support from Tutorial Center required?
+                            </p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-800 dark:text-gray-200 font-medium shadow-sm">
+                              {next.support_required ? (
+                                <span className="text-rose-600 dark:text-rose-400 font-bold">
+                                  Yes — {next.support_detail || "Support requested"}
+                                </span>
+                              ) : (
+                                <span className="text-emerald-600 dark:text-emerald-400 font-bold">No</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 8. Overall Assessment & Signature */}
+                      <div className="bg-[#09314F]/5 dark:bg-[#C5A97A]/5 p-5 rounded-3xl border border-[#09314F]/10 dark:border-[#C5A97A]/20 space-y-4">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">8</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-[#C5A97A]">Overall Summary & Sign-off</h4>
+                        </div>
+
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                              Brief summary of the lesson for management:
+                            </p>
+                            <div className="p-3.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 italic whitespace-pre-wrap shadow-sm">
+                              "{overall.management_summary || selectedFeedback.comment || "N/A"}"
+                            </div>
+                          </div>
+
+                          <div className="pt-3 border-t border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between text-xs">
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-gray-400 block">Tutor's Signature:</span>
+                              <span className="font-black text-[#09314F] dark:text-[#C5A97A] text-sm">
+                                {overall.tutor_signature || selectedFeedback.author_name}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[10px] uppercase font-bold text-gray-400 block">Submitted At:</span>
+                              <span className="font-mono text-gray-600 dark:text-gray-300 text-xs">
+                                {overall.submitted_at ? new Date(overall.submitted_at).toLocaleString() : new Date(selectedFeedback.created_at).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Standard written review & scalar sub-ratings
+                return (
+                  <div className="space-y-4">
+                    {/* Full Comment */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-gray-400">Written Review</h4>
+                      <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-2">
+                        {selectedFeedback.title && (
+                          <h5 className="font-black text-sm text-[#09314F] dark:text-[#C5A97A]">{selectedFeedback.title}</h5>
+                        )}
+                        <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                          {selectedFeedback.comment || "No detailed comment was provided."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Sub-ratings Breakdown if present and scalar */}
+                    {selectedFeedback.ratings && Object.keys(selectedFeedback.ratings).length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-gray-400">Sub-Ratings Breakdown</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          {Object.entries(selectedFeedback.ratings).map(([key, val]) => {
+                            if (typeof val === "object" && val !== null) return null;
+                            return (
+                              <div key={key} className="p-3 bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs">
+                                <span className="font-bold capitalize text-gray-600 dark:text-gray-400">{key.replace(/_/g, " ")}:</span>
+                                <span className="font-black text-gray-900 dark:text-white">{val} / 5</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Modal Footer Controls */}
               <div className="pt-2 flex items-center justify-between">

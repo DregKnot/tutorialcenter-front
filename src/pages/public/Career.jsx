@@ -135,7 +135,7 @@ const Career = () => {
                   </button>
 
                   <button
-                    onClick={() => alert("Course Advisor applications are currently closed. Please check back later!")}
+                    onClick={() => window.open("https://forms.gle/iNHR7nc8YdRnz1ma8", "_blank", "noopener,noreferrer")}
                     className="w-full bg-white text-[#09314F] border border-[#09314F] font-bold py-4 rounded-xl shadow-[1px_1px_4px_0px_rgba(0,0,0,0.25)] hover:bg-gray-50 transition-all"
                   >
                     Apply as Course Advisor
@@ -287,7 +287,7 @@ const Career = () => {
               </div>
 
               <button
-                onClick={() => alert("Course Advisor applications are currently closed. Please check back later!")}
+                onClick={() => window.open("https://forms.gle/iNHR7nc8YdRnz1ma8", "_blank", "noopener,noreferrer")}
                 className="px-14 py-4 text-white font-bold rounded-xl shadow-lg hover:brightness-110 transition-all active:scale-95"
                 style={{
                   background:

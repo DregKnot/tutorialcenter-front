@@ -2,19 +2,20 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { Icon } from "@iconify/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import JoinMethodModal from "../../../components/common/JoinMethodModal";
+import TutorPostClassReportModal from "../../../components/private/Tutor/TutorPostClassReportModal";
 import { 
   UserGroupIcon, 
   HandThumbUpIcon, 
   UserMinusIcon,
-  // BellIcon,
   ClockIcon,
   VideoCameraIcon
 } from "@heroicons/react/24/outline";
 
 export default function TutorDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [scheduleData, setScheduleData] = useState({
     next_class: null,
     today_classes: [],
@@ -25,9 +26,12 @@ export default function TutorDashboard() {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
+  const staffName = localStorage.getItem("staff_name") || "Tutor";
 
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [sessionToJoin, setSessionToJoin] = useState(null);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackSession, setFeedbackSession] = useState(null);
 
   const handleJoinClass = (session) => {
     if (!session) return;
@@ -79,6 +83,61 @@ export default function TutorDashboard() {
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
+
+  // Check for feedback query parameter or sessionStorage upon leaving class
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const feedbackSessionId =
+      searchParams.get("feedback_session") ||
+      location.state?.completedSessionId ||
+      sessionStorage.getItem("just_completed_class_session_id");
+
+    if (feedbackSessionId) {
+      sessionStorage.removeItem("just_completed_class_session_id");
+
+      const allSessions = [
+        ...(scheduleData.today_classes || []),
+        ...Object.values(scheduleData.week_schedule || {}).flat(),
+        ...(scheduleData.upcoming_sessions || []),
+        ...(scheduleData.next_class ? [scheduleData.next_class] : [])
+      ];
+
+      const session = allSessions.find((s) => String(s.id) === String(feedbackSessionId));
+      if (session) {
+        setFeedbackSession({
+          id: session.id,
+          class_id: session.class_id || session.id,
+          class_title: session.class?.title || session.class?.subject?.name || session.title || "Masterclass",
+          subject: (typeof session.class?.subject === "object" ? session.class?.subject?.name : session.class?.subject) || "General Subject",
+          topic: session.class?.title || session.title || "Lesson Session",
+          date: session.session_date ? new Date(session.session_date).toLocaleDateString() : new Date().toLocaleDateString(),
+          time: `${session.starts_at || 'TBD'} - ${session.ends_at || 'TBD'}`,
+          tutor_name: staffName,
+          present_count: session.attendances?.length ?? 0,
+          total_students: 20,
+        });
+      } else {
+        setFeedbackSession({
+          id: feedbackSessionId,
+          class_id: feedbackSessionId,
+          class_title: "Master Class",
+          subject: "Live Masterclass",
+          topic: "Class Lesson",
+          date: new Date().toLocaleDateString(),
+          time: "Just Concluded",
+          tutor_name: staffName,
+          present_count: 0,
+          total_students: 20,
+        });
+      }
+
+      setFeedbackModalOpen(true);
+
+      if (location.search || location.state?.promptPostClassReport) {
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.search, location.state, scheduleData, navigate, location.pathname, staffName]);
 
   // --- HELPERS ---
   const formatDate = (dateStr) => {
@@ -324,6 +383,17 @@ export default function TutorDashboard() {
       onJoinWeb={() => {
         setIsJoinModalOpen(false);
         if (sessionToJoin?.id) navigate(`/classroom/${sessionToJoin.id}`);
+      }}
+    />
+
+    {/* ====== POST-CLASS TUTOR REPORT POPUP MODAL ====== */}
+    <TutorPostClassReportModal 
+      isOpen={feedbackModalOpen}
+      onClose={() => setFeedbackModalOpen(false)}
+      sessionDetails={feedbackSession}
+      onSubmitSuccess={() => {
+        setFeedbackModalOpen(false);
+        fetchDashboardData();
       }}
     />
     </>

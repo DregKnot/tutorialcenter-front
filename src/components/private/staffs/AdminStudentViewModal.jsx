@@ -65,7 +65,7 @@ const ModalInput = ({
   );
 };
 
-export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) {
+export default function AdminStudentViewModal({ studentId, onClose, onUpdate, isOpen = true }) {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -103,21 +103,28 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
   const token = localStorage.getItem("staff_token");
   const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
   const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
-  const apiPrefix = staffRole === "advisor" ? "advisor" : "admin";
+  const isAdvisor = staffRole === "advisor" || staffRole === "course_advisor" || staffRole === "course advisor";
+  const apiPrefix = isAdvisor ? "advisor" : "admin";
 
-  // Fetch courses, subjects, guardians, and advisors directory
+  // Fetch courses, subjects, guardians, and advisors directory (only when modal opens)
   useEffect(() => {
+    if (!isOpen || !studentId) return;
+
     const fetchDirectories = async () => {
       try {
+        const subjectsUrl = isAdvisor ? `${API_BASE_URL}/api/subjects` : `${API_BASE_URL}/api/admin/subjects/all`;
+        const guardiansUrl = isAdvisor ? `${API_BASE_URL}/api/guardians/all` : `${API_BASE_URL}/api/admin/guardians/all`;
+        const advisorsUrl = isAdvisor ? `${API_BASE_URL}/api/advisors/all` : `${API_BASE_URL}/api/admin/advisors/all`;
+
         const [cRes, sRes, gRes, aRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/courses`).catch(() => ({ data: [] })),
-          axios.get(`${API_BASE_URL}/api/admin/subjects/all`, {
+          axios.get(subjectsUrl, {
             headers: { Authorization: `Bearer ${token}` }
           }).catch(() => ({ data: [] })),
-          axios.get(`${API_BASE_URL}/api/admin/guardians/all`, {
+          axios.get(guardiansUrl, {
             headers: { Authorization: `Bearer ${token}` }
           }).catch(() => ({ data: [] })),
-          axios.get(`${API_BASE_URL}/api/admin/advisors/all`, {
+          axios.get(advisorsUrl, {
             headers: { Authorization: `Bearer ${token}` }
           }).catch(() => ({ data: [] })),
         ]);
@@ -136,7 +143,7 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate }) 
       }
     };
     fetchDirectories();
-  }, [API_BASE_URL, token]);
+  }, [isOpen, studentId, API_BASE_URL, token, isAdvisor]);
 
   // Fetch full student details
   const fetchStudentDetails = useCallback(async () => {

@@ -74,6 +74,7 @@ const CourseAdvisorMasterClass = lazy(() => import("./pages/staffs/courseadvisor
 const CourseAdvisorCalendar = lazy(() => import("./pages/staffs/courseadvisor/CourseAdvisorCalendar.jsx"));
 const TutorCalendar = lazy(() => import("./pages/staffs/tutor/TutorCalendar.jsx"));
 const StaffMasterClassList = lazy(() => import("./pages/staffs/admin/StaffMasterClassList.jsx"));
+const StaffStudentSchedule = lazy(() => import("./pages/staffs/StaffStudentSchedule.jsx"));
 const CoursesManagement = lazy(() => import("./pages/staffs/admin/CoursesManagement.jsx"));
 const StudentPaymentHistory = lazy(() => import("./pages/Students/StudentPaymentDisplay.jsx"));
 const StudentMeetWrapper = lazy(() => import("./pages/Students/StudentMeetWrapper.jsx"));
@@ -239,6 +240,7 @@ function App() {
               <Route path="/staffs/course-advisor/students" element={<CourseAdvisorStudentManagement />} />
               <Route path="/staffs/course-advisor/guardians" element={<CourseAdvisorGuardianManagement />} />
               <Route path="/staffs/course-advisor/master-class" element={<CourseAdvisorMasterClass />} />
+              <Route path="/staffs/course-advisor/student-schedule" element={<StaffStudentSchedule />} />
               <Route path="/staffs/course-advisor/calendar" element={<CourseAdvisorCalendar />} />
               <Route path="/staffs/course-advisor/exams" element={<CourseAdvisorComingSoon title="Exams" />} />
               <Route path="/staffs/course-advisor/settings" element={<CourseAdvisorComingSoon title="Settings" />} />
@@ -248,6 +250,7 @@ function App() {
               <Route path="/staffs/manage-guardians" element={<AdminGuardianManagement />} />
               <Route path="/staffs/create-student" element={<AdminCreateStudent />} />
               <Route path="/staffs/master-class" element={<StaffMasterClassList />} />
+              <Route path="/staffs/student-schedule" element={<StaffStudentSchedule />} />
               <Route path="/staffs/calendar" element={<AdminCalendar />} />
               <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
               <Route path="/staffs/manage-exams" element={<ExamManagement />} />
