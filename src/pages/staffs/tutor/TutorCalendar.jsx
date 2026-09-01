@@ -115,54 +115,68 @@ export default function TutorCalendar() {
   // Helper to flatten tiered schedule API response
   const getFlatSessions = (data) => {
     const list = [];
-    if (data.next_class) {
-      list.push(data.next_class);
-    }
-    if (Array.isArray(data.today_classes)) {
-      data.today_classes.forEach(s => {
-        if (!list.some(item => item.id === s.id)) {
-          list.push(s);
+    const pushSession = (s, parentClass = null) => {
+      if (!s || !s.id) return;
+      if (list.some(item => item.id === s.id)) return;
+      
+      const source = parentClass || s.class || s;
+      const rawDate = s.session_date || s.date || s.scheduled_date || s.start_date || s.created_at;
+      const dateStr = rawDate ? String(rawDate).split("T")[0].split(" ")[0] : new Date().toISOString().split("T")[0];
+
+      const rawSubject = source.subject || s.subject;
+      const subjectName = typeof rawSubject === "object" ? rawSubject?.name : rawSubject;
+
+      list.push({
+        ...s,
+        id: s.id,
+        session_date: dateStr,
+        starts_at: s.starts_at ? String(s.starts_at).substring(0, 5) : (s.start_time ? String(s.start_time).substring(0, 5) : "10:00"),
+        ends_at: s.ends_at ? String(s.ends_at).substring(0, 5) : (s.end_time ? String(s.end_time).substring(0, 5) : "11:30"),
+        topic: s.title || source.title || `${subjectName || "Master Class"}`,
+        class: source,
+        subject: subjectName || source.title || "Class",
+      });
+    };
+
+    const processClassItem = (cls) => {
+      if (!cls) return;
+      let extractedCount = 0;
+      if (Array.isArray(cls.schedules)) {
+        cls.schedules.forEach(sched => {
+          if (Array.isArray(sched.sessions)) {
+            sched.sessions.forEach(session => {
+              pushSession(session, cls);
+              extractedCount++;
+            });
+          }
+        });
+      }
+      if (extractedCount === 0) {
+        pushSession(cls);
+      }
+    };
+
+    if (Array.isArray(data)) {
+      data.forEach(item => {
+        if (item.schedules || item.subject_id) {
+          processClassItem(item);
+        } else {
+          pushSession(item);
         }
       });
-    }
-    if (data.week_schedule) {
-      Object.values(data.week_schedule).forEach(sessionsArray => {
-        if (Array.isArray(sessionsArray)) {
-          sessionsArray.forEach(s => {
-            if (!list.some(item => item.id === s.id)) {
-              list.push(s);
-            }
-          });
-        }
-      });
-    }
-    if (Array.isArray(data.upcoming_sessions)) {
-      data.upcoming_sessions.forEach(s => {
-        if (!list.some(item => item.id === s.id)) {
-          list.push(s);
-        }
-      });
-    }
-    if (Array.isArray(data.past_sessions)) {
-      data.past_sessions.forEach(s => {
-        if (!list.some(item => item.id === s.id)) {
-          list.push(s);
-        }
-      });
-    }
-    if (Array.isArray(data.history)) {
-      data.history.forEach(s => {
-        if (!list.some(item => item.id === s.id)) {
-          list.push(s);
-        }
-      });
-    }
-    if (Array.isArray(data.sessions)) {
-      data.sessions.forEach(s => {
-        if (!list.some(item => item.id === s.id)) {
-          list.push(s);
-        }
-      });
+    } else if (data && typeof data === 'object') {
+      if (Array.isArray(data.sessions)) data.sessions.forEach(s => pushSession(s));
+      if (Array.isArray(data.classes)) data.classes.forEach(processClassItem);
+      if (Array.isArray(data.today_classes)) data.today_classes.forEach(s => pushSession(s));
+      if (Array.isArray(data.upcoming_sessions)) data.upcoming_sessions.forEach(s => pushSession(s));
+      if (Array.isArray(data.past_sessions)) data.past_sessions.forEach(s => pushSession(s));
+      if (Array.isArray(data.history)) data.history.forEach(s => pushSession(s));
+      if (data.next_class) pushSession(data.next_class);
+      if (data.week_schedule && typeof data.week_schedule === 'object') {
+        Object.values(data.week_schedule).forEach(arr => {
+          if (Array.isArray(arr)) arr.forEach(s => pushSession(s));
+        });
+      }
     }
     return list;
   };
@@ -806,7 +820,7 @@ export default function TutorCalendar() {
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${colors.text} bg-white/60 dark:bg-black/30 backdrop-blur-sm`}>
-                            {s.subject || s.class?.title || "Class"}
+                            {(typeof s.subject === "object" ? s.subject?.name : s.subject) || s.class?.title || "Class"}
                           </span>
                           <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
                             past ? "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"

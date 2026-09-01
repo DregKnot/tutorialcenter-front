@@ -298,7 +298,8 @@ export default function Leaderboard() {
     return (
       <div 
         id={`expanded-panel-${student.student_id}`}
-        className="overflow-hidden border-t border-amber-300/40 dark:border-white/5 pt-5 mt-4 space-y-5"
+        onClick={(e) => e.stopPropagation()}
+        className="overflow-hidden border-t border-amber-300/40 dark:border-white/10 pt-5 mt-4 space-y-5 cursor-default"
       >
         {/* Navigation Tabs */}
         <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-amber-300/30 dark:border-white/10">
@@ -516,21 +517,24 @@ export default function Leaderboard() {
       <div className="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-8">
         
         {/* Header Block */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 backdrop-blur-xl bg-white/90 dark:bg-gray-800/80 rounded-[32px] p-6 md:p-8 border border-gray-200/60 dark:border-gray-700/60 shadow-xl relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 backdrop-blur-xl bg-white/95 dark:bg-gray-800/90 rounded-[28px] p-5 md:p-8 border border-gray-200/80 dark:border-gray-700/60 shadow-xl relative overflow-hidden">
           <div className="absolute -right-10 -top-10 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex items-center gap-5 relative z-10">
-            <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20 text-white">
-              <TrophyIcon className="w-8 h-8" />
+          
+          <div className="flex items-start sm:items-center gap-4 relative z-10">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20 text-white shrink-0">
+              <TrophyIcon className="w-7 h-7 sm:w-8 sm:h-8" />
             </div>
             <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl md:text-2xl font-black text-[#0F2843] dark:text-white uppercase tracking-tight">Student Leadership Board</h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg sm:text-2xl font-black text-[#0F2843] dark:text-white tracking-tight">
+                  Student Leadership Board
+                </h1>
                 <span className="px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                  Status Bar Engine
+                  Live Engine
                 </span>
               </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mt-1">
-                Click any status bar to expand live subject mastery, pass/fail indicators, and daily timeline.
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1 leading-relaxed">
+                Click any student card to expand subject mastery, pass/fail benchmarks, and practice timelines.
               </p>
             </div>
           </div>
@@ -538,10 +542,10 @@ export default function Leaderboard() {
           <button 
             onClick={fetchLeaderboard}
             disabled={loading}
-            className="flex items-center justify-center gap-2 self-start md:self-auto px-5 py-3 bg-[#0F2843] hover:bg-[#09314F] disabled:bg-gray-400 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all active:scale-95 shadow-md relative z-10"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 bg-[#0F2843] hover:bg-[#09314F] disabled:bg-gray-400 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-md relative z-10 shrink-0"
           >
             <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh data
+            <span>Refresh data</span>
           </button>
         </div>
 
@@ -576,71 +580,93 @@ export default function Leaderboard() {
               {top1 && (
                 <div
                   onClick={() => handleToggleExpand(top1)}
-                  className={`status-bar-card rounded-3xl p-5 md:p-6 transition-all duration-300 cursor-pointer backdrop-blur-xl border relative overflow-hidden group ${
+                  className={`status-bar-card rounded-3xl p-4 sm:p-6 transition-all duration-300 cursor-pointer backdrop-blur-xl border relative overflow-hidden group ${
                     expandedStudentId === top1.student_id
                       ? "bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-200 border-amber-400 shadow-xl ring-2 ring-amber-400/50 dark:from-amber-600/30 dark:via-yellow-600/20 dark:to-stone-900/90 dark:border-amber-400 dark:shadow-[0_0_40px_rgba(245,158,11,0.3)] dark:ring-2 dark:ring-amber-400/40"
                       : "bg-gradient-to-r from-amber-100/90 via-yellow-50 to-amber-200/70 hover:from-amber-100 border-amber-300/80 shadow-md ring-1 ring-amber-400/30 hover:border-amber-400 dark:from-amber-500/15 dark:via-yellow-500/10 dark:to-stone-900/80 dark:hover:from-amber-500/25 dark:border-amber-400/50 dark:shadow-[0_10px_30px_rgba(245,158,11,0.15)] dark:ring-1 dark:ring-amber-400/30 dark:hover:border-amber-300 dark:hover:shadow-[0_15px_45px_rgba(245,158,11,0.25)]"
                   }`}
                 >
-                  {/* Glowing ambient light */}
                   <div className="absolute top-0 right-1/4 w-72 h-72 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
 
                   {/* Main Status Bar Row */}
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-                    <div className="flex items-center gap-4">
-                      {/* Rank 1 Gold Crown Badge */}
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-amber-500/30 shrink-0 border border-amber-300">
-                        <TrophyIcon className="w-6 h-6" />
-                      </div>
-
-                      {/* Avatar */}
-                      <div className="relative shrink-0">
-                        {top1.profile_picture ? (
-                          <img 
-                            src={top1.profile_picture.startsWith("http") ? top1.profile_picture : `${API_BASE_URL}/storage/${top1.profile_picture}`} 
-                            alt={top1.name} 
-                            className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-400 shadow-md ring-2 ring-amber-400/40"
-                          />
-                        ) : (
-                          <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center font-black text-xl border-2 border-amber-400 shadow-md ring-2 ring-amber-400/40">
-                            {getInitials(top1.name)}
-                          </div>
-                        )}
-                        <span className="absolute -top-2 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-400 text-amber-950 shadow">#1</span>
-                      </div>
-
-                      {/* Student Info */}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-base md:text-lg font-black text-[#0F2843] dark:text-white">{top1.name}</h3>
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-amber-500/20 text-amber-800 dark:bg-amber-400/20 dark:text-amber-300 border border-amber-400/40">
-                            Champion
-                          </span>
+                    <div className="flex items-center justify-between gap-3 w-full md:w-auto">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                        {/* Rank 1 Gold Crown Badge */}
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-md shadow-amber-500/30 shrink-0 border border-amber-300">
+                          <TrophyIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <p className="text-[11px] text-[#0F2843]/80 dark:text-amber-200/80 font-bold mt-0.5">
-                          ID: #{top1.student_id} • Focus: <strong className="text-[#0F2843] dark:text-amber-200">{top1.most_practiced_subject}</strong>
-                        </p>
+
+                        {/* Avatar */}
+                        <div className="relative shrink-0">
+                          {top1.profile_picture ? (
+                            <img 
+                              src={top1.profile_picture.startsWith("http") ? top1.profile_picture : `${API_BASE_URL}/storage/${top1.profile_picture}`} 
+                              alt={top1.name} 
+                              className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-amber-400 shadow-md ring-2 ring-amber-400/40"
+                            />
+                          ) : (
+                            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center font-black text-base sm:text-xl border-2 border-amber-400 shadow-md ring-2 ring-amber-400/40">
+                              {getInitials(top1.name)}
+                            </div>
+                          )}
+                          <span className="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-400 text-amber-950 shadow">#1</span>
+                        </div>
+
+                        {/* Student Info */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <h3 className="text-sm sm:text-lg font-black text-[#0F2843] dark:text-white truncate">{top1.name}</h3>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-amber-500/20 text-amber-800 dark:bg-amber-400/20 dark:text-amber-300 border border-amber-400/40">
+                              Champion
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#0F2843]/80 dark:text-amber-200/80 font-semibold truncate mt-0.5">
+                            ID: #{top1.student_id} • Focus: <strong className="text-[#0F2843] dark:text-amber-200">{top1.most_practiced_subject}</strong>
+                          </p>
+                        </div>
                       </div>
+
+                      {/* Mobile Expand Button */}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleExpand(top1);
+                        }}
+                        className="md:hidden p-2 rounded-xl bg-amber-200/80 hover:bg-amber-300 text-amber-900 dark:bg-white/10 dark:text-white shrink-0"
+                      >
+                        {expandedStudentId === top1.student_id ? (
+                          <ChevronUpIcon className="w-4 h-4" />
+                        ) : (
+                          <ChevronDownIcon className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
 
-                    {/* Stats Pill Columns */}
-                    <div className="flex items-center gap-3 md:gap-6 flex-wrap self-end md:self-center">
-                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-4 py-2 rounded-2xl border border-amber-300/60 dark:border-amber-400/20 text-center min-w-[90px] shadow-sm">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-amber-300/70 block">Attempts</span>
-                        <span className="text-sm font-black text-[#0F2843] dark:text-white">{top1.total_attempts}</span>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex md:items-center md:gap-4 mt-1 md:mt-0">
+                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-3 py-2 rounded-xl border border-amber-300/60 dark:border-amber-400/20 text-center shadow-sm">
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-amber-300/70 block">Attempts</span>
+                        <span className="text-xs sm:text-sm font-black text-[#0F2843] dark:text-white">{top1.total_attempts}</span>
                       </div>
 
-                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-4 py-2 rounded-2xl border border-amber-300/60 dark:border-amber-400/20 text-center min-w-[90px] shadow-sm">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-amber-300/70 block">Avg Accuracy</span>
-                        <span className="text-sm font-black text-emerald-700 dark:text-emerald-400">{top1.average_score}%</span>
+                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-3 py-2 rounded-xl border border-amber-300/60 dark:border-amber-400/20 text-center shadow-sm">
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-amber-300/70 block">Accuracy</span>
+                        <span className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-400">{top1.average_score}%</span>
                       </div>
 
-                      <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-5 py-2.5 rounded-2xl shadow-lg shadow-amber-500/20 text-center min-w-[120px] border border-amber-300/40">
-                        <span className="text-[9px] font-black uppercase tracking-wider block opacity-90">Total Accumulated</span>
-                        <span className="text-base font-black">{top1.total_score} Points</span>
+                      <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-3 sm:px-5 py-2 rounded-xl shadow-md shadow-amber-500/20 text-center border border-amber-300/40">
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider block opacity-90">Accumulated</span>
+                        <span className="text-xs sm:text-base font-black truncate block">{top1.total_score} Pts</span>
                       </div>
 
-                      <button className="p-2.5 rounded-xl bg-amber-200/80 hover:bg-amber-300 text-amber-900 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white transition-all">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleExpand(top1);
+                        }}
+                        className="hidden md:flex p-2.5 rounded-xl bg-amber-200/80 hover:bg-amber-300 text-amber-900 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white transition-all items-center justify-center shrink-0"
+                      >
                         {expandedStudentId === top1.student_id ? (
                           <ChevronUpIcon className="w-5 h-5" />
                         ) : (
@@ -659,7 +685,7 @@ export default function Leaderboard() {
               {top2 && (
                 <div
                   onClick={() => handleToggleExpand(top2)}
-                  className={`status-bar-card rounded-3xl p-5 md:p-6 transition-all duration-300 cursor-pointer backdrop-blur-xl border relative overflow-hidden group ${
+                  className={`status-bar-card rounded-3xl p-4 sm:p-6 transition-all duration-300 cursor-pointer backdrop-blur-xl border relative overflow-hidden group ${
                     expandedStudentId === top2.student_id
                       ? "bg-gradient-to-r from-slate-200 via-slate-100 to-slate-300 border-slate-400 shadow-xl ring-2 ring-slate-400/50 dark:from-slate-500/30 dark:via-slate-600/20 dark:to-slate-950/90 dark:border-slate-300 dark:shadow-[0_0_40px_rgba(203,213,225,0.3)] dark:ring-2 dark:ring-slate-300/40"
                       : "bg-gradient-to-r from-slate-100/95 via-slate-50 to-slate-200/70 hover:from-slate-100 border-slate-300/80 shadow-md ring-1 ring-slate-300/40 dark:from-slate-400/15 dark:via-slate-300/10 dark:to-slate-950/80 dark:hover:from-slate-400/25 dark:border-slate-300/50 dark:shadow-[0_10px_30px_rgba(203,213,225,0.15)] dark:ring-1 dark:ring-slate-300/30 dark:hover:border-slate-200 dark:hover:shadow-[0_15px_45px_rgba(203,213,225,0.25)]"
@@ -669,60 +695,83 @@ export default function Leaderboard() {
 
                   {/* Main Status Bar Row */}
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-                    <div className="flex items-center gap-4">
-                      {/* Rank 2 Silver Badge */}
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-400 to-slate-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-slate-400/20 shrink-0 border border-slate-300">
-                        2
-                      </div>
-
-                      {/* Avatar */}
-                      <div className="relative shrink-0">
-                        {top2.profile_picture ? (
-                          <img 
-                            src={top2.profile_picture.startsWith("http") ? top2.profile_picture : `${API_BASE_URL}/storage/${top2.profile_picture}`} 
-                            alt={top2.name} 
-                            className="w-14 h-14 rounded-2xl object-cover border-2 border-slate-400 shadow-md ring-2 ring-slate-400/40"
-                          />
-                        ) : (
-                          <div className="w-14 h-14 rounded-2xl bg-slate-400/20 text-slate-700 dark:text-slate-200 flex items-center justify-center font-black text-xl border-2 border-slate-400 shadow-md ring-2 ring-slate-400/40">
-                            {getInitials(top2.name)}
-                          </div>
-                        )}
-                        <span className="absolute -top-2 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-slate-400 text-white shadow">#2</span>
-                      </div>
-
-                      {/* Student Info */}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-base md:text-lg font-black text-[#0F2843] dark:text-white">{top2.name}</h3>
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-slate-300/30 text-slate-800 dark:bg-slate-300/20 dark:text-slate-200 border border-slate-400/40">
-                            Silver Runner-Up
-                          </span>
+                    <div className="flex items-center justify-between gap-3 w-full md:w-auto">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                        {/* Rank 2 Silver Badge */}
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-slate-400 to-slate-600 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-md shadow-slate-400/20 shrink-0 border border-slate-300">
+                          2
                         </div>
-                        <p className="text-[11px] text-[#0F2843]/80 dark:text-slate-300/80 font-bold mt-0.5">
-                          ID: #{top2.student_id} • Focus: <strong className="text-[#0F2843] dark:text-slate-300">{top2.most_practiced_subject}</strong>
-                        </p>
+
+                        {/* Avatar */}
+                        <div className="relative shrink-0">
+                          {top2.profile_picture ? (
+                            <img 
+                              src={top2.profile_picture.startsWith("http") ? top2.profile_picture : `${API_BASE_URL}/storage/${top2.profile_picture}`} 
+                              alt={top2.name} 
+                              className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-slate-400 shadow-md ring-2 ring-slate-400/40"
+                            />
+                          ) : (
+                            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-slate-400/20 text-slate-700 dark:text-slate-200 flex items-center justify-center font-black text-base sm:text-xl border-2 border-slate-400 shadow-md ring-2 ring-slate-400/40">
+                              {getInitials(top2.name)}
+                            </div>
+                          )}
+                          <span className="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-slate-400 text-white shadow">#2</span>
+                        </div>
+
+                        {/* Student Info */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <h3 className="text-sm sm:text-lg font-black text-[#0F2843] dark:text-white truncate">{top2.name}</h3>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-slate-300/30 text-slate-800 dark:bg-slate-300/20 dark:text-slate-200 border border-slate-400/40">
+                              Silver
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#0F2843]/80 dark:text-slate-300/80 font-semibold truncate mt-0.5">
+                            ID: #{top2.student_id} • Focus: <strong className="text-[#0F2843] dark:text-slate-300">{top2.most_practiced_subject}</strong>
+                          </p>
+                        </div>
                       </div>
+
+                      {/* Mobile Expand Button */}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleExpand(top2);
+                        }}
+                        className="md:hidden p-2 rounded-xl bg-slate-200/80 hover:bg-slate-300 text-slate-800 dark:bg-white/10 dark:text-white shrink-0"
+                      >
+                        {expandedStudentId === top2.student_id ? (
+                          <ChevronUpIcon className="w-4 h-4" />
+                        ) : (
+                          <ChevronDownIcon className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
 
-                    {/* Stats Pill Columns */}
-                    <div className="flex items-center gap-3 md:gap-6 flex-wrap self-end md:self-center">
-                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-300/60 dark:border-slate-300/20 text-center min-w-[90px] shadow-sm">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-slate-300/70 block">Attempts</span>
-                        <span className="text-sm font-black text-[#0F2843] dark:text-white">{top2.total_attempts}</span>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex md:items-center md:gap-4 mt-1 md:mt-0">
+                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-300/60 dark:border-slate-300/20 text-center shadow-sm">
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-slate-300/70 block">Attempts</span>
+                        <span className="text-xs sm:text-sm font-black text-[#0F2843] dark:text-white">{top2.total_attempts}</span>
                       </div>
 
-                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-300/60 dark:border-slate-300/20 text-center min-w-[90px] shadow-sm">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-slate-300/70 block">Avg Accuracy</span>
-                        <span className="text-sm font-black text-emerald-700 dark:text-emerald-400">{top2.average_score}%</span>
+                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-300/60 dark:border-slate-300/20 text-center shadow-sm">
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-slate-300/70 block">Accuracy</span>
+                        <span className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-400">{top2.average_score}%</span>
                       </div>
 
-                      <div className="bg-gradient-to-r from-slate-500 to-slate-600 text-white px-5 py-2.5 rounded-2xl shadow-lg shadow-slate-400/20 text-center min-w-[120px] border border-slate-300/40">
-                        <span className="text-[9px] font-black uppercase tracking-wider block opacity-90">Total Accumulated</span>
-                        <span className="text-base font-black">{top2.total_score} Points</span>
+                      <div className="bg-gradient-to-r from-slate-500 to-slate-600 text-white px-3 sm:px-5 py-2 rounded-xl shadow-md shadow-slate-400/20 text-center border border-slate-300/40">
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider block opacity-90">Accumulated</span>
+                        <span className="text-xs sm:text-base font-black truncate block">{top2.total_score} Pts</span>
                       </div>
 
-                      <button className="p-2.5 rounded-xl bg-slate-200/80 hover:bg-slate-300 text-slate-800 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white transition-all">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleExpand(top2);
+                        }}
+                        className="hidden md:flex p-2.5 rounded-xl bg-slate-200/80 hover:bg-slate-300 text-slate-800 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white transition-all items-center justify-center shrink-0"
+                      >
                         {expandedStudentId === top2.student_id ? (
                           <ChevronUpIcon className="w-5 h-5" />
                         ) : (
@@ -741,7 +790,7 @@ export default function Leaderboard() {
               {top3 && (
                 <div
                   onClick={() => handleToggleExpand(top3)}
-                  className={`status-bar-card rounded-3xl p-5 md:p-6 transition-all duration-300 cursor-pointer backdrop-blur-xl border relative overflow-hidden group ${
+                  className={`status-bar-card rounded-3xl p-4 sm:p-6 transition-all duration-300 cursor-pointer backdrop-blur-xl border relative overflow-hidden group ${
                     expandedStudentId === top3.student_id
                       ? "bg-gradient-to-r from-amber-100 via-orange-100 to-amber-200 border-amber-500 shadow-xl ring-2 ring-amber-500/50 dark:from-amber-800/30 dark:via-orange-900/20 dark:to-stone-950/90 dark:border-amber-600 dark:shadow-[0_0_40px_rgba(180,83,9,0.3)] dark:ring-2 dark:ring-amber-600/40"
                       : "bg-gradient-to-r from-amber-100/90 via-orange-50 to-amber-200/70 hover:from-amber-100 border-amber-400/60 shadow-md ring-1 ring-amber-400/30 dark:from-amber-700/15 dark:via-orange-600/10 dark:to-stone-950/80 dark:hover:from-amber-700/25 dark:border-amber-600/50 dark:shadow-[0_10px_30px_rgba(180,83,9,0.15)] dark:ring-1 dark:ring-amber-600/30 dark:hover:border-amber-500 dark:hover:shadow-[0_15px_45px_rgba(180,83,9,0.25)]"
@@ -751,60 +800,83 @@ export default function Leaderboard() {
 
                   {/* Main Status Bar Row */}
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-                    <div className="flex items-center gap-4">
-                      {/* Rank 3 Bronze Badge */}
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-800 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-amber-700/20 shrink-0 border border-amber-500">
-                        3
-                      </div>
-
-                      {/* Avatar */}
-                      <div className="relative shrink-0">
-                        {top3.profile_picture ? (
-                          <img 
-                            src={top3.profile_picture.startsWith("http") ? top3.profile_picture : `${API_BASE_URL}/storage/${top3.profile_picture}`} 
-                            alt={top3.name} 
-                            className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-600 shadow-md ring-2 ring-amber-600/40"
-                          />
-                        ) : (
-                          <div className="w-14 h-14 rounded-2xl bg-amber-700/20 text-amber-800 dark:text-amber-200 flex items-center justify-center font-black text-xl border-2 border-amber-600 shadow-md ring-2 ring-amber-600/40">
-                            {getInitials(top3.name)}
-                          </div>
-                        )}
-                        <span className="absolute -top-2 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-600 text-white shadow">#3</span>
-                      </div>
-
-                      {/* Student Info */}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-base md:text-lg font-black text-[#0F2843] dark:text-white">{top3.name}</h3>
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-amber-700/20 text-amber-900 dark:bg-amber-700/20 dark:text-amber-200 border border-amber-600/30">
-                            Bronze Finalist
-                          </span>
+                    <div className="flex items-center justify-between gap-3 w-full md:w-auto">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                        {/* Rank 3 Bronze Badge */}
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-800 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-md shadow-amber-700/20 shrink-0 border border-amber-500">
+                          3
                         </div>
-                        <p className="text-[11px] text-[#0F2843]/80 dark:text-amber-200/80 font-bold mt-0.5">
-                          ID: #{top3.student_id} • Focus: <strong className="text-[#0F2843] dark:text-amber-200">{top3.most_practiced_subject}</strong>
-                        </p>
+
+                        {/* Avatar */}
+                        <div className="relative shrink-0">
+                          {top3.profile_picture ? (
+                            <img 
+                              src={top3.profile_picture.startsWith("http") ? top3.profile_picture : `${API_BASE_URL}/storage/${top3.profile_picture}`} 
+                              alt={top3.name} 
+                              className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-amber-600 shadow-md ring-2 ring-amber-600/40"
+                            />
+                          ) : (
+                            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-amber-700/20 text-amber-800 dark:text-amber-200 flex items-center justify-center font-black text-base sm:text-xl border-2 border-amber-600 shadow-md ring-2 ring-amber-600/40">
+                              {getInitials(top3.name)}
+                            </div>
+                          )}
+                          <span className="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-600 text-white shadow">#3</span>
+                        </div>
+
+                        {/* Student Info */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <h3 className="text-sm sm:text-lg font-black text-[#0F2843] dark:text-white truncate">{top3.name}</h3>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-amber-700/20 text-amber-900 dark:bg-amber-700/20 dark:text-amber-200 border border-amber-600/30">
+                              Bronze
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#0F2843]/80 dark:text-amber-200/80 font-semibold truncate mt-0.5">
+                            ID: #{top3.student_id} • Focus: <strong className="text-[#0F2843] dark:text-amber-200">{top3.most_practiced_subject}</strong>
+                          </p>
+                        </div>
                       </div>
+
+                      {/* Mobile Expand Button */}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleExpand(top3);
+                        }}
+                        className="md:hidden p-2 rounded-xl bg-amber-200/80 hover:bg-amber-300 text-amber-900 dark:bg-white/10 dark:text-white shrink-0"
+                      >
+                        {expandedStudentId === top3.student_id ? (
+                          <ChevronUpIcon className="w-4 h-4" />
+                        ) : (
+                          <ChevronDownIcon className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
 
-                    {/* Stats Pill Columns */}
-                    <div className="flex items-center gap-3 md:gap-6 flex-wrap self-end md:self-center">
-                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-4 py-2 rounded-2xl border border-amber-400/50 dark:border-amber-600/20 text-center min-w-[90px] shadow-sm">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-amber-200/70 block">Attempts</span>
-                        <span className="text-sm font-black text-[#0F2843] dark:text-white">{top3.total_attempts}</span>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex md:items-center md:gap-4 mt-1 md:mt-0">
+                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-3 py-2 rounded-xl border border-amber-400/50 dark:border-amber-600/20 text-center shadow-sm">
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-amber-200/70 block">Attempts</span>
+                        <span className="text-xs sm:text-sm font-black text-[#0F2843] dark:text-white">{top3.total_attempts}</span>
                       </div>
 
-                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-4 py-2 rounded-2xl border border-amber-400/50 dark:border-amber-600/20 text-center min-w-[90px] shadow-sm">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-amber-200/70 block">Avg Accuracy</span>
-                        <span className="text-sm font-black text-emerald-700 dark:text-emerald-400">{top3.average_score}%</span>
+                      <div className="bg-white/90 dark:bg-black/30 backdrop-blur-md px-3 py-2 rounded-xl border border-amber-400/50 dark:border-amber-600/20 text-center shadow-sm">
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-[#0F2843]/70 dark:text-amber-200/70 block">Accuracy</span>
+                        <span className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-400">{top3.average_score}%</span>
                       </div>
 
-                      <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white px-5 py-2.5 rounded-2xl shadow-lg shadow-amber-700/20 text-center min-w-[120px] border border-amber-500/40">
-                        <span className="text-[9px] font-black uppercase tracking-wider block opacity-90">Total Accumulated</span>
-                        <span className="text-base font-black">{top3.total_score} Points</span>
+                      <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white px-3 sm:px-5 py-2 rounded-xl shadow-md shadow-amber-700/20 text-center border border-amber-500/40">
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider block opacity-90">Accumulated</span>
+                        <span className="text-xs sm:text-base font-black truncate block">{top3.total_score} Pts</span>
                       </div>
 
-                      <button className="p-2.5 rounded-xl bg-amber-200/80 hover:bg-amber-300 text-amber-900 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white transition-all">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleExpand(top3);
+                        }}
+                        className="hidden md:flex p-2.5 rounded-xl bg-amber-200/80 hover:bg-amber-300 text-amber-900 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white transition-all items-center justify-center shrink-0"
+                      >
                         {expandedStudentId === top3.student_id ? (
                           <ChevronUpIcon className="w-5 h-5" />
                         ) : (
@@ -860,57 +932,81 @@ export default function Leaderboard() {
                             : "bg-white/90 dark:bg-gray-800/80 text-gray-900 dark:text-white border-gray-200/80 dark:border-gray-700/60 hover:border-primary/40 hover:shadow-lg"
                         }`}
                       >
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-                          <div className="flex items-center gap-3.5">
-                            <span className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center font-black text-xs shrink-0 border border-gray-200 dark:border-transparent">
-                              {student.rank}
-                            </span>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative z-10">
+                          {/* Student Header */}
+                          <div className="flex items-center justify-between gap-3 w-full md:w-auto">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center font-black text-xs shrink-0 border border-gray-200 dark:border-transparent">
+                                {student.rank}
+                              </span>
 
-                            {student.profile_picture ? (
-                              <img 
-                                src={student.profile_picture.startsWith("http") ? student.profile_picture : `${API_BASE_URL}/storage/${student.profile_picture}`} 
-                                alt={student.name} 
-                                className="w-10 h-10 rounded-xl object-cover border border-gray-200 dark:border-gray-700"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center font-black text-xs">
-                                {getInitials(student.name)}
-                              </div>
-                            )}
+                              {student.profile_picture ? (
+                                <img 
+                                  src={student.profile_picture.startsWith("http") ? student.profile_picture : `${API_BASE_URL}/storage/${student.profile_picture}`} 
+                                  alt={student.name} 
+                                  className="w-10 h-10 rounded-xl object-cover border border-gray-200 dark:border-gray-700 shrink-0"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center font-black text-xs shrink-0">
+                                  {getInitials(student.name)}
+                                </div>
+                              )}
 
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-black text-sm text-[#0F2843] dark:text-white">{student.name}</h4>
-                                {student.today_points > 0 && (
-                                  <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-0.5">
-                                    <FireIcon className="w-3 h-3 text-emerald-600" /> +{student.today_points} Today
-                                  </span>
-                                )}
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-black text-sm text-[#0F2843] dark:text-white truncate">{student.name}</h4>
+                                  {student.today_points > 0 && (
+                                    <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-0.5 shrink-0">
+                                      <FireIcon className="w-3 h-3 text-emerald-600" /> +{student.today_points}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold truncate mt-0.5">
+                                  Focus: <strong className="text-primary dark:text-blue-300">{student.most_practiced_subject}</strong>
+                                </p>
                               </div>
-                              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold mt-0.5">
-                                Focus: <strong className="text-primary dark:text-blue-300">{student.most_practiced_subject}</strong>
-                              </p>
                             </div>
+
+                            {/* Mobile Chevron */}
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleExpand(student);
+                              }}
+                              className="md:hidden p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shrink-0"
+                            >
+                              {isExpanded ? (
+                                <ChevronUpIcon className="w-4 h-4" />
+                              ) : (
+                                <ChevronDownIcon className="w-4 h-4" />
+                              )}
+                            </button>
                           </div>
 
-                          {/* Columns */}
-                          <div className="flex items-center gap-4 self-end md:self-center">
-                            <div className="text-center min-w-[70px]">
+                          {/* Stats Grid */}
+                          <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex md:items-center md:gap-4 mt-1 md:mt-0">
+                            <div className="bg-gray-50 dark:bg-gray-700/40 md:bg-transparent px-2.5 py-1.5 rounded-xl text-center md:min-w-[70px]">
                               <span className="text-[8px] font-black uppercase text-gray-500 dark:text-gray-400 block">Attempts</span>
                               <span className="text-xs font-black text-[#0F2843] dark:text-white">{student.total_attempts}</span>
                             </div>
 
-                            <div className="text-center min-w-[70px]">
+                            <div className="bg-gray-50 dark:bg-gray-700/40 md:bg-transparent px-2.5 py-1.5 rounded-xl text-center md:min-w-[70px]">
                               <span className="text-[8px] font-black uppercase text-gray-500 dark:text-gray-400 block">Accuracy</span>
                               <span className="text-xs font-black text-emerald-600 dark:text-emerald-500">{student.average_score}%</span>
                             </div>
 
-                            <div className="text-center min-w-[90px] px-3 py-1.5 rounded-xl bg-gray-100/90 dark:bg-gray-700/60 border border-gray-200 dark:border-transparent">
-                              <span className="text-[8px] font-black uppercase text-gray-500 dark:text-gray-400 block">Total Points</span>
-                              <span className="text-xs font-black text-[#0F2843] dark:text-white">{student.total_score} Pts</span>
+                            <div className="bg-gray-100 dark:bg-gray-700/60 px-3 py-1.5 rounded-xl text-center md:min-w-[90px] border border-gray-200 dark:border-transparent">
+                              <span className="text-[8px] font-black uppercase text-gray-500 dark:text-gray-400 block">Total</span>
+                              <span className="text-xs font-black text-[#0F2843] dark:text-white truncate block">{student.total_score} Pts</span>
                             </div>
 
-                            <button className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-gray-700 dark:text-gray-300">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleExpand(student);
+                              }}
+                              className="hidden md:flex p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-gray-700 dark:text-gray-300 shrink-0"
+                            >
                               {isExpanded ? (
                                 <ChevronUpIcon className="w-4 h-4" />
                               ) : (
