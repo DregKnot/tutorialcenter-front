@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import FeedbackModal from "../../../components/common/FeedbackModal";
+import TutorPostClassReportModal from "../../../components/private/Tutor/TutorPostClassReportModal";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { 
@@ -27,8 +27,7 @@ export default function TutorMasterClass() {
   const location = useLocation();
 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
-  const [feedbackClassId, setFeedbackClassId] = useState(null);
-  const [feedbackClassTitle, setFeedbackClassTitle] = useState("");
+  const [feedbackSession, setFeedbackSession] = useState(null);
   const [showJoinOptions, setShowJoinOptions] = useState(false);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -83,16 +82,26 @@ export default function TutorMasterClass() {
       ];
 
       const session = allSessions.find(s => String(s.id) === String(feedbackSessionId));
-      if (session && session.class_id) {
-        setFeedbackClassId(session.class_id);
-        setFeedbackClassTitle(session.class?.title || session.class?.subject?.name || "Masterclass");
+      if (session) {
+        setFeedbackSession({
+          id: session.id,
+          class_id: session.class_id,
+          class_title: session.class?.title || session.class?.subject?.name || "Masterclass",
+          subject: session.class?.subject?.name || "General Subject",
+          topic: session.class?.title || "Topic Lesson",
+          date: session.session_date ? new Date(session.session_date).toLocaleDateString() : new Date().toLocaleDateString(),
+          time: `${session.starts_at || 'TBD'} - ${session.ends_at || 'TBD'}`,
+          tutor_name: staffName,
+          present_count: session.attendances?.length ?? 0,
+          total_students: 20,
+        });
         setFeedbackModalOpen(true);
         
         // Clean up URL
         navigate(location.pathname, { replace: true });
       }
     }
-  }, [location.search, scheduleData, navigate, location.pathname]);
+  }, [location.search, scheduleData, navigate, location.pathname, staffName]);
 
   // --- HELPERS ---
   const formatDate = (dateStr) => {
@@ -355,10 +364,33 @@ export default function TutorMasterClass() {
               </div>
             </div>
 
-            <div className="mt-10">
+            <div className="mt-8 space-y-3">
+              <button
+                onClick={() => {
+                  setFeedbackSession({
+                    id: selectedSession.id,
+                    class_id: selectedSession.class_id,
+                    class_title: selectedSession.class?.title || selectedSession.class?.subject?.name || "Masterclass",
+                    subject: selectedSession.class?.subject?.name || "General Subject",
+                    topic: selectedSession.class?.title || "Topic Lesson",
+                    date: selectedSession.session_date ? new Date(selectedSession.session_date).toLocaleDateString() : new Date().toLocaleDateString(),
+                    time: `${selectedSession.starts_at || 'TBD'} - ${selectedSession.ends_at || 'TBD'}`,
+                    tutor_name: staffName,
+                    present_count: selectedSession.attendances?.length ?? 15,
+                    total_students: 20,
+                  });
+                  setFeedbackModalOpen(true);
+                  setSelectedSession(null);
+                }}
+                className="w-full py-3.5 bg-[#C5A97A] hover:bg-[#b5996a] text-[#09314F] font-black rounded-2xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+              >
+                <Icon icon="lucide:clipboard-check" className="w-4 h-4" />
+                <span>Submit Post-Class Tutor Report</span>
+              </button>
+
               <button 
                 onClick={() => setSelectedSession(null)}
-                className="w-full py-4 bg-[#0F2843] dark:bg-blue-600 text-white font-bold rounded-2xl hover:bg-[#1a3d5c] dark:hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-slate-200 dark:shadow-none uppercase text-[11px] tracking-widest"
+                className="w-full py-3.5 bg-[#0F2843] dark:bg-blue-600 text-white font-bold rounded-2xl hover:bg-[#1a3d5c] dark:hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-slate-200 dark:shadow-none uppercase text-[11px] tracking-widest"
               >
                 Close
               </button>
@@ -367,12 +399,13 @@ export default function TutorMasterClass() {
         </div>
       )}
     </StaffDashboardLayout>
-    <FeedbackModal 
+    <TutorPostClassReportModal 
       isOpen={feedbackModalOpen}
       onClose={() => setFeedbackModalOpen(false)}
-      prefilledType="class"
-      prefilledId={feedbackClassId}
-      prefilledTitle={feedbackClassTitle}
+      sessionDetails={feedbackSession}
+      onSubmitSuccess={() => {
+        setToast({ type: "success", message: "Post-Class Tutor Report submitted successfully!" });
+      }}
     />
     </>
   );

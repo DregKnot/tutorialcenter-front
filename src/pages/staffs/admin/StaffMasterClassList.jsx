@@ -21,6 +21,7 @@ export default function MasterClassList() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingClass, setEditingClass] = useState(null);
   const [toast, setToast] = useState(null);
   const [copiedLink, setCopiedLink] = useState(null);
   const [selectedClassDetail, setSelectedClassDetail] = useState(null);
@@ -191,15 +192,16 @@ export default function MasterClassList() {
             </span>
           </div>
 
-          {/* Link - Right aligned and compact */}
-          <div className="flex-shrink-0 min-w-0 flex justify-end">
+          {/* Link & Actions - Right aligned */}
+          <div className="flex-shrink-0 min-w-0 flex items-center gap-2 justify-end">
              {link ? (
-               <div className="flex items-center gap-2">
+               <div className="flex items-center gap-1.5">
                  <a
                    href={link}
                    target="_blank"
                    rel="noreferrer"
-                   className="text-sm text-blue-500 font-bold hover:underline truncate max-w-[100px] lg:max-w-[150px]"
+                   onClick={(e) => e.stopPropagation()}
+                   className="text-sm text-blue-500 font-bold hover:underline truncate max-w-[90px] lg:max-w-[140px]"
                  >
                    {link.replace(/^https?:\/\//, '')}
                  </a>
@@ -209,6 +211,7 @@ export default function MasterClassList() {
                      copyToClipboard(link, cls.id);
                    }}
                    className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors flex-shrink-0"
+                   title="Copy class link"
                  >
                    <Icon icon={isLinkCopied ? "mdi:check" : "mdi:content-copy"} className={`w-3.5 h-3.5 ${isLinkCopied ? "text-green-500" : "text-blue-400"}`} />
                  </button>
@@ -216,6 +219,19 @@ export default function MasterClassList() {
              ) : (
                <span className="text-xs text-gray-300 italic">No link</span>
              )}
+
+             <button
+               onClick={(e) => {
+                 e.stopPropagation();
+                 setSelectedClassDetail(null);
+                 setEditingClass(cls);
+                 setShowCreateModal(true);
+               }}
+               className="p-1.5 bg-gray-100 hover:bg-[#0F2843] hover:text-white dark:bg-gray-700 dark:hover:bg-blue-600 rounded-lg transition-all text-gray-600 dark:text-gray-300 shadow-sm"
+               title="Edit Master Class"
+             >
+               <Icon icon="mdi:pencil-outline" className="w-4 h-4" />
+             </button>
           </div>
         </div>
       </div>
@@ -241,14 +257,22 @@ export default function MasterClassList() {
         </div>
       )}
 
-      {/* Create Class Modal */}
+      {/* Create / Edit Class Modal */}
       {showCreateModal && (
         <CreateMasterClassModal
-          onClose={() => setShowCreateModal(false)}
+          editClass={editingClass}
+          onClose={() => {
+            setShowCreateModal(false);
+            setEditingClass(null);
+          }}
           onSuccess={() => {
             setShowCreateModal(false);
+            setEditingClass(null);
             fetchClasses();
-            setToast({ type: "success", message: "Master class created successfully!" });
+            setToast({
+              type: "success",
+              message: editingClass ? "Master class updated successfully!" : "Master class created successfully!"
+            });
           }}
         />
       )}
@@ -446,10 +470,22 @@ export default function MasterClassList() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-10 bg-gray-50 dark:bg-gray-800/80 flex items-center justify-end gap-4 border-t dark:border-gray-700">
+            <div className="p-8 bg-gray-50 dark:bg-gray-800/80 flex items-center justify-end gap-3 border-t dark:border-gray-700">
+              <button 
+                onClick={() => {
+                  const target = selectedClassDetail;
+                  setSelectedClassDetail(null);
+                  setEditingClass(target);
+                  setShowCreateModal(true);
+                }}
+                className="px-6 py-3.5 bg-[#0F2843] dark:bg-blue-600 hover:bg-[#1a3d60] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all active:scale-95 shadow-sm flex items-center gap-2"
+              >
+                <Icon icon="mdi:pencil" className="w-4 h-4" />
+                Edit Master Class
+              </button>
               <button 
                 onClick={() => setSelectedClassDetail(null)}
-                className="px-10 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-300 font-black rounded-2xl text-[13px] uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95 shadow-sm"
+                className="px-8 py-3.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-300 font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95 shadow-sm"
               >
                 Close
               </button>

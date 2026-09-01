@@ -14,7 +14,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
-export default function CreateMasterClassModal({ onClose, onSuccess }) {
+export default function CreateMasterClassModal({ onClose, onSuccess, editClass = null }) {
   /* =============================
      CONSTANTS
   ============================= */
@@ -156,16 +156,64 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     }
   }, [formData.course_id, fetchSubjects]);
 
-  // Sync title whenever course or subject changes
+  // Sync title whenever course or subject changes (only for new classes)
   useEffect(() => {
-    if (selectedCourse && selectedSubject) {
+    if (!editClass && selectedCourse && selectedSubject) {
       const generatedTitle = `${selectedCourse.title || selectedCourse.name} - ${selectedSubject.name}`;
       setFormData((prev) => ({
         ...prev,
         title: generatedTitle,
       }));
     }
-  }, [selectedCourse, selectedSubject]);
+  }, [editClass, selectedCourse, selectedSubject]);
+
+  // Pre-fill existing data when editing a Master Class
+  useEffect(() => {
+    if (editClass) {
+      const startD = editClass.start_date 
+        ? editClass.start_date.substring(0, 10) 
+        : (editClass.schedules?.[0]?.start_date ? editClass.schedules[0].start_date.substring(0, 10) : "");
+      const endD = editClass.end_date 
+        ? editClass.end_date.substring(0, 10) 
+        : (editClass.schedules?.[0]?.end_date ? editClass.schedules[0].end_date.substring(0, 10) : "");
+      
+      const subjectObj = editClass.subject;
+      const courseId = subjectObj?.course_id?.[0] || editClass.course_id || "";
+
+      setFormData({
+        course_id: courseId,
+        subject_id: editClass.subject_id || subjectObj?.id || "",
+        title: editClass.title || "",
+        start_date: startD,
+        end_date: endD,
+        tutor_ids: (editClass.staffs || []).filter(s => s.role !== "assistant" && s.role !== "advisor").map(s => s.staff_id || s.id),
+        assistant_ids: (editClass.staffs || []).filter(s => s.role === "assistant" || s.role === "advisor").map(s => s.staff_id || s.id),
+        link: editClass.class_link || editClass.zoom_join_url || "",
+        status: editClass.status || "active",
+        description: editClass.description || "",
+      });
+
+      if (subjectObj) {
+        setSelectedSubject(subjectObj);
+        setSubjectSearch(subjectObj.name || "");
+      }
+
+      if (editClass.schedules && editClass.schedules.length > 0) {
+        setDaySchedules(editClass.schedules.map(s => ({
+          day: s.day_of_week,
+          start_time: s.start_time ? s.start_time.substring(0, 5) : "12:00",
+          end_time: s.end_time ? s.end_time.substring(0, 5) : "13:00"
+        })));
+      }
+
+      if (editClass.staffs && editClass.staffs.length > 0) {
+        const tutorsList = editClass.staffs.filter(s => s.role !== "assistant" && s.role !== "advisor").map(s => s.staff || s);
+        const assistantsList = editClass.staffs.filter(s => s.role === "assistant" || s.role === "advisor").map(s => s.staff || s);
+        setSelectedTutors(tutorsList);
+        setSelectedAssistants(assistantsList);
+      }
+    }
+  }, [editClass]);
 
   /* =============================
      INPUT HANDLERS
@@ -436,19 +484,33 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
        API REQUEST
     ============================= */
 
-      const res = await axios.post(
-        `${API_BASE_URL}/api/admin/classes/create`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      let res;
+      if (editClass) {
+        res = await axios.put(
+          `${API_BASE_URL}/api/admin/classes/update/${editClass.id}`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } else {
+        res = await axios.post(
+          `${API_BASE_URL}/api/admin/classes/create`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
 
       if (res.status === 201 || res.status === 200) {
-        console.log("Masterclass created successfully:", res.data);
+        console.log("Masterclass saved successfully:", res.data);
         onSuccess(res.data);
       }
     } catch (error) {
@@ -490,7 +552,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
     {/* Header - Fixed */}
     <div className="flex-shrink-0 px-8 py-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-        Schedule Master Class
+        {editClass ? "Edit Master Class" : "Schedule Master Class"}
       </h2>
       <button
         onClick={onClose}
@@ -927,6 +989,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess }) {
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             Saving...
           </>
+        ) : editClass ? (
+          "Save Changes"
         ) : (
           "Save"
         )}

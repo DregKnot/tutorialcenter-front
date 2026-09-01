@@ -74,6 +74,8 @@ export default function GuardianDashboard() {
     fetchDashboardData();
   }, [navigate, API_BASE_URL]);
 
+  const [wardSchedule, setWardSchedule] = useState([]);
+
   // 2. Fetch Detailed Stats & Attendance for Selected Ward
   const fetchWardStats = useCallback(async () => {
     if (!selectedStudentId) return;
@@ -81,11 +83,12 @@ export default function GuardianDashboard() {
     if (!token) return;
 
     try {
-      const [detailsRes, attRes, subRes, repRes] = await Promise.allSettled([
+      const [detailsRes, attRes, subRes, repRes, schedRes] = await Promise.allSettled([
         axios.get(`${API_BASE_URL}/api/guardians/dashboard/wards/${selectedStudentId}/performance-details?per_page=6`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API_BASE_URL}/api/guardians/dashboard/wards/${selectedStudentId}/attendance`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API_BASE_URL}/api/guardians/dashboard/wards/${selectedStudentId}/subscription`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_BASE_URL}/api/guardians/dashboard/wards/${selectedStudentId}/weekly-report`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${API_BASE_URL}/api/guardians/dashboard/wards/${selectedStudentId}/weekly-report`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_BASE_URL}/api/guardians/dashboard/wards/${selectedStudentId}/classes/schedule`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       if (detailsRes.status === "fulfilled") setPerformanceDetails(detailsRes.value.data);
@@ -95,6 +98,10 @@ export default function GuardianDashboard() {
       }
       if (subRes.status === "fulfilled") setSubscription(subRes.value.data);
       if (repRes.status === "fulfilled") setWeeklyReport(repRes.value.data);
+      if (schedRes.status === "fulfilled") {
+        const rawSched = schedRes.value.data?.data || [];
+        setWardSchedule(Array.isArray(rawSched) ? rawSched : []);
+      }
     } catch (error) {
       console.error("Failed to fetch ward stats:", error);
     }
@@ -690,34 +697,52 @@ export default function GuardianDashboard() {
 
               {openAccordion === 'schedule' && (
                 <div className="pt-4 space-y-2.5 animate-in fade-in slide-in-from-top-2 max-h-[300px] overflow-y-auto pr-1">
-                  {masterclassTimetable.map((slot, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-[#09314F] text-white flex items-center justify-center text-[10px] font-black shrink-0">
-                          {slot.day.substring(0, 3)}
-                        </div>
-                        <div>
-                          <h5 className="text-xs font-black text-[#09314F] dark:text-white leading-tight">
-                            {slot.subject} ({slot.time})
-                          </h5>
-                          <p className="text-[10px] text-gray-400 font-semibold truncate max-w-[130px] sm:max-w-[160px]">
-                            {slot.topic}
-                          </p>
-                        </div>
-                      </div>
-
-                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
-                        slot.status === 'attended'
-                          ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-transparent"
-                          : "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-transparent"
-                      }`}>
-                        {slot.status === 'attended' ? "Attended" : "Scheduled"}
-                      </span>
+                  {wardSchedule.length === 0 ? (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl text-center border border-dashed border-gray-200 dark:border-gray-700 text-xs text-gray-400">
+                      <p className="font-bold">No masterclasses scheduled for this week.</p>
                     </div>
-                  ))}
+                  ) : (
+                    wardSchedule.map((slot) => {
+                      const isAttended = slot.attendance_status === 'present';
+                      const isLate = slot.attendance_status === 'late';
+                      const isMissed = slot.attendance_status === 'absent';
+
+                      return (
+                        <div
+                          key={slot.id}
+                          className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-[#09314F] text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                              {slot.day?.substring(0, 3) || "CLS"}
+                            </div>
+                            <div>
+                              <h5 className="text-xs font-black text-[#09314F] dark:text-white leading-tight">
+                                {slot.class_title}
+                              </h5>
+                              <p className="text-[10px] text-gray-400 font-semibold truncate max-w-[130px] sm:max-w-[170px] mt-0.5">
+                                Tutor: {slot.tutor} • {slot.time}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
+                            isAttended
+                              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-transparent"
+                              : isLate
+                              ? "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-transparent"
+                              : isMissed
+                              ? "bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 border border-rose-200 dark:border-transparent"
+                              : "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-transparent"
+                          }`}>
+                            {isAttended ? (slot.attendance_duration > 0 ? `Attended (${slot.attendance_duration}m)` : "Attended") :
+                             isLate ? "Joined Late" :
+                             isMissed ? "Missed" : "Scheduled"}
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               )}
             </div>

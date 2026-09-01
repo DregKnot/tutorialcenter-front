@@ -131,6 +131,15 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
                                 if (isMounted) {
                                     setLoading(false);
                                 }
+
+                                // If student, record initial join attendance and initiate periodic heartbeat
+                                if (!isStaff && token && classSessionId) {
+                                    axios.post(
+                                        `${API_BASE_URL}/api/students/classes/attendance/join`,
+                                        { class_session_id: classSessionId },
+                                        { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+                                    ).catch((err) => console.warn("Attendance join ping failed:", err));
+                                }
                             },
                             error: (joinErr) => {
                                 console.error("Zoom Join Error:", joinErr);
@@ -161,10 +170,32 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
 
         initializeZoom();
 
+        // 4. Background heartbeat timer every 120 seconds while student is in Zoom
+        let heartbeatInterval = null;
+        if (!isStaff && token && classSessionId) {
+            heartbeatInterval = setInterval(() => {
+                axios.post(
+                    `${API_BASE_URL}/api/students/classes/attendance/heartbeat`,
+                    { class_session_id: classSessionId },
+                    { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+                ).catch((err) => console.warn("Attendance heartbeat ping failed:", err));
+            }, 120000);
+        }
+
         return () => {
             isMounted = false;
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+            }
+            if (!isStaff && token && classSessionId) {
+                axios.post(
+                    `${API_BASE_URL}/api/students/classes/attendance/leave`,
+                    { class_session_id: classSessionId },
+                    { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+                ).catch(() => {});
+            }
         };
-    }, [sdkReady, classSessionId, signatureEndpoint, token, getLeaveUrl]);
+    }, [sdkReady, classSessionId, signatureEndpoint, token, getLeaveUrl, isStaff, API_BASE_URL]);
 
     // Client View renders into #zmmtg-root which Zoom injects automatically.
     // We only need to show loading/error overlays here, and a style tag to unhide the zoom root.
