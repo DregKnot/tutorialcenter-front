@@ -124,15 +124,7 @@ export default function GuardianDashboard() {
   const elapsedCyclePct = Math.min(100, Math.max(0, Math.round((daysUsed / totalPlanDays) * 100)));
   const isNearExpiry = elapsedCyclePct >= 80;
 
-  // Masterclass Schedule Timetable
-  const masterclassTimetable = [
-    { day: "Monday", time: "4:00 PM", subject: "Mathematics", topic: "Calculus & Derivatives", tutor: "Mr. David", status: "attended" },
-    { day: "Tuesday", time: "4:00 PM", subject: "English Language", topic: "Essay & Comprehension Strategy", tutor: "Mrs. Sarah", status: "attended" },
-    { day: "Wednesday", time: "5:00 PM", subject: "Physics", topic: "Projectile Motion & Mechanics", tutor: "Engr. Michael", status: "upcoming" },
-    { day: "Thursday", time: "4:00 PM", subject: "Chemistry", topic: "Organic Reaction Mechanisms", tutor: "Dr. Angela", status: "upcoming" },
-    { day: "Friday", time: "4:00 PM", subject: "Biology", topic: "Genetics & Cell Division", tutor: "Mr. Paul", status: "upcoming" },
-    { day: "Saturday", time: "10:00 AM", subject: "Economics / Gov", topic: "Macroeconomic Policy", tutor: "Mr. Kenneth", status: "upcoming" },
-  ];
+
 
   // Dynamic Weekly Study Frequency from Attendance & Login/Logout backend calculation
   const weeklyStudyDays = weeklyReport?.weekly_study_days && weeklyReport.weekly_study_days.length === 7
