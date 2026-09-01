@@ -317,101 +317,187 @@ export default function AdminStudentManagement() {
         </div>
 
         {/* Students Table Section */}
-        <div className="space-y-4">
-           {/* Custom Table Header */}
-           <div className="grid grid-cols-6 items-center bg-[#BB9E7F] px-8 py-5 rounded-2xl text-white font-black text-[13px] uppercase tracking-widest shadow-lg">
-              <div>Name</div>
-              <div className="text-center">Status</div>
-              <div className="text-center">Email</div>
-              { (activeTab === "Active Students" || activeTab === "Inactive Students") ? (
-                <div className="text-center">Expiry Date</div>
-              ) : (
-                <div className="text-center">Phone Number</div>
-              )}
-              <div className="text-center">Actions</div>
-              <div className="text-center"></div>
-           </div>
+         {/* Students Table Section */}
+         <div className="space-y-4">
+            {/* Desktop Table Header (Hidden on Mobile) */}
+            <div className="hidden md:grid md:grid-cols-5 items-center bg-[#BB9E7F] px-6 py-4 rounded-2xl text-white font-black text-xs uppercase tracking-wider shadow-md">
+               <div>Name</div>
+               <div className="text-center">Status</div>
+               <div className="text-center">Email</div>
+               { (activeTab === "Active Students" || activeTab === "Inactive Students") ? (
+                 <div className="text-center">Expiry Date</div>
+               ) : (
+                 <div className="text-center">Phone Number</div>
+               )}
+               <div className="text-right pr-4">Actions</div>
+            </div>
 
-           {/* Students Rows List */}
-           <div className="flex flex-col gap-4 min-h-[400px]">
-              {loading ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="w-10 h-10 border-4 border-[#0F2843]/20 border-t-[#0F2843] rounded-full animate-spin"></div>
-                </div>
-              ) : currentStudents.length > 0 ? (
-                currentStudents.map((student, idx) => {
-                  const isSuspended = student.banned === 1 || 
-                                      student.account_status === "suspended" || 
-                                      student.deleted_at != null || 
-                                      student.information?.deleted_at != null || 
-                                      (Array.isArray(student.information) && student.information[0]?.deleted_at != null);
+            {/* Students Rows List */}
+            <div className="flex flex-col gap-3 min-h-[400px]">
+               {loading ? (
+                 <div className="flex-1 flex items-center justify-center py-16">
+                   <div className="w-10 h-10 border-4 border-[#0F2843]/20 border-t-[#0F2843] rounded-full animate-spin"></div>
+                 </div>
+               ) : currentStudents.length > 0 ? (
+                 currentStudents.map((student, idx) => {
+                   const isSuspended = student.banned === 1 || 
+                                       student.account_status === "suspended" || 
+                                       student.deleted_at != null || 
+                                       student.information?.deleted_at != null || 
+                                       (Array.isArray(student.information) && student.information[0]?.deleted_at != null);
 
-                  const displayName = (student.firstname && student.surname)
-                    ? `${student.firstname} ${student.surname}`.trim() 
-                    : student.username || "Unknown Student";
+                   const displayName = (student.firstname && student.surname)
+                     ? `${student.firstname} ${student.surname}`.trim() 
+                     : student.username || "Unknown Student";
 
-                  return (
-                  <div 
-                    key={student.id || idx} 
-                    className={`grid grid-cols-6 items-center bg-white dark:bg-gray-800 px-8 py-5 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-gray-50 dark:border-gray-700 hover:shadow-xl transition-all cursor-pointer group animate-in fade-in slide-in-from-bottom-2 ${isSuspended ? "opacity-60 grayscale-[0.5]" : ""}`}
-                  >
-                     {/* Name Column with Avatar */}
-                     <div className="flex items-center gap-4 col-span-1">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all bg-gray-100 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
-                           {student.profile_picture ? (
-                             <img 
-                               src={`${API_BASE_URL}/storage/${student.profile_picture}`} 
-                               className="w-full h-full object-cover" 
-                               alt={displayName} 
-                             />
-                           ) : (
-                             <span className="font-black text-[#0F2843] dark:text-white text-sm">
-                               {displayName?.[0]?.toUpperCase() || "S"}
+                   const expiryDateStr = (() => {
+                      const latest = getLatestCourse(student);
+                      if (!latest || !latest.end_date) return "N/A";
+                      return new Date(latest.end_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                   })();
+
+                   const phoneStr = student.tel || student.guardian?.tel || "—";
+                   const isActive = isStudentActive(student);
+
+                   return (
+                     <div key={student.id || idx}>
+                       {/* DESKTOP ROW */}
+                       <div 
+                         onClick={() => handleOpenModal(student.id)}
+                         className={`hidden md:grid md:grid-cols-5 items-center bg-white dark:bg-gray-800 px-6 py-4 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-gray-700/60 hover:shadow-lg transition-all cursor-pointer group animate-in fade-in slide-in-from-bottom-2 ${isSuspended ? "opacity-60 grayscale-[0.5]" : ""}`}
+                       >
+                          {/* Name Column with Avatar */}
+                          <div className="flex items-center gap-3.5">
+                             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all bg-gray-100 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
+                                {student.profile_picture ? (
+                                  <img 
+                                    src={`${API_BASE_URL}/storage/${student.profile_picture}`} 
+                                    className="w-full h-full object-cover" 
+                                    alt={displayName} 
+                                  />
+                                ) : (
+                                  <span className="font-black text-[#0F2843] dark:text-white text-xs">
+                                    {displayName?.[0]?.toUpperCase() || "S"}
+                                  </span>
+                                )}
+                             </div>
+                             <span className="font-bold text-[#0F2843] dark:text-white text-sm truncate" title={displayName}>
+                               {displayName}
                              </span>
-                           )}
-                        </div>
-                        <span className="font-black text-[#0F2843] dark:text-white text-sm truncate">{displayName}</span>
-                     </div>
-                     
-                     {/* Data Columns */}
-                     <div className="text-center font-black text-[13px] tracking-tight uppercase">
-                       {isSuspended ? (
-                         <span className="text-[#EF4444]">Suspended</span>
-                       ) : (
-                         <span className={isStudentActive(student) ? 'text-[#22C55E]' : 'text-gray-500'}>
-                           {isStudentActive(student) ? "Active" : "Inactive"}
-                         </span>
-                       )}
-                     </div>
-                     <div className="text-center text-gray-500 font-bold text-[13px] truncate">{student.email || "—"}</div>
-                     
-                     { (activeTab === "Active Students" || activeTab === "Inactive Students") ? (
-                       <div className="text-center text-gray-700 dark:text-gray-300 font-bold text-[13px]">
-                         {(() => {
-                            const latest = getLatestCourse(student);
-                            if (!latest || !latest.end_date) return "N/A";
-                            return new Date(latest.end_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-                         })()}
-                       </div>
-                     ) : (
-                       <div className="text-center text-[#BB9E7F] font-black text-sm">{student.tel || student.guardian?.tel || "—"}</div>
-                     )}
+                          </div>
+                          
+                          {/* Status Column */}
+                          <div className="text-center font-bold text-xs uppercase">
+                            {isSuspended ? (
+                              <span className="px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-900/30 text-red-500 font-bold">Suspended</span>
+                            ) : (
+                              <span className={`px-2.5 py-1 rounded-full font-bold ${
+                                isActive ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600" : "bg-gray-100 dark:bg-gray-700 text-gray-400"
+                              }`}>
+                                {isActive ? "Active" : "Inactive"}
+                              </span>
+                            )}
+                          </div>
 
-                     {/* Actions Column */}
-                     <div className="text-center">
-                        <button 
-                          onClick={() => handleOpenModal(student.id)}
-                          className="p-2.5 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-[#0F2843] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-600 rounded-xl transition-all active:scale-95"
-                        >
-                           <EyeIcon className="w-5 h-5" />
-                        </button>
+                          {/* Email Column */}
+                          <div className="text-center text-gray-500 dark:text-gray-400 font-medium text-xs truncate px-2" title={student.email}>
+                            {student.email || "—"}
+                          </div>
+                          
+                          {/* Expiry or Phone */}
+                          { (activeTab === "Active Students" || activeTab === "Inactive Students") ? (
+                            <div className="text-center text-gray-700 dark:text-gray-300 font-semibold text-xs">
+                              {expiryDateStr}
+                            </div>
+                          ) : (
+                            <div className="text-center text-gray-700 dark:text-gray-300 font-bold text-xs">
+                              {phoneStr}
+                            </div>
+                          )}
+
+                          {/* Actions Column */}
+                          <div className="text-right pr-2">
+                             <button 
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 handleOpenModal(student.id);
+                               }}
+                               className="p-2 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-[#0F2843] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-600 rounded-xl transition-all active:scale-95"
+                               title="View student profile"
+                             >
+                                <EyeIcon className="w-4 h-4" />
+                             </button>
+                          </div>
+                       </div>
+
+                       {/* MOBILE CARD VIEW */}
+                       <div 
+                         onClick={() => handleOpenModal(student.id)}
+                         className={`block md:hidden bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm hover:shadow-md transition-all active:scale-[0.99] cursor-pointer ${isSuspended ? "opacity-60 grayscale-[0.5]" : ""}`}
+                       >
+                         <div className="flex items-center justify-between gap-3 mb-3">
+                           <div className="flex items-center gap-3 min-w-0">
+                             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#BB9E7F]/30 bg-gray-100 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
+                               {student.profile_picture ? (
+                                 <img 
+                                   src={`${API_BASE_URL}/storage/${student.profile_picture}`} 
+                                   className="w-full h-full object-cover" 
+                                   alt={displayName} 
+                                 />
+                               ) : (
+                                 <span className="font-black text-[#0F2843] dark:text-white text-xs">
+                                   {displayName?.[0]?.toUpperCase() || "S"}
+                                 </span>
+                               )}
+                             </div>
+                             <div className="min-w-0">
+                               <p className="font-bold text-[#0F2843] dark:text-white text-sm truncate">{displayName}</p>
+                               <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase mt-0.5 ${
+                                 isSuspended
+                                   ? "bg-red-50 text-red-500"
+                                   : isActive
+                                   ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600"
+                                   : "bg-gray-100 dark:bg-gray-700 text-gray-400"
+                               }`}>
+                                 {isSuspended ? "Suspended" : (isActive ? "Active" : "Inactive")}
+                                </span>
+                             </div>
+                           </div>
+
+                           <button 
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               handleOpenModal(student.id);
+                             }}
+                             className="p-2 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-[#0F2843] dark:hover:text-white rounded-xl"
+                           >
+                             <EyeIcon className="w-4 h-4" />
+                           </button>
+                         </div>
+
+                         <div className="grid grid-cols-1 gap-1.5 pt-2 border-t border-gray-100 dark:border-gray-700/50 text-xs">
+                           <div className="flex items-center justify-between text-gray-500 dark:text-gray-400">
+                             <span className="text-[11px] font-semibold">Email:</span>
+                             <span className="font-medium text-gray-800 dark:text-gray-200 truncate max-w-[200px]">{student.email || "—"}</span>
+                           </div>
+                           <div className="flex items-center justify-between text-gray-500 dark:text-gray-400">
+                             <span className="text-[11px] font-semibold">Phone:</span>
+                             <span className="font-bold text-gray-800 dark:text-gray-200">{phoneStr}</span>
+                           </div>
+                           {(activeTab === "Active Students" || activeTab === "Inactive Students") && (
+                             <div className="flex items-center justify-between text-gray-500 dark:text-gray-400">
+                               <span className="text-[11px] font-semibold">Expiry:</span>
+                               <span className="font-bold text-gray-800 dark:text-gray-200">{expiryDateStr}</span>
+                             </div>
+                           )}
+                         </div>
+                       </div>
                      </div>
-                     <div className="text-center"></div>
-                  </div>
-                )})
-              ) : (
-                /* Awaiting Content Placeholder */
-                <div className="flex-1 flex flex-col items-center justify-center bg-white/40 dark:bg-gray-800/40 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 p-12">
+                   );
+                 })
+               ) : (
+                 /* Awaiting Content Placeholder */
+                 <div className="flex-1 flex flex-col items-center justify-center bg-white/40 dark:bg-gray-800/40 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 p-12">
                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-6">
                       <UserPlusIcon className="w-10 h-10 text-gray-300" />
                    </div>

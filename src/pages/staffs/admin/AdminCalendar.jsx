@@ -125,57 +125,81 @@ const extractTutorInfo = (rawItem) => {
 // Helper to extract flattened sessions from any backend response format
 const extractFlatSessions = (data) => {
   const list = [];
-  const pushIfNew = (item) => {
-    if (item && item.id && !list.some(s => s.id === item.id)) {
-      const tutor = extractTutorInfo(item);
-      const subject = item.subject_name || item.subject?.name || item.course?.name || "General Studies";
-      
-      let link = item.class_link || item.meeting_link;
-      let recording = item.recording_link || item.recording_url || item.video_url;
+  
+  const pushSession = (session, parentClass = null) => {
+    if (!session || !session.id) return;
+    if (list.some(s => s.id === session.id)) return;
 
-      if (!link && Array.isArray(item.schedules)) {
-        for (let sched of item.schedules) {
-          if (Array.isArray(sched.sessions)) {
-            const found = sched.sessions.find(s => s.class_link);
-            if (found) { link = found.class_link; break; }
-          }
+    const source = parentClass || session.class || session;
+    const tutor = extractTutorInfo(source);
+    const subject = source.subject_name || source.subject?.name || source.course?.name || "General Studies";
+    
+    let link = session.class_link || source.class_link || source.zoom_join_url || source.zoom_start_url;
+    let recording = session.recording_link || source.recording_link;
+
+    const rawDate = session.session_date || session.date || session.scheduled_date || session.start_date || session.created_at;
+    const dateStr = rawDate ? String(rawDate).split("T")[0].split(" ")[0] : new Date().toISOString().split("T")[0];
+    
+    const startTime = session.starts_at || session.start_time || "10:00";
+    const endTime = session.ends_at || session.end_time || "11:30";
+
+    list.push({
+      ...session,
+      id: session.id,
+      class_id: source.id || session.class_id,
+      session_date: dateStr,
+      starts_at: startTime ? startTime.substring(0, 5) : "10:00",
+      ends_at: endTime ? endTime.substring(0, 5) : "11:30",
+      topic: session.title || source.title || `${subject} Master Class`,
+      subject_name: subject,
+      subject: source.subject || session.subject,
+      tutor,
+      tutor_name: tutor.name,
+      class_link: link,
+      recording_link: recording,
+      class_tier: session.class_tier || source.class_tier || "JAMB / O-Levels",
+      description: session.description || source.description || "In-depth master class lecture covering core syllabus topics, past questions, and problem-solving techniques.",
+    });
+  };
+
+  const processClassItem = (cls) => {
+    if (!cls) return;
+    let extractedCount = 0;
+    if (Array.isArray(cls.schedules)) {
+      cls.schedules.forEach(sched => {
+        if (Array.isArray(sched.sessions)) {
+          sched.sessions.forEach(session => {
+            pushSession(session, cls);
+            extractedCount++;
+          });
         }
-      }
-
-      const dateStr = item.session_date || item.date || item.scheduled_date || item.start_date || item.created_at?.split("T")[0];
-      const startTime = item.starts_at || item.start_time || item.schedules?.[0]?.start_time || "10:00";
-      const endTime = item.ends_at || item.end_time || item.schedules?.[0]?.end_time || "11:30";
-
-      list.push({
-        ...item,
-        session_date: dateStr,
-        starts_at: startTime,
-        ends_at: endTime,
-        topic: item.topic || item.title || item.name || `${subject} Master Class`,
-        subject_name: subject,
-        tutor,
-        tutor_name: tutor.name,
-        class_link: link,
-        recording_link: recording,
-        class_tier: item.class_tier || item.tier || "JAMB / O-Levels",
-        description: item.description || "In-depth master class lecture covering core syllabus topics, past questions, and problem-solving techniques.",
       });
+    }
+    // If no nested sessions were found in schedules, extract class directly
+    if (extractedCount === 0) {
+      pushSession(cls);
     }
   };
 
   if (Array.isArray(data)) {
-    data.forEach(pushIfNew);
+    data.forEach(item => {
+      if (item.schedules || item.subject_id) {
+        processClassItem(item);
+      } else {
+        pushSession(item);
+      }
+    });
   } else if (data && typeof data === 'object') {
-    if (Array.isArray(data.classes)) data.classes.forEach(pushIfNew);
-    if (Array.isArray(data.sessions)) data.sessions.forEach(pushIfNew);
-    if (Array.isArray(data.today_classes)) data.today_classes.forEach(pushIfNew);
-    if (Array.isArray(data.upcoming_sessions)) data.upcoming_sessions.forEach(pushIfNew);
-    if (Array.isArray(data.past_sessions)) data.past_sessions.forEach(pushIfNew);
-    if (Array.isArray(data.history)) data.history.forEach(pushIfNew);
-    if (data.next_class) pushIfNew(data.next_class);
+    if (Array.isArray(data.classes)) data.classes.forEach(processClassItem);
+    if (Array.isArray(data.sessions)) data.sessions.forEach(s => pushSession(s));
+    if (Array.isArray(data.today_classes)) data.today_classes.forEach(s => pushSession(s));
+    if (Array.isArray(data.upcoming_sessions)) data.upcoming_sessions.forEach(s => pushSession(s));
+    if (Array.isArray(data.past_sessions)) data.past_sessions.forEach(s => pushSession(s));
+    if (Array.isArray(data.history)) data.history.forEach(s => pushSession(s));
+    if (data.next_class) pushSession(data.next_class);
     if (data.week_schedule && typeof data.week_schedule === 'object') {
       Object.values(data.week_schedule).forEach(arr => {
-        if (Array.isArray(arr)) arr.forEach(pushIfNew);
+        if (Array.isArray(arr)) arr.forEach(s => pushSession(s));
       });
     }
   }

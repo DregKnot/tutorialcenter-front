@@ -122,19 +122,20 @@ export default function AdminGuardianManagement() {
         </div>
 
         {/* Guardians Table Section */}
+        {/* Guardians Table Section */}
         <div className="space-y-4">
-           {/* Custom Table Header */}
-           <div className="grid grid-cols-4 items-center bg-[#09314F] px-8 py-5 rounded-2xl text-white font-black text-[13px] uppercase tracking-widest shadow-lg">
+           {/* Desktop Table Header (Hidden on Mobile) */}
+           <div className="hidden md:grid md:grid-cols-4 items-center bg-[#09314F] px-6 py-4 rounded-2xl text-white font-black text-xs uppercase tracking-wider shadow-md">
               <div>Guardian Name</div>
               <div className="text-center">Email</div>
               <div className="text-center">Phone Number</div>
-              <div className="text-center">Students Enrolled</div>
+              <div className="text-right pr-4">Students Enrolled</div>
            </div>
 
            {/* Rows List */}
-           <div className="flex flex-col gap-4 min-h-[400px]">
+           <div className="flex flex-col gap-3 min-h-[400px]">
               {loading ? (
-                <div className="flex-1 flex items-center justify-center">
+                <div className="flex-1 flex items-center justify-center py-16">
                   <div className="w-10 h-10 border-4 border-[#0F2843]/20 border-t-[#0F2843] rounded-full animate-spin"></div>
                 </div>
               ) : currentGuardians.length > 0 ? (
@@ -144,34 +145,60 @@ export default function AdminGuardianManagement() {
                     : (guardian.firstname || guardian.surname || "Unknown Guardian");
 
                   return (
-                    <div 
-                      key={idx}
-                      className="grid grid-cols-4 items-center bg-white dark:bg-gray-800/60 px-8 py-5 rounded-2xl border border-gray-50 dark:border-gray-700/50 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all hover:shadow-md group"
-                    >
-                       <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-[#0F2843] text-white flex items-center justify-center font-black text-sm uppercase">
-                            {displayName.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-bold text-[#0F2843] dark:text-white text-sm">
+                    <div key={idx}>
+                      {/* DESKTOP ROW */}
+                      <div className="hidden md:grid md:grid-cols-4 items-center bg-white dark:bg-gray-800/60 px-6 py-4 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all group">
+                         <div className="flex items-center gap-3.5 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-[#0F2843] text-white flex items-center justify-center font-black text-xs uppercase flex-shrink-0">
+                              {displayName.charAt(0)}
+                            </div>
+                            <span className="font-bold text-[#0F2843] dark:text-white text-sm truncate" title={displayName}>
                               {displayName}
-                            </p>
+                            </span>
+                         </div>
+                         
+                         <div className="text-center font-medium text-gray-500 dark:text-gray-400 text-xs truncate px-2" title={guardian.email}>
+                            {guardian.email || "N/A"}
+                         </div>
+                         
+                         <div className="text-center font-bold text-gray-800 dark:text-gray-200 text-xs">
+                            {guardian.tel || "N/A"}
+                         </div>
+                         
+                         <div className="text-right pr-2">
+                            <span className="inline-flex items-center px-3 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] rounded-lg text-xs font-bold">
+                               {guardian.students?.length || 0} Ward(s)
+                            </span>
+                         </div>
+                      </div>
+
+                      {/* MOBILE CARD VIEW */}
+                      <div className="block md:hidden bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm">
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-[#0F2843] text-white flex items-center justify-center font-black text-xs uppercase flex-shrink-0">
+                              {displayName.charAt(0)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bold text-[#0F2843] dark:text-white text-sm truncate">{displayName}</p>
+                              <span className="inline-flex items-center px-2 py-0.5 bg-[#BB9E7F]/10 text-[#BB9E7F] rounded-md text-[10px] font-bold mt-0.5">
+                                {guardian.students?.length || 0} Ward(s)
+                              </span>
+                            </div>
                           </div>
-                       </div>
-                       
-                       <div className="text-center font-bold text-gray-500 dark:text-gray-400 text-sm">
-                          {guardian.email || "N/A"}
-                       </div>
-                       
-                       <div className="text-center font-bold text-gray-500 dark:text-gray-400 text-sm">
-                          {guardian.tel || "N/A"}
-                       </div>
-                       
-                       <div className="text-center text-sm font-bold text-gray-500 flex flex-col items-center">
-                          <span className="px-3 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] rounded-lg">
-                             {guardian.students?.length || 0} Ward(s)
-                          </span>
-                       </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-1.5 pt-2 border-t border-gray-100 dark:border-gray-700/50 text-xs">
+                          <div className="flex items-center justify-between text-gray-500 dark:text-gray-400">
+                            <span className="text-[11px] font-semibold">Email:</span>
+                            <span className="font-medium text-gray-800 dark:text-gray-200 truncate max-w-[200px]">{guardian.email || "—"}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-gray-500 dark:text-gray-400">
+                            <span className="text-[11px] font-semibold">Phone:</span>
+                            <span className="font-bold text-gray-800 dark:text-gray-200">{guardian.tel || "—"}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   );
                 })
