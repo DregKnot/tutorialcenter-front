@@ -153,12 +153,23 @@ export default function StudentPaymentDisplay() {
       const reference = response?.reference || `TC-REN-${Date.now()}-${student?.id}`;
       const courseId = selectedPayment?.enrollment?.course_id || selectedPayment?.course_id;
 
+      // Extract existing enrolled subjects so they are explicitly carried forward on renewal
+      let extractedSubjects = [];
+      if (Array.isArray(selectedPayment?.subjects)) {
+        extractedSubjects = selectedPayment.subjects.map(s => s.id || s.subject_id || s).filter(Boolean);
+      } else if (Array.isArray(selectedPayment?.enrollment?.subjects)) {
+        extractedSubjects = selectedPayment.enrollment.subjects.map(s => s.subject_id || s.id || s.subject?.id).filter(Boolean);
+      } else if (Array.isArray(selectedPayment?.enrolled_subjects)) {
+        extractedSubjects = selectedPayment.enrolled_subjects.map(s => s.id || s.subject_id || s).filter(Boolean);
+      }
+
       const fallbackMetadata = {
         type: "course_renewal",
         student_id: student?.id,
         course_id: courseId,
         billing_cycle: selectedDuration,
         price: calculatedPrice,
+        subjects: extractedSubjects,
       };
 
       console.log("Verifying renewal payment with backend:", reference);
