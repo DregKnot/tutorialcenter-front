@@ -52,13 +52,27 @@ export default function StaffMeetWrapper() {
       );
   }
 
-  const isZoom = sessionDetails.class_link?.includes("zoom.us") || sessionDetails.class_link?.includes("zoom");
+  const handleLeave = () => {
+    if (sessionDetails?.class_schedule_id) {
+      sessionStorage.setItem("just_completed_class_session_id", String(sessionDetails.class_schedule_id));
+    }
+    const staffRole = localStorage.getItem("staff_role") || "";
+    if (staffRole.toLowerCase() === 'course_advisor' || staffRole.toLowerCase() === 'advisor') {
+      navigate(`/staffs/course-advisor/master-class?feedback_session=${sessionDetails?.class_schedule_id}`);
+    } else {
+      navigate(`/staffs/tutor/master-class?feedback_session=${sessionDetails?.class_schedule_id}`, {
+        state: { promptPostClassReport: true, completedSessionId: sessionDetails?.class_schedule_id }
+      });
+    }
+  };
+
+  const isZoom = sessionDetails?.class_link?.includes("zoom.us") || sessionDetails?.class_link?.includes("zoom");
 
   return (
     <StaffDashboardLayout pagetitle={isZoom ? "Live Zoom Class (Host)" : "Live Class Session"}>
       {isZoom ? (
         <div className="py-6 max-w-5xl mx-auto">
-          <ZoomMeetingSession classSessionId={sessionDetails.class_schedule_id} />
+          <ZoomMeetingSession classSessionId={sessionDetails.class_schedule_id} onLeave={handleLeave} />
         </div>
       ) : (
         <div className="flex items-center justify-center min-h-[60vh]">

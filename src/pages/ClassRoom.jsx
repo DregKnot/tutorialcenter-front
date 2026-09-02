@@ -39,10 +39,18 @@ export default function ClassRoom() {
         const isStaff = !!localStorage.getItem("staff_token");
         if (isStaff) {
             const staffRole = localStorage.getItem("staff_role") || "";
+            if (classSessionId) {
+                sessionStorage.setItem("just_completed_class_session_id", String(classSessionId));
+            }
             if (staffRole.toLowerCase() === 'course_advisor' || staffRole.toLowerCase() === 'advisor') {
-                navigate('/staffs/course-advisor/master-class');
+                navigate(`/staffs/course-advisor/master-class?feedback_session=${classSessionId}`);
             } else {
-                navigate('/staffs/tutor/master-class');
+                navigate(`/staffs/tutor/master-class?feedback_session=${classSessionId}`, {
+                    state: {
+                        promptPostClassReport: true,
+                        completedSessionId: classSessionId
+                    }
+                });
             }
         } else {
             navigate('/student/class-schedule');

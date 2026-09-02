@@ -2,7 +2,8 @@ import { useEffect, useLayoutEffect, useState, useMemo, useCallback, useRef } fr
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import axios from "axios";
 import { Icon } from "@iconify/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import TutorPostClassReportModal from "../../../components/private/Tutor/TutorPostClassReportModal";
 
 // SVG Icons to match premium look
 const ChevronLeftIcon = () => (
@@ -90,6 +91,11 @@ export default function TutorCalendar() {
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedDateModal, setSelectedDateModal] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackSession, setFeedbackSession] = useState(null);
+  const location = useLocation();
+  const staffName = localStorage.getItem("staff_name") || "Tutor";
 
   const isPastSession = useCallback((session) => {
     if (!session || !session.session_date) return false;
@@ -201,6 +207,54 @@ export default function TutorCalendar() {
   useEffect(() => {
     fetchSchedule();
   }, [fetchSchedule]);
+
+  // Check for feedback query parameter or sessionStorage upon leaving class
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const feedbackSessionId =
+      searchParams.get("feedback_session") ||
+      location.state?.completedSessionId ||
+      sessionStorage.getItem("just_completed_class_session_id");
+
+    if (feedbackSessionId) {
+      sessionStorage.removeItem("just_completed_class_session_id");
+
+      const session = sessions.find((s) => String(s.id) === String(feedbackSessionId));
+      if (session) {
+        setFeedbackSession({
+          id: session.id,
+          class_id: session.class_id || session.id,
+          class_title: session.class?.title || session.title || "Masterclass",
+          subject: (typeof session.subject === "object" ? session.subject?.name : session.subject) || "General Subject",
+          topic: session.topic || session.title || "Lesson Session",
+          date: session.session_date ? new Date(session.session_date).toLocaleDateString() : new Date().toLocaleDateString(),
+          time: `${session.starts_at || 'TBD'} - ${session.ends_at || 'TBD'}`,
+          tutor_name: staffName,
+          present_count: session.attendances?.length ?? 0,
+          total_students: 20,
+        });
+      } else {
+        setFeedbackSession({
+          id: feedbackSessionId,
+          class_id: feedbackSessionId,
+          class_title: "Master Class",
+          subject: "Live Masterclass",
+          topic: "Class Lesson",
+          date: new Date().toLocaleDateString(),
+          time: "Just Concluded",
+          tutor_name: staffName,
+          present_count: 0,
+          total_students: 20,
+        });
+      }
+
+      setFeedbackModalOpen(true);
+
+      if (location.search || location.state?.promptPostClassReport) {
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.search, location.state, sessions, navigate, location.pathname, staffName]);
 
   // Scroll active hour into view for Week/Day views
   useLayoutEffect(() => {
@@ -1057,6 +1111,17 @@ export default function TutorCalendar() {
           </div>
         </div>
       )}
+
+      {/* ====== POST-CLASS TUTOR REPORT POPUP MODAL ====== */}
+      <TutorPostClassReportModal 
+        isOpen={feedbackModalOpen}
+        onClose={() => setFeedbackModalOpen(false)}
+        sessionDetails={feedbackSession}
+        onSubmitSuccess={() => {
+          setFeedbackModalOpen(false);
+          fetchSchedule();
+        }}
+      />
     </StaffDashboardLayout>
   );
 }

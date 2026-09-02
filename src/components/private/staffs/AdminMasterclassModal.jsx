@@ -431,12 +431,15 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
        BUILD STAFF ARRAY
     ============================= */
 
+      const validTutors = (formData.tutor_ids || []).filter(id => id && !isNaN(Number(id)));
+      const validAssistants = (formData.assistant_ids || []).filter(id => id && !isNaN(Number(id)));
+
       const staffs = [
-        ...formData.tutor_ids.map((id) => ({
+        ...validTutors.map((id) => ({
           staff_id: Number(id),
           role: "lead",
         })),
-        ...formData.assistant_ids.map((id) => ({
+        ...validAssistants.map((id) => ({
           staff_id: Number(id),
           role: "assistant",
         })),
@@ -455,8 +458,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
       const schedules = daySchedules
         .filter((s) => s.day && s.start_time && s.end_time)
         .map((s) => ({
-          day_of_week: s.day.toLowerCase(),
-          start_time: s.start_time,
+          day_of_week: s.day.toLowerCase().trim(),
+          start_time: s.start_time.length > 5 ? s.start_time.substring(0, 5) : s.start_time,
           duration_minutes: Number(calculateDuration(s.start_time, s.end_time)),
         }));
 
@@ -469,17 +472,22 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
       /* =============================
        BUILD FINAL PAYLOAD
     ============================= */
+      const subId = formData.subject_id 
+        ? Number(formData.subject_id) 
+        : (editClass?.subject_id || editClass?.subject?.id ? Number(editClass.subject_id || editClass.subject.id) : null);
+
       const payload = {
-        subject_id: Number(formData.subject_id),
+        subject_id: subId,
         title: formData.title.trim(),
-        description: formData.description || "No description",
-        status: formData.status,
-        class_link: formData.link, // ✅ ADD THIS
-        start_date: formData.start_date,
-        end_date: formData.end_date,
+        description: formData.description?.trim() || null,
+        status: formData.status || "active",
+        class_link: formData.link?.trim() ? formData.link.trim() : null,
+        start_date: formData.start_date ? formData.start_date.substring(0, 10) : null,
+        end_date: formData.end_date ? formData.end_date.substring(0, 10) : null,
         staffs,
         schedules,
       };
+
       /* =============================
        API REQUEST
     ============================= */
@@ -520,13 +528,16 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         console.log("VALIDATION ERRORS:", error.response.data.errors);
 
         const formatted = {};
+        const errorList = [];
 
         Object.entries(error.response.data.errors).forEach(([k, v]) => {
           const errorKey = k === 'class_link' ? 'link' : k;
           formatted[errorKey] = v[0];
+          errorList.push(`${errorKey}: ${v[0]}`);
         });
 
         setErrors(formatted);
+        setApiError(errorList.join(" | ") || error.response.data.message || "Validation failed");
       } else {
         setApiError(error.response?.data?.message || "Server error");
       }

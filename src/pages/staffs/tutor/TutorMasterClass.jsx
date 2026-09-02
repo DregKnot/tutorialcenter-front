@@ -68,40 +68,63 @@ export default function TutorMasterClass() {
     fetchSessions();
   }, [fetchSessions]);
 
-  // Check for feedback query parameter
+  // Check for feedback query parameter or state/storage from leaving a masterclass
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const feedbackSessionId = searchParams.get("feedback_session");
+    const feedbackSessionId =
+      searchParams.get("feedback_session") ||
+      location.state?.completedSessionId ||
+      sessionStorage.getItem("just_completed_class_session_id");
 
-    if (feedbackSessionId && Object.keys(scheduleData).length > 0) {
-      // Find the session in any of the lists
+    if (feedbackSessionId) {
+      sessionStorage.removeItem("just_completed_class_session_id");
+
+      // Find the session in any of the loaded lists
       const allSessions = [
-        ...scheduleData.today_classes,
-        ...Object.values(scheduleData.week_schedule).flat(),
-        ...scheduleData.upcoming_sessions
+        ...(scheduleData.today_classes || []),
+        ...Object.values(scheduleData.week_schedule || {}).flat(),
+        ...(scheduleData.upcoming_sessions || []),
+        ...(scheduleData.next_class ? [scheduleData.next_class] : [])
       ];
 
       const session = allSessions.find(s => String(s.id) === String(feedbackSessionId));
       if (session) {
         setFeedbackSession({
           id: session.id,
-          class_id: session.class_id,
-          class_title: session.class?.title || session.class?.subject?.name || "Masterclass",
-          subject: session.class?.subject?.name || "General Subject",
-          topic: session.class?.title || "Topic Lesson",
+          class_id: session.class_id || session.id,
+          class_title: session.class?.title || session.class?.subject?.name || session.title || "Masterclass",
+          subject: (typeof session.class?.subject === "object" ? session.class?.subject?.name : session.class?.subject) || "General Subject",
+          topic: session.class?.title || session.title || "Lesson Session",
           date: session.session_date ? new Date(session.session_date).toLocaleDateString() : new Date().toLocaleDateString(),
           time: `${session.starts_at || 'TBD'} - ${session.ends_at || 'TBD'}`,
           tutor_name: staffName,
           present_count: session.attendances?.length ?? 0,
           total_students: 20,
         });
-        setFeedbackModalOpen(true);
-        
-        // Clean up URL
-        navigate(location.pathname, { replace: true });
+      } else {
+        // Fallback default so popup opens instantly even before list loads
+        setFeedbackSession({
+          id: feedbackSessionId,
+          class_id: feedbackSessionId,
+          class_title: "Master Class",
+          subject: "Live Masterclass",
+          topic: "Class Lesson",
+          date: new Date().toLocaleDateString(),
+          time: "Just Concluded",
+          tutor_name: staffName,
+          present_count: 0,
+          total_students: 20,
+        });
+      }
+
+      setFeedbackModalOpen(true);
+      
+      // Clean up URL and state
+      if (location.search || location.state?.promptPostClassReport) {
+        navigate(location.pathname, { replace: true, state: {} });
       }
     }
-  }, [location.search, scheduleData, navigate, location.pathname, staffName]);
+  }, [location.search, location.state, scheduleData, navigate, location.pathname, staffName]);
 
   // --- HELPERS ---
   const formatDate = (dateStr) => {

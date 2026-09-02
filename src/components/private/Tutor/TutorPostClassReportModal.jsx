@@ -71,8 +71,8 @@ export default function TutorPostClassReportModal({
 
       setFormData((prev) => ({
         ...prev,
-        presentCount: sessionDetails.present_count ?? (sessionDetails.attendances_count ?? 15),
-        totalCount: sessionDetails.total_students ?? 20,
+        presentCount: sessionDetails.present_count ?? (sessionDetails.attendances_count ?? 0),
+        totalCount: sessionDetails.total_students ?? 0,
         tutorSignature: sessionDetails.tutor_name || tutorName,
       }));
       setError(null);
@@ -123,9 +123,18 @@ export default function TutorPostClassReportModal({
     setError(null);
 
     const token = localStorage.getItem("staff_token") || localStorage.getItem("token");
+    let currentStaffId = null;
+    try {
+      const stored = localStorage.getItem("staff_user") || localStorage.getItem("staff_info") || localStorage.getItem("user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        currentStaffId = parsed.id || null;
+      }
+    } catch (e) {}
 
     const payload = {
       class_session_id: sessionDetails.id,
+      staff_id: currentStaffId,
       attendance: {
         present_count: parseInt(formData.presentCount, 10) || 0,
         total_count: parseInt(formData.totalCount, 10) || 0,
@@ -311,49 +320,58 @@ export default function TutorPostClassReportModal({
                   
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold">Present:</span>
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Present:</span>
                       <input
                         type="number"
                         min="0"
                         value={formData.presentCount}
                         onChange={(e) => setFormData({ ...formData, presentCount: e.target.value })}
-                        className="w-20 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-center font-black text-sm"
-                      />
-                    </div>
-                    <span className="text-gray-400 font-bold">/</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold">Total:</span>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.totalCount}
-                        onChange={(e) => setFormData({ ...formData, totalCount: e.target.value })}
-                        className="w-20 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-center font-black text-sm"
+                        className="w-24 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-center font-black text-sm text-[#09314F] dark:text-[#C5A97A] focus:ring-2 focus:ring-[#C5A97A] outline-none"
+                        placeholder="0"
                       />
                     </div>
                   </div>
 
                   <div className="pt-2">
-                    <p className="text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5">Were there any notable attendance issues?</p>
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                        <input
-                          type="radio"
-                          name="hasAttendanceIssues"
-                          checked={!formData.hasAttendanceIssues}
-                          onChange={() => setFormData({ ...formData, hasAttendanceIssues: false, attendanceIssuesDetail: "" })}
-                        />
+                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Were there any notable attendance issues?</p>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, hasAttendanceIssues: false, attendanceIssuesDetail: "" })}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
+                          !formData.hasAttendanceIssues
+                            ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
+                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded flex items-center justify-center border ${
+                          !formData.hasAttendanceIssues
+                            ? "bg-white text-[#09314F] border-white dark:bg-[#09314F] dark:text-white"
+                            : "border-gray-400 dark:border-gray-500"
+                        }`}>
+                          {!formData.hasAttendanceIssues && <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" />}
+                        </span>
                         <span>No</span>
-                      </label>
-                      <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                        <input
-                          type="radio"
-                          name="hasAttendanceIssues"
-                          checked={formData.hasAttendanceIssues}
-                          onChange={() => setFormData({ ...formData, hasAttendanceIssues: true })}
-                        />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, hasAttendanceIssues: true })}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
+                          formData.hasAttendanceIssues
+                            ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
+                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded flex items-center justify-center border ${
+                          formData.hasAttendanceIssues
+                            ? "bg-white text-[#09314F] border-white dark:bg-[#09314F] dark:text-white"
+                            : "border-gray-400 dark:border-gray-500"
+                        }`}>
+                          {formData.hasAttendanceIssues && <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" />}
+                        </span>
                         <span>Yes — Please specify</span>
-                      </label>
+                      </button>
                     </div>
 
                     {formData.hasAttendanceIssues && (
@@ -560,27 +578,46 @@ export default function TutorPostClassReportModal({
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Did you assess students' understanding today?</span>
-                    <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-1.5 text-xs font-bold cursor-pointer">
-                        <input
-                          type="radio"
-                          name="assessedToday"
-                          checked={formData.assessedToday}
-                          onChange={() => setFormData({ ...formData, assessedToday: true })}
-                        />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <span className="text-xs font-black text-gray-800 dark:text-white">Did you assess students' understanding today?</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, assessedToday: true })}
+                        className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
+                          formData.assessedToday
+                            ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
+                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded flex items-center justify-center border ${
+                          formData.assessedToday
+                            ? "bg-white text-[#09314F] border-white dark:bg-[#09314F] dark:text-white"
+                            : "border-gray-400 dark:border-gray-500"
+                        }`}>
+                          {formData.assessedToday && <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" />}
+                        </span>
                         <span>Yes</span>
-                      </label>
-                      <label className="flex items-center gap-1.5 text-xs font-bold cursor-pointer">
-                        <input
-                          type="radio"
-                          name="assessedToday"
-                          checked={!formData.assessedToday}
-                          onChange={() => setFormData({ ...formData, assessedToday: false })}
-                        />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, assessedToday: false })}
+                        className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
+                          !formData.assessedToday
+                            ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
+                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded flex items-center justify-center border ${
+                          !formData.assessedToday
+                            ? "bg-white text-[#09314F] border-white dark:bg-[#09314F] dark:text-white"
+                            : "border-gray-400 dark:border-gray-500"
+                        }`}>
+                          {!formData.assessedToday && <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" />}
+                        </span>
                         <span>No</span>
-                      </label>
+                      </button>
                     </div>
                   </div>
 
@@ -626,13 +663,19 @@ export default function TutorPostClassReportModal({
                           key={c}
                           type="button"
                           onClick={() => handleCheckboxToggle(c)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
                             isSel
-                              ? "bg-[#09314F] text-white dark:bg-[#C5A97A] dark:text-[#09314F]"
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                              ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
+                              : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
                           }`}
                         >
-                          <Icon icon={isSel ? "lucide:check-square" : "lucide:square"} className="w-3.5 h-3.5" />
+                          <span className={`w-4 h-4 rounded flex items-center justify-center border ${
+                            isSel
+                              ? "bg-white text-[#09314F] border-white dark:bg-[#09314F] dark:text-white"
+                              : "border-gray-400 dark:border-gray-500"
+                          }`}>
+                            {isSel && <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" />}
+                          </span>
                           <span>{c}</span>
                         </button>
                       );
@@ -683,27 +726,46 @@ export default function TutorPostClassReportModal({
                     />
                   </div>
 
-                  <div className="bg-gray-50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-3">
                     <p className="text-xs font-bold text-gray-700 dark:text-gray-300">Is any intervention or support from Tutorial Center required?</p>
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                        <input
-                          type="radio"
-                          name="supportRequired"
-                          checked={!formData.supportRequired}
-                          onChange={() => setFormData({ ...formData, supportRequired: false, supportDetail: "" })}
-                        />
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, supportRequired: false, supportDetail: "" })}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
+                          !formData.supportRequired
+                            ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
+                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded flex items-center justify-center border ${
+                          !formData.supportRequired
+                            ? "bg-white text-[#09314F] border-white dark:bg-[#09314F] dark:text-white"
+                            : "border-gray-400 dark:border-gray-500"
+                        }`}>
+                          {!formData.supportRequired && <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" />}
+                        </span>
                         <span>No</span>
-                      </label>
-                      <label className="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                        <input
-                          type="radio"
-                          name="supportRequired"
-                          checked={formData.supportRequired}
-                          onChange={() => setFormData({ ...formData, supportRequired: true })}
-                        />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, supportRequired: true })}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
+                          formData.supportRequired
+                            ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
+                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                        }`}
+                      >
+                        <span className={`w-4 h-4 rounded flex items-center justify-center border ${
+                          formData.supportRequired
+                            ? "bg-white text-[#09314F] border-white dark:bg-[#09314F] dark:text-white"
+                            : "border-gray-400 dark:border-gray-500"
+                        }`}>
+                          {formData.supportRequired && <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" />}
+                        </span>
                         <span>Yes</span>
-                      </label>
+                      </button>
                     </div>
 
                     {formData.supportRequired && (
