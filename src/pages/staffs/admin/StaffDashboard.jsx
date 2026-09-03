@@ -7,6 +7,7 @@ import SiteTrafficPlaceholder from "../../../components/private/staffs/dashboard
 import MockExamAnalytics from "../../../components/private/staffs/dashboard/MockExamAnalytics.jsx";
 import LocationAnalysis from "../../../components/private/staffs/dashboard/LocationAnalysis.jsx";
 import LeaderboardWidget from "../../../components/private/staffs/dashboard/LeaderboardWidget.jsx";
+import SubjectHierarchy from "../../../components/private/staffs/dashboard/SubjectHierarchy.jsx";
 import { useStaffAuth } from "../../../context/StaffAuthContext";
 import { Icon } from "@iconify/react";
 
@@ -153,6 +154,11 @@ export default function StaffDashboard() {
           <div className="lg:col-span-1">
             <LeaderboardWidget />
           </div>
+        </div>
+
+        {/* ─── Academic Subject Hierarchy ─────────────────────────────────── */}
+        <div className="w-full">
+          <SubjectHierarchy />
         </div>
       </div>
     </StaffDashboardLayout>

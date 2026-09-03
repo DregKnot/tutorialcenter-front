@@ -54,7 +54,7 @@ const menuItems = [
   {
     label: "Assessment",
     icon: "mdi:file-document-edit-outline",
-    // destination: "/student/assessment",
+    destination: "/student/assessments",
   },
   {
     label: "Games & Fun",
