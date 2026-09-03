@@ -26,6 +26,21 @@ import {
   InformationCircleIcon
 } from "@heroicons/react/24/outline";
 
+// Official Tutorial Center African Time Zone (West Africa Time / UTC+1)
+const AFRICAN_TIMEZONE = "Africa/Lagos";
+
+// Helper to get African Date in YYYY-MM-DD format strictly tied to Africa/Lagos
+const getAfricanDateYMD = (d = new Date()) => {
+  if (!d) return "";
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: AFRICAN_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return formatter.format(d);
+};
+
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
@@ -138,7 +153,7 @@ const extractFlatSessions = (data) => {
     let recording = session.recording_link || source.recording_link;
 
     const rawDate = session.session_date || session.date || session.scheduled_date || session.start_date || session.created_at;
-    const dateStr = rawDate ? String(rawDate).split("T")[0].split(" ")[0] : new Date().toISOString().split("T")[0];
+    const dateStr = rawDate ? String(rawDate).split("T")[0].split(" ")[0] : getAfricanDateYMD();
     
     const startTime = session.starts_at || session.start_time || "10:00";
     const endTime = session.ends_at || session.end_time || "11:30";
@@ -303,11 +318,10 @@ export default function AdminCalendar() {
       return s.tutor?.name === tutorName;
     });
 
-    const now = new Date();
+    const todayStr = getAfricanDateYMD();
     const pastClasses = tutorClasses.filter(s => {
       if (!s.session_date) return false;
-      const d = new Date(s.session_date);
-      return d < now;
+      return s.session_date < todayStr;
     });
 
     const recordings = tutorClasses.filter(s => s.recording_link || s.recording_url || s.video_url);
@@ -322,7 +336,7 @@ export default function AdminCalendar() {
   // Check if session is live right now
   const isSessionLiveNow = (session) => {
     if (!session || !session.session_date) return false;
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = getAfricanDateYMD();
     if (session.session_date !== todayStr) return false;
 
     const now = new Date();
@@ -345,7 +359,7 @@ export default function AdminCalendar() {
   // Sessions for Selected Date in Day Modal
   const selectedDateSessions = useMemo(() => {
     if (!selectedDateForModal) return [];
-    const dateStr = selectedDateForModal.toISOString().split("T")[0];
+    const dateStr = getAfricanDateYMD(selectedDateForModal);
     return filteredSessions.filter(s => s.session_date === dateStr);
   }, [selectedDateForModal, filteredSessions]);
 
@@ -606,7 +620,7 @@ export default function AdminCalendar() {
             {/* Grid Cells */}
             <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-gray-200 dark:divide-gray-800">
               {monthDays.map((item, idx) => {
-                const dateString = item.date.toISOString().split("T")[0];
+                const dateString = getAfricanDateYMD(item.date);
                 const daySessions = filteredSessions.filter(s => s.session_date === dateString);
                 const isToday = item.date.toDateString() === new Date().toDateString();
 
@@ -724,7 +738,7 @@ export default function AdminCalendar() {
                         {hourStr}
                       </div>
                       {weekDays.map((d, di) => {
-                        const dateStr = d.toISOString().split("T")[0];
+                        const dateStr = getAfricanDateYMD(d);
                         const cellSessions = filteredSessions.filter(s => {
                           if (s.session_date !== dateStr) return false;
                           const sHour = parseInt(s.starts_at?.split(":")[0] || "0", 10);
@@ -777,13 +791,13 @@ export default function AdminCalendar() {
             <h3 className="text-base sm:text-lg font-extrabold text-[#09314F] dark:text-white mb-4 pb-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
               <span>Master Classes for {currentDate.toDateString()}</span>
               <span className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary font-bold">
-                {filteredSessions.filter(s => s.session_date === currentDate.toISOString().split("T")[0]).length} Scheduled
+                {filteredSessions.filter(s => s.session_date === getAfricanDateYMD(currentDate)).length} Scheduled
               </span>
             </h3>
 
             <div className="space-y-3.5">
               {filteredSessions
-                .filter(s => s.session_date === currentDate.toISOString().split("T")[0])
+                .filter(s => s.session_date === getAfricanDateYMD(currentDate))
                 .sort((a, b) => (a.starts_at || "").localeCompare(b.starts_at || ""))
                 .map(session => {
                   const style = getSubjectColor(session.subject_name);

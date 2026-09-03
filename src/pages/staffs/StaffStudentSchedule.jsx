@@ -8,8 +8,234 @@ import {
   ArrowPathIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  BellIcon
+  BellIcon,
+  SparklesIcon,
+  UserGroupIcon,
+  AcademicCapIcon
 } from "@heroicons/react/24/outline";
+
+// Official Tutorial Center African Time Zone (West Africa Time / UTC+1)
+const AFRICAN_TIMEZONE = "Africa/Lagos";
+
+// Helper to get African Date in YYYY-MM-DD format strictly tied to Africa/Lagos
+const getAfricanDateYMD = (d = new Date()) => {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: AFRICAN_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return formatter.format(d);
+};
+
+// Helper to get current African time in minutes from midnight (0..1439)
+const getAfricanMinutes = (d = new Date()) => {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: AFRICAN_TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.format(d).split(":");
+  const h = Number(parts[0]) || 0;
+  const m = Number(parts[1]) || 0;
+  return h * 60 + m;
+};
+
+// Helper to format timestamps strictly in African local time (WAT)
+const formatAfricanTime = (dateInput) => {
+  if (!dateInput) return "";
+  const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  return d.toLocaleTimeString("en-US", {
+    timeZone: AFRICAN_TIMEZONE,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+// Subject Color & Accent Token Mapping
+const getSubjectTheme = (name = "") => {
+  const n = (name || "").toLowerCase();
+  if (n.includes("physics")) {
+    return {
+      bg: "bg-purple-500/10 dark:bg-purple-500/20",
+      border: "border-purple-500/30",
+      text: "text-purple-600 dark:text-purple-300",
+      badge: "bg-purple-600 text-white",
+      glow: "shadow-purple-500/15",
+      accent: "#A855F7"
+    };
+  }
+  if (n.includes("chemistry")) {
+    return {
+      bg: "bg-sky-500/10 dark:bg-sky-500/20",
+      border: "border-sky-500/30",
+      text: "text-sky-600 dark:text-sky-300",
+      badge: "bg-sky-600 text-white",
+      glow: "shadow-sky-500/15",
+      accent: "#0EA5E9"
+    };
+  }
+  if (n.includes("biology")) {
+    return {
+      bg: "bg-emerald-500/10 dark:bg-emerald-500/20",
+      border: "border-emerald-500/30",
+      text: "text-emerald-600 dark:text-emerald-300",
+      badge: "bg-emerald-600 text-white",
+      glow: "shadow-emerald-500/15",
+      accent: "#10B981"
+    };
+  }
+  if (n.includes("further")) {
+    return {
+      bg: "bg-rose-500/10 dark:bg-rose-500/20",
+      border: "border-rose-500/30",
+      text: "text-rose-600 dark:text-rose-300",
+      badge: "bg-rose-600 text-white",
+      glow: "shadow-rose-500/15",
+      accent: "#F43F5E"
+    };
+  }
+  if (n.includes("math")) {
+    return {
+      bg: "bg-amber-500/10 dark:bg-amber-500/20",
+      border: "border-amber-500/30",
+      text: "text-amber-600 dark:text-amber-300",
+      badge: "bg-amber-600 text-white",
+      glow: "shadow-amber-500/15",
+      accent: "#F59E0B"
+    };
+  }
+  if (n.includes("english")) {
+    return {
+      bg: "bg-teal-500/10 dark:bg-teal-500/20",
+      border: "border-teal-500/30",
+      text: "text-teal-600 dark:text-teal-300",
+      badge: "bg-teal-600 text-white",
+      glow: "shadow-teal-500/15",
+      accent: "#14B8A6"
+    };
+  }
+  return {
+    bg: "bg-[#0F2843]/10 dark:bg-white/10",
+    border: "border-[#0F2843]/20 dark:border-white/20",
+    text: "text-[#0F2843] dark:text-[#C5A97A]",
+    badge: "bg-[#0F2843] dark:bg-[#C5A97A] text-white dark:text-[#09314F]",
+    glow: "shadow-[#0F2843]/10",
+    accent: "#C5A97A"
+  };
+};
+
+const extractTutorInfo = (source) => {
+  if (!source) return { name: "Assigned Tutor", initials: "AT", email: "" };
+  const staffs = source.staffs || source.staff || [];
+  const tutorStaff = Array.isArray(staffs)
+    ? staffs.find(s => (s.role || s.pivot?.role || "").toLowerCase().includes("tutor") || (s.role || s.pivot?.role || "").toLowerCase().includes("lead")) || staffs[0]
+    : staffs;
+  
+  if (tutorStaff) {
+    const s = tutorStaff.staff || tutorStaff;
+    const name = s.firstname && s.surname ? `${s.firstname} ${s.surname}` : (s.name || "Assigned Tutor");
+    return {
+      name,
+      initials: (name.split(" ").map(n => n[0]).join("") || "TC").toUpperCase().slice(0, 2),
+      email: s.email || "",
+      tel: s.tel || "",
+      avatar: s.profile_picture || null,
+    };
+  }
+  return { name: "Assigned Tutor", initials: "AT", email: "" };
+};
+
+// Robust Unified Extractor
+const extractFlatSessions = (data) => {
+  const list = [];
+  
+  const pushSession = (session, parentClass = null) => {
+    if (!session || !session.id) return;
+    if (list.some(s => s.id === session.id)) return;
+
+    const source = parentClass || session.class || session;
+    const tutor = extractTutorInfo(source);
+    const subject = source.subject_name || source.subject?.name || source.course?.name || "General Studies";
+    
+    let link = session.class_link || source.class_link || source.zoom_join_url || source.zoom_start_url;
+    let recording = session.recording_link || source.recording_link;
+
+    const rawDate = session.session_date || session.date || session.scheduled_date || session.start_date;
+    const dateStr = rawDate ? String(rawDate).split("T")[0].split(" ")[0] : getAfricanDateYMD();
+    
+    const startTime = session.starts_at || session.start_time || "10:00";
+    const endTime = session.ends_at || session.end_time || "11:30";
+
+    list.push({
+      ...session,
+      id: session.id,
+      class_id: source.id || session.class_id,
+      session_date: dateStr,
+      starts_at: startTime ? startTime.substring(0, 5) : "10:00",
+      ends_at: endTime ? endTime.substring(0, 5) : "11:30",
+      title: session.title || source.title || `${subject} Master Class`,
+      subject_name: subject,
+      subject: source.subject || { name: subject },
+      class: {
+        ...source,
+        subject: source.subject || { name: subject },
+        staffs: source.staffs || [],
+        enrolled_students: session.enrolled_students || source.enrolled_students || [],
+      },
+      enrolled_students: session.enrolled_students || source.enrolled_students || [],
+      attendances: session.attendances || [],
+      tutor,
+      tutor_name: tutor.name,
+      class_link: link,
+      recording_link: recording,
+    });
+  };
+
+  const processClassItem = (cls) => {
+    if (!cls) return;
+    if (Array.isArray(cls.schedules)) {
+      cls.schedules.forEach(sched => {
+        if (Array.isArray(sched.sessions)) {
+          sched.sessions.forEach(session => {
+            pushSession(session, cls);
+          });
+        }
+      });
+    }
+    if (Array.isArray(cls.sessions)) {
+      cls.sessions.forEach(session => {
+        pushSession(session, cls);
+      });
+    }
+  };
+
+  if (Array.isArray(data)) {
+    data.forEach(item => {
+      if (item.schedules || item.subject_id) {
+        processClassItem(item);
+      } else {
+        pushSession(item);
+      }
+    });
+  } else if (data && typeof data === 'object') {
+    if (Array.isArray(data.classes)) data.classes.forEach(processClassItem);
+    if (Array.isArray(data.sessions)) data.sessions.forEach(s => pushSession(s));
+    if (Array.isArray(data.today_classes)) data.today_classes.forEach(s => pushSession(s));
+    if (Array.isArray(data.upcoming_sessions)) data.upcoming_sessions.forEach(s => pushSession(s));
+    if (Array.isArray(data.past_sessions)) data.past_sessions.forEach(s => pushSession(s));
+    if (Array.isArray(data.history)) data.history.forEach(s => pushSession(s));
+    if (data.next_class) pushSession(data.next_class);
+    if (data.week_schedule && typeof data.week_schedule === 'object') {
+      Object.values(data.week_schedule).forEach(arr => {
+        if (Array.isArray(arr)) arr.forEach(s => pushSession(s));
+      });
+    }
+  }
+  return list;
+};
 
 export default function StaffStudentSchedule() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -18,10 +244,7 @@ export default function StaffStudentSchedule() {
   const isAdvisor = staffRole === "course_advisor" || staffRole === "advisor";
 
   // --- STATE ---
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const d = new Date();
-    return d.toISOString().substring(0, 10);
-  });
+  const [selectedDate, setSelectedDate] = useState(() => getAfricanDateYMD(new Date()));
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'live', 'scheduled', 'completed'
   const [loading, setLoading] = useState(true);
@@ -42,7 +265,6 @@ export default function StaffStudentSchedule() {
         },
       };
 
-      // Fetch classes schedule based on role
       const scheduleUrl = isAdvisor
         ? `${API_BASE_URL}/api/advisor/classes/schedule`
         : `${API_BASE_URL}/api/admin/classes/all`;
@@ -67,54 +289,18 @@ export default function StaffStudentSchedule() {
       const parsedStudents = Array.isArray(rawStudents) ? rawStudents : [];
       setStudentsData(parsedStudents);
 
-      // Parse classes & sessions
-      const sData = scheduleRes.data || {};
-      let allSessionsList = [];
-
-      if (Array.isArray(sData.classes)) {
-        sData.classes.forEach((cls) => {
-          const subject = cls.subject;
-          const staffs = cls.staffs || [];
-          const schedules = cls.schedules || [];
-          schedules.forEach((sch) => {
-            const sessions = sch.sessions || [];
-            sessions.forEach((ses) => {
-              allSessionsList.push({
-                ...ses,
-                class: {
-                  ...cls,
-                  subject: subject,
-                  staffs: staffs,
-                },
-              });
-            });
-          });
-        });
-      } else {
-        const today = Array.isArray(sData.today_classes) ? sData.today_classes : [];
-        const upcoming = Array.isArray(sData.upcoming_sessions) ? sData.upcoming_sessions : [];
-        const past = Array.isArray(sData.past_sessions) ? sData.past_sessions : [];
-        const week = sData.week_schedule && typeof sData.week_schedule === "object" ? Object.values(sData.week_schedule).flat() : [];
-        const directSessions = Array.isArray(sData.sessions) ? sData.sessions : [];
-
-        const merged = [...today, ...upcoming, ...past, ...week, ...directSessions];
-        const map = new Map();
-        merged.forEach((item) => {
-          if (item && item.id) map.set(String(item.id), item);
-        });
-        allSessionsList = Array.from(map.values());
-      }
-
+      // Parse sessions using unified robust extractor
+      const allSessionsList = extractFlatSessions(scheduleRes.data || {});
       setClassesData(allSessionsList);
 
-      // Automatically expand the first 2 classes by default
+      // Automatically expand first 2 classes by default
       const initialExpanded = {};
       allSessionsList.slice(0, 3).forEach((s) => {
         initialExpanded[s.id] = true;
       });
       setExpandedClassIds(initialExpanded);
 
-      // Extract sample live notifications from recent joins
+      // Extract live notifications
       const logs = [];
       allSessionsList.forEach((ses) => {
         const attends = ses.attendances || [];
@@ -123,40 +309,24 @@ export default function StaffStudentSchedule() {
             logs.push({
               id: `${ses.id}-${att.student_id}`,
               student_name: att.student ? `${att.student.firstname} ${att.student.surname}` : "Student",
-              class_title: ses.class?.title || ses.class?.subject?.name || "Masterclass",
-              subject: ses.class?.subject?.name || "General",
-              joined_at: att.joined_at,
+              class_title: ses.title || "Master Class",
+              subject: ses.subject_name || "General",
               status: att.status || "present",
+              joined_at: formatAfricanTime(att.joined_at),
             });
           }
         });
       });
-      setNotificationLogs(logs.slice(0, 15));
+      setNotificationLogs(logs.slice(0, 8));
 
-      // Detailed debug logs for schedule & attendance
-      console.group("📅 [StudentSchedule] Live Schedules & Attendance Diagnostics");
-      console.log("🔑 Staff Role:", staffRole || "admin/staff", "| Is Advisor:", isAdvisor);
-      console.log("📡 Schedule API URL:", scheduleUrl);
-      console.log("👥 Students API URL:", studentsUrl);
-      console.log("📚 Total Sessions Loaded:", allSessionsList.length, allSessionsList);
-      console.log("🎓 Total Registered Students Directory:", parsedStudents.length, parsedStudents);
-      console.log("🔔 Recent Live Join Logs:", logs);
-      console.groupEnd();
-
-      // Sample first 3 classes attendance breakdown
-      if (allSessionsList.length > 0) {
-        console.group("🔍 [StudentSchedule] Class Attendance Breakdown Sample");
-        allSessionsList.slice(0, 5).forEach((ses) => {
-          const subName = (typeof ses.class?.subject === "object" ? ses.class?.subject?.name : ses.class?.subject) || "Subject";
-          const title = ses.class?.title || ses.title || `${subName} Masterclass`;
-          const atts = ses.attendances || [];
-          console.log(`📖 [${title} - ${subName}] (Date: ${ses.session_date || "Today"} | Time: ${ses.starts_at}-${ses.ends_at})`, {
-            session_id: ses.id,
-            attendance_records: atts.length,
-            attendances: atts,
-          });
-        });
-        console.groupEnd();
+      // Auto check if any class is currently live in Africa
+      const africanTodayStr = getAfricanDateYMD(new Date());
+      const hasLive = allSessionsList.some((s) => {
+        const dStr = s.session_date ? String(s.session_date).split("T")[0].split(" ")[0] : "";
+        return dStr === africanTodayStr && s.starts_at && s.ends_at;
+      });
+      if (hasLive) {
+        setShowLiveNotifications(true);
       }
 
     } catch (error) {
@@ -164,7 +334,7 @@ export default function StaffStudentSchedule() {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, token, isAdvisor, staffRole]);
+  }, [API_BASE_URL, token, isAdvisor]);
 
   useEffect(() => {
     fetchData();
@@ -173,8 +343,14 @@ export default function StaffStudentSchedule() {
   // --- HELPERS ---
   const formatDateStr = (dateStr) => {
     if (!dateStr) return "";
+    const cleanStr = String(dateStr).split("T")[0].split(" ")[0];
+    const parts = cleanStr.split("-");
+    if (parts.length === 3) {
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      return d.toLocaleDateString("en-GB", { timeZone: AFRICAN_TIMEZONE, day: "2-digit", month: "short", year: "numeric" });
+    }
     const d = new Date(dateStr);
-    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    return d.toLocaleDateString("en-GB", { timeZone: AFRICAN_TIMEZONE, day: "2-digit", month: "short", year: "numeric" });
   };
 
   const formatTimeStr = (timeStr) => {
@@ -188,26 +364,22 @@ export default function StaffStudentSchedule() {
 
   const getSessionClassState = (session) => {
     if (!session || !session.session_date) return "scheduled";
-    const now = new Date();
-    const sessionDate = new Date(session.session_date);
-    const isToday = sessionDate.toDateString() === now.toDateString();
+    const todayStr = getAfricanDateYMD(new Date());
+    const sessionDateStr = String(session.session_date).split("T")[0].split(" ")[0];
 
-    if (!isToday) {
-      return sessionDate < now ? "completed" : "scheduled";
-    }
+    if (sessionDateStr < todayStr) return "completed";
+    if (sessionDateStr > todayStr) return "scheduled";
 
     if (session.starts_at && session.ends_at) {
       const [startH, startM] = session.starts_at.split(":").map(Number);
       const [endH, endM] = session.ends_at.split(":").map(Number);
 
-      const startTime = new Date();
-      startTime.setHours(startH, startM, 0, 0);
+      const startTotalMins = (startH || 0) * 60 + (startM || 0);
+      const endTotalMins = (endH || 0) * 60 + (endM || 0);
+      const currentAfricanMins = getAfricanMinutes(new Date());
 
-      const endTime = new Date();
-      endTime.setHours(endH, endM, 0, 0);
-
-      if (now >= startTime && now <= endTime) return "live";
-      if (now > endTime) return "completed";
+      if (currentAfricanMins >= startTotalMins && currentAfricanMins <= endTotalMins) return "live";
+      if (currentAfricanMins > endTotalMins) return "completed";
       return "scheduled";
     }
 
@@ -215,22 +387,48 @@ export default function StaffStudentSchedule() {
   };
 
   // Check if student is enrolled in a specific subject
-  const isStudentEnrolled = (student, subjectId, subjectName) => {
+  const isStudentEnrolled = (student, subjectId, subjectName, classTitle) => {
     if (!student) return false;
-    const subIdStr = String(subjectId);
+    const subIdStr = subjectId ? String(subjectId) : null;
     const subNameLower = (subjectName || "").toLowerCase().trim();
+    const classTitleLower = (classTitle || "").toLowerCase().trim();
 
-    // 1. Direct subject_enrollments
-    const enrollments = student.subject_enrollments || student.subjects || [];
-    if (Array.isArray(enrollments)) {
-      if (enrollments.some((s) => String(s.subject_id || s.id) === subIdStr)) return true;
-      if (subNameLower && enrollments.some((s) => (s.name || s.subject?.name || "").toLowerCase().trim() === subNameLower)) return true;
-    }
+    const studentInfo = Array.isArray(student.information) ? student.information[0] : (student.information || {});
+    
+    const allStudentSubjects = [
+      ...(Array.isArray(student.enrolled_subjects) ? student.enrolled_subjects : []),
+      ...(Array.isArray(student.subject_enrollments) ? student.subject_enrollments : []),
+      ...(Array.isArray(student.subjectEnrollments) ? student.subjectEnrollments : []),
+      ...(Array.isArray(student.subjects) ? student.subjects : []),
+      ...(Array.isArray(studentInfo.enrolled_subjects) ? studentInfo.enrolled_subjects : []),
+      ...(Array.isArray(studentInfo.subjects) ? studentInfo.subjects : []),
+      ...(Array.isArray(studentInfo.subject_enrollments) ? studentInfo.subject_enrollments : [])
+    ];
 
-    // 2. Student information JSON
-    const info = Array.isArray(student.information) ? student.information[0] : student.information;
-    if (info && info.subjects && Array.isArray(info.subjects)) {
-      if (info.subjects.some((s) => String(s.id || s.subject_id) === subIdStr || (s.name || "").toLowerCase().trim() === subNameLower)) return true;
+    const courseEnrollments = [
+      ...(Array.isArray(student.course_enrollments) ? student.course_enrollments : []),
+      ...(Array.isArray(student.courseEnrollments) ? student.courseEnrollments : []),
+      ...(Array.isArray(studentInfo.course_enrollments) ? studentInfo.course_enrollments : []),
+      ...(Array.isArray(studentInfo.courses) ? studentInfo.courses : [])
+    ];
+
+    courseEnrollments.forEach((ce) => {
+      if (ce && Array.isArray(ce.subjects)) {
+        allStudentSubjects.push(...ce.subjects);
+      }
+      if (ce && ce.course && Array.isArray(ce.course.subjects)) {
+        allStudentSubjects.push(...ce.course.subjects);
+      }
+    });
+
+    for (const sub of allStudentSubjects) {
+      if (!sub) continue;
+      const sId = typeof sub === "object" ? String(sub.subject_id || sub.id || sub.subject?.id || "") : String(sub);
+      const sName = typeof sub === "object" ? (sub.title || sub.name || sub.subject?.title || sub.subject?.name || sub.subject_name || "").toLowerCase().trim() : "";
+
+      if (subIdStr && sId && sId === subIdStr) return true;
+      if (subNameLower && sName && (sName === subNameLower || subNameLower.includes(sName) || sName.includes(subNameLower))) return true;
+      if (classTitleLower && sName && (classTitleLower.includes(sName) || sName.includes(classTitleLower))) return true;
     }
 
     return false;
@@ -238,13 +436,17 @@ export default function StaffStudentSchedule() {
 
   // Get enrolled students for a specific session/class
   const getEnrolledStudentsForClass = useCallback((session) => {
+    const backendEnrolled = session.enrolled_students || session.class?.enrolled_students;
+    if (Array.isArray(backendEnrolled) && backendEnrolled.length > 0) {
+      return backendEnrolled;
+    }
+
     const subjectId = session.class?.subject_id || session.class?.subject?.id;
-    const subjectName = typeof session.class?.subject === "object" ? session.class?.subject?.name : session.class?.subject;
+    const subjectName = typeof session.class?.subject === "object" ? session.class?.subject?.name : session.subject_name;
+    const classTitle = session.title || session.class?.title || session.class?.name || "";
 
-    // Filter all registered students who have this subject in their enrollment
-    let enrolled = studentsData.filter((st) => isStudentEnrolled(st, subjectId, subjectName));
+    let enrolled = studentsData.filter((st) => isStudentEnrolled(st, subjectId, subjectName, classTitle));
 
-    // Fallback if no matching subject enrollment found: map attendance records so attending students always show
     if (enrolled.length === 0 && session.attendances && session.attendances.length > 0) {
       enrolled = session.attendances
         .map((att) => att.student || studentsData.find((s) => s.id === att.student_id))
@@ -258,10 +460,18 @@ export default function StaffStudentSchedule() {
   const getStudentAttendanceInfo = (student, session) => {
     const attendances = session.attendances || [];
     const attRecord = attendances.find((a) => a.student_id === student.id || a.student?.id === student.id);
+    const sessionState = getSessionClassState(session);
 
     if (!attRecord) {
+      let defaultStatus = "absent";
+      if (sessionState === "scheduled") {
+        defaultStatus = "scheduled";
+      } else if (sessionState === "live") {
+        defaultStatus = "not_joined";
+      }
+
       return {
-        status: "absent",
+        status: defaultStatus,
         joined_at: null,
         left_at: null,
         rejoin_count: 0,
@@ -282,15 +492,14 @@ export default function StaffStudentSchedule() {
 
     return {
       status: attRecord.status || "present",
-      joined_at: joinedAt ? joinedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null,
-      left_at: leftAt ? leftAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null,
+      joined_at: joinedAt ? formatAfricanTime(joinedAt) : null,
+      left_at: leftAt ? formatAfricanTime(leftAt) : null,
       rejoin_count: attRecord.rejoin_count || 0,
       duration_minutes: duration,
       is_clean_exit: Boolean(attRecord.left_at),
     };
   };
 
-  // Toggle card expansion
   const toggleCardExpansion = (id) => {
     setExpandedClassIds((prev) => ({
       ...prev,
@@ -301,9 +510,9 @@ export default function StaffStudentSchedule() {
   // --- FILTERED SESSIONS LIST ---
   const filteredSessions = useMemo(() => {
     return classesData.filter((session) => {
-      // 1. Date Filter
+      // 1. Date Filter (Strict YYYY-MM-DD match)
       if (selectedDate && session.session_date) {
-        const sessionDate = session.session_date.substring(0, 10);
+        const sessionDate = String(session.session_date).split("T")[0].split(" ")[0];
         if (sessionDate !== selectedDate) return false;
       }
 
@@ -314,12 +523,11 @@ export default function StaffStudentSchedule() {
       // 3. Search Query Filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const titleMatch = (session.class?.title || "").toLowerCase().includes(q);
-        const subjectName = typeof session.class?.subject === "object" ? session.class?.subject?.name : session.class?.subject;
+        const titleMatch = (session.title || session.class?.title || "").toLowerCase().includes(q);
+        const subjectName = typeof session.subject === "object" ? session.subject?.name : session.subject_name;
         const subjectMatch = (subjectName || "").toLowerCase().includes(q);
-        const tutorMatch = (session.class?.staffs || []).some((st) => `${st.firstname} ${st.surname}`.toLowerCase().includes(q));
+        const tutorMatch = (session.tutor_name || "").toLowerCase().includes(q);
 
-        // Check if any student name matches
         const enrolled = getEnrolledStudentsForClass(session);
         const studentMatch = enrolled.some((st) => `${st.firstname} ${st.surname} ${st.email}`.toLowerCase().includes(q));
 
@@ -332,57 +540,62 @@ export default function StaffStudentSchedule() {
 
   return (
     <StaffDashboardLayout pagetitle="Student Schedule & Live Attendance">
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full min-h-screen space-y-8 pb-24">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full min-h-screen space-y-8 pb-24">
 
-        {/* ── TOP HEADER & CONTROL BAR ─────────────────────────────── */}
-        <div className="bg-white dark:bg-[#09314F] rounded-[32px] p-6 border border-gray-100 dark:border-white/10 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-black text-[#0F2843] dark:text-[#C5A97A] uppercase tracking-widest">
-              <CalendarDaysIcon className="w-4 h-4" />
-              <span>{isAdvisor ? "Course Advisor Schedule Hub" : "Administrator Master Roster"}</span>
+        {/* ── HERO HEADER WITH GLASSMORPHISM & GOLD GLOW ───────────── */}
+        <div className="relative overflow-hidden rounded-[36px] bg-gradient-to-r from-[#0F2843]/95 via-[#163759]/90 to-[#09314F]/95 backdrop-blur-2xl border border-white/15 p-7 sm:p-9 shadow-2xl shadow-[#0F2843]/20">
+          <div className="absolute -right-16 -top-16 w-80 h-80 bg-gradient-to-br from-[#BB9E7F]/20 via-[#C5A97A]/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -left-16 -bottom-16 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#BB9E7F]/15 text-[#BB9E7F] dark:text-[#d4b592] border border-[#BB9E7F]/30 backdrop-blur-md text-[11px] font-black uppercase tracking-widest shadow-sm">
+                <SparklesIcon className="w-3.5 h-3.5" />
+                <span>{isAdvisor ? "Course Advisor Schedule Hub" : "Admin Master Schedule & Roster"}</span>
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight drop-shadow-sm">
+                Student Master Class Schedule
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+                Live attendance monitoring, enrolled student rosters, join timestamps, and session durations across all active masterclasses.
+              </p>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-[#0F2843] dark:text-white tracking-tight">
-              Student Schedule & Attendance
-            </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-300 font-medium">
-              View daily scheduled classes with full enrolled student rosters, join timestamps, rejoin events, and stay durations directly inside each class card.
-            </p>
-          </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={() => setShowLiveNotifications(!showLiveNotifications)}
-              className={`relative px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 border transition-all ${
-                showLiveNotifications
-                  ? "bg-[#0F2843] text-white border-[#0F2843] dark:bg-[#C5A97A] dark:text-[#09314F]"
-                  : "bg-gray-50 dark:bg-black/20 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-white/10 hover:bg-gray-100"
-              }`}
-            >
-              <BellIcon className="w-4 h-4" />
-              <span>Live Ticker</span>
-              {notificationLogs.length > 0 && (
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              )}
-            </button>
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => setShowLiveNotifications(!showLiveNotifications)}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 border backdrop-blur-xl transition-all shadow-md active:scale-95 ${
+                  showLiveNotifications
+                    ? "bg-[#BB9E7F] text-[#0F2843] border-[#BB9E7F] shadow-[#BB9E7F]/25"
+                    : "bg-white/10 text-white border-white/20 hover:bg-white/20"
+                }`}
+              >
+                <BellIcon className="w-4 h-4" />
+                <span>Live Feed</span>
+                {notificationLogs.length > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                )}
+              </button>
 
-            <button
-              onClick={fetchData}
-              disabled={loading}
-              className="p-3 bg-gray-50 hover:bg-gray-100 dark:bg-black/20 dark:hover:bg-black/40 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 rounded-2xl transition-all"
-              title="Refresh Schedule"
-            >
-              <ArrowPathIcon className={`w-4 h-4 ${loading ? "animate-spin text-[#0F2843] dark:text-[#C5A97A]" : ""}`} />
-            </button>
+              <button
+                onClick={fetchData}
+                disabled={loading}
+                className="p-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-xl rounded-2xl transition-all shadow-md active:scale-95"
+                title="Refresh Live Schedule"
+              >
+                <ArrowPathIcon className={`w-4 h-4 ${loading ? "animate-spin text-[#BB9E7F]" : ""}`} />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* ── LIVE ACTIVITY TICKER (Collapsible Drawer) ───────────── */}
+        {/* ── LIVE ACTIVITY DRAWER ─────────────────────────────────── */}
         {showLiveNotifications && (
-          <div className="bg-gradient-to-r from-[#0F2843] to-[#1E3A5F] text-white rounded-3xl p-5 border border-white/10 shadow-lg animate-in slide-in-from-top-4 duration-200">
+          <div className="bg-[#0F2843]/80 backdrop-blur-xl rounded-3xl p-5 border border-[#BB9E7F]/30 shadow-2xl animate-in slide-in-from-top-4 duration-300">
             <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                <h4 className="text-xs font-black uppercase tracking-wider text-[#C5A97A]">Live Attendance Stream</h4>
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#C5A97A]">Real-Time Attendance Stream</h4>
               </div>
               <span className="text-[10px] text-white/60 font-bold uppercase">{notificationLogs.length} Recent Joins</span>
             </div>
@@ -394,17 +607,17 @@ export default function StaffStudentSchedule() {
                 {notificationLogs.map((log, idx) => (
                   <div
                     key={idx}
-                    className="bg-white/10 backdrop-blur-md rounded-2xl p-3 shrink-0 min-w-[260px] border border-white/10 text-xs"
+                    className="bg-white/10 backdrop-blur-md rounded-2xl p-3 shrink-0 min-w-[260px] border border-white/10 text-xs shadow-md"
                   >
                     <div className="flex items-center justify-between font-black text-white mb-1">
                       <span className="truncate max-w-[170px]">{log.student_name}</span>
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 uppercase">
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold uppercase">
                         {log.status}
                       </span>
                     </div>
                     <p className="text-[11px] text-white/80 truncate">{log.subject} &bull; {log.class_title}</p>
                     <p className="text-[10px] text-[#C5A97A] font-bold mt-1">
-                      Joined at {new Date(log.joined_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      Joined at {log.joined_at}
                     </p>
                   </div>
                 ))}
@@ -413,8 +626,8 @@ export default function StaffStudentSchedule() {
           </div>
         )}
 
-        {/* ── DATE NAVIGATOR & FILTERS ─────────────────────────────── */}
-        <div className="bg-white dark:bg-[#09314F] rounded-3xl p-5 border border-gray-100 dark:border-white/10 shadow-sm space-y-4">
+        {/* ── DATE NAVIGATOR & GLASSMORPHIC CONTROL BAR ────────────── */}
+        <div className="bg-white/80 dark:bg-[#09314F]/70 backdrop-blur-2xl rounded-[30px] p-5 sm:p-6 border border-gray-200/80 dark:border-white/15 shadow-xl shadow-[#0F2843]/5 space-y-5">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
             
             {/* Quick Date Pills */}
@@ -426,17 +639,17 @@ export default function StaffStudentSchedule() {
               ].map((btn, idx) => {
                 const target = new Date();
                 target.setDate(target.getDate() + btn.offset);
-                const targetStr = target.toISOString().substring(0, 10);
+                const targetStr = getAfricanDateYMD(target);
                 const isActive = selectedDate === targetStr;
 
                 return (
                   <button
                     key={idx}
                     onClick={() => setSelectedDate(targetStr)}
-                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                    className={`px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap shadow-sm active:scale-95 ${
                       isActive
-                        ? "bg-[#0F2843] dark:bg-[#C5A97A] text-white dark:text-[#09314F] shadow-md shadow-slate-200 dark:shadow-none"
-                        : "bg-gray-100 hover:bg-gray-200 dark:bg-black/20 dark:hover:bg-black/40 text-gray-700 dark:text-gray-200"
+                        ? "bg-gradient-to-r from-[#BB9E7F] to-[#D4B592] text-[#0F2843] shadow-md shadow-[#BB9E7F]/30 ring-2 ring-[#BB9E7F]/40"
+                        : "bg-gray-100/90 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 text-gray-700 dark:text-gray-200 border border-gray-200/60 dark:border-white/10"
                     }`}
                   >
                     {btn.label}
@@ -444,9 +657,9 @@ export default function StaffStudentSchedule() {
                 );
               })}
 
-              {/* Specific Date Picker */}
-              <div className="flex items-center gap-2 bg-gray-100 dark:bg-black/20 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-white/10 shrink-0">
-                <CalendarDaysIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              {/* Specific Date Picker with Glass Capsule */}
+              <div className="flex items-center gap-2 bg-gray-100/90 dark:bg-white/10 px-3.5 py-2 rounded-2xl border border-gray-200/80 dark:border-white/15 shrink-0 shadow-inner">
+                <CalendarDaysIcon className="w-4 h-4 text-[#BB9E7F]" />
                 <input
                   type="date"
                   value={selectedDate}
@@ -467,10 +680,10 @@ export default function StaffStudentSchedule() {
                 <button
                   key={st.id}
                   onClick={() => setStatusFilter(st.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                  className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap border shadow-sm ${
                     statusFilter === st.id
-                      ? "bg-blue-50 dark:bg-blue-950/60 text-[#0F2843] dark:text-blue-300 border border-blue-200 dark:border-blue-800"
-                      : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
+                      ? "bg-[#0F2843] text-white border-[#0F2843] dark:bg-[#BB9E7F]/20 dark:text-[#BB9E7F] dark:border-[#BB9E7F]/40 font-black shadow-[#BB9E7F]/10"
+                      : "bg-gray-50/70 dark:bg-white/5 border-gray-200/60 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-100"
                   }`}
                 >
                   {st.label}
@@ -484,10 +697,10 @@ export default function StaffStudentSchedule() {
             <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search by subject (e.g. Biology), class topic, tutor, or student name..."
+              placeholder="Search by subject (e.g. Physics), topic, tutor, or student name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-xs font-bold text-gray-800 dark:text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] transition-all"
+              className="w-full pl-12 pr-4 py-3.5 bg-gray-50/90 dark:bg-black/30 backdrop-blur-md border border-gray-200/80 dark:border-white/15 rounded-2xl text-xs font-bold text-gray-800 dark:text-white placeholder-gray-400 outline-none focus:ring-4 focus:ring-[#BB9E7F]/20 focus:border-[#BB9E7F] transition-all shadow-inner"
             />
           </div>
         </div>
@@ -498,18 +711,18 @@ export default function StaffStudentSchedule() {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-64 bg-gray-50 dark:bg-black/20 rounded-[32px] border border-gray-100 dark:border-white/10 animate-pulse"
+                className="h-64 bg-white/40 dark:bg-[#09314F]/40 rounded-[36px] border border-gray-200/40 dark:border-white/10 animate-pulse backdrop-blur-xl"
               />
             ))}
           </div>
         ) : filteredSessions.length === 0 ? (
-          <div className="bg-white dark:bg-[#09314F] rounded-[32px] p-12 border border-gray-100 dark:border-white/10 text-center space-y-3">
-            <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-950/50 text-[#0F2843] dark:text-blue-300 flex items-center justify-center mx-auto text-2xl font-black">
-              <CalendarDaysIcon className="w-8 h-8" />
+          <div className="bg-white/80 dark:bg-[#09314F]/70 backdrop-blur-2xl rounded-[36px] p-14 border border-gray-200/80 dark:border-white/15 text-center space-y-4 shadow-xl">
+            <div className="w-20 h-20 rounded-3xl bg-[#BB9E7F]/15 border border-[#BB9E7F]/30 text-[#BB9E7F] flex items-center justify-center mx-auto text-3xl font-black shadow-lg shadow-[#BB9E7F]/10">
+              <CalendarDaysIcon className="w-10 h-10" />
             </div>
-            <h3 className="text-base font-black text-gray-800 dark:text-white">No Scheduled Classes Found</h3>
-            <p className="text-xs text-gray-400 max-w-sm mx-auto">
-              No masterclasses are scheduled for {formatDateStr(selectedDate)}. Choose another date or adjust your filters above.
+            <h3 className="text-lg font-black text-gray-800 dark:text-white">No Scheduled Classes for {formatDateStr(selectedDate)}</h3>
+            <p className="text-xs text-gray-400 max-w-md mx-auto">
+              There are no masterclasses listed for this date. Select another date from the pills or calendar to inspect upcoming and completed schedules.
             </p>
           </div>
         ) : (
@@ -517,9 +730,10 @@ export default function StaffStudentSchedule() {
             {filteredSessions.map((session) => {
               const isExpanded = !!expandedClassIds[session.id];
               const state = getSessionClassState(session);
-              const subjectName = (typeof session.class?.subject === "object" ? session.class?.subject?.name : session.class?.subject) || "General Subject";
-              const classTitle = session.class?.title || session.title || `${subjectName} Masterclass`;
+              const subjectName = session.subject_name || "General Studies";
+              const classTitle = session.title || `${subjectName} Masterclass`;
               const enrolledStudents = getEnrolledStudentsForClass(session);
+              const theme = getSubjectTheme(subjectName);
               
               // Calculate Attendance Breakdown
               let presentCount = 0;
@@ -537,58 +751,57 @@ export default function StaffStudentSchedule() {
                 }
               });
 
-              // Tutor information
-              const tutor = session.class?.staffs?.find((s) => s.role === "lead" || s.role === "tutor") || session.class?.staffs?.[0];
-              const tutorName = tutor ? `${tutor.firstname} ${tutor.surname}` : "Assigned Tutor";
+              const tutorName = session.tutor_name || "Assigned Tutor";
 
               return (
                 <div
                   key={session.id}
-                  className="bg-white dark:bg-[#09314F] rounded-[32px] border border-gray-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all overflow-hidden"
+                  className="bg-white/90 dark:bg-[#0F2843]/80 backdrop-blur-2xl rounded-[36px] border border-gray-200/90 dark:border-white/15 shadow-xl hover:shadow-2xl hover:border-[#BB9E7F]/40 transition-all duration-300 overflow-hidden group"
                 >
-                  {/* ── CARD HEADER (Schedule Details & Quick Stats) ── */}
-                  <div className="p-6 sm:p-7 border-b border-gray-100 dark:border-white/10 space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  {/* ── CARD HEADER (Schedule Details & Quick Metrics) ── */}
+                  <div className="p-6 sm:p-8 border-b border-gray-100 dark:border-white/10 space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
                       
                       {/* Left: Class Subject & Topic */}
-                      <div className="space-y-2">
+                      <div className="space-y-2.5">
                         <div className="flex items-center gap-2.5 flex-wrap">
-                          <span className="px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 dark:bg-blue-950/60 text-[#0F2843] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          <span className={`px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${theme.bg} ${theme.text} border ${theme.border} shadow-sm`}>
                             {subjectName}
                           </span>
                           
                           {/* Live / Status Indicator */}
                           {state === "live" ? (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 animate-pulse">
+                            <span className="px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 animate-pulse shadow-sm shadow-emerald-500/20">
                               <span className="w-2 h-2 rounded-full bg-emerald-500" />
                               Live Now
                             </span>
                           ) : state === "completed" ? (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300">
+                            <span className="px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10">
                               Completed
                             </span>
                           ) : (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                            <span className="px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
                               Upcoming
                             </span>
                           )}
 
-                          <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                          <span className="text-xs font-bold text-gray-400 dark:text-gray-400">
                             {formatDateStr(session.session_date)}
                           </span>
                         </div>
 
-                        <h2 className="text-xl font-black text-[#0F2843] dark:text-white tracking-tight">
+                        <h2 className="text-xl sm:text-2xl font-black text-[#0F2843] dark:text-white tracking-tight">
                           {classTitle}
                         </h2>
 
                         <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-300 font-medium">
-                          <span className="flex items-center gap-1.5">
-                            <ClockIcon className="w-4 h-4 text-gray-400" />
+                          <span className="flex items-center gap-1.5 bg-gray-50 dark:bg-black/20 px-2.5 py-1 rounded-lg border border-gray-200/50 dark:border-white/5">
+                            <ClockIcon className="w-4 h-4 text-[#BB9E7F]" />
                             {formatTimeStr(session.starts_at)} - {formatTimeStr(session.ends_at)}
                           </span>
                           <span>&bull;</span>
-                          <span className="font-bold text-gray-700 dark:text-gray-200">
+                          <span className="font-bold text-gray-700 dark:text-gray-200 flex items-center gap-1.5">
+                            <AcademicCapIcon className="w-4 h-4 text-[#BB9E7F]" />
                             Tutor: {tutorName}
                           </span>
                         </div>
@@ -596,46 +809,84 @@ export default function StaffStudentSchedule() {
 
                       {/* Right: Quick Attendance Summary Metrics */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <div className="bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 px-3.5 py-2 rounded-2xl text-center">
+                        <div className="bg-white/50 dark:bg-black/30 backdrop-blur-md border border-gray-200 dark:border-white/15 px-4 py-2.5 rounded-2xl text-center shadow-sm">
                           <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block">Enrolled</span>
-                          <span className="text-sm font-black text-[#0F2843] dark:text-white">{enrolledStudents.length}</span>
+                          <span className="text-base font-black text-[#0F2843] dark:text-white">{enrolledStudents.length}</span>
                         </div>
 
-                        <div className="bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-3.5 py-2 rounded-2xl text-center">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">Present</span>
-                          <span className="text-sm font-black text-emerald-700 dark:text-emerald-300">{presentCount}</span>
-                        </div>
-
-                        {lateCount > 0 && (
-                          <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-3.5 py-2 rounded-2xl text-center">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 block">Late</span>
-                            <span className="text-sm font-black text-amber-700 dark:text-amber-300">{lateCount}</span>
+                        {state === "scheduled" ? (
+                          <div className="bg-blue-500/10 dark:bg-blue-500/20 backdrop-blur-md border border-blue-500/30 px-4 py-2.5 rounded-2xl text-center shadow-sm shadow-blue-500/5">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-300 block">Scheduled</span>
+                            <span className="text-base font-black text-blue-700 dark:text-blue-300">{enrolledStudents.length}</span>
                           </div>
-                        )}
+                        ) : state === "live" ? (
+                          <>
+                            <div className="bg-emerald-500/10 dark:bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 px-4 py-2.5 rounded-2xl text-center shadow-sm shadow-emerald-500/10">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 block">Present</span>
+                              <span className="text-base font-black text-emerald-700 dark:text-emerald-300">{presentCount}</span>
+                            </div>
 
-                        {disconnectedCount > 0 && (
-                          <div className="bg-orange-50/80 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 px-3.5 py-2 rounded-2xl text-center">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-orange-700 dark:text-orange-400 block">Rejoined</span>
-                            <span className="text-sm font-black text-orange-700 dark:text-orange-300">{disconnectedCount}</span>
-                          </div>
-                        )}
+                            {lateCount > 0 && (
+                              <div className="bg-amber-500/10 dark:bg-amber-500/20 backdrop-blur-md border border-amber-500/30 px-4 py-2.5 rounded-2xl text-center shadow-sm">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block">Late</span>
+                                <span className="text-base font-black text-amber-700 dark:text-amber-300">{lateCount}</span>
+                              </div>
+                            )}
 
-                        <div className="bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 px-3.5 py-2 rounded-2xl text-center">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-400 block">Absent</span>
-                          <span className="text-sm font-black text-rose-700 dark:text-rose-300">{absentCount}</span>
-                        </div>
+                            {disconnectedCount > 0 && (
+                              <div className="bg-orange-500/10 dark:bg-orange-500/20 backdrop-blur-md border border-orange-500/30 px-4 py-2.5 rounded-2xl text-center shadow-sm">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-orange-700 dark:text-orange-300 block">Rejoined</span>
+                                <span className="text-base font-black text-orange-700 dark:text-orange-300">{disconnectedCount}</span>
+                              </div>
+                            )}
+
+                            <div className="bg-amber-500/10 dark:bg-amber-500/20 backdrop-blur-md border border-amber-500/30 px-4 py-2.5 rounded-2xl text-center shadow-sm">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block">Not Joined</span>
+                              <span className="text-base font-black text-amber-700 dark:text-amber-300">
+                                {Math.max(0, enrolledStudents.length - presentCount - lateCount)}
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="bg-emerald-500/10 dark:bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 px-4 py-2.5 rounded-2xl text-center shadow-sm">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 block">Present</span>
+                              <span className="text-base font-black text-emerald-700 dark:text-emerald-300">{presentCount}</span>
+                            </div>
+
+                            {lateCount > 0 && (
+                              <div className="bg-amber-500/10 dark:bg-amber-500/20 backdrop-blur-md border border-amber-500/30 px-4 py-2.5 rounded-2xl text-center shadow-sm">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block">Late</span>
+                                <span className="text-base font-black text-amber-700 dark:text-amber-300">{lateCount}</span>
+                              </div>
+                            )}
+
+                            {disconnectedCount > 0 && (
+                              <div className="bg-orange-500/10 dark:bg-orange-500/20 backdrop-blur-md border border-orange-500/30 px-4 py-2.5 rounded-2xl text-center shadow-sm">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-orange-700 dark:text-orange-300 block">Rejoined</span>
+                                <span className="text-base font-black text-orange-700 dark:text-orange-300">{disconnectedCount}</span>
+                              </div>
+                            )}
+
+                            <div className="bg-rose-500/10 dark:bg-rose-500/20 backdrop-blur-md border border-rose-500/30 px-4 py-2.5 rounded-2xl text-center shadow-sm shadow-rose-500/10">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-300 block">Absent</span>
+                              <span className="text-base font-black text-rose-700 dark:text-rose-300">{absentCount}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
                     {/* Expand / Collapse Roster Trigger */}
-                    <div className="pt-2 flex items-center justify-between border-t border-gray-100 dark:border-white/5">
-                      <span className="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    <div className="pt-2 flex items-center justify-between border-t border-gray-100 dark:border-white/10">
+                      <span className="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                        <UserGroupIcon className="w-4 h-4 text-[#BB9E7F]" />
                         Attendance Roster for {subjectName} ({enrolledStudents.length} Registered Students)
                       </span>
 
                       <button
                         onClick={() => toggleCardExpansion(session.id)}
-                        className="px-4 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-xs font-black text-gray-700 dark:text-white flex items-center gap-1.5 transition-all"
+                        className="px-4 py-2 rounded-xl bg-gray-100/90 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-xs font-black text-gray-700 dark:text-white flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
                       >
                         <span>{isExpanded ? "Hide Student Roster" : "View Registered Students"}</span>
                         {isExpanded ? <ChevronUpIcon className="w-3.5 h-3.5" /> : <ChevronDownIcon className="w-3.5 h-3.5" />}
@@ -643,24 +894,24 @@ export default function StaffStudentSchedule() {
                     </div>
                   </div>
 
-                  {/* ── CARD BODY (Registered Students & Attendance List) ── */}
+                  {/* ── CARD BODY (Registered Students & Attendance Table) ── */}
                   {isExpanded && (
-                    <div className="p-6 bg-slate-50/60 dark:bg-black/20 space-y-4 animate-in fade-in duration-150">
+                    <div className="p-6 bg-slate-50/70 dark:bg-black/30 backdrop-blur-xl space-y-4 animate-in fade-in duration-200">
                       {enrolledStudents.length === 0 ? (
-                        <div className="py-8 text-center text-gray-400 text-xs font-bold">
+                        <div className="py-10 text-center text-gray-400 text-xs font-bold border-2 border-dashed border-gray-200 dark:border-white/10 rounded-2xl">
                           No students are registered for this subject ({subjectName}) yet.
                         </div>
                       ) : (
-                        <div className="overflow-x-auto rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-[#09314F]">
+                        <div className="overflow-x-auto rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white/80 dark:bg-[#09314F]/80 backdrop-blur-xl shadow-lg">
                           <table className="w-full text-left text-xs">
-                            <thead className="bg-gray-50 dark:bg-black/30 text-gray-500 dark:text-gray-400 font-black uppercase tracking-wider text-[10px] border-b border-gray-200 dark:border-white/10">
+                            <thead className="bg-gray-50/80 dark:bg-black/40 backdrop-blur-md text-gray-500 dark:text-gray-400 font-black uppercase tracking-wider text-[10px] border-b border-gray-200/80 dark:border-white/10">
                               <tr>
-                                <th className="py-3 px-4">Student</th>
-                                <th className="py-3 px-4">Attendance Status</th>
-                                <th className="py-3 px-4">Join Time</th>
-                                <th className="py-3 px-4">Last Seen / Left</th>
-                                <th className="py-3 px-4">Rejoin / Disconnects</th>
-                                <th className="py-3 px-4">Stay Duration</th>
+                                <th className="py-3.5 px-4">Student</th>
+                                <th className="py-3.5 px-4">Attendance Status</th>
+                                <th className="py-3.5 px-4">Join Time</th>
+                                <th className="py-3.5 px-4">Last Seen / Left</th>
+                                <th className="py-3.5 px-4">Rejoin / Disconnects</th>
+                                <th className="py-3.5 px-4">Stay Duration</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-white/5 font-medium text-gray-700 dark:text-gray-200">
@@ -671,12 +922,12 @@ export default function StaffStudentSchedule() {
                                 return (
                                   <tr
                                     key={student.id}
-                                    className="hover:bg-blue-50/30 dark:hover:bg-white/5 transition-colors"
+                                    className="hover:bg-[#BB9E7F]/10 dark:hover:bg-white/5 transition-colors"
                                   >
                                     {/* Student Identity */}
-                                    <td className="py-3.5 px-4">
+                                    <td className="py-4 px-4">
                                       <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#0F2843] to-[#1E3A5F] text-white font-black text-xs flex items-center justify-center shrink-0">
+                                        <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#0F2843] to-[#1E3A5F] dark:from-[#BB9E7F] dark:to-[#d4b592] text-white dark:text-[#09314F] font-black text-xs flex items-center justify-center shrink-0 shadow-md">
                                           {initials}
                                         </div>
                                         <div className="min-w-0">
@@ -689,39 +940,47 @@ export default function StaffStudentSchedule() {
                                     </td>
 
                                     {/* Attendance Status */}
-                                    <td className="py-3.5 px-4">
+                                    <td className="py-4 px-4">
                                       {att.status === "present" ? (
-                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                        <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 shadow-sm">
                                           ● Present
                                         </span>
                                       ) : att.status === "late" ? (
-                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                        <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-sm">
                                           ● Late
                                         </span>
+                                      ) : att.status === "scheduled" ? (
+                                        <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30 shadow-sm">
+                                          ● Scheduled
+                                        </span>
+                                      ) : att.status === "not_joined" ? (
+                                        <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shadow-sm">
+                                          ● Not Joined
+                                        </span>
                                       ) : (
-                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                        <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 shadow-sm">
                                           ● Absent
                                         </span>
                                       )}
                                     </td>
 
                                     {/* Join Time */}
-                                    <td className="py-3.5 px-4 font-bold text-gray-600 dark:text-gray-300">
+                                    <td className="py-4 px-4 font-bold text-gray-600 dark:text-gray-300">
                                       {att.joined_at || <span className="text-gray-300 dark:text-gray-600">—</span>}
                                     </td>
 
                                     {/* Last Active / Left */}
-                                    <td className="py-3.5 px-4 font-bold text-gray-600 dark:text-gray-300">
+                                    <td className="py-4 px-4 font-bold text-gray-600 dark:text-gray-300">
                                       {att.left_at || <span className="text-gray-300 dark:text-gray-600">—</span>}
                                     </td>
 
                                     {/* Rejoin / Drop count */}
-                                    <td className="py-3.5 px-4">
+                                    <td className="py-4 px-4">
                                       {att.rejoin_count > 0 ? (
-                                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300">
+                                        <span className="px-2.5 py-1 rounded-xl text-[10px] font-black bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30">
                                           ⚠️ Rejoined {att.rejoin_count}x
                                         </span>
-                                      ) : att.status !== "absent" ? (
+                                      ) : att.status !== "absent" && att.status !== "scheduled" ? (
                                         <span className="text-[11px] text-gray-400 font-bold">Stable (0)</span>
                                       ) : (
                                         <span className="text-gray-300 dark:text-gray-600">—</span>
@@ -729,7 +988,7 @@ export default function StaffStudentSchedule() {
                                     </td>
 
                                     {/* Stay Duration */}
-                                    <td className="py-3.5 px-4">
+                                    <td className="py-4 px-4">
                                       {att.duration_minutes > 0 ? (
                                         <div className="space-y-1">
                                           <span className="font-black text-[#0F2843] dark:text-[#C5A97A]">
@@ -738,12 +997,12 @@ export default function StaffStudentSchedule() {
                                           <div className="w-20 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                             <div
                                               className="h-full bg-emerald-500 rounded-full"
-                                              style={{ width: `${Math.min(100, (att.duration_minutes / 60) * 100)}%` }}
+                                              style={{ width: `${Math.min(100, (att.duration_minutes / 90) * 100)}%` }}
                                             />
                                           </div>
                                         </div>
                                       ) : (
-                                        <span className="text-gray-300 dark:text-gray-600">0 mins</span>
+                                        <span className="text-gray-300 dark:text-gray-600">—</span>
                                       )}
                                     </td>
                                   </tr>

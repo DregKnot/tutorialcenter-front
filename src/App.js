@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useState, useEffect } from 'react';
+import "katex/dist/katex.min.css";
 import SplashScreen from "./components/public/SplashScreen.jsx";
 import PageLoader from "./components/common/PageLoader.jsx";
 import StickyButtons from "./components/public/StickyButtons.jsx";
@@ -111,6 +112,9 @@ const AuditLog = lazy(() => import("./pages/staffs/admin/AuditLog.jsx"));
 const AdminCalendar = lazy(() => import("./pages/staffs/admin/AdminCalendar.jsx"));
 const BadgeDemo = lazy(() => import("./pages/public/BadgeDemo.jsx"));
 const StudentAchievements = lazy(() => import("./pages/Students/StudentAchievements.jsx"));
+const TutorAssessments = lazy(() => import("./pages/staffs/tutor/TutorAssessments.jsx"));
+const StudentAssessments = lazy(() => import("./pages/Students/StudentAssessments.jsx"));
+const StudentAssessmentTaker = lazy(() => import("./pages/Students/StudentAssessmentTaker.jsx"));
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
@@ -219,6 +223,8 @@ function App() {
               <Route path="/student/games" element={<StudentGames />} />
               <Route path="/student/exams" element={<StudentExam />} />
               <Route path="/student/achievements" element={<StudentAchievements />} />
+              <Route path="/student/assessments" element={<StudentAssessments />} />
+              <Route path="/student/assessments/:id" element={<StudentAssessmentTaker />} />
               <Route path="/student/scholarship" element={<StudentScholarship />} />
               <Route path="/student/leaderboard" element={<StudentLeaderboard />} />
               <Route path="/student/blog" element={<StudentBlog />} />
@@ -236,6 +242,7 @@ function App() {
               <Route path="/staffs/tutor/dashboard" element={<TutorDashboard />} />
               <Route path="/staffs/tutor/master-class" element={<TutorMasterClass />} />
               <Route path="/staffs/tutor/calendar" element={<TutorCalendar />} />
+              <Route path="/staffs/tutor/assessments" element={<TutorAssessments />} />
               <Route path="/staffs/course-advisor/dashboard" element={<CourseAdvisorDashboard />} />
               <Route path="/staffs/course-advisor/students" element={<CourseAdvisorStudentManagement />} />
               <Route path="/staffs/course-advisor/guardians" element={<CourseAdvisorGuardianManagement />} />
