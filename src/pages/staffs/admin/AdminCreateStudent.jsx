@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import axios from "axios";
 import { location as locationList } from "../../../data/locations";
@@ -25,6 +25,7 @@ import {
   ArrowPathRoundedSquareIcon,
   SparklesIcon,
   ShieldCheckIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 
 const API_BASE_URL =
@@ -376,13 +377,16 @@ function RecoveryModal({ payment, onClose, onConfirm, loading }) {
 export default function AdminCreateStudent() {
   const dateInputRef = useRef(null);
   const token = localStorage.getItem("staff_token");
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-  };
+  const config = useMemo(
+    () => ({
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    }),
+    [token]
+  );
 
   /* ---- SHARED STATE ---- */
   const [mode, setMode] = useState("recover"); // "recover" | "create"
@@ -401,40 +405,148 @@ export default function AdminCreateStudent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
   const [recoveryModal, setRecoveryModal] = useState(null);
   const [recovering, setRecovering] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("all"); // "all" | "incomplete" | "pending" | "missing_enrollment"
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    setSearching(true);
-    setHasSearched(true);
-    const endpoint = `${API_BASE_URL}/api/admin/payments/registration-recovery/search`;
-    console.log(`[AdminCreateStudent] [GET] Searching Registration Recovery -> ${endpoint}`, { search: searchQuery.trim() });
+  const loadRecoveryRecords = useCallback(
+    async (searchTerm = "") => {
+      setSearching(true);
+      const endpoint = `${API_BASE_URL}/api/admin/payments/registration-recovery/search`;
+      console.log(`[AdminCreateStudent] [GET] Loading Registration Recovery -> ${endpoint}`, { search: searchTerm });
 
-    try {
-      const res = await axios.get(endpoint, {
-        ...config,
-        params: { search: searchQuery.trim() },
-      });
-      console.log("[AdminCreateStudent] Recovery Search Response:", res.data);
-      const payments = res.data?.payments || [];
-      setSearchResults(payments);
-      if (payments.length === 0) {
-        setToast({ type: "error", message: "No matching payments found." });
+      try {
+        const res = await axios.get(endpoint, {
+          ...config,
+          params: searchTerm ? { search: searchTerm } : {},
+        });
+        console.log("[AdminCreateStudent] Recovery Response:", res.data);
+        const payments = res.data?.payments || [];
+        const incompleteStudentsFromApi = res.data?.incomplete_students || [];
+
+        // Normalize results into tagged items
+        let results = [
+          ...payments.map((p) => {
+            const hasCompleteEnrollment =
+              p.enrollment &&
+              p.enrollment.course &&
+              Array.isArray(p.enrollment.subjects) &&
+              p.enrollment.subjects.length > 0;
+
+            return {
+              recordType: hasCompleteEnrollment ? "recoverable_payment" : "payment_missing_enrollment",
+              id: `pay-${p.id}`,
+              student: p.student,
+              enrollment: p.enrollment,
+              amount: p.amount,
+              status: p.status,
+              gateway_reference: p.gateway_reference,
+              created_at: p.created_at,
+              rawPayment: p,
+            };
+          }),
+          ...incompleteStudentsFromApi.map((s) => ({
+            recordType: "incomplete_registration",
+            id: `stud-${s.id}`,
+            student: s,
+            enrollment: s.courseEnrollments?.[0] || s.course_enrollments?.[0] || null,
+            created_at: s.created_at,
+            rawStudent: s,
+          })),
+        ];
+
+        // Fallback search against /api/admin/students/all if searching specifically and empty
+        if (searchTerm && incompleteStudentsFromApi.length === 0) {
+          try {
+            const studentsRes = await axios.get(`${API_BASE_URL}/api/admin/students/all`, config);
+            const allStudents = studentsRes.data?.students || studentsRes.data?.data || [];
+            const queryLower = searchTerm.toLowerCase();
+            const matchedStudents = allStudents.filter((s) => {
+              const emailMatch = s.email?.toLowerCase().includes(queryLower);
+              const telMatch = s.tel?.includes(searchTerm);
+              const nameMatch = `${s.firstname || ''} ${s.surname || ''}`.toLowerCase().includes(queryLower);
+              const idMatch = String(s.id) === searchTerm;
+              
+              // Incomplete: no active course enrollment or active enrollment with 0 subjects
+              const hasActiveEnrollment = (s.courseEnrollments || s.course_enrollments || []).some(
+                (ce) => ce.status === 'active' && ce.subjects && ce.subjects.length > 0
+              );
+              return (emailMatch || telMatch || nameMatch || idMatch) && !hasActiveEnrollment;
+            });
+
+            // Avoid duplicating any student already in payments
+            const paymentStudentIds = new Set(payments.map(p => p.student_id || p.student?.id));
+            matchedStudents.forEach((s) => {
+              if (!paymentStudentIds.has(s.id)) {
+                results.push({
+                  recordType: "incomplete_registration",
+                  id: `stud-${s.id}`,
+                  student: s,
+                  enrollment: s.courseEnrollments?.[0] || s.course_enrollments?.[0] || null,
+                  created_at: s.created_at,
+                  rawStudent: s,
+                });
+              }
+            });
+          } catch (fallbackErr) {
+            console.warn("[AdminCreateStudent] Optional student fallback search failed:", fallbackErr);
+          }
+        }
+
+        setSearchResults(results);
+      } catch (err) {
+        console.error("[AdminCreateStudent] Recovery Load Error:", err.response?.data || err);
+        setToast({
+          type: "error",
+          message:
+            err.response?.data?.message || "Failed to load recovery records.",
+        });
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
       }
-    } catch (err) {
-      console.error("[AdminCreateStudent] Recovery Search Error:", err.response?.data || err);
-      setToast({
-        type: "error",
-        message:
-          err.response?.data?.message || "Search failed. Please try again.",
-      });
-      setSearchResults([]);
-    } finally {
-      setSearching(false);
+    },
+    [config]
+  );
+
+  // Auto-fetch on mount or mode switch to "recover"
+  useEffect(() => {
+    if (mode === "recover") {
+      loadRecoveryRecords(searchQuery.trim());
     }
+  }, [mode, loadRecoveryRecords]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSearch = (e) => {
+    if (e) e.preventDefault();
+    loadRecoveryRecords(searchQuery.trim());
   };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    loadRecoveryRecords("");
+  };
+
+  const displayedResults = useMemo(() => {
+    if (activeFilter === "incomplete") {
+      return searchResults.filter((r) => r.recordType === "incomplete_registration");
+    }
+    if (activeFilter === "pending") {
+      return searchResults.filter((r) => r.recordType === "recoverable_payment");
+    }
+    if (activeFilter === "missing_enrollment") {
+      return searchResults.filter((r) => r.recordType === "payment_missing_enrollment");
+    }
+    return searchResults;
+  }, [searchResults, activeFilter]);
+
+  const filterCounts = useMemo(() => {
+    return {
+      all: searchResults.length,
+      incomplete: searchResults.filter((r) => r.recordType === "incomplete_registration").length,
+      pending: searchResults.filter((r) => r.recordType === "recoverable_payment").length,
+      missing_enrollment: searchResults.filter((r) => r.recordType === "payment_missing_enrollment").length,
+    };
+  }, [searchResults]);
 
   const handleRecoveryConfirm = async ({ payment_id, gateway_reference, reason }) => {
     setRecovering(true);
@@ -450,8 +562,8 @@ export default function AdminCreateStudent() {
         message: "Registration recovered successfully! Student enrollment is now active.",
       });
       setRecoveryModal(null);
-      // Refresh search results
-      if (searchQuery.trim()) handleSearch();
+      // Refresh recovery list
+      loadRecoveryRecords(searchQuery.trim());
     } catch (err) {
       console.error("[AdminCreateStudent] Registration Recovery Error:", err.response?.data || err);
       setToast({
@@ -476,8 +588,11 @@ export default function AdminCreateStudent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [verificationModal, setVerificationModal] = useState(null);
+  const [autofillSource, setAutofillSource] = useState(null);
 
   const [formData, setFormData] = useState({
+    student_id: null,
+    payment_id: null,
     firstname: "",
     surname: "",
     email: "",
@@ -637,6 +752,88 @@ export default function AdminCreateStudent() {
     }
   };
 
+  const handleCompleteIncompleteRegistration = (student, payment = null) => {
+    console.log("[AdminCreateStudent] Completing registration for student:", student, "Payment:", payment);
+
+    const existingEnrollment = payment?.enrollment || student.courseEnrollments?.[0] || student.course_enrollments?.[0] || null;
+    const prefilledCourseId = existingEnrollment?.course_id 
+      ? String(existingEnrollment.course_id) 
+      : (student.course_id ? String(student.course_id) : "");
+    const prefilledSubjectIds = (existingEnrollment?.subjects || student.subjects || []).map(
+      (s) => s.subject_id || s.id || s
+    );
+    const prefilledBillingCycle = payment?.billing_cycle || existingEnrollment?.billing_cycle || student.billing_cycle || "";
+
+    const defaultReason = payment 
+      ? `Completing enrollment for payment #${payment.id}${payment.gateway_reference ? ` (${payment.gateway_reference})` : ''}`
+      : "Completing incomplete student registration";
+
+    setFormData({
+      student_id: student.id,
+      payment_id: payment?.id || null,
+      firstname: student.firstname || "",
+      surname: student.surname || "",
+      email: student.email || "",
+      tel: student.tel || "",
+      password: "",
+      confirmPassword: "",
+      gender: student.gender || "",
+      date_of_birth: student.date_of_birth ? student.date_of_birth.split("T")[0] : "",
+      location: student.location || "",
+      address: student.address || "",
+      department: student.department || "",
+      course_id: prefilledCourseId,
+      subject_ids: prefilledSubjectIds,
+      billing_cycle: prefilledBillingCycle,
+      reason: defaultReason,
+    });
+
+    setAutofillSource({ ...student, attachedPayment: payment });
+    setErrors({});
+    setMode("create");
+
+    if (prefilledCourseId) {
+      fetchSubjectsForCourse(prefilledCourseId, student.department);
+    }
+
+    setToast({
+      type: "success",
+      message: payment 
+        ? `Autofilled details for ${student.firstname} ${student.surname} (Payment #${payment.id}). Select course/subjects to link enrollment.`
+        : `Autofilled signup details for ${student.firstname} ${student.surname}. Complete the remaining details to finalize enrollment.`,
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleClearAutofill = () => {
+    setAutofillSource(null);
+    setFormData({
+      student_id: null,
+      payment_id: null,
+      firstname: "",
+      surname: "",
+      email: "",
+      tel: "",
+      password: "",
+      confirmPassword: "",
+      gender: "",
+      date_of_birth: "",
+      location: "",
+      address: "",
+      department: "",
+      course_id: "",
+      subject_ids: [],
+      billing_cycle: "",
+      reason: "",
+    });
+    setErrors({});
+    setToast({
+      type: "info",
+      message: "Form cleared to standard new student registration.",
+    });
+  };
+
   const validateCreateForm = () => {
     const errs = {};
     const phoneRegex = /^(\+234|234|0)(70|80|81|90|91)\d{8}$/;
@@ -653,10 +850,21 @@ export default function AdminCreateStudent() {
       errs.tel = "Invalid Nigerian phone number format";
     }
 
-    if (!formData.password || formData.password.length < 8)
-      errs.password = "Password must be at least 8 characters";
-    if (formData.password !== formData.confirmPassword)
-      errs.confirmPassword = "Passwords do not match";
+    // Password validation: required for new accounts; optional if completing existing student
+    if (!formData.student_id) {
+      if (!formData.password || formData.password.length < 8)
+        errs.password = "Password must be at least 8 characters";
+      if (formData.password !== formData.confirmPassword)
+        errs.confirmPassword = "Passwords do not match";
+    } else {
+      if (formData.password) {
+        if (formData.password.length < 8)
+          errs.password = "Password must be at least 8 characters";
+        if (formData.password !== formData.confirmPassword)
+          errs.confirmPassword = "Passwords do not match";
+      }
+    }
+
     if (!formData.gender) errs.gender = "Gender is required";
     if (!formData.date_of_birth) errs.date_of_birth = "Date of birth is required";
     if (!formData.location.trim()) errs.location = "Location is required";
@@ -681,12 +889,14 @@ export default function AdminCreateStudent() {
 
     try {
       const payload = {
+        student_id: formData.student_id || undefined,
+        payment_id: formData.payment_id || undefined,
         firstname: formData.firstname.trim(),
         surname: formData.surname.trim(),
         email: formData.email.trim() || undefined,
         tel: formData.tel.trim() || undefined,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
+        password: formData.password || undefined,
+        confirmPassword: formData.confirmPassword || undefined,
         gender: formData.gender,
         date_of_birth: formData.date_of_birth,
         location: formData.location.trim() || undefined,
@@ -703,19 +913,21 @@ export default function AdminCreateStudent() {
         (k) => payload[k] === undefined && delete payload[k]
       );
 
-      console.log(`[AdminCreateStudent] [POST] Submitting Complimentary Registration -> ${endpoint}`, payload);
+      console.log(`[AdminCreateStudent] [POST] Submitting Complimentary / Complete Registration -> ${endpoint}`, payload);
 
       const res = await axios.post(endpoint, payload, config);
-      console.log("[AdminCreateStudent] Complimentary Registration Response:", res.data);
+      console.log("[AdminCreateStudent] Complimentary / Complete Registration Response:", res.data);
 
       setToast({
         type: "success",
         message:
           res.data?.message ||
-          "Complimentary student registration successful!",
+          (formData.student_id
+            ? "Student registration completed successfully!"
+            : "Complimentary student registration successful!"),
       });
 
-      // Open verification modal
+      // Open verification modal if applicable
       setVerificationModal({
         firstname: formData.firstname,
         surname: formData.surname,
@@ -724,7 +936,10 @@ export default function AdminCreateStudent() {
       });
 
       // Reset form
+      setAutofillSource(null);
       setFormData({
+        student_id: null,
+        payment_id: null,
         firstname: "",
         surname: "",
         email: "",
@@ -742,6 +957,9 @@ export default function AdminCreateStudent() {
         reason: "",
       });
       setErrors({});
+
+      // Reload recovery list
+      loadRecoveryRecords(searchQuery.trim());
     } catch (err) {
       console.error("[AdminCreateStudent] Complimentary Registration Error:", err.response?.data || err);
       const backendErrors = err.response?.data?.errors;
@@ -786,12 +1004,16 @@ export default function AdminCreateStudent() {
             <div>
               <h2 className="text-lg font-black text-[#09314F] dark:text-white tracking-tight">
                 {mode === "recover"
-                  ? "Student Recovery"
+                  ? "Student Recovery & Incomplete Registrations"
+                  : autofillSource
+                  ? "Complete Student Registration"
                   : "Complimentary Registration"}
               </h2>
               <p className="text-xs font-medium text-gray-400 mt-1 leading-relaxed max-w-md">
                 {mode === "recover"
-                  ? "Find and finalize failed student registrations where payment was confirmed on the gateway."
+                  ? "Search recoverable gateway payments or complete signups for students who registered without paying."
+                  : autofillSource
+                  ? "Review prefilled details and select course/subjects to complete this student's enrollment."
                   : "Issue a zero-cost enrollment for students approved by management."}
               </p>
             </div>
@@ -829,167 +1051,362 @@ export default function AdminCreateStudent() {
         ======================================== */}
         {mode === "recover" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-400">
-            {/* Search Card */}
+            {/* Search and Action Bar */}
             <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10">
                 <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                   <MagnifyingGlassIcon className="w-4 h-4 text-[#C5A97A]" />
-                  Search Payment Records
+                  Active Recovery Triage & Incomplete Registrations
                 </h3>
               </div>
               <div className="p-6">
-                <div className="flex gap-3">
+                <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
                     <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                      placeholder="Email, Phone Number, or Gateway Reference..."
-                      className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-4 pl-12 pr-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all"
+                      placeholder="Filter by Email, Phone, Name, Gateway Reference, or Payment ID..."
+                      className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-4 pl-12 pr-10 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all"
                     />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={handleClearSearch}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 hover:text-gray-800 dark:hover:text-white flex items-center justify-center text-xs font-bold transition-all"
+                        title="Clear filter"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={searching}
+                      className="px-7 py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-gradient-to-r from-[#09314F] to-[#0F4068] text-white hover:opacity-90 active:scale-[0.98] transition-all shadow-lg flex items-center gap-2"
+                    >
+                      {searching ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <MagnifyingGlassIcon className="w-4 h-4" />
+                      )}
+                      {searching ? "Searching..." : "Search"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => loadRecoveryRecords(searchQuery.trim())}
+                      disabled={searching}
+                      className="px-4 py-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#06243A] text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all flex items-center justify-center"
+                      title="Refresh records"
+                    >
+                      <ArrowPathIcon className={`w-4 h-4 ${searching ? "animate-spin text-[#C5A97A]" : ""}`} />
+                    </button>
+                  </div>
+                </form>
+
+                {/* Filter Tabs */}
+                <div className="flex flex-wrap items-center gap-2 mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-1">
+                    Filter:
+                  </span>
                   <button
-                    onClick={handleSearch}
-                    disabled={searching || !searchQuery.trim()}
-                    className={`px-8 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 ${
-                      searching || !searchQuery.trim()
-                        ? "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r from-[#09314F] to-[#0F4068] text-white hover:opacity-90 active:scale-[0.98] shadow-lg"
+                    type="button"
+                    onClick={() => setActiveFilter("all")}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                      activeFilter === "all"
+                        ? "bg-[#09314F] text-white shadow-md shadow-[#09314F]/20"
+                        : "bg-gray-100 dark:bg-[#06243A] text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
                     }`}
                   >
-                    {searching ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <MagnifyingGlassIcon className="w-4 h-4" />
-                    )}
-                    {searching ? "Searching..." : "Search"}
+                    <span>All Records</span>
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                      activeFilter === "all" ? "bg-white/20 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                    }`}>
+                      {filterCounts.all}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter("incomplete")}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                      activeFilter === "incomplete"
+                        ? "bg-amber-600 text-white shadow-md shadow-amber-600/20"
+                        : "bg-gray-100 dark:bg-[#06243A] text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    <span>Incomplete Signups</span>
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                      activeFilter === "incomplete" ? "bg-white/20 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                    }`}>
+                      {filterCounts.incomplete}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter("pending")}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                      activeFilter === "pending"
+                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                        : "bg-gray-100 dark:bg-[#06243A] text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    <span>Pending Payments</span>
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                      activeFilter === "pending" ? "bg-white/20 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                    }`}>
+                      {filterCounts.pending}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter("missing_enrollment")}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                      activeFilter === "missing_enrollment"
+                        ? "bg-purple-600 text-white shadow-md shadow-purple-600/20"
+                        : "bg-gray-100 dark:bg-[#06243A] text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    <span>Payments Missing Courses</span>
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                      activeFilter === "missing_enrollment" ? "bg-white/20 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                    }`}>
+                      {filterCounts.missing_enrollment}
+                    </span>
                   </button>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-3 font-medium">
-                  Search by the student's email address, phone number, or
-                  Paystack/Flutterwave payment reference.
-                </p>
               </div>
             </div>
 
-            {/* Search Results */}
-            {hasSearched && (
-              <div className="space-y-4">
-                {searchResults.length > 0 ? (
-                  searchResults.map((payment) => (
+            {/* Records List */}
+            <div className="space-y-4">
+              {searching && searchResults.length === 0 ? (
+                <div className="flex flex-col items-center justify-center bg-white/40 dark:bg-gray-800/40 rounded-3xl border border-gray-100 dark:border-gray-800 p-12">
+                  <div className="w-10 h-10 border-4 border-[#C5A97A]/30 border-t-[#C5A97A] rounded-full animate-spin mb-4" />
+                  <p className="text-xs font-black uppercase tracking-widest text-gray-400">Loading records needing attention...</p>
+                </div>
+              ) : displayedResults.length > 0 ? (
+                displayedResults.map((item) => {
+                  const isRecoverablePayment = item.recordType === "recoverable_payment";
+                  const isMissingEnrollment = item.recordType === "payment_missing_enrollment";
+                  const student = item.student || {};
+                  const enrollment = item.enrollment || {};
+                  const courseTitle = enrollment.course?.title || student.course_title;
+
+                  return (
                     <div
-                      key={payment.id}
+                      key={item.id}
                       className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-sm overflow-hidden hover:shadow-xl transition-all group animate-in fade-in slide-in-from-bottom-2 duration-300"
                     >
                       <div className="p-6">
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                           {/* Student Info */}
                           <div className="flex items-center gap-4 flex-1">
-                            <div className="w-14 h-14 bg-gradient-to-br from-[#09314F] to-[#0F4068] rounded-2xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-lg">
-                              {payment.student?.firstname?.[0]?.toUpperCase() ||
-                                "S"}
+                            <div
+                              className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-lg ${
+                                isRecoverablePayment
+                                  ? "bg-gradient-to-br from-[#09314F] to-[#0F4068]"
+                                  : isMissingEnrollment
+                                  ? "bg-gradient-to-br from-purple-800 to-indigo-700"
+                                  : "bg-gradient-to-br from-[#BB9E7F] to-[#8C6D4F]"
+                              }`}
+                            >
+                              {student?.firstname?.[0]?.toUpperCase() || "S"}
                             </div>
                             <div className="min-w-0">
-                              <h4 className="font-black text-[#09314F] dark:text-white text-sm truncate">
-                                {payment.student?.firstname}{" "}
-                                {payment.student?.surname}
-                              </h4>
-                              <div className="flex flex-wrap items-center gap-3 mt-1">
-                                {payment.student?.email && (
-                                  <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
-                                    <EnvelopeIcon className="w-3 h-3" />
-                                    {payment.student.email}
+                              <div className="flex flex-wrap items-center gap-3">
+                                <h4 className="font-black text-[#09314F] dark:text-white text-base truncate">
+                                  {student?.firstname} {student?.surname}
+                                </h4>
+                                {/* TAG / BADGE */}
+                                {isRecoverablePayment && (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-sm">
+                                    <ArrowPathIcon className="w-3.5 h-3.5 text-emerald-500" />
+                                    Recoverable Student
                                   </span>
                                 )}
-                                {payment.student?.tel && (
-                                  <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
-                                    <PhoneIcon className="w-3 h-3" />
-                                    {payment.student.tel}
+                                {isMissingEnrollment && (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shadow-sm">
+                                    <ExclamationTriangleIcon className="w-3.5 h-3.5 text-purple-500" />
+                                    Payment Without Course/Subjects
+                                  </span>
+                                )}
+                                {!isRecoverablePayment && !isMissingEnrollment && (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shadow-sm">
+                                    <ExclamationTriangleIcon className="w-3.5 h-3.5 text-amber-500" />
+                                    Incomplete Registration
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-4 mt-2">
+                                {student?.email && (
+                                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                    <EnvelopeIcon className="w-3.5 h-3.5 text-gray-400" />
+                                    {student.email}
+                                  </span>
+                                )}
+                                {student?.tel && (
+                                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                    <PhoneIcon className="w-3.5 h-3.5 text-gray-400" />
+                                    {student.tel}
+                                  </span>
+                                )}
+                                {student?.department && (
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-[#BB9E7F] bg-[#BB9E7F]/10 px-2.5 py-0.5 rounded-lg border border-[#BB9E7F]/20">
+                                    {student.department}
+                                  </span>
+                                )}
+                                {student?.location && (
+                                  <span className="text-xs font-medium text-gray-400 flex items-center gap-1">
+                                    <MapPinIcon className="w-3.5 h-3.5" />
+                                    {student.location}
                                   </span>
                                 )}
                               </div>
                             </div>
                           </div>
 
-                          {/* Payment Details */}
+                          {/* Details (Payment status or Incomplete status) */}
                           <div className="flex flex-wrap items-center gap-3">
-                            {/* Amount Badge */}
-                            <div className="bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-xl border border-green-100 dark:border-green-800">
-                              <span className="text-xs font-black text-green-700 dark:text-green-300">
-                                {Number(payment.amount || 0) === 0
-                                  ? "FREE"
-                                  : `₦${parseFloat(
-                                      payment.amount || 0
-                                    ).toLocaleString()}`}
-                              </span>
-                            </div>
+                            {isRecoverablePayment || isMissingEnrollment ? (
+                              <>
+                                {/* Amount Badge */}
+                                <div className="bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-xl border border-green-100 dark:border-green-800">
+                                  <span className="text-xs font-black text-green-700 dark:text-green-300">
+                                    {Number(item.amount || 0) === 0
+                                      ? "FREE"
+                                      : `₦${parseFloat(item.amount || 0).toLocaleString()}`}
+                                  </span>
+                                </div>
 
-                            {/* Status Chip */}
-                            <div
-                              className={`px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-wider ${
-                                payment.status === "pending"
-                                  ? "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800 text-amber-700 dark:text-amber-300"
-                                  : payment.status === "successful"
-                                  ? "bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800 text-green-700 dark:text-green-300"
-                                  : "bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800 text-red-700 dark:text-red-300"
-                              }`}
-                            >
-                              {payment.status}
-                            </div>
-
-                            {/* Course */}
-                            {payment.enrollment?.course?.title && (
-                              <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-xl border border-blue-100 dark:border-blue-800">
-                                <span className="text-[10px] font-black text-blue-700 dark:text-blue-300 flex items-center gap-1">
-                                  <AcademicCapIcon className="w-3 h-3" />
-                                  {payment.enrollment.course.title}
+                                {/* Status Chip */}
+                                <div
+                                  className={`px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-wider ${
+                                    item.status === "pending"
+                                      ? "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800 text-amber-700 dark:text-amber-300"
+                                      : item.status === "successful"
+                                      ? "bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800 text-green-700 dark:text-green-300"
+                                      : "bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800 text-red-700 dark:text-red-300"
+                                  }`}
+                                >
+                                  {item.status}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="bg-amber-50/70 dark:bg-amber-900/20 px-4 py-2 rounded-xl border border-amber-100 dark:border-amber-800">
+                                <span className="text-[11px] font-bold text-amber-800 dark:text-amber-200">
+                                  Signed up • Unpaid
                                 </span>
                               </div>
                             )}
+
+                            {/* Course (if available) */}
+                            {courseTitle ? (
+                              <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-xl border border-blue-100 dark:border-blue-800">
+                                <span className="text-[10px] font-black text-blue-700 dark:text-blue-300 flex items-center gap-1">
+                                  <AcademicCapIcon className="w-3 h-3" />
+                                  {courseTitle}
+                                </span>
+                              </div>
+                            ) : isMissingEnrollment ? (
+                              <div className="bg-purple-50 dark:bg-purple-900/20 px-4 py-2 rounded-xl border border-purple-100 dark:border-purple-800">
+                                <span className="text-[10px] font-black text-purple-700 dark:text-purple-300">
+                                  No Course/Subjects Linked
+                                </span>
+                              </div>
+                            ) : null}
                           </div>
 
-                          {/* Action */}
-                          <button
-                            onClick={() => setRecoveryModal(payment)}
-                            className="px-6 py-3 bg-gradient-to-r from-[#09314F] to-[#E83831] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all shadow-lg flex items-center gap-2 flex-shrink-0"
-                          >
-                            <ArrowPathIcon className="w-4 h-4" />
-                            Recover
-                          </button>
+                          {/* Action Button */}
+                          {isRecoverablePayment ? (
+                            <button
+                              onClick={() => setRecoveryModal(item.rawPayment || item)}
+                              className="px-6 py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all shadow-lg flex items-center gap-2 flex-shrink-0"
+                            >
+                              <ArrowPathIcon className="w-4 h-4" />
+                              Recover
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                handleCompleteIncompleteRegistration(
+                                  item.rawStudent || item.student,
+                                  item.rawPayment || null
+                                )
+                              }
+                              className="px-6 py-3.5 bg-gradient-to-r from-[#09314F] to-[#BB9E7F] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-90 active:scale-[0.98] transition-all shadow-lg flex items-center gap-2 flex-shrink-0"
+                            >
+                              <PencilSquareIcon className="w-4 h-4" />
+                              Complete
+                            </button>
+                          )}
                         </div>
 
-                        {/* Gateway Reference */}
-                        {payment.gateway_reference && (
-                          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                              Gateway Reference:
-                            </span>{" "}
-                            <code className="text-xs font-bold text-[#C5A97A] bg-gray-50 dark:bg-[#06243A] px-3 py-1 rounded-lg">
-                              {payment.gateway_reference}
-                            </code>
+                        {/* Additional Reference/Payment details */}
+                        {(item.gateway_reference || item.rawPayment?.id) && (
+                          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center gap-4 text-xs">
+                            {item.rawPayment?.id && (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                  Payment ID:
+                                </span>
+                                <span className="font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 rounded-md">
+                                  #{item.rawPayment.id}
+                                </span>
+                              </div>
+                            )}
+                            {item.gateway_reference && (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                  Gateway Reference:
+                                </span>
+                                <code className="text-xs font-bold text-[#C5A97A] bg-gray-50 dark:bg-[#06243A] px-3 py-1 rounded-lg">
+                                  {item.gateway_reference}
+                                </code>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="flex flex-col items-center justify-center bg-white/40 dark:bg-gray-800/40 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-12">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center bg-white/40 dark:bg-gray-800/40 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-12">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                    {searchQuery.trim() ? (
                       <MagnifyingGlassIcon className="w-8 h-8 text-gray-300" />
-                    </div>
-                    <h3 className="text-lg font-black text-gray-400 mb-1">
-                      No Results Found
-                    </h3>
-                    <p className="text-gray-400 text-xs font-medium text-center max-w-sm">
-                      No pending payments match your search. Try a different
-                      email, phone number, or gateway reference.
-                    </p>
+                    ) : (
+                      <CheckCircleIcon className="w-8 h-8 text-emerald-400" />
+                    )}
                   </div>
-                )}
-              </div>
-            )}
+                  <h3 className="text-lg font-black text-gray-600 dark:text-gray-300 mb-1">
+                    {searchQuery.trim() ? "No Matching Records Found" : "All Caught Up!"}
+                  </h3>
+                  <p className="text-gray-400 text-xs font-medium text-center max-w-sm">
+                    {searchQuery.trim()
+                      ? `No payments or incomplete registrations matched "${searchQuery.trim()}". Try another keyword or clear the filter.`
+                      : activeFilter !== "all"
+                      ? "No records match the current filter selection."
+                      : "There are currently no pending payments, incomplete registrations, or orphaned enrollments requiring administrative action."}
+                  </p>
+                  {searchQuery.trim() && (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-[#09314F] dark:text-[#C5A97A] bg-gray-100 dark:bg-[#06243A] hover:opacity-80 transition-all"
+                    >
+                      Clear Search Filter
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -998,6 +1415,33 @@ export default function AdminCreateStudent() {
         ======================================== */}
         {mode === "create" && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-400">
+            {autofillSource && (
+              <div className="mb-6 p-5 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-2 border-amber-500/30 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in slide-in-from-top-4 shadow-sm">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0 shadow-inner">
+                    <SparklesIcon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 flex items-center gap-2">
+                      <span>Completing Incomplete Registration</span>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-[9px] font-bold text-amber-800 dark:text-amber-200">
+                        Existing Account #{autofillSource.id}
+                      </span>
+                    </h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 font-medium mt-1">
+                      Signup details autofilled for <strong className="text-[#09314F] dark:text-white font-bold">{autofillSource.firstname} {autofillSource.surname}</strong> ({autofillSource.email || autofillSource.tel || "No contact"}). Assign course/subjects to complete enrollment.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearAutofill}
+                  className="px-4 py-2 text-[11px] font-black uppercase tracking-widest text-gray-500 hover:text-red-500 hover:border-red-200 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all flex-shrink-0"
+                >
+                  Clear Autofill
+                </button>
+              </div>
+            )}
             <form onSubmit={handleCreateSubmit} className="space-y-6">
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* LEFT COLUMN */}
@@ -1414,7 +1858,7 @@ export default function AdminCreateStudent() {
                         {/* Password */}
                         <div>
                           <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
-                            Password
+                            {formData.student_id ? "Password (Optional)" : "Password"}
                           </label>
                           <div className="relative">
                             <input
@@ -1422,7 +1866,11 @@ export default function AdminCreateStudent() {
                               name="password"
                               value={formData.password}
                               onChange={handleChange}
-                              placeholder="Min. 8 characters"
+                              placeholder={
+                                formData.student_id
+                                  ? "Leave empty to keep existing password"
+                                  : "Min. 8 characters"
+                              }
                               className={`w-full rounded-2xl border bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 pr-12 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all ${
                                 errors.password
                                   ? "border-red-500"
@@ -1459,7 +1907,11 @@ export default function AdminCreateStudent() {
                               name="confirmPassword"
                               value={formData.confirmPassword}
                               onChange={handleChange}
-                              placeholder="Re-enter password"
+                              placeholder={
+                                formData.student_id
+                                  ? "Confirm new password (if changing)"
+                                  : "Re-enter password"
+                              }
                               className={`w-full rounded-2xl border bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 pr-12 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all ${
                                 errors.confirmPassword
                                   ? "border-red-500"
@@ -1487,6 +1939,12 @@ export default function AdminCreateStudent() {
                           )}
                         </div>
                       </div>
+
+                      {formData.student_id && (
+                        <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium bg-amber-50 dark:bg-amber-950/30 p-3.5 rounded-2xl border border-amber-200 dark:border-amber-900/40">
+                          Student created their password during initial signup. Leave password blank to retain their existing login password, or enter a new password to reset it.
+                        </p>
+                      )}
 
                       {/* Helper Buttons */}
                       <div className="flex flex-wrap gap-3">
@@ -1616,12 +2074,21 @@ export default function AdminCreateStudent() {
                     {creating ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Creating Student...
+                        {formData.student_id ? "Completing Registration..." : "Creating Student..."}
                       </>
                     ) : (
                       <>
-                        <UserPlusIcon className="w-5 h-5" />
-                        Create Complimentary Student
+                        {formData.student_id ? (
+                          <>
+                            <CheckCircleIcon className="w-5 h-5" />
+                            Complete Student Registration
+                          </>
+                        ) : (
+                          <>
+                            <UserPlusIcon className="w-5 h-5" />
+                            Create Complimentary Student
+                          </>
+                        )}
                       </>
                     )}
                   </button>

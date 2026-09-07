@@ -475,7 +475,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+      <div className="bg-white dark:bg-gray-900 w-full max-w-5xl max-h-[92vh] rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
         
         {/* Header */}
         <div className="px-10 py-8 bg-[#0F2843] text-white flex items-center justify-between">
@@ -673,7 +673,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                     onChange={setGroupContent}
                     modules={quillModules}
                     formats={quillFormats}
-                    className="[&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
+                    className="[&_.ql-editor]:min-h-[220px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
                   />
                 </div>
               </div>
@@ -747,7 +747,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 onChange={(val) => setQuestionText(stripImagesFromHtml(val))}
                 modules={quillModules}
                 formats={quillFormats}
-                className="[&_.ql-editor]:min-h-[120px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
+                className="[&_.ql-editor]:min-h-[300px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
               />
             </div>
           </div>
@@ -933,7 +933,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 onChange={(val) => setExplanation(stripImagesFromHtml(val))}
                 modules={quillModules}
                 formats={quillFormats}
-                className="[&_.ql-editor]:min-h-[100px] [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" 
+                className="[&_.ql-editor]:min-h-[180px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" 
               />
             </div>
           </div>
