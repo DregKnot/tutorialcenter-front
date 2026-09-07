@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
+import GuardianDetailsModal from "../../../components/private/staffs/GuardianDetailsModal.jsx";
+import AdminStudentViewModal from "../../../components/private/staffs/AdminStudentViewModal.jsx";
 import {
   MagnifyingGlassIcon,
   ShieldCheckIcon,
   UserGroupIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
 
 export default function AdminGuardianManagement() {
@@ -14,6 +17,8 @@ export default function AdminGuardianManagement() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedGuardian, setSelectedGuardian] = useState(null);
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [stats, setStats] = useState([
     { label: "Total Guardians", value: 0, icon: UserGroupIcon, bg: "bg-blue-100", color: "text-blue-600" },
     { label: "Active", value: 0, icon: ShieldCheckIcon, bg: "bg-green-100", color: "text-green-600" },
@@ -122,14 +127,14 @@ export default function AdminGuardianManagement() {
         </div>
 
         {/* Guardians Table Section */}
-        {/* Guardians Table Section */}
         <div className="space-y-4">
            {/* Desktop Table Header (Hidden on Mobile) */}
-           <div className="hidden md:grid md:grid-cols-4 items-center bg-[#09314F] px-6 py-4 rounded-2xl text-white font-black text-xs uppercase tracking-wider shadow-md">
-              <div>Guardian Name</div>
-              <div className="text-center">Email</div>
-              <div className="text-center">Phone Number</div>
-              <div className="text-right pr-4">Students Enrolled</div>
+           <div className="hidden md:grid md:grid-cols-12 items-center bg-[#09314F] px-6 py-4 rounded-2xl text-white font-black text-xs uppercase tracking-wider shadow-md">
+              <div className="col-span-3">Guardian Name</div>
+              <div className="col-span-3 text-center">Email</div>
+              <div className="col-span-2 text-center">Phone Number</div>
+              <div className="col-span-2 text-center">Students Enrolled</div>
+              <div className="col-span-2 text-right pr-2">Action</div>
            </div>
 
            {/* Rows List */}
@@ -147,34 +152,53 @@ export default function AdminGuardianManagement() {
                   return (
                     <div key={idx}>
                       {/* DESKTOP ROW */}
-                      <div className="hidden md:grid md:grid-cols-4 items-center bg-white dark:bg-gray-800/60 px-6 py-4 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all group">
-                         <div className="flex items-center gap-3.5 min-w-0">
-                            <div className="w-10 h-10 rounded-full bg-[#0F2843] text-white flex items-center justify-center font-black text-xs uppercase flex-shrink-0">
+                      <div className="hidden md:grid md:grid-cols-12 items-center bg-white dark:bg-gray-800/60 px-6 py-4 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all group">
+                         <div 
+                           onClick={() => setSelectedGuardian(guardian)}
+                           className="col-span-3 flex items-center gap-3.5 min-w-0 cursor-pointer group/name"
+                           title="Click to view details"
+                         >
+                            <div className="w-10 h-10 rounded-full bg-[#0F2843] text-white flex items-center justify-center font-black text-xs uppercase flex-shrink-0 group-hover/name:ring-2 ring-[#BB9E7F] transition-all">
                               {displayName.charAt(0)}
                             </div>
-                            <span className="font-bold text-[#0F2843] dark:text-white text-sm truncate" title={displayName}>
+                            <span className="font-bold text-[#0F2843] dark:text-white text-sm truncate group-hover/name:text-[#BB9E7F] transition-colors" title={displayName}>
                               {displayName}
                             </span>
                          </div>
                          
-                         <div className="text-center font-medium text-gray-500 dark:text-gray-400 text-xs truncate px-2" title={guardian.email}>
+                         <div className="col-span-3 text-center font-medium text-gray-500 dark:text-gray-400 text-xs truncate px-2" title={guardian.email}>
                             {guardian.email || "N/A"}
                          </div>
                          
-                         <div className="text-center font-bold text-gray-800 dark:text-gray-200 text-xs">
+                         <div className="col-span-2 text-center font-bold text-gray-800 dark:text-gray-200 text-xs">
                             {guardian.tel || "N/A"}
                          </div>
                          
-                         <div className="text-right pr-2">
+                         <div className="col-span-2 text-center">
                             <span className="inline-flex items-center px-3 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] rounded-lg text-xs font-bold">
                                {guardian.students?.length || 0} Ward(s)
                             </span>
+                         </div>
+
+                         <div className="col-span-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedGuardian(guardian)}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#09314F] hover:bg-[#0F2843] text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                              title="View Details"
+                            >
+                              <EyeIcon className="w-4 h-4" />
+                              <span>View Details</span>
+                            </button>
                          </div>
                       </div>
 
                       {/* MOBILE CARD VIEW */}
                       <div className="block md:hidden bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/60 shadow-sm">
-                        <div className="flex items-center justify-between gap-3 mb-3">
+                        <div 
+                          onClick={() => setSelectedGuardian(guardian)}
+                          className="flex items-center justify-between gap-3 mb-3 cursor-pointer"
+                        >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="w-10 h-10 rounded-full bg-[#0F2843] text-white flex items-center justify-center font-black text-xs uppercase flex-shrink-0">
                               {displayName.charAt(0)}
@@ -198,6 +222,15 @@ export default function AdminGuardianManagement() {
                             <span className="font-bold text-gray-800 dark:text-gray-200">{guardian.tel || "—"}</span>
                           </div>
                         </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedGuardian(guardian)}
+                          className="w-full mt-3 py-2.5 bg-[#09314F] hover:bg-[#0F2843] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                          <span>View Details</span>
+                        </button>
                       </div>
                     </div>
                   );
@@ -226,6 +259,26 @@ export default function AdminGuardianManagement() {
            )}
         </div>
       </div>
+
+      {/* Guardian Details Modal */}
+      <GuardianDetailsModal
+        guardian={selectedGuardian}
+        isOpen={!!selectedGuardian}
+        onClose={() => setSelectedGuardian(null)}
+        onViewStudent={(studentId) => {
+          setSelectedStudentId(studentId);
+        }}
+      />
+
+      {/* Student View Modal if admin clicks View Profile on any linked ward */}
+      {selectedStudentId && (
+        <AdminStudentViewModal
+          studentId={selectedStudentId}
+          isOpen={!!selectedStudentId}
+          onClose={() => setSelectedStudentId(null)}
+          onUpdate={() => fetchData()}
+        />
+      )}
     </StaffDashboardLayout>
   );
 }
