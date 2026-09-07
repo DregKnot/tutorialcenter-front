@@ -371,7 +371,7 @@ export default function QuestionItem({
           {/* Question Text (WYSIWYG) */}
           <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-gray-700">
             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Text</label>
-            <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!">
+            <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[280px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!">
               <ReactQuill 
                 theme="snow" 
                 value={q.questionText} 
@@ -480,7 +480,7 @@ export default function QuestionItem({
           {/* Explanation Section */}
           <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-gray-700">
             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Explanation / Answer Key</label>
-            <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[120px] [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!">
+            <div className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[180px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!">
               <ReactQuill 
                 theme="snow" 
                 value={q.explanation} 

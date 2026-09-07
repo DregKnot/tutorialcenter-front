@@ -51,8 +51,18 @@ export default function GuardianTrainingPayment() {
 
   /* ================= EMAIL ================= */
   const payerEmail = useMemo(() => {
-    if (!guardianData?.length) return "guardian@example.com";
-    return guardianData[0]?.email || "guardian@example.com";
+    const storedEmail = localStorage.getItem("guardianEmail");
+    if (storedEmail && storedEmail.includes("@")) return storedEmail.trim();
+
+    try {
+      const storedGuardian = JSON.parse(localStorage.getItem("guardianStudents") || "{}");
+      if (storedGuardian?.email && storedGuardian.email.includes("@")) return storedGuardian.email.trim();
+    } catch (e) {}
+
+    if (guardianData?.length && guardianData[0]?.email && guardianData[0].email.includes("@")) {
+      return guardianData[0].email.trim();
+    }
+    return "guardian@tutorialcenter.com";
   }, [guardianData]);
 
   /* ================= MODAL ================= */
@@ -123,6 +133,7 @@ export default function GuardianTrainingPayment() {
 
       // Cleanup guardian localStorage
       localStorage.removeItem("guardianTel");
+      localStorage.removeItem("guardianEmail");
       localStorage.removeItem("guardianStudents");
       localStorage.removeItem("guardianStudentsBiodata");
       localStorage.removeItem("guardianStudentsTraining");

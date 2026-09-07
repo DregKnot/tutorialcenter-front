@@ -19,6 +19,7 @@ export default function GuardianPayments() {
   const [wardSubscription, setWardSubscription] = useState(null);
   const [selectedEnrollmentId, setSelectedEnrollmentId] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
+  const [historyWardFilter, setHistoryWardFilter] = useState('all');
   const [fetchingHistory, setFetchingHistory] = useState(false);
   const [historySearchQuery, setHistorySearchQuery] = useState('');
 
@@ -187,42 +188,46 @@ export default function GuardianPayments() {
 
   // 2. Fetch Subscription & Payment History for Selected Ward
   const fetchWardDetails = useCallback(async () => {
-    if (!selectedWardId) return;
     const token = localStorage.getItem("guardian_token");
     if (!token) return;
 
-    setFetchingHistory(true);
-    try {
-      const [subRes, historyRes] = await Promise.allSettled([
-        axios.get(`${API_BASE_URL}/api/guardians/dashboard/wards/${selectedWardId}/subscription`, {
+    // Fetch subscription details for selected ward if a ward is selected
+    if (selectedWardId && selectedWardId !== 'all') {
+      try {
+        const subRes = await axios.get(`${API_BASE_URL}/api/guardians/dashboard/wards/${selectedWardId}/subscription`, {
           headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API_BASE_URL}/api/guardians/payments/history`, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { student_id: selectedWardId }
-        })
-      ]);
-
-      if (subRes.status === "fulfilled") {
-        const subData = subRes.value.data || null;
+        });
+        const subData = subRes.data || null;
         setWardSubscription(subData);
         // Automatically default selected enrollment to first available
         if (subData?.enrollments && subData.enrollments.length > 0) {
           const defaultEnr = subData.enrollments.find(e => e.is_active) || subData.enrollments[0];
           setSelectedEnrollmentId(defaultEnr.id);
         }
+      } catch (err) {
+        console.error("[GuardianPayments] Failed to fetch ward subscription:", err);
       }
+    }
 
-      if (historyRes.status === "fulfilled") {
-        const historyData = historyRes.value.data?.data || [];
-        setPaymentHistory(historyData);
-      }
+    // Fetch live payment history (scoped to selected ward or all wards)
+    setFetchingHistory(true);
+    try {
+      const historyParams = historyWardFilter && historyWardFilter !== 'all'
+        ? { student_id: historyWardFilter }
+        : (selectedWardId && selectedWardId !== 'all' ? { student_id: selectedWardId } : { student_id: 'all' });
+
+      const historyRes = await axios.get(`${API_BASE_URL}/api/guardians/payments/history`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: historyParams
+      });
+      const historyData = historyRes.data?.data || [];
+      setPaymentHistory(historyData);
     } catch (err) {
-      console.error("[GuardianPayments] Failed to fetch ward subscription or history:", err);
+      console.error("[GuardianPayments] Failed to fetch payment history:", err);
     } finally {
       setFetchingHistory(false);
     }
-  }, [API_BASE_URL, selectedWardId]);
+  }, [API_BASE_URL, selectedWardId, historyWardFilter]);
 
   useEffect(() => {
     fetchWardDetails();
@@ -249,9 +254,14 @@ export default function GuardianPayments() {
     return 'guardian@tutorialcenter.com';
   }, [guardian, selectedWard]);
 
-  // Dynamic Renewal Price based on current selected enrollment
+  // Dynamic Renewal Price based on current selected enrollment from backend
   const currentPlanMultiplier = pricingPlans[billingCycle]?.multiplier || 1;
-  const baseRenewalCoursePrice = Number(currentEnrollment?.course_price || currentEnrollment?.cost || availableCourses[0]?.price || 10000);
+  const baseRenewalCoursePrice = Number(
+    currentEnrollment?.course_price ??
+    currentEnrollment?.cost ??
+    (availableCourses.length > 0 ? availableCourses[0]?.price : 0) ??
+    0
+  );
   const calculatedRenewalTotal = Math.max(100, Math.round(baseRenewalCoursePrice * currentPlanMultiplier));
 
   // 3. Open Add Training Config Modal & Fetch Live Subjects
@@ -314,7 +324,7 @@ export default function GuardianPayments() {
 
   // Calculated configured course price
   const configDurationPlan = pricingPlans[configuredDuration] || pricingPlans.monthly;
-  const configuredCoursePrice = Math.max(100, Math.round(Number(selectedCourse?.price || 10000) * configDurationPlan.multiplier));
+  const configuredCoursePrice = Math.max(100, Math.round(Number(selectedCourse?.price || 0) * configDurationPlan.multiplier));
 
   // 4. Server-Side Atomic Verification
   const verifyPaymentOnBackend = async (reference, metadata) => {
@@ -348,10 +358,10 @@ export default function GuardianPayments() {
     }
   };
 
-  // 5. Handle Renewal Checkout (Explicit Course Targeting)
+  // 5. Handle Renewal Checkout (Backend-Initiated with Explicit Course Targeting)
   const handleRenewPayment = async () => {
-    if (!selectedWardId) {
-      setPaymentMessage({ type: 'error', text: 'Please select a ward first.' });
+    if (!selectedWardId || selectedWardId === 'all') {
+      setPaymentMessage({ type: 'error', text: 'Please select a specific ward first.' });
       return;
     }
 
@@ -365,9 +375,37 @@ export default function GuardianPayments() {
       return;
     }
 
-    const targetCourseId = currentEnrollment?.course_id || currentEnrollment?.id || availableCourses[0]?.id || 1;
-    const reference = `TCR_${selectedWardId}_${Date.now()}`;
-    const payerEmail = getValidPayerEmail();
+    const targetCourseId = currentEnrollment?.course_id || currentEnrollment?.id || (availableCourses.length > 0 ? availableCourses[0]?.id : null);
+    if (!targetCourseId) {
+      setPaymentMessage({ type: 'error', text: 'No course found to renew. Please select a valid course.' });
+      setProcessingPayment(false);
+      return;
+    }
+
+    const token = localStorage.getItem("guardian_token");
+    let initData = null;
+    try {
+      const initRes = await axios.post(
+        `${API_BASE_URL}/api/guardians/payments/training/renew`,
+        {
+          student_id: selectedWardId,
+          course_id: targetCourseId,
+          billing_cycle: billingCycle,
+          amount: calculatedRenewalTotal,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (initRes.data?.success && initRes.data?.data) {
+        initData = initRes.data.data;
+      }
+    } catch (err) {
+      console.warn("[GuardianPayments] Backend renewal initialization fallback:", err.response?.data || err);
+    }
+
+    const reference = initData?.reference || `TCR_${selectedWardId}_${Date.now()}`;
+    const payerEmail = initData?.email || getValidPayerEmail();
+    const finalAmount = initData?.amount ? Number(initData.amount) : calculatedRenewalTotal;
+    const paystackKey = initData?.key || PAYSTACK_KEY;
 
     const sanitizedRenewalSubjects = Array.isArray(currentEnrollment?.enrolled_subjects)
       ? currentEnrollment.enrolled_subjects
@@ -383,7 +421,7 @@ export default function GuardianPayments() {
         {
           course_id: targetCourseId,
           billing_cycle: billingCycle,
-          price: calculatedRenewalTotal,
+          price: finalAmount,
           subjects: sanitizedRenewalSubjects,
         }
       ]
@@ -392,16 +430,16 @@ export default function GuardianPayments() {
     console.log("[GuardianPayments] Launching Paystack Renewal Popup for Target Course:", {
       targetCourseTitle: currentEnrollment?.course_title,
       targetCourseId,
-      amount: calculatedRenewalTotal * 100,
+      amount: Math.round(finalAmount * 100),
       reference,
       metadata: paystackMetadata
     });
 
     try {
       const handler = window.PaystackPop.setup({
-        key: PAYSTACK_KEY,
+        key: paystackKey,
         email: payerEmail,
-        amount: Math.round(calculatedRenewalTotal * 100),
+        amount: Math.round(finalAmount * 100),
         currency: "NGN",
         ref: reference,
         metadata: paystackMetadata,
@@ -421,8 +459,13 @@ export default function GuardianPayments() {
     }
   };
 
-  // 6. Handle Add Training Course Checkout
+  // 6. Handle Add Training Course Checkout (Backend-Initiated)
   const handleAddTrainingCheckout = async () => {
+    if (!selectedWardId || selectedWardId === 'all') {
+      alert("Please select a specific ward first.");
+      return;
+    }
+
     if (selectedSubjectIds.length === 0) {
       alert("Please select at least one subject for the training program.");
       return;
@@ -438,12 +481,36 @@ export default function GuardianPayments() {
       return;
     }
 
-    const reference = `TCA_${selectedWardId}_${Date.now()}`;
-    const payerEmail = getValidPayerEmail();
     const sanitizedEnrolledSubjects = selectedSubjectIds
       .map(s => (typeof s === 'object' && s !== null ? (s.subject_id || s.id) : s))
       .filter(id => Number(id) > 0)
       .map(id => Number(id));
+
+    const token = localStorage.getItem("guardian_token");
+    let initData = null;
+    try {
+      const initRes = await axios.post(
+        `${API_BASE_URL}/api/guardians/payments/training/add-course`,
+        {
+          student_id: selectedWardId,
+          course_id: selectedCourse.id,
+          amount: configuredCoursePrice,
+          billing_cycle: configuredDuration,
+          subject_ids: sanitizedEnrolledSubjects,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (initRes.data?.success && initRes.data?.data) {
+        initData = initRes.data.data;
+      }
+    } catch (err) {
+      console.warn("[GuardianPayments] Backend add-course initialization fallback:", err.response?.data || err);
+    }
+
+    const reference = initData?.reference || `TCA_${selectedWardId}_${Date.now()}`;
+    const payerEmail = initData?.email || getValidPayerEmail();
+    const finalAmount = initData?.amount ? Number(initData.amount) : configuredCoursePrice;
+    const paystackKey = initData?.key || PAYSTACK_KEY;
 
     const paystackMetadata = {
       type: "student_enrollment",
@@ -452,7 +519,7 @@ export default function GuardianPayments() {
         {
           course_id: selectedCourse.id,
           billing_cycle: configuredDuration,
-          price: configuredCoursePrice,
+          price: finalAmount,
           subjects: sanitizedEnrolledSubjects,
         }
       ]
@@ -460,9 +527,9 @@ export default function GuardianPayments() {
 
     try {
       const handler = window.PaystackPop.setup({
-        key: PAYSTACK_KEY,
+        key: paystackKey,
         email: payerEmail,
-        amount: Math.round(configuredCoursePrice * 100),
+        amount: Math.round(finalAmount * 100),
         currency: "NGN",
         ref: reference,
         metadata: paystackMetadata,
@@ -759,7 +826,7 @@ export default function GuardianPayments() {
                     const bannerUrl = getCourseBannerUrl(course.banner);
                     const cleanDesc = stripHtml(course.description);
                     const previewDesc = cleanDesc.length > 130 ? `${cleanDesc.substring(0, 130)}...` : cleanDesc;
-                    const basePrice = Number(course.price || 10000);
+                    const basePrice = Number(course.price || 0);
 
                     return (
                       <div
@@ -846,7 +913,7 @@ export default function GuardianPayments() {
               <div className="flex justify-between">
                 <span className="text-gray-500">Selected Program:</span>
                 <strong className="text-[#09314F] dark:text-[#C5A97A] truncate max-w-[200px]">
-                  {activePaymentTab === 'renew' ? (currentEnrollment?.course_title || "Training Plan") : (selectedCourse?.title || "New Program")}
+                  {activePaymentTab === 'renew' ? (currentEnrollment?.course_title || "Training Plan") : (selectedCourse?.title || "Choose a Course Below")}
                 </strong>
               </div>
 
@@ -865,7 +932,7 @@ export default function GuardianPayments() {
               <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between items-baseline">
                 <span className="text-sm font-black text-[#09314F] dark:text-white">Total Amount:</span>
                 <span className="text-xl font-black font-mono text-[#09314F] dark:text-[#C5A97A]">
-                  ₦{calculatedRenewalTotal.toLocaleString()}
+                  ₦{(activePaymentTab === 'renew' ? calculatedRenewalTotal : (selectedCourse ? configuredCoursePrice : 0)).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -879,19 +946,33 @@ export default function GuardianPayments() {
             </div>
           </div>
 
-          {/* PAYMENT HISTORY & RECEIPTS (With Search & Full History) */}
+          {/* PAYMENT HISTORY & RECEIPTS (With Search & Multi-Ward Support) */}
           <div className="bg-white dark:bg-gray-800 rounded-[32px] p-5 sm:p-6 border border-gray-100 dark:border-gray-700/80 shadow-sm space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-700">
-              <h4 className="text-xs font-black uppercase tracking-wider text-gray-400">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-700 gap-2">
+              <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 shrink-0">
                 Payment History ({paymentHistory.length} Total)
               </h4>
-              <button
-                onClick={fetchWardDetails}
-                className="text-[11px] font-bold text-[#C5A97A] hover:underline flex items-center gap-1"
-              >
-                <Icon icon="lucide:refresh-cw" className={`w-3 h-3 ${fetchingHistory ? "animate-spin" : ""}`} />
-                <span>Refresh</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {wards.length > 1 && (
+                  <select
+                    value={historyWardFilter}
+                    onChange={(e) => setHistoryWardFilter(e.target.value)}
+                    className="text-[10px] font-black bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1 text-gray-700 dark:text-gray-200 focus:outline-none"
+                  >
+                    <option value="all">All Wards</option>
+                    {wards.map(w => (
+                      <option key={w.id} value={w.id}>{w.name}</option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  onClick={fetchWardDetails}
+                  className="text-[11px] font-bold text-[#C5A97A] hover:underline flex items-center gap-1 shrink-0"
+                >
+                  <Icon icon="lucide:refresh-cw" className={`w-3 h-3 ${fetchingHistory ? "animate-spin" : ""}`} />
+                  <span>Refresh</span>
+                </button>
+              </div>
             </div>
 
             {/* Quick search filter for payment records */}
@@ -922,17 +1003,24 @@ export default function GuardianPayments() {
                     className="p-3.5 rounded-2xl bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between gap-2 hover:bg-gray-100 dark:hover:bg-gray-700/40 transition-colors border border-gray-100 dark:border-gray-800"
                   >
                     <div className="min-w-0">
-                      <h5 className="text-xs font-black text-[#09314F] dark:text-white leading-tight truncate">
-                        {item.course_title || item.title || "Subscription Renewal"}
-                      </h5>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <h5 className="text-xs font-black text-[#09314F] dark:text-white leading-tight truncate">
+                          {item.course_title || item.title || "Subscription Renewal"}
+                        </h5>
+                        {item.student_name && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-blue-50 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] font-bold shrink-0">
+                            {item.student_name}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-gray-400 mt-0.5 truncate">
-                        {item.paid_at || item.created_at} • Ref: {item.reference || "N/A"}
+                        {item.paid_at || item.created_at || "Recently"} • Ref: {item.reference || "N/A"}
                       </p>
                     </div>
 
                     <div className="text-right shrink-0">
                       <span className="text-xs font-black font-mono text-emerald-600 dark:text-emerald-400 block">
-                        ₦{Number(item.amount || 10000).toLocaleString()}
+                        ₦{Number(item.amount != null ? item.amount : 0).toLocaleString()}
                       </span>
                       <button
                         onClick={() => setReceiptModalData(item)}
@@ -1106,7 +1194,7 @@ export default function GuardianPayments() {
                     <div className="space-y-2.5">
                       {Object.entries(pricingPlans).map(([key, plan]) => {
                         const isSelected = configuredDuration === key;
-                        const planPrice = Math.round(Number(selectedCourse.price || 10000) * plan.multiplier);
+                        const planPrice = Math.round(Number(selectedCourse?.price || 0) * plan.multiplier);
                         return (
                           <div
                             key={key}
@@ -1213,25 +1301,47 @@ export default function GuardianPayments() {
             <div className="space-y-2.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-gray-400">Transaction Ref:</span>
-                <strong className="font-mono text-gray-800 dark:text-gray-200">{receiptModalData.reference || "TC-REC-001"}</strong>
+                <strong className="font-mono text-gray-800 dark:text-gray-200">{receiptModalData.reference || "N/A"}</strong>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Item:</span>
-                <strong className="text-gray-800 dark:text-gray-200">{receiptModalData.course_title || "Training Subscription"}</strong>
+                <span className="text-gray-400">Item / Program:</span>
+                <strong className="text-gray-800 dark:text-gray-200">{receiptModalData.course_title || "Course Enrollment"}</strong>
+              </div>
+              {receiptModalData.student_name && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Beneficiary Ward:</span>
+                  <strong className="text-gray-800 dark:text-gray-200">{receiptModalData.student_name}</strong>
+                </div>
+              )}
+              {receiptModalData.billing_cycle && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Billing Cycle:</span>
+                  <strong className="text-gray-800 dark:text-gray-200 uppercase">{receiptModalData.billing_cycle}</strong>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-gray-400">Payment Method:</span>
+                <span className="font-mono font-bold text-gray-700 dark:text-gray-300 uppercase">{receiptModalData.payment_method || "Paystack"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Amount Paid:</span>
-                <strong className="font-mono text-emerald-600 text-sm">₦{Number(receiptModalData.amount || 10000).toLocaleString()}</strong>
+                <strong className="font-mono text-emerald-600 text-sm">₦{Number(receiptModalData.amount != null ? receiptModalData.amount : 0).toLocaleString()}</strong>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Status:</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-bold text-[10px]">
-                  Successful / Verified
+                <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                  receiptModalData.status === 'successful'
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : receiptModalData.status === 'pending'
+                    ? "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                    : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                }`}>
+                  {receiptModalData.status ? receiptModalData.status.toUpperCase() : "VERIFIED"}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Date:</span>
-                <strong className="text-gray-800 dark:text-gray-200">{receiptModalData.paid_at || "Today"}</strong>
+                <strong className="text-gray-800 dark:text-gray-200">{receiptModalData.paid_at || receiptModalData.created_at || "Recorded"}</strong>
               </div>
             </div>
 

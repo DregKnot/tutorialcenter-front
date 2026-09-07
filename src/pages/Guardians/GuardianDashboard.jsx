@@ -117,9 +117,11 @@ export default function GuardianDashboard() {
   const subjects = performanceDetails?.subject_breakdowns || [];
   const recentHistory = performanceDetails?.history?.data || [];
 
-  // Subscription Lifecycle Calculation (Model A)
-  const totalPlanDays = 30;
-  const daysLeft = typeof subscription?.days_left === 'number' ? subscription.days_left : 9;
+  // Dynamic Subscription Lifecycle Calculation (Model A)
+  const totalPlanDays = subscription?.billing_cycle === 'annual'
+    ? 365
+    : (subscription?.billing_cycle === 'quarterly' || subscription?.billing_cycle === 'semi-annual' ? 90 : 30);
+  const daysLeft = typeof subscription?.days_left === 'number' ? subscription.days_left : 0;
   const daysUsed = Math.max(0, Math.min(totalPlanDays, totalPlanDays - daysLeft));
   const elapsedCyclePct = Math.min(100, Math.max(0, Math.round((daysUsed / totalPlanDays) * 100)));
   const isNearExpiry = elapsedCyclePct >= 80;
@@ -609,7 +611,7 @@ export default function GuardianDashboard() {
                   {subscription?.course_title || (selectedWard ? `${selectedWard.name}'s Prep Plan` : "WAEC & JAMB Intensive Plan")}
                 </h4>
                 <p className="text-xs font-bold text-[#09314F]/80 mt-0.5">
-                  30-Day Cycle • {elapsedCyclePct}% Elapsed ({daysUsed} of {totalPlanDays} Days)
+                  {totalPlanDays}-Day Cycle • {elapsedCyclePct}% Elapsed ({daysUsed} of {totalPlanDays} Days)
                 </p>
               </div>
 
@@ -636,7 +638,7 @@ export default function GuardianDashboard() {
                     {daysLeft} DAYS
                   </span>
                   <span className="text-xs font-bold text-[#09314F]/70 uppercase">
-                    / {subscription?.cost ? `₦${Number(subscription.cost).toLocaleString()}` : "₦10,000"}
+                    / {subscription?.cost != null ? `₦${Number(subscription.cost).toLocaleString()}` : (subscription?.course_price != null ? `₦${Number(subscription.course_price).toLocaleString()}` : "—")}
                   </span>
                 </div>
                 <p className="text-[11px] font-bold text-[#09314F]/70 mt-0.5">
