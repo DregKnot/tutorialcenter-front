@@ -118,7 +118,7 @@ const StudentAssessmentTaker = lazy(() => import("./pages/Students/StudentAssess
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
-  const { isStaffSplashing } = useStaffAuth();
+  const { isSplashing: isStaffSplashing } = useStaffAuth();
   const [initialLoad, setInitialLoad] = useState(true);
 
   // Initialize page tracking for Google Analytics / GTM
@@ -209,6 +209,8 @@ function App() {
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/classroom/:classSessionId" element={<ClassRoom />} />
+              <Route path="/zoom/masterclass/:classSessionId" element={<ClassRoom />} />
+              <Route path="/zoom/masterclass/class/:classSessionId" element={<ClassRoom />} />
               {/* Student Routes */}
               <Route path="/student/dashboard" element={<StudentDashboard />} />
               <Route path="/student/notifications" element={<StudentNotifications />} />

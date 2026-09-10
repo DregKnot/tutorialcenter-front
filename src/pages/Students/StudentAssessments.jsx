@@ -11,7 +11,8 @@ import {
   TrophyIcon,
   SparklesIcon,
   MagnifyingGlassIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 
 export default function StudentAssessments() {
@@ -73,38 +74,53 @@ export default function StudentAssessments() {
     }
   };
 
+  // Helper: determine unified assessment status
+  const getAssessmentStatus = useCallback((a) => {
+    const sub = a.submission;
+    const subStatus = sub?.status;
+    const isPastDue = a.due_at && new Date(a.due_at) < new Date();
+
+    if (subStatus === "graded") return "graded";
+    if (subStatus === "submitted") return "submitted";
+    if (a.is_missed || subStatus === "absent" || (isPastDue && !sub)) return "absent";
+    if (subStatus === "in_progress") return "in_progress";
+    return isPastDue ? "absent" : "not_started";
+  }, []);
+
   // Filter assessments
   const filteredAssessments = useMemo(() => {
     return assessments.filter((a) => {
-      const subStatus = a.submission?.status || "not_started";
+      const computedStatus = getAssessmentStatus(a);
 
       if (statusFilter === "pending") {
-        if (subStatus !== "not_started" && subStatus !== "in_progress") return false;
+        if (computedStatus !== "not_started" && computedStatus !== "in_progress") return false;
       } else if (statusFilter === "submitted") {
-        if (subStatus !== "submitted") return false;
+        if (computedStatus !== "submitted") return false;
       } else if (statusFilter === "graded") {
-        if (subStatus !== "graded") return false;
+        if (computedStatus !== "graded") return false;
       } else if (statusFilter === "absent") {
-        if (subStatus !== "absent") return false;
+        if (computedStatus !== "absent") return false;
       }
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const titleMatch = (a.title || "").toLowerCase().includes(q);
-        const subjectMatch = (a.subject?.name || a.class?.title || "").toLowerCase().includes(q);
+        const subjectMatch = (a.subject?.name || a.class?.title || a.class?.subject?.name || "").toLowerCase().includes(q);
         if (!titleMatch && !subjectMatch) return false;
       }
 
       return true;
     });
-  }, [assessments, statusFilter, searchQuery]);
+  }, [assessments, statusFilter, searchQuery, getAssessmentStatus]);
 
   // High-level KPI computations
   const totalCount = assessments.length;
-  const pendingCount = assessments.filter(
-    (a) => !a.submission || a.submission.status === "in_progress"
-  ).length;
-  const gradedCount = assessments.filter((a) => a.submission?.status === "graded").length;
+  const missedCount = assessments.filter((a) => getAssessmentStatus(a) === "absent").length;
+  const pendingCount = assessments.filter((a) => {
+    const s = getAssessmentStatus(a);
+    return s === "not_started" || s === "in_progress";
+  }).length;
+  const gradedCount = assessments.filter((a) => getAssessmentStatus(a) === "graded").length;
 
   const gradedScores = assessments
     .filter((a) => a.submission?.status === "graded" && a.submission.percentage !== null)
@@ -149,7 +165,7 @@ export default function StudentAssessments() {
         </div>
 
         {/* ── KPI STATS BAR ───────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <div className="bg-white dark:bg-[#09314F] rounded-3xl p-5 border border-gray-100 dark:border-white/10 shadow-sm space-y-1">
             <span className="text-[11px] font-black text-gray-400 uppercase tracking-wider">
               Total Assigned
@@ -157,7 +173,7 @@ export default function StudentAssessments() {
             <div className="text-2xl sm:text-3xl font-black text-[#0F2843] dark:text-white">
               {totalCount}
             </div>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">In your enrolled subjects</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">In enrolled subjects</p>
           </div>
 
           <div className="bg-white dark:bg-[#09314F] rounded-3xl p-5 border border-gray-100 dark:border-white/10 shadow-sm space-y-1">
@@ -168,7 +184,7 @@ export default function StudentAssessments() {
             <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
               {pendingCount}
             </div>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Pending your submission</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Active deadlines</p>
           </div>
 
           <div className="bg-white dark:bg-[#09314F] rounded-3xl p-5 border border-gray-100 dark:border-white/10 shadow-sm space-y-1">
@@ -181,7 +197,18 @@ export default function StudentAssessments() {
             <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">With tutor feedback</p>
           </div>
 
-          <div className="bg-white dark:bg-[#09314F] rounded-3xl p-5 border border-gray-100 dark:border-white/10 shadow-sm space-y-1">
+          <div className="bg-white dark:bg-[#09314F] rounded-3xl p-5 border border-red-100 dark:border-red-900/30 shadow-sm space-y-1">
+            <span className="text-[11px] font-black text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span>Missed Tests</span>
+              {missedCount > 0 && <span className="w-2 h-2 rounded-full bg-red-500" />}
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400">
+              {missedCount}
+            </div>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Passed deadline</p>
+          </div>
+
+          <div className="bg-white dark:bg-[#09314F] rounded-3xl p-5 border border-gray-100 dark:border-white/10 shadow-sm space-y-1 col-span-2 md:col-span-1">
             <span className="text-[11px] font-black text-[#C5A97A] uppercase tracking-wider">
               Average Score
             </span>
@@ -196,23 +223,32 @@ export default function StudentAssessments() {
         <div className="bg-white dark:bg-[#09314F] rounded-[28px] p-4 sm:p-5 border border-gray-100 dark:border-white/10 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-white/5 p-1.5 rounded-2xl w-full md:w-auto overflow-x-auto custom-scrollbar">
             {[
-              { id: "all", label: "All Tests" },
-              { id: "pending", label: "To Take" },
+              { id: "all", label: "All Tests", count: totalCount },
+              { id: "pending", label: "To Take", count: pendingCount },
               { id: "submitted", label: "Submitted" },
-              { id: "graded", label: "Graded" },
-              { id: "absent", label: "Missed" }
+              { id: "graded", label: "Graded", count: gradedCount },
+              { id: "absent", label: "Missed", count: missedCount }
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setStatusFilter(tab.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition flex-shrink-0 ${
+                className={`px-4 py-2 rounded-xl text-xs font-black transition flex-shrink-0 flex items-center gap-1.5 ${
                   statusFilter === tab.id
                     ? "bg-[#0F2843] text-white dark:bg-[#C5A97A] dark:text-[#0F2843] shadow-md"
                     : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                    tab.id === "absent"
+                      ? (statusFilter === tab.id ? "bg-red-500 text-white" : "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300")
+                      : (statusFilter === tab.id ? "bg-white/20 text-white dark:bg-black/20 dark:text-[#0F2843]" : "bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300")
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -255,11 +291,11 @@ export default function StudentAssessments() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAssessments.map((item) => {
               const sub = item.submission;
-              const subStatus = sub?.status || "not_started";
-              const isGraded = subStatus === "graded";
-              const isSubmitted = subStatus === "submitted";
-              const isAbsent = subStatus === "absent";
-              const isToTake = subStatus === "not_started" || subStatus === "in_progress";
+              const computedStatus = getAssessmentStatus(item);
+              const isGraded = computedStatus === "graded";
+              const isSubmitted = computedStatus === "submitted";
+              const isAbsent = computedStatus === "absent";
+              const isToTake = computedStatus === "not_started" || computedStatus === "in_progress";
 
               const subjectName = item.subject?.name || item.class?.subject?.name || "Subject";
               const classTitle = item.class?.title || `${subjectName} Masterclass`;
@@ -267,7 +303,11 @@ export default function StudentAssessments() {
               return (
                 <div
                   key={item.id}
-                  className="bg-white dark:bg-[#09314F] rounded-[32px] p-6 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-6 group"
+                  className={`bg-white dark:bg-[#09314F] rounded-[32px] p-6 border ${
+                    isAbsent 
+                      ? "border-red-200/80 dark:border-red-900/40" 
+                      : "border-gray-100 dark:border-white/10"
+                  } shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-6 group`}
                 >
                   {/* Top Info */}
                   <div className="space-y-3">
@@ -278,7 +318,7 @@ export default function StudentAssessments() {
 
                       {/* Status Tag */}
                       <span
-                        className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border ${
+                        className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border flex items-center gap-1 ${
                           isGraded
                             ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300"
                             : isSubmitted
@@ -288,13 +328,16 @@ export default function StudentAssessments() {
                             : "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-300"
                         }`}
                       >
-                        {isGraded
-                          ? "Graded"
-                          : isSubmitted
-                          ? "Submitted (Pending Grading)"
-                          : isAbsent
-                          ? "Missed"
-                          : "To Take"}
+                        {isAbsent && <ExclamationTriangleIcon className="w-3 h-3" />}
+                        <span>
+                          {isGraded
+                            ? "Graded"
+                            : isSubmitted
+                            ? "Submitted (Pending)"
+                            : isAbsent
+                            ? "Missed"
+                            : "To Take"}
+                        </span>
                       </span>
                     </div>
 
@@ -329,19 +372,20 @@ export default function StudentAssessments() {
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-gray-600 dark:text-gray-300">Your Grade:</span>
                         <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                          {sub.score} / {sub.total_marks || item.total_marks} ({Math.round(sub.percentage || 0)}%)
+                          {sub?.score} / {sub?.total_marks || item.total_marks} ({Math.round(sub?.percentage || 0)}%)
                         </span>
                       </div>
                     ) : isSubmitted ? (
                       <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
                         <span className="font-medium">MCQ Partial Score:</span>
                         <span className="font-bold text-[#0F2843] dark:text-[#C5A97A]">
-                          {sub.score || 0} pts (Essays Pending)
+                          {sub?.score || 0} pts (Essays Pending)
                         </span>
                       </div>
                     ) : isAbsent ? (
-                      <div className="text-red-500 font-bold text-[11px]">
-                        Deadline passed without submission.
+                      <div className="text-red-500 dark:text-red-400 font-bold text-[11px] flex items-center gap-1.5">
+                        <ExclamationTriangleIcon className="w-4 h-4 shrink-0" />
+                        <span>Deadline passed without submission</span>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
@@ -353,9 +397,14 @@ export default function StudentAssessments() {
                     )}
 
                     {item.due_at && (
-                      <div className="text-[11px] text-gray-400 pt-1 border-t border-gray-200/50 dark:border-white/10 flex items-center gap-1.5">
-                        <CalendarDaysIcon className="w-3.5 h-3.5" />
-                        <span>Deadline: {new Date(item.due_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                      <div className={`text-[11px] pt-1 border-t border-gray-200/50 dark:border-white/10 flex items-center gap-1.5 ${
+                        isAbsent ? "text-red-500/80 dark:text-red-400/80 font-bold" : "text-gray-400"
+                      }`}>
+                        <CalendarDaysIcon className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                          {isAbsent ? "Closed On: " : "Deadline: "}
+                          {new Date(item.due_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -369,7 +418,7 @@ export default function StudentAssessments() {
                         className="w-full py-2.5 rounded-2xl bg-[#0F2843] text-white dark:bg-[#C5A97A] dark:text-[#0F2843] text-xs font-black shadow-md hover:opacity-95 transition flex items-center justify-center gap-2"
                       >
                         <PlayIcon className="w-4 h-4" />
-                        <span>{subStatus === "in_progress" ? "Resume Assessment" : "Start Assessment"}</span>
+                        <span>{computedStatus === "in_progress" ? "Resume Assessment" : "Start Assessment"}</span>
                       </button>
                     ) : isGraded || isSubmitted ? (
                       <button
@@ -392,8 +441,9 @@ export default function StudentAssessments() {
                         </span>
                       </button>
                     ) : (
-                      <div className="text-center py-2 text-xs font-bold text-gray-400">
-                        Assessment Closed
+                      <div className="w-full py-2.5 px-4 rounded-2xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200/60 dark:border-red-900/40 text-xs font-black text-center flex items-center justify-center gap-1.5">
+                        <ExclamationTriangleIcon className="w-3.5 h-3.5" />
+                        <span>Deadline Missed (Closed)</span>
                       </div>
                     )}
                   </div>

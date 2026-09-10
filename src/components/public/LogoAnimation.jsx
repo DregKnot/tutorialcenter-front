@@ -6,6 +6,11 @@ const LogoAnimation = ({ onComplete }) => {
   const videoRef = useRef(null);
 
   useEffect(() => {
+    // Ensure video explicitly triggers play on mount
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+
     // If an onComplete callback is provided, trigger it when the video ends
     const videoElement = videoRef.current;
     if (!videoElement) return;

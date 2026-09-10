@@ -401,8 +401,20 @@ export default function AchievementVisualRenderer({
           )}
 
           {/* Central Frosted Lock Overlay */}
-          <div className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl z-20">
-            <Lock className="w-5 h-5 text-gray-300" />
+          <div 
+            className="absolute inset-0 m-auto rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl z-20"
+            style={{ 
+              width: size < 60 ? Math.max(16, Math.round(size * 0.42)) : 40, 
+              height: size < 60 ? Math.max(16, Math.round(size * 0.42)) : 40 
+            }}
+          >
+            <Lock 
+              style={{ 
+                width: size < 60 ? Math.max(10, Math.round(size * 0.22)) : 20, 
+                height: size < 60 ? Math.max(10, Math.round(size * 0.22)) : 20 
+              }} 
+              className="text-gray-300" 
+            />
           </div>
         </div>
       )}

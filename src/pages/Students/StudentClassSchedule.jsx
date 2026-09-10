@@ -192,7 +192,7 @@ export default function StudentClassSchedule() {
     const isZoom = link.includes("zoom.us") || link.includes("zoom");
 
     if (isZoom) {
-      navigate(`/classroom/${sessionObj.id}`);
+      navigate(`/zoom/masterclass/class/${sessionObj.id}`);
     } else {
       // Open the window DIRECTLY in the click handler to bypass popup blockers for Google Meet
       window.activeClassPopup = window.open(link, '_blank');
@@ -335,15 +335,40 @@ export default function StudentClassSchedule() {
             </span>
           </div>
 
-          {/* Link Column */}
-          <div className="text-left lg:text-center min-w-0">
+          {/* Action Column */}
+          <div className="text-left lg:text-center min-w-0 flex flex-col items-start lg:items-center">
             <span className="text-[11px] font-black text-gray-400 dark:text-blue-300 uppercase tracking-widest block mb-1">Session</span>
-            <span 
-              className="text-[#3A5ECC] dark:text-blue-400 text-[13px] font-bold underline decoration-dotted underline-offset-4 truncate block"
-              onClick={(e) => e.stopPropagation()} // Prevent toggling the card when clicking the link
-            >
-              {session.recording_link || (session.class_link ? session.class_link.replace(/^https?:\/\//, '').substring(0, 18) + '...' : null) || "Awaiting"}
-            </span>
+            {session.recording_link ? (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleJoinClass(e, session);
+                }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-[11px] font-extrabold rounded-lg transition-all shadow-xs active:scale-95"
+              >
+                <Icon icon="lucide:play-circle" className="w-3.5 h-3.5" />
+                <span>Watch</span>
+              </button>
+            ) : (session.class_link || session.id) ? (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleJoinClass(e, session);
+                }}
+                className={`inline-flex items-center gap-1 px-3 py-1 text-[11px] font-extrabold rounded-lg transition-all shadow-xs active:scale-95 ${
+                  status === 'live'
+                    ? "bg-[#22C55E] hover:bg-[#16a34a] text-white animate-pulse"
+                    : "bg-[#09314F] hover:bg-[#062035] text-white dark:bg-[#BB9E7F] dark:hover:bg-white dark:text-[#09314F]"
+                }`}
+              >
+                <Icon icon="lucide:video" className="w-3.5 h-3.5" />
+                <span>{status === 'live' ? "Join Live" : "Join Class"}</span>
+              </button>
+            ) : (
+              <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 italic">
+                Awaiting
+              </span>
+            )}
           </div>
 
           {/* Time Column */}
@@ -398,14 +423,14 @@ export default function StudentClassSchedule() {
                </div>
 
                <div className="flex flex-col gap-3 flex-1 min-w-[250px]">
-                   <div className="w-full">
-                    <span className="text-[10px] font-black text-gray-300 dark:text-blue-300 uppercase tracking-[0.2em] mb-1 block">Live Meeting Link</span>
-                    <button 
-                      onClick={(e) => handleJoinClass(e, session)}
-                      className="text-sm font-bold text-[#3A5ECC] dark:text-blue-400 underline decoration-dotted underline-offset-4 break-all block text-left"
-                    >
-                      {session.recording_link || (session.class_link ? session.class_link.replace(/^https?:\/\//, '').substring(0, 18) + '...' : null) || "Link Awaiting Deployment..."}
-                    </button>
+                 <div className="w-full">
+                    <span className="text-[10px] font-black text-gray-300 dark:text-blue-300 uppercase tracking-[0.2em] mb-1 block">Classroom Access</span>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-extrabold shadow-xs">
+                        <Icon icon="lucide:shield-check" className="w-4 h-4 text-emerald-600" />
+                        In-App Secure Classroom · Link Masked
+                      </span>
+                    </div>
                  </div>
                  <div className="flex items-center gap-2 text-gray-400 dark:text-blue-300 font-black text-[12px] uppercase tracking-widest mt-2">
                     <CalendarIcon className="w-4 h-4 text-[#BB9E7F]" />
@@ -457,14 +482,14 @@ export default function StudentClassSchedule() {
 
         {/* ========= Featured Next Class(es) ========= */}
         {scheduleData.next_classes && scheduleData.next_classes.length > 0 && (
-          <div className="mb-12">
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-3">
-                <h2 className="text-[12px] font-black text-[#E83831] uppercase tracking-[0.3em] pl-2 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-[#E83831] rounded-full animate-pulse"></span> NEXT UP
+          <div className="mb-6 sm:mb-8 md:mb-12">
+            <div className="flex items-center justify-between gap-3 mb-3 sm:mb-5 md:mb-6">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <h2 className="text-[11px] sm:text-[12px] font-black text-[#E83831] uppercase tracking-[0.25em] sm:tracking-[0.3em] pl-1 sm:pl-2 flex items-center gap-1.5 sm:gap-2">
+                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#E83831] rounded-full animate-pulse"></span> NEXT UP
                 </h2>
                 {scheduleData.next_classes.length > 1 && (
-                  <span className="px-3 py-1 bg-red-500/10 dark:bg-red-950/50 text-[#E83831] border border-[#E83831]/25 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
+                  <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 bg-red-500/10 dark:bg-red-950/50 text-[#E83831] border border-[#E83831]/25 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest shadow-sm">
                     2 Sessions Ahead
                   </span>
                 )}
@@ -473,19 +498,19 @@ export default function StudentClassSchedule() {
             </div>
 
             {scheduleData.next_classes.length === 1 ? (
-              /* Single Class Hero */
-              <div className="bg-[#09314F] rounded-[40px] p-8 md:p-10 text-white relative overflow-hidden shadow-2xl group transition-all hover:translate-y-[-4px]">
+              /* Single Class Hero - Compact on Mobile */
+              <div className="bg-[#09314F] rounded-2xl sm:rounded-3xl md:rounded-[40px] p-4 sm:p-6 md:p-10 text-white relative overflow-hidden shadow-2xl group transition-all hover:translate-y-[-3px]">
                 {/* Background Accents */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-white/10 to-transparent rounded-full -mr-20 -mt-20 blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#BB9E7F]/10 rounded-full -ml-20 -mb-20 blur-2xl"></div>
+                <div className="absolute top-0 right-0 w-48 sm:w-64 h-48 sm:h-64 bg-gradient-to-br from-white/10 to-transparent rounded-full -mr-16 sm:-mr-20 -mt-16 sm:-mt-20 blur-2xl sm:blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-36 sm:w-48 h-36 sm:h-48 bg-[#BB9E7F]/10 rounded-full -ml-16 sm:-ml-20 -mb-16 sm:-mb-20 blur-xl sm:blur-2xl"></div>
 
-                <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
-                  <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 text-center sm:text-left w-full lg:w-auto">
+                <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 md:gap-8">
+                  <div className="flex flex-col sm:flex-row items-center gap-3.5 sm:gap-6 md:gap-8 text-center sm:text-left w-full lg:w-auto">
                     {(() => {
                       const tutor = getTutorInfo(scheduleData.next_classes[0]);
                       return (
-                        <div className="w-24 h-24 rounded-3xl overflow-hidden bg-white/10 border border-white/20 p-1 backdrop-blur-md shrink-0">
-                          <div className="w-full h-full rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                        <div className="w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl sm:rounded-3xl overflow-hidden bg-white/10 border border-white/20 p-0.5 sm:p-1 backdrop-blur-md shrink-0">
+                          <div className="w-full h-full rounded-xl sm:rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
                             <img 
                               src={tutor.avatarUrl || tutor.fallbackUrl}
                               className="w-full h-full object-cover"
@@ -498,33 +523,33 @@ export default function StudentClassSchedule() {
                     })()}
 
                     <div className="flex-1 min-w-0">
-                      <span className="px-3.5 py-1 bg-[#E83831] text-white rounded-full text-[10px] font-black uppercase tracking-widest mb-3 inline-block shadow-sm">
+                      <span className="px-2.5 sm:px-3.5 py-0.5 sm:py-1 bg-[#E83831] text-white rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest mb-1.5 sm:mb-3 inline-block shadow-sm">
                         Recommended Session
                       </span>
-                      <h3 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter mb-3 leading-tight truncate">
+                      <h3 className="text-base sm:text-2xl md:text-3xl font-black italic uppercase tracking-tighter mb-1.5 sm:mb-3 leading-tight truncate">
                         {scheduleData.next_classes[0].title || scheduleData.next_classes[0].class?.title || "Master Class Session"}
                       </h3>
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-white/70 font-bold text-sm">
-                        <div className="flex items-center gap-2">
-                          <UserIcon className="w-4 h-4 text-[#BB9E7F]" />
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 sm:gap-4 text-white/70 font-bold text-xs sm:text-sm">
+                        <div className="flex items-center gap-1.5">
+                          <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#BB9E7F]" />
                           <span className="text-white font-extrabold">{getTutorInfo(scheduleData.next_classes[0]).name}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <ClockIcon className="w-4 h-4 text-[#BB9E7F]" />
+                        <div className="flex items-center gap-1.5">
+                          <ClockIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#BB9E7F]" />
                           <span>{formatTime(scheduleData.next_classes[0].starts_at)} - {formatTime(scheduleData.next_classes[0].ends_at)}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <CalendarIcon className="w-4 h-4 text-[#BB9E7F]" />
+                        <div className="flex items-center gap-1.5">
+                          <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#BB9E7F]" />
                           <span>{formatSessionDate(scheduleData.next_classes[0].session_date)}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-center lg:items-end gap-4 min-w-[200px] w-full sm:w-auto">
+                  <div className="flex flex-col items-center lg:items-end gap-3 sm:gap-4 min-w-[160px] sm:min-w-[200px] w-full sm:w-auto">
                     <button 
                       onClick={(e) => handleJoinClass(e, scheduleData.next_classes[0])}
-                      className="w-full sm:w-auto px-10 py-5 bg-[#BB9E7F] text-[#09314F] font-black rounded-2xl hover:bg-white transition-all shadow-xl shadow-black/20 group-hover:px-12 active:scale-95 uppercase tracking-widest text-xs"
+                      className="w-full sm:w-auto px-6 sm:px-10 py-2.5 sm:py-4 md:py-5 bg-[#BB9E7F] text-[#09314F] font-black rounded-xl sm:rounded-2xl hover:bg-white transition-all shadow-xl shadow-black/20 group-hover:px-12 active:scale-95 uppercase tracking-widest text-xs"
                     >
                       Join Session
                     </button>
@@ -533,28 +558,28 @@ export default function StudentClassSchedule() {
               </div>
             ) : (
               /* Dual Classes Grid - Sooner Class Prioritized First */
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
-                {/* 1. Sooner Class (Priority Card) */}
-                <div className="xl:col-span-7 bg-[#09314F] rounded-[40px] p-7 md:p-8 text-white relative overflow-hidden shadow-2xl group transition-all hover:translate-y-[-3px] flex flex-col justify-between border-2 border-[#BB9E7F]/30">
-                  <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-br from-white/10 to-transparent rounded-full -mr-20 -mt-20 blur-3xl"></div>
-                  <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#BB9E7F]/15 rounded-full -ml-16 -mb-16 blur-2xl"></div>
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 sm:gap-5 md:gap-6 items-stretch">
+                {/* 1. Sooner Class (Priority Card) - Sleek & Smaller on Mobile */}
+                <div className="xl:col-span-7 bg-[#09314F] rounded-2xl sm:rounded-3xl md:rounded-[36px] p-4 sm:p-6 md:p-8 text-white relative overflow-hidden shadow-2xl group transition-all hover:translate-y-[-3px] flex flex-col justify-between border-2 border-[#BB9E7F]/30">
+                  <div className="absolute top-0 right-0 w-44 sm:w-60 h-44 sm:h-60 bg-gradient-to-br from-white/10 to-transparent rounded-full -mr-16 sm:-mr-20 -mt-16 sm:-mt-20 blur-2xl sm:blur-3xl"></div>
+                  <div className="absolute bottom-0 left-0 w-32 sm:w-40 h-32 sm:h-40 bg-[#BB9E7F]/15 rounded-full -ml-12 sm:-ml-16 -mb-12 sm:-mb-16 blur-xl sm:blur-2xl"></div>
 
                   <div className="relative z-10">
-                    <div className="flex items-center justify-between gap-3 mb-4">
-                      <span className="px-3.5 py-1 bg-[#E83831] text-white rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 shadow-sm">
+                    <div className="flex items-center justify-between gap-2 sm:gap-3 mb-2.5 sm:mb-4">
+                      <span className="px-2.5 sm:px-3.5 py-0.5 sm:py-1 bg-[#E83831] text-white rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest inline-flex items-center gap-1.5 shadow-sm">
                         <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span> Starts Soonest • Priority
                       </span>
-                      <span className="text-[11px] font-black text-[#BB9E7F] uppercase tracking-wider">
+                      <span className="text-[10px] sm:text-[11px] font-black text-[#BB9E7F] uppercase tracking-wider truncate max-w-[140px] sm:max-w-none text-right">
                         {scheduleData.next_classes[0].subject_name || "General"}
                       </span>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 mb-5 text-center sm:text-left">
+                    <div className="flex items-center sm:items-start gap-3.5 sm:gap-5 mb-3 sm:mb-5 text-left">
                       {(() => {
                         const tutor = getTutorInfo(scheduleData.next_classes[0]);
                         return (
-                          <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/10 border border-white/20 p-1 shrink-0 backdrop-blur-md">
-                            <div className="w-full h-full rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl sm:rounded-2xl overflow-hidden bg-white/10 border border-white/20 p-0.5 sm:p-1 shrink-0 backdrop-blur-md">
+                            <div className="w-full h-full rounded-lg sm:rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center">
                               <img 
                                 src={tutor.avatarUrl || tutor.fallbackUrl}
                                 className="w-full h-full object-cover"
@@ -567,16 +592,16 @@ export default function StudentClassSchedule() {
                       })()}
 
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter leading-tight mb-2 truncate">
+                        <h3 className="text-sm sm:text-lg md:text-2xl font-black italic uppercase tracking-tighter leading-tight mb-1 sm:mb-2 truncate">
                           {scheduleData.next_classes[0].title || scheduleData.next_classes[0].class?.title || "Master Class Session"}
                         </h3>
-                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-5 gap-y-2 text-white/70 font-bold text-xs md:text-sm">
-                          <div className="flex items-center gap-1.5">
-                            <UserIcon className="w-4 h-4 text-[#BB9E7F]" />
-                            <span className="text-white font-extrabold">{getTutorInfo(scheduleData.next_classes[0]).name}</span>
+                        <div className="flex flex-wrap items-center gap-x-3.5 sm:gap-x-5 gap-y-1 sm:gap-y-2 text-white/70 font-bold text-[11px] sm:text-xs md:text-sm">
+                          <div className="flex items-center gap-1 sm:gap-1.5">
+                            <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#BB9E7F]" />
+                            <span className="text-white font-extrabold truncate max-w-[120px] sm:max-w-none">{getTutorInfo(scheduleData.next_classes[0]).name}</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <ClockIcon className="w-4 h-4 text-[#BB9E7F]" />
+                          <div className="flex items-center gap-1 sm:gap-1.5">
+                            <ClockIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#BB9E7F]" />
                             <span>{formatTime(scheduleData.next_classes[0].starts_at)} - {formatTime(scheduleData.next_classes[0].ends_at)}</span>
                           </div>
                         </div>
@@ -584,40 +609,40 @@ export default function StudentClassSchedule() {
                     </div>
                   </div>
 
-                  <div className="relative z-10 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-white/70 font-bold text-xs">
-                      <CalendarIcon className="w-4 h-4 text-[#BB9E7F]" />
-                      <span>{formatSessionDate(scheduleData.next_classes[0].session_date)}</span>
+                  <div className="relative z-10 pt-2.5 sm:pt-4 border-t border-white/10 flex flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5 text-white/70 font-bold text-[10px] sm:text-xs">
+                      <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#BB9E7F] shrink-0" />
+                      <span className="truncate">{formatSessionDate(scheduleData.next_classes[0].session_date)}</span>
                     </div>
                     <button 
                       onClick={(e) => handleJoinClass(e, scheduleData.next_classes[0])}
-                      className="w-full sm:w-auto px-8 py-3.5 bg-[#BB9E7F] text-[#09314F] font-black rounded-xl hover:bg-white transition-all shadow-lg active:scale-95 uppercase tracking-widest text-xs text-center"
+                      className="px-4 sm:px-8 py-2 sm:py-3.5 bg-[#BB9E7F] text-[#09314F] font-black rounded-lg sm:rounded-xl hover:bg-white transition-all shadow-lg active:scale-95 uppercase tracking-wider sm:tracking-widest text-[10px] sm:text-xs text-center shrink-0"
                     >
                       Join Session
                     </button>
                   </div>
                 </div>
 
-                {/* 2. Later Class (Secondary Card) */}
-                <div className="xl:col-span-5 bg-gradient-to-br from-[#0C3B5E] to-[#09314F] rounded-[40px] p-7 md:p-8 text-white relative overflow-hidden shadow-xl group transition-all hover:translate-y-[-3px] flex flex-col justify-between border border-white/15">
-                  <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                {/* 2. Later Class (Follow Up Next Class) - Explicitly Smaller & Compact */}
+                <div className="xl:col-span-5 bg-gradient-to-br from-[#0C3B5E] to-[#09314F] rounded-xl sm:rounded-2xl md:rounded-[28px] p-3 sm:p-4.5 md:p-6 text-white relative overflow-hidden shadow-lg group transition-all hover:translate-y-[-2px] flex flex-col justify-between border border-white/15">
+                  <div className="absolute top-0 right-0 w-36 sm:w-48 h-36 sm:h-48 bg-white/5 rounded-full -mr-12 sm:-mr-16 -mt-12 sm:-mt-16 blur-xl sm:blur-2xl"></div>
 
                   <div className="relative z-10">
-                    <div className="flex items-center justify-between gap-3 mb-4">
-                      <span className="px-3.5 py-1 bg-white/15 text-white/90 border border-white/20 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5">
-                        <ClockIcon className="w-3.5 h-3.5 text-[#BB9E7F]" /> Upcoming Next
+                    <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                      <span className="px-2 sm:px-3 py-0.5 bg-white/15 text-white/90 border border-white/20 rounded-full text-[8.5px] sm:text-[9.5px] font-black uppercase tracking-wider inline-flex items-center gap-1">
+                        <ClockIcon className="w-3 h-3 text-[#BB9E7F]" /> Upcoming Next
                       </span>
-                      <span className="text-[11px] font-black text-white/60 uppercase tracking-wider">
+                      <span className="text-[9.5px] sm:text-[10.5px] font-black text-white/60 uppercase tracking-wider truncate max-w-[120px] sm:max-w-none text-right">
                         {scheduleData.next_classes[1].subject_name || "General"}
                       </span>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-5 text-center sm:text-left">
+                    <div className="flex items-center sm:items-start gap-2.5 sm:gap-4 mb-2.5 sm:mb-4 text-left">
                       {(() => {
                         const tutor = getTutorInfo(scheduleData.next_classes[1]);
                         return (
-                          <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white/10 border border-white/20 p-1 shrink-0 backdrop-blur-md">
-                            <div className="w-full h-full rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl overflow-hidden bg-white/10 border border-white/20 p-0.5 shrink-0 backdrop-blur-md">
+                            <div className="w-full h-full rounded-md sm:rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
                               <img 
                                 src={tutor.avatarUrl || tutor.fallbackUrl}
                                 className="w-full h-full object-cover"
@@ -630,16 +655,16 @@ export default function StudentClassSchedule() {
                       })()}
 
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg md:text-xl font-black italic uppercase tracking-tighter leading-tight mb-2 truncate">
+                        <h3 className="text-xs sm:text-sm md:text-lg font-black italic uppercase tracking-tighter leading-tight mb-1 truncate">
                           {scheduleData.next_classes[1].title || scheduleData.next_classes[1].class?.title || "Master Class Session"}
                         </h3>
-                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1.5 text-white/70 font-bold text-xs">
-                          <div className="flex items-center gap-1.5">
-                            <UserIcon className="w-3.5 h-3.5 text-[#BB9E7F]" />
-                            <span className="text-white font-extrabold">{getTutorInfo(scheduleData.next_classes[1]).name}</span>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-white/70 font-bold text-[10px] sm:text-xs">
+                          <div className="flex items-center gap-1">
+                            <UserIcon className="w-3 h-3 text-[#BB9E7F]" />
+                            <span className="text-white font-extrabold truncate max-w-[110px] sm:max-w-none">{getTutorInfo(scheduleData.next_classes[1]).name}</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <ClockIcon className="w-3.5 h-3.5 text-[#BB9E7F]" />
+                          <div className="flex items-center gap-1">
+                            <ClockIcon className="w-3 h-3 text-[#BB9E7F]" />
                             <span>{formatTime(scheduleData.next_classes[1].starts_at)} - {formatTime(scheduleData.next_classes[1].ends_at)}</span>
                           </div>
                         </div>
@@ -647,14 +672,14 @@ export default function StudentClassSchedule() {
                     </div>
                   </div>
 
-                  <div className="relative z-10 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-white/70 font-bold text-xs">
-                      <CalendarIcon className="w-4 h-4 text-[#BB9E7F]" />
-                      <span>{formatSessionDate(scheduleData.next_classes[1].session_date)}</span>
+                  <div className="relative z-10 pt-2 sm:pt-3 border-t border-white/10 flex flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-1 text-white/70 font-bold text-[9.5px] sm:text-[11px]">
+                      <CalendarIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#BB9E7F] shrink-0" />
+                      <span className="truncate">{formatSessionDate(scheduleData.next_classes[1].session_date)}</span>
                     </div>
                     <button 
                       onClick={(e) => handleJoinClass(e, scheduleData.next_classes[1])}
-                      className="w-full sm:w-auto px-6 py-3 bg-white/10 hover:bg-white text-white hover:text-[#09314F] border border-white/20 font-black rounded-xl transition-all shadow-md active:scale-95 uppercase tracking-widest text-[11px] text-center"
+                      className="px-3 sm:px-5 py-1.5 sm:py-2.5 bg-white/10 hover:bg-white text-white hover:text-[#09314F] border border-white/20 font-black rounded-lg transition-all shadow-sm active:scale-95 uppercase tracking-wider text-[9.5px] sm:text-[10.5px] text-center shrink-0"
                     >
                       Join Session
                     </button>

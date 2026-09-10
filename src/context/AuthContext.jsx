@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { clearDashboardCache } from "../utils/dashboardCache";
 import { clearActivityCache } from "../hooks/useStudentActivity";
 
@@ -7,6 +7,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [token, setToken] = useState(null);
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,8 +38,14 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = useCallback((token, studentData) => {
+  const splashStartTimeRef = useRef(0);
+  const splashTargetRouteRef = useRef(null);
+
+  const login = useCallback((token, studentData, targetRoute = "/student/dashboard") => {
     setIsSplashing(true);
+    splashStartTimeRef.current = Date.now();
+    splashTargetRouteRef.current = targetRoute;
+
     localStorage.setItem("student_token", token);
     localStorage.setItem("student_info", JSON.stringify(studentData));
     localStorage.setItem("studentdata", JSON.stringify({ data: studentData }));
@@ -47,12 +54,17 @@ export function AuthProvider({ children }) {
 
     setToken(token);
     setStudent(studentData);
-    
-    setTimeout(() => setIsSplashing(false), 2500); // Allow video to play
-  }, []);
 
-  const logout = useCallback(async () => {
+    if (targetRoute) {
+      navigate(targetRoute, { replace: true });
+    }
+  }, [navigate]);
+
+  const logout = useCallback(async (targetRoute = "/student/login") => {
     setIsSplashing(true);
+    splashStartTimeRef.current = Date.now();
+    splashTargetRouteRef.current = targetRoute;
+
     try {
       const currentToken = localStorage.getItem("student_token");
       if (currentToken) {
@@ -81,13 +93,54 @@ export function AuthProvider({ children }) {
       setIsInactiveModalOpen(false);
       setIsClassActive(false);
 
-      // Redirect to student login with slight delay for splash screen
-      setTimeout(() => {
-        setIsSplashing(false);
-        navigate("/student/login");
-      }, 2500);
+      if (targetRoute) {
+        navigate(targetRoute, { replace: true });
+      }
     }
   }, [navigate, student?.id]);
+
+  // Synchronized Splash Dismissal Effect:
+  // Guarantees that the splash screen only unveils once the target route is active AND minimum display flourish time has passed.
+  useEffect(() => {
+    if (!isSplashing) return;
+
+    const targetRoute = splashTargetRouteRef.current;
+    if (!targetRoute) return;
+
+    const currentPath = (location?.pathname || "").toLowerCase();
+    const targetPath = targetRoute.toLowerCase();
+
+    // Check if user has arrived at the destination page
+    const hasReachedTarget =
+      currentPath === targetPath ||
+      currentPath.startsWith(targetPath) ||
+      (targetPath.includes("dashboard") && !currentPath.includes("login"));
+
+    if (hasReachedTarget) {
+      const elapsed = Date.now() - (splashStartTimeRef.current || 0);
+      const MIN_SPLASH_TIME = 2200; // 2.2s allows rich branded video intro to play gracefully
+      const remaining = Math.max(0, MIN_SPLASH_TIME - elapsed);
+
+      const timer = setTimeout(() => {
+        setIsSplashing(false);
+        splashTargetRouteRef.current = null;
+      }, remaining);
+
+      return () => clearTimeout(timer);
+    }
+  }, [location?.pathname, isSplashing]);
+
+  // Safety fallback: Ensure user is never permanently trapped by an unexpected navigation fault
+  useEffect(() => {
+    if (!isSplashing) return;
+
+    const safetyTimer = setTimeout(() => {
+      setIsSplashing(false);
+      splashTargetRouteRef.current = null;
+    }, 6000);
+
+    return () => clearTimeout(safetyTimer);
+  }, [isSplashing]);
 
   const resetActivity = useCallback(() => {
     localStorage.setItem("last_activity_at", Date.now().toString());
@@ -151,25 +204,74 @@ export function AuthProvider({ children }) {
   };
 
 
+  // Helper: check if a URL represents an active live class / classroom session
+  const isClassUrl = useCallback((pathname = location?.pathname || window.location.pathname) => {
+    if (!pathname) return false;
+    const path = pathname.toLowerCase();
+    
+    // 1. Direct classroom, zoom masterclass, meet, or class URLs
+    if (
+      path.startsWith("/classroom") ||
+      path.startsWith("/zoom/masterclass") ||
+      path.startsWith("/student/meet") ||
+      path.startsWith("/staffs/meet")
+    ) {
+      return true;
+    }
+    
+    // 2. Class patterns like /class/123, /classroom/123, /masterclass/123
+    if (
+      /\/class\/\d+/i.test(path) ||
+      /\/classroom\/\d+/i.test(path) ||
+      /\/masterclass\/\d+/i.test(path) ||
+      /\/zoom\/masterclass\/class\/\d+/i.test(path)
+    ) {
+      return true;
+    }
+
+    // 3. Query params containing class session identification
+    try {
+      const search = (window.location.search || "").toLowerCase();
+      if (search.includes("class_session_id") || search.includes("class_schedule_id")) {
+        return true;
+      }
+    } catch (e) {}
+
+    return false;
+  }, [location?.pathname]);
+
   // Heartbeat to signal to other tabs/windows that a class or recorded video is active
   useEffect(() => {
     if (!token) return;
 
-    if (isClassActive) {
+    const inClass = isClassActive || isClassUrl();
+
+    if (inClass) {
       const updateHeartbeat = () => {
         const now = Date.now().toString();
         localStorage.setItem("student_active_class_heartbeat", now);
+        localStorage.setItem("student_active_class_url", location.pathname);
         localStorage.setItem("last_activity_at", now);
       };
 
       updateHeartbeat();
       const heartbeatInterval = setInterval(updateHeartbeat, 2000);
 
-      return () => clearInterval(heartbeatInterval);
+      return () => {
+        clearInterval(heartbeatInterval);
+        // If leaving the class, clean up heartbeat so other tabs know immediately
+        if (isClassUrl()) {
+          localStorage.removeItem("student_active_class_heartbeat");
+          localStorage.removeItem("student_active_class_url");
+          localStorage.setItem("last_activity_at", Date.now().toString());
+        }
+      };
     }
-  }, [token, isClassActive]);
+  }, [token, isClassActive, isClassUrl, location.pathname]);
 
-  // Interaction monitoring & autologout
+  // Interaction monitoring & autologout with class protection
+  const wasInClassRef = useRef(false);
+
   useEffect(() => {
     if (!token) return;
 
@@ -184,25 +286,34 @@ export function AuthProvider({ children }) {
     events.forEach((evt) => window.addEventListener(evt, handleActivity));
 
     const interval = setInterval(() => {
-      // 1. If class/recorded session is active in this tab
-      if (isClassActive) {
-        handleActivity();
-        setIsInactiveModalOpen(false);
-        return;
-      }
+      // 1. Check if current tab is on a class URL or has isClassActive set
+      const currentTabInClass = isClassActive || isClassUrl();
 
       // 2. Check if a masterclass or recorded session is active in another tab/window
-      const heartbeat = parseInt(localStorage.getItem("student_active_class_heartbeat") || "0");
-      const isOtherTabClassActive = Date.now() - heartbeat < 10000;
+      const heartbeat = parseInt(localStorage.getItem("student_active_class_heartbeat") || "0", 10);
+      const isOtherTabClassActive = (Date.now() - heartbeat) < 15000;
 
-      if (isOtherTabClassActive) {
+      const isInAnyClass = currentTabInClass || isOtherTabClassActive;
+
+      // When the student is in any class (whether in this tab or another tab opened from dashboard, calendar, or masterclass):
+      // PAUSE the timer, keep refreshing activity timestamp, and prevent inactive modal from opening
+      if (isInAnyClass) {
+        wasInClassRef.current = true;
         handleActivity();
         setIsInactiveModalOpen(false);
         return;
       }
 
-      // 3. Otherwise calculate inactivity duration
-      const lastActivity = parseInt(localStorage.getItem("last_activity_at") || "0");
+      // When exiting/finishing a class, immediately refresh activity timestamp so the timer resumes counting fresh from 0
+      if (wasInClassRef.current) {
+        wasInClassRef.current = false;
+        handleActivity();
+        setIsInactiveModalOpen(false);
+        return;
+      }
+
+      // 3. Normal inactivity countdown (only runs when NOT in any class)
+      const lastActivity = parseInt(localStorage.getItem("last_activity_at") || "0", 10);
       const diff = Date.now() - lastActivity;
 
       const THREE_MINUTES = 3 * 60 * 1000;
@@ -221,7 +332,7 @@ export function AuthProvider({ children }) {
       events.forEach((evt) => window.removeEventListener(evt, handleActivity));
       clearInterval(interval);
     };
-  }, [token, isClassActive, logout]);
+  }, [token, isClassActive, isClassUrl, logout]);
 
   return (
     <AuthContext.Provider
@@ -253,3 +364,6 @@ export function AuthProvider({ children }) {
 }
 
 export const useAuth = () => useContext(AuthContext);
+
+export { default as SplashScreen } from "../components/public/SplashScreen.jsx";
+export { default as LogoAnimation } from "../components/public/LogoAnimation.jsx";

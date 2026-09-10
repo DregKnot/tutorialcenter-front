@@ -79,10 +79,48 @@ export default function TutorCalendar() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
+  // Logged-in tutor identification for calendar scoping
+  const staffInfo = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("staff_info");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+  const currentStaffId = staffInfo?.id ? Number(staffInfo.id) : null;
+
+  const isAssignedToMe = useCallback((session) => {
+    if (!session || !currentStaffId) return false;
+    if (session.staff_id && Number(session.staff_id) === currentStaffId) return true;
+    if (session.tutor_id && Number(session.tutor_id) === currentStaffId) return true;
+    const staffs = session.class?.staffs || session.staffs || [];
+    if (Array.isArray(staffs) && staffs.some(st => Number(st.id) === currentStaffId)) return true;
+    if (session.tutor?.id && Number(session.tutor.id) === currentStaffId) return true;
+    return false;
+  }, [currentStaffId]);
+
+  const getSessionTutorName = useCallback((session) => {
+    if (!session) return "Assigned Faculty";
+    if (session.tutor_name) return session.tutor_name;
+    if (session.tutor && typeof session.tutor === "object") {
+      const name = `${session.tutor.firstname || ""} ${session.tutor.surname || ""}`.trim();
+      if (name) return name;
+    }
+    const staffs = session.class?.staffs || session.staffs || [];
+    if (Array.isArray(staffs)) {
+      const tutor = staffs.find(st => (st.role || "").toLowerCase() === "tutor");
+      if (tutor) {
+        return `${tutor.firstname || ""} ${tutor.surname || ""}`.trim();
+      }
+    }
+    return "Peer Faculty";
+  }, []);
+
   const [joiningSessionId, setJoiningSessionId] = useState(null);
 
   const handleJoinClass = useCallback((s) => {
-    if (!s) return;
+    if (!s || !isAssignedToMe(s)) return;
     const link = s.class_link || s.recording_link;
     if (!link && !s.id) return;
 
@@ -91,15 +129,8 @@ export default function TutorCalendar() {
       setJoiningSessionId(s.id);
     } else if (link) {
       window.open(link, '_blank');
-      navigate('/staffs/meet', {
-        state: {
-          class_link: link,
-          class_schedule_id: s.id,
-          alreadyOpened: true
-        }
-      });
     }
-  }, [navigate]);
+  }, [isAssignedToMe]);
 
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -606,6 +637,7 @@ export default function TutorCalendar() {
                           <div className="flex flex-col gap-1 overflow-y-auto max-h-[80px] pr-0.5 animate-fade-in">
                             {daySessions.slice(0, 3).map((s, sIdx) => {
                               const colors = getClassColor(s.class?.title || s.title);
+                              const isMine = isAssignedToMe(s);
                               return (
                                 <button
                                   key={s.id || sIdx}
@@ -613,9 +645,12 @@ export default function TutorCalendar() {
                                     e.stopPropagation();
                                     setSelectedSession(s);
                                   }}
-                                  className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border ${colors.bg} ${colors.border} ${colors.text} truncate hover:opacity-85 transition-opacity active:scale-[0.98]`}
+                                  className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border ${colors.bg} ${colors.border} ${colors.text} truncate hover:opacity-85 transition-opacity active:scale-[0.98] flex items-center gap-1`}
                                 >
-                                  {s.class?.title || s.title}
+                                  {isMine && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block shadow-xs" title="Assigned to you" />
+                                  )}
+                                  <span className="truncate">{s.class?.title || s.title}</span>
                                 </button>
                               );
                             })}
@@ -691,13 +726,28 @@ export default function TutorCalendar() {
                           <div className="p-1 relative border-r border-gray-100 dark:border-[#1a4a75]/10 bg-white dark:bg-transparent flex flex-col gap-1">
                             {getSessionsForDateAndHour(currentDate, hour).map((s, sIdx) => {
                               const colors = getClassColor(s.class?.title || s.title);
+                              const isMine = isAssignedToMe(s);
                               return (
                                 <button
                                   key={s.id || sIdx}
                                   onClick={() => setSelectedSession(s)}
                                   className={`w-full text-left p-2.5 rounded-xl border ${colors.bg} ${colors.border} ${colors.text} shadow-sm transition-all hover:scale-[1.01] hover:shadow-md cursor-pointer`}
                                 >
-                                  <div className="text-xs font-extrabold">{s.class?.title || s.title}</div>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="text-xs font-extrabold truncate flex items-center gap-1.5">
+                                      {isMine && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 inline-block" title="Assigned to you" />}
+                                      <span>{s.class?.title || s.title}</span>
+                                    </div>
+                                    {isMine ? (
+                                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 shrink-0">
+                                        Yours
+                                      </span>
+                                    ) : (
+                                      <span className="text-[9px] font-medium opacity-70 truncate max-w-[100px] shrink-0">
+                                        {getSessionTutorName(s)}
+                                      </span>
+                                    )}
+                                  </div>
                                   {s.starts_at && (
                                     <div className="text-[9px] opacity-80 mt-1 font-semibold">
                                       {formatTimeRange(s.starts_at, s.ends_at)}
@@ -720,13 +770,15 @@ export default function TutorCalendar() {
                               >
                                 {cellSessions.map((s, sIdx) => {
                                   const colors = getClassColor(s.class?.title || s.title);
+                                  const isMine = isAssignedToMe(s);
                                   return (
                                     <button
                                       key={s.id || sIdx}
                                       onClick={() => setSelectedSession(s)}
-                                      className={`w-full text-left p-1 text-[9px] font-bold rounded border ${colors.bg} ${colors.border} ${colors.text} truncate hover:opacity-90 active:scale-[0.98] transition-all`}
+                                      className={`w-full text-left p-1 text-[9px] font-bold rounded border ${colors.bg} ${colors.border} ${colors.text} truncate hover:opacity-90 active:scale-[0.98] transition-all flex items-center gap-1`}
                                     >
-                                      {s.class?.title || s.title}
+                                      {isMine && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block" title="Assigned to you" />}
+                                      <span className="truncate">{s.class?.title || s.title}</span>
                                     </button>
                                   );
                                 })}
@@ -812,15 +864,27 @@ export default function TutorCalendar() {
                       {getSessionsForDate(selectedMobileDate).length > 0 ? (
                         getSessionsForDate(selectedMobileDate).map((s, sIdx) => {
                           const colors = getClassColor(s.class?.title || s.title);
+                          const isMine = isAssignedToMe(s);
                           return (
                             <div
                               key={s.id || sIdx}
                               onClick={() => setSelectedSession(s)}
                               className={`flex flex-col p-4 rounded-2xl border ${colors.bg} ${colors.border} ${colors.text} shadow-sm transition-all active:scale-[0.98] cursor-pointer`}
                             >
-                              <h4 className="text-sm font-extrabold leading-snug">
-                                {s.class?.title || s.title || "Master Class"}
-                              </h4>
+                              <div className="flex items-center justify-between gap-2">
+                                <h4 className="text-sm font-extrabold leading-snug truncate">
+                                  {s.class?.title || s.title || "Master Class"}
+                                </h4>
+                                {isMine ? (
+                                  <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 shrink-0">
+                                    Your Class
+                                  </span>
+                                ) : (
+                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 opacity-75 shrink-0">
+                                    {getSessionTutorName(s)}
+                                  </span>
+                                )}
+                              </div>
                               {s.starts_at && (
                                 <p className="text-xs font-semibold opacity-95 mt-1.5 flex items-center gap-1.5">
                                   <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
@@ -878,6 +942,7 @@ export default function TutorCalendar() {
                   const colors = getClassColor(s.class?.title || s.title);
                   const past = isPastSession(s);
                   const recUrl = s.recording_link || s.recording_url || s.recorded_url || s.video_url;
+                  const isMine = isAssignedToMe(s);
 
                   return (
                     <div
@@ -889,11 +954,22 @@ export default function TutorCalendar() {
                           <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${colors.text} bg-white/60 dark:bg-black/30 backdrop-blur-sm`}>
                             {(typeof s.subject === "object" ? s.subject?.name : s.subject) || s.class?.title || "Class"}
                           </span>
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                            past ? "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                          }`}>
-                            {past ? "Ended" : "Scheduled"}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {isMine ? (
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                                Your Class
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 opacity-80" title="Assigned Faculty">
+                                Faculty: {getSessionTutorName(s)}
+                              </span>
+                            )}
+                            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                              past ? "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                            }`}>
+                              {past ? "Ended" : "Scheduled"}
+                            </span>
+                          </div>
                         </div>
                         
                         <h3 className={`text-base font-extrabold leading-snug ${colors.text}`}>
@@ -926,6 +1002,11 @@ export default function TutorCalendar() {
                               Class Ended (No Video Uploaded)
                             </div>
                           )
+                        ) : !isMine ? (
+                          <div className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-black/5 dark:bg-white/5 rounded-xl text-center text-xs font-bold text-gray-500 dark:text-gray-400">
+                            <Icon icon="solar:user-bold" className="w-4 h-4 opacity-60 text-[#C5A97A]" />
+                            <span>Assigned to {getSessionTutorName(s)}</span>
+                          </div>
                         ) : (
                           s.class_link ? (
                             joiningSessionId === s.id ? (
@@ -960,7 +1041,7 @@ export default function TutorCalendar() {
                                 className="w-full py-2.5 px-4 bg-[#09314F] hover:bg-[#E83831] text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
                               >
                                 <Icon icon="logos:zoom" className="w-4 h-4" />
-                                Start Class Now
+                                Join Class Now
                               </button>
                             )
                           ) : (
@@ -1002,7 +1083,18 @@ export default function TutorCalendar() {
             
             <div className="space-y-6">
               <div className="bg-slate-50 dark:bg-black/25 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
-                <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Class Title</p>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Class Title</p>
+                  {isAssignedToMe(selectedSession) ? (
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                      Your Class
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 opacity-80">
+                      Faculty: {getSessionTutorName(selectedSession)}
+                    </span>
+                  )}
+                </div>
                 <p className="text-[15px] font-black text-slate-800 dark:text-white">
                   {selectedSession.class?.title || selectedSession.title || "Master Class"}
                 </p>
@@ -1056,7 +1148,7 @@ export default function TutorCalendar() {
                 )}
               </div>
 
-              {/* Action Button: Recorded Class if past, else Start Class */}
+              {/* Action Button: Recorded Class if past, else Join Class */}
               <div className="pt-4 border-t border-slate-100 dark:border-white/5">
                 {isPastSession(selectedSession) ? (
                   (selectedSession.recording_link || selectedSession.recording_url) ? (
@@ -1074,8 +1166,13 @@ export default function TutorCalendar() {
                       Class Ended (No Recording Uploaded)
                     </div>
                   )
+                ) : !isAssignedToMe(selectedSession) ? (
+                  <div className="flex items-center justify-center gap-2 py-3 px-4 bg-slate-100 dark:bg-black/25 rounded-2xl text-center text-xs font-bold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/5">
+                    <Icon icon="solar:user-bold" className="w-4 h-4 opacity-60 text-[#C5A97A]" />
+                    <span>Assigned Faculty: <strong className="text-slate-700 dark:text-slate-200">{getSessionTutorName(selectedSession)}</strong></span>
+                  </div>
                 ) : (
-                  selectedSession.class_link && (
+                  selectedSession.class_link ? (
                     joiningSessionId === selectedSession.id ? (
                       <div className="flex flex-col gap-3 w-full">
                         <button 
@@ -1107,9 +1204,13 @@ export default function TutorCalendar() {
                         }}
                         className="w-full bg-[#0F2843] hover:bg-[#E83831] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center block shadow-lg shadow-slate-200 dark:shadow-none hover:shadow-xl transition-all active:scale-98"
                       >
-                        Start Class Now
+                        Join Class Now
                       </button>
                     )
+                  ) : (
+                    <div className="text-center py-2 text-xs font-bold text-slate-400 dark:text-slate-500 italic">
+                      Class Link Pending
+                    </div>
                   )
                 )}
               </div>

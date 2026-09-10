@@ -1,8 +1,21 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+
+export const getStaffDashboardRoute = (staffRole) => {
+  const role = (staffRole || "").toLowerCase();
+  if (role === "admin") return "/staffs/dashboard";
+  if (role === "coo" || role === "preview" || role === "operations") return "/staffs/coo/dashboard";
+  if (role === "moderator") return "/staffs/manage-exams";
+  if (role === "course advisor" || role === "advisor") return "/staffs/course-advisor/dashboard";
+  return "/staffs/tutor/dashboard";
+};
 
 const StaffAuthContext = createContext(null);
 
 export function StaffAuthProvider({ children }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [token, setToken] = useState(null);
   const [staff, setStaff] = useState(null);
   const [role, setRole] = useState(null);
@@ -10,6 +23,9 @@ export function StaffAuthProvider({ children }) {
   const [isSplashing, setIsSplashing] = useState(false);
   const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
   const [isClassActive, setIsClassActive] = useState(false);
+
+  const splashStartTimeRef = useRef(0);
+  const splashTargetRouteRef = useRef(null);
 
   // Load from localStorage on app start
   useEffect(() => {
@@ -27,8 +43,12 @@ export function StaffAuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = useCallback((token, staffData, staffRole) => {
+  const login = useCallback((token, staffData, staffRole, customTargetRoute) => {
+    const target = customTargetRoute || getStaffDashboardRoute(staffRole);
     setIsSplashing(true);
+    splashStartTimeRef.current = Date.now();
+    splashTargetRouteRef.current = target;
+
     localStorage.setItem("staff_token", token);
     localStorage.setItem("staff_info", JSON.stringify(staffData));
     localStorage.setItem("staff_role", staffRole);
@@ -39,11 +59,16 @@ export function StaffAuthProvider({ children }) {
     setStaff(staffData);
     setRole(staffRole);
 
-    setTimeout(() => setIsSplashing(false), 2500);
-  }, []);
+    if (target) {
+      navigate(target, { replace: true });
+    }
+  }, [navigate]);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(async (targetRoute = "/staff/login") => {
     setIsSplashing(true);
+    splashStartTimeRef.current = Date.now();
+    splashTargetRouteRef.current = targetRoute;
+
     try {
       const currentToken = localStorage.getItem("staff_token");
       if (currentToken) {
@@ -67,11 +92,53 @@ export function StaffAuthProvider({ children }) {
       setRole(null);
       setIsInactiveModalOpen(false);
 
-      // Redirect to staff login immediately to prevent Unauthorized flash
-      setIsSplashing(false);
-      window.location.href = "/staff/login";
+      if (targetRoute) {
+        navigate(targetRoute, { replace: true });
+      }
     }
-  }, []);
+  }, [navigate]);
+
+  // Synchronized Splash Dismissal Effect:
+  // Guarantees that the splash screen only unveils once the staff dashboard/login is active AND minimum display flourish time has passed.
+  useEffect(() => {
+    if (!isSplashing) return;
+
+    const targetRoute = splashTargetRouteRef.current;
+    if (!targetRoute) return;
+
+    const currentPath = (location?.pathname || "").toLowerCase();
+    const targetPath = targetRoute.toLowerCase();
+
+    const hasReachedTarget =
+      currentPath === targetPath ||
+      currentPath.startsWith(targetPath) ||
+      (targetPath.includes("staffs") && !currentPath.includes("login"));
+
+    if (hasReachedTarget) {
+      const elapsed = Date.now() - (splashStartTimeRef.current || 0);
+      const MIN_SPLASH_TIME = 2200;
+      const remaining = Math.max(0, MIN_SPLASH_TIME - elapsed);
+
+      const timer = setTimeout(() => {
+        setIsSplashing(false);
+        splashTargetRouteRef.current = null;
+      }, remaining);
+
+      return () => clearTimeout(timer);
+    }
+  }, [location?.pathname, isSplashing]);
+
+  // Safety fallback
+  useEffect(() => {
+    if (!isSplashing) return;
+
+    const safetyTimer = setTimeout(() => {
+      setIsSplashing(false);
+      splashTargetRouteRef.current = null;
+    }, 6000);
+
+    return () => clearTimeout(safetyTimer);
+  }, [isSplashing]);
 
   const resetActivity = useCallback(() => {
     localStorage.setItem("staff_last_activity_at", Date.now().toString());
@@ -112,6 +179,7 @@ export function StaffAuthProvider({ children }) {
         isAuthenticated: Boolean(token),
         loading,
         isSplashing,
+        isStaffSplashing: isSplashing,
         setIsSplashing,
         isInactiveModalOpen,
         resetActivity,
@@ -125,3 +193,6 @@ export function StaffAuthProvider({ children }) {
 }
 
 export const useStaffAuth = () => useContext(StaffAuthContext);
+
+export { default as SplashScreen } from "../components/public/SplashScreen.jsx";
+export { default as LogoAnimation } from "../components/public/LogoAnimation.jsx";

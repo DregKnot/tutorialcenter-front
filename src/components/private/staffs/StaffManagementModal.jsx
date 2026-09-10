@@ -273,9 +273,62 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
         <div className={`flex-1 overflow-y-auto p-8 md:p-10 ${isSuspended ? "opacity-60 grayscale-[0.2]" : ""}`}>
           
           {/* Header */}
-          <h1 className="text-xl md:text-2xl font-black mb-8 uppercase tracking-tight">
-            STAFF PROFILE: {staff.firstname} {staff.middlename} {staff.surname}
-          </h1>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <h1 className="text-xl md:text-2xl font-black uppercase tracking-tight">
+              STAFF PROFILE: {staff.firstname} {staff.middlename ? `${staff.middlename} ` : ""}{staff.surname}
+            </h1>
+          </div>
+
+          {/* Verification Badges & Metadata Strip */}
+          <div className="flex flex-wrap items-center gap-2 mb-8 pb-5 border-b border-gray-100 dark:border-gray-800">
+            {/* Email Verification Badge */}
+            {staff.email_verified_at ? (
+              <span 
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800"
+                title={`Verified: ${new Date(staff.email_verified_at).toLocaleString()}`}
+              >
+                <Icon icon="heroicons:check-badge-solid" className="w-4 h-4 text-green-600 dark:text-green-400" />
+                Email Verified ({new Date(staff.email_verified_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })})
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                <Icon icon="heroicons:exclamation-circle-solid" className="w-4 h-4 text-amber-500" />
+                Email Unverified
+              </span>
+            )}
+
+            {/* Phone Verification Badge */}
+            {staff.tel_verified_at ? (
+              <span 
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800"
+                title={`Verified: ${new Date(staff.tel_verified_at).toLocaleString()}`}
+              >
+                <Icon icon="heroicons:check-badge-solid" className="w-4 h-4 text-green-600 dark:text-green-400" />
+                Phone Verified
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                <Icon icon="heroicons:phone-solid" className="w-4 h-4 text-gray-400" />
+                Phone Unverified
+              </span>
+            )}
+
+            {/* Date Joined */}
+            {staff.created_at && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/40 text-[#0F2843] dark:text-blue-300 border border-blue-100 dark:border-blue-900/50">
+                <Icon icon="heroicons:calendar-days-solid" className="w-4 h-4 text-blue-500" />
+                Joined: {new Date(staff.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+            )}
+
+            {/* Inducted By */}
+            {staff.inducted_by && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                <Icon icon="heroicons:user-circle-solid" className="w-4 h-4 text-purple-500" />
+                Inducted by: {staff.inducted_by}
+              </span>
+            )}
+          </div>
 
           {/* Top Section: Avatar + Primary Fields */}
           <div className="flex flex-col md:flex-row gap-6 mb-8 items-start">
@@ -335,7 +388,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
               )}
             </div>
 
-            {/* Name/Email Inputs (2 columns inside) */}
+            {/* Name/Email/Phone Inputs (2 columns inside) */}
             <div className="flex-1 grid grid-cols-2 gap-x-4 gap-y-4">
               <ModalInput 
                 label="First Name" 
@@ -377,12 +430,16 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 placeholder="Email Address"
                 error={errors.email}
               />
-            </div>
-          </div>
-
-          {/* Grid Section for secondary details */}
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-x-4">
+              <ModalInput 
+                label="Telephone / Mobile" 
+                icon="heroicons:phone-solid" 
+                name="tel" 
+                value={staff.tel || ""} 
+                onChange={handleChange} 
+                disabled={!isEditing}
+                placeholder="08012345678"
+                error={errors.tel}
+              />
               <ModalInput 
                 label="Gender" 
                 icon="ph:gender-male-bold" 
@@ -398,50 +455,43 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 ]}
                 error={errors.gender}
               />
+            </div>
+          </div>
+
+          {/* Grid Section for secondary details */}
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-x-4">
               <ModalInput 
                 label="Date of Birth" 
                 icon="heroicons:calendar-days-solid" 
                 name="date_of_birth" 
-                value={staff.date_of_birth?.split('T')[0]} 
+                value={staff.date_of_birth ? staff.date_of_birth.split('T')[0] : ""} 
                 onChange={handleChange} 
                 disabled={!isEditing}
                 type="date"
                 error={errors.date_of_birth}
               />
-            </div>
-
-            {/* Role - Full Width */}
-            <ModalInput 
-              label="Role" 
-              icon="heroicons:user-group-solid" 
-              name="role" 
-              value={staff.role} 
-              onChange={handleChange} 
-              disabled={!isEditing}
-              isSelect={true}
-              options={[
-                { label: "Admin", value: "admin" },
-                { label: "Tutor", value: "tutor" },
-                { label: "Advisor", value: "advisor" },
-                {label: "Moderator", value: "moderator"}
-              ]}
-              error={errors.role}
-            />
-
-            {/* Teaching Info (Classes) */}
-            <div className="grid grid-cols-1 gap-4">
               <ModalInput 
-                label="Assigned Classes" 
+                label="Role" 
                 icon="heroicons:user-group-solid" 
-                name="classes" 
-                value={staffClasses.map(c => c.title).join(", ") || "No classes assigned"} 
-                disabled={true} // Display only as per feedback
-                placeholder="Classes taken"
+                name="role" 
+                value={staff.role} 
+                onChange={handleChange} 
+                disabled={!isEditing}
+                isSelect={true}
+                options={[
+                  { label: "Admin", value: "admin" },
+                  { label: "Chief Operating Officer (COO)", value: "coo" },
+                  { label: "Tutor", value: "tutor" },
+                  { label: "Course Advisor", value: "advisor" },
+                  { label: "Moderator", value: "moderator" }
+                ]}
+                error={errors.role}
               />
             </div>
 
             {/* Status & Location */}
-            <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-x-4">
               <ModalInput 
                 label="Status" 
                 icon="heroicons:user-group-solid" 
@@ -474,7 +524,53 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
               />
             </div>
 
-            {/* Home Address (Label above as in image) */}
+            {/* Teaching Info (Classes) - Rich Cards Display */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between ml-1">
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Assigned Classes ({staffClasses.length})
+                </label>
+                {staffClasses.length > 0 && (
+                  <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-[#C5A97A]">
+                    {staffClasses.length} {staffClasses.length === 1 ? "Class" : "Classes"}
+                  </span>
+                )}
+              </div>
+              
+              {staffClasses.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3.5 rounded-2xl bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
+                  {staffClasses.map((cls, idx) => (
+                    <div 
+                      key={cls.id || idx}
+                      className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 shadow-sm hover:border-[#0F2843]/30 dark:hover:border-[#C5A97A]/40 transition"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-[#0F2843]/10 dark:bg-[#C5A97A]/20 flex items-center justify-center text-[#0F2843] dark:text-[#C5A97A] font-bold shrink-0">
+                          <Icon icon="heroicons:academic-cap-solid" className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-gray-800 dark:text-gray-100 truncate">
+                            {cls.title}
+                          </p>
+                          <p className="text-[10px] text-gray-400 font-semibold truncate">
+                            {cls.subject?.name || cls.class_type || "Standard Class"}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 shrink-0 border border-emerald-200 dark:border-emerald-800">
+                        Active
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/30 border border-dashed border-gray-200 dark:border-gray-700 text-center">
+                  <p className="text-xs font-semibold text-gray-400">No active classes assigned to this staff member.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Home Address */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-gray-400 ml-1">Home Address</label>
               <textarea 
@@ -482,7 +578,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 value={staff.address || ""}
                 onChange={handleChange}
                 disabled={!isEditing}
-                rows={1}
+                rows={2}
                 placeholder="Full Home Address"
                 className={`w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border ${errors.address ? "border-red-500" : "border-gray-200 dark:border-gray-700"} rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50 resize-none`}
               />

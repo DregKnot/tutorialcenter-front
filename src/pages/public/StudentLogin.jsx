@@ -69,18 +69,8 @@ export default function StudentLogin() {
       );
 
       if (response.status === 200) {
-        // Use AuthContext login to update both localStorage AND React state
-        login(response.data.token, response.data.student);
-
-        setToast({ type: "success", message: response.data.message });
-        setMsg({
-          text: "Login successful!",
-          type: "success",
-        });
-
-        setTimeout(() => {
-          navigate(`/student/dashboard`);
-        }, 3000);
+        // Use AuthContext login to activate splash video and seamlessly navigate to dashboard
+        login(response.data.token, response.data.student, "/student/dashboard");
       }
     } catch (error) {
       setToast({

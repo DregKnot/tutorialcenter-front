@@ -109,15 +109,8 @@ export default function StaffLogin() {
       );
 
       if (response.status === 200) {
+        // Use StaffAuthContext login to activate splash video and navigate directly to the staff role dashboard
         login(response.data.token, response.data.staff, response.data.role);
-        
-        setToast({ 
-          type: "success", 
-          message: response.data.message || "Login successful!",
-          showCountdown: true
-        });
-
-        setCountdown(3);
       }
 
     } catch (error) {
