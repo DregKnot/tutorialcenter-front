@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import signup_img from "../../../assets/images/Student_sign_up.webp";
+import { getStudentData, clearStudentRegistrationData } from "./studentStorageHelper";
 
 export const StudentPaymentSuccessScreen = () => {
   const navigate = useNavigate();
@@ -11,118 +12,123 @@ export const StudentPaymentSuccessScreen = () => {
   useEffect(() => {
     const loadPaymentData = () => {
       try {
-        const stored = localStorage.getItem("studentdata");
-        if (!stored) {
-          navigate("/register/student");
+        const studentData = getStudentData();
+        if (!studentData) {
+          navigate("/student/login");
           return;
         }
 
-        const studentData = JSON.parse(stored);
-
-        // --- Debug: confirm what's stored ---
-        console.log("[PaymentSuccess] availableTrainings:", studentData.availableTrainings);
-        console.log("[PaymentSuccess] selectedTraining:", studentData.selectedTraining);
-
-        // --- Getting Names by ID from the stored data ---
         const enrichedCourses = (studentData.selectedTraining || []).map((id) => {
-          // We look into the trainings list already in your localStorage
           const courseDetail = studentData.availableTrainings?.find((c) => c.id === id);
-          console.log(`[PaymentSuccess] id=${id} → courseDetail:`, courseDetail);
+          const durationData = studentData.selectedDurations?.[id];
+
           return {
             id,
-            name: courseDetail?.title || `Course ${id}`, // Dynamic name
-            duration: studentData.selectedDurations[id]?.duration || "Access Granted",
+            name: courseDetail?.title || `Course #${id}`,
+            duration: durationData?.duration ? `${durationData.duration} plan` : "Active Subscription",
           };
         });
 
+        const fullName =
+          [studentData.firstname, studentData.surname].filter(Boolean).join(" ") ||
+          "Student";
+
         setPaymentData({
-          studentName: `${studentData.data.firstname} ${studentData.data.surname}`,
+          studentName: fullName,
           courses: enrichedCourses,
         });
-        setLoading(false);
       } catch (error) {
-        console.error("Error loading payment data:", error);
+        console.error("[PaymentSuccess] Error parsing data:", error);
+      } finally {
         setLoading(false);
       }
     };
+
     loadPaymentData();
   }, [navigate]);
 
   const handleGoToDashboard = () => {
-    ["studentEmail", "studentdata", "studentTel", "studentVerified", "studentBiodata"].forEach((k) =>
-      localStorage.removeItem(k)
-    );
+    clearStudentRegistrationData();
     navigate("/student/login");
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F4F4F4]">
+        <div className="w-10 h-10 border-4 border-gray-200 border-t-[#09314F] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="w-screen h-screen flex overflow-hidden font-sans">
-      
-      {/* LEFT SIDE: Content Area with a floating card */}
-      <div className="w-full md:w-1/2 h-full bg-[#F4F4F4] flex flex-col items-center justify-center px-6 md:px-10">
-        
-        {/* THE WHITE CARD (Everything from Success Message to Button) */}
-        <div className="bg-white w-full max-w-[448px] shadow-xl rounded-[24px] p-8 md:p-12 flex flex-col items-center border border-gray-100">
-          
-          {/* Success Icon */}
-          <div className="w-20 h-20 rounded-full bg-[#09314F] flex items-center justify-center mb-6">
-            <CheckCircleIcon className="w-12 h-12 text-white" />
+    <div className="w-full min-h-screen flex flex-col lg:flex-row font-sans overflow-x-hidden bg-[#F4F4F4]">
+      {/* LEFT CONTENT AREA */}
+      <div className="w-full lg:w-1/2 min-h-screen flex flex-col items-center justify-center px-4 sm:px-8 md:px-12 py-10 order-2 lg:order-1">
+        <div className="bg-white w-full max-w-[min(100%,480px)] shadow-[0_20px_50px_rgba(9,49,79,0.08)] rounded-3xl p-6 sm:p-10 flex flex-col items-center border border-gray-100 text-center animate-fadeIn">
+          {/* SUCCESS ICON */}
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-5 ring-8 ring-emerald-50/50">
+            <CheckCircleIcon className="w-10 h-10 sm:w-14 sm:h-14 text-emerald-600" />
           </div>
 
-          {/* Success Message */}
-          <h1 className="text-2xl md:text-3xl font-black text-[#09314F] text-center mb-2">
-            Payment Successful!
+          <h1 className="text-2xl sm:text-3xl font-black text-[#09314F] mb-1.5 tracking-tight">
+            Registration & Payment Successful!
           </h1>
 
-          {/* Student Name */}
-          <p className="text-gray-500 text-center mb-8">
-            Welcome, <span className="font-bold text-[#09314F]">{paymentData.studentName}</span>
+          <p className="text-gray-500 text-xs sm:text-sm mb-6">
+            Welcome aboard, <span className="font-bold text-[#09314F]">{paymentData?.studentName}</span>
           </p>
 
-          {/* Access Information */}
-          <div className="w-full mb-8">
-            <p className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
-              Your Subscriptions
-            </p>
-            
-            <div className="space-y-3 max-h-[160px] overflow-y-auto pr-2">
-              {paymentData.courses.map((course) => (
-                <div 
-                  key={course.id}
-                  className="flex flex-col items-center py-3 px-4 bg-gray-50 rounded-2xl border border-gray-100"
-                >
-                  <p className="text-sm font-bold text-[#09314F] text-center">
-                    {course.name}
-                  </p>
-                  <p className="text-[11px] text-[#76D287] font-bold uppercase mt-1">
-                    {course.duration}
-                  </p>
+          {/* SUBSCRIPTION CARDS */}
+          <div className="w-full mb-8 text-left">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block text-center mb-3">
+              Enrolled Training Programs
+            </span>
+
+            <div className="space-y-2.5 max-h-[200px] overflow-y-auto pr-1">
+              {paymentData?.courses && paymentData.courses.length > 0 ? (
+                paymentData.courses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="flex justify-between items-center py-3 px-4 bg-gray-50/80 rounded-2xl border border-gray-100 text-xs sm:text-sm"
+                  >
+                    <span className="font-bold text-[#09314F] truncate mr-2">
+                      {course.name}
+                    </span>
+                    <span className="text-[11px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md shrink-0">
+                      {course.duration}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-xs font-semibold text-gray-400">
+                  Standard Access Granted
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
-          {/* Dashboard Button */}
+          {/* DASHBOARD BUTTON */}
           <button
+            type="button"
             onClick={handleGoToDashboard}
-            className="w-full py-4 text-white font-bold text-lg rounded-xl shadow-lg transition-all active:scale-95"
-            style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
+            className="w-full py-4 px-6 text-white font-black text-sm sm:text-base rounded-2xl shadow-lg shadow-[#09314F]/20 transition-all hover:brightness-105 active:scale-95 bg-gradient-to-r from-[#09314F] via-[#0c4066] to-[#E83831]"
           >
-            Login to Dashboard
+            Login to Student Dashboard
           </button>
         </div>
       </div>
 
-      {/* RIGHT SIDE: The Visual Image */}
-      <div 
-        className="hidden md:block md:w-1/2 h-full bg-cover bg-center"
-        style={{ backgroundImage: `url(${signup_img})` }}
-      >
-        <div className="w-full h-full bg-[#09314F]/10"></div>
+      {/* RIGHT VISUAL HERO */}
+      <div className="w-full lg:w-1/2 h-[200px] sm:h-[260px] lg:h-auto lg:min-h-screen relative order-1 lg:order-2 overflow-hidden shrink-0">
+        <div
+          className="w-full h-full bg-cover bg-center transition-transform duration-700 hover:scale-105"
+          style={{ backgroundImage: `url(${signup_img})` }}
+        >
+          <div className="w-full h-full bg-gradient-to-t from-[#09314F]/80 via-transparent to-black/20 lg:bg-[#09314F]/25 backdrop-blur-[1px]" />
+        </div>
       </div>
     </div>
   );
 };
 
+export default StudentPaymentSuccessScreen;

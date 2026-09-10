@@ -7,7 +7,13 @@ import {
   MagnifyingGlassIcon,
   CalendarIcon,
   LinkIcon,
-  VideoCameraIcon
+  VideoCameraIcon,
+  ArrowPathIcon,
+  ClockIcon,
+  UserGroupIcon,
+  AcademicCapIcon,
+  SparklesIcon,
+  ArrowTopRightOnSquareIcon
 } from "@heroicons/react/24/outline";
 import { Icon } from "@iconify/react";
 
@@ -16,23 +22,26 @@ export default function TutorMasterClass() {
     next_class: null,
     today_classes: [],
     week_schedule: {},
-    upcoming_sessions: []
+    upcoming_sessions: [],
+    sessions: [],
+    classes: []
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("classes"); // "classes" | "timeline"
+  const [timelineFilter, setTimelineFilter] = useState("all"); // "all" | "today" | "week" | "upcoming" | "past"
   const [toast, setToast] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
+  const [showJoinOptions, setShowJoinOptions] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackSession, setFeedbackSession] = useState(null);
-  const [showJoinOptions, setShowJoinOptions] = useState(false);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const staffName = localStorage.getItem("staff_name") || "Tutor";
-  const staffRole = localStorage.getItem("staff_role") || "Tutor";
   const token = localStorage.getItem("staff_token");
 
   // --- FETCHING LOGIC ---
@@ -46,14 +55,15 @@ export default function TutorMasterClass() {
         }
       });
       
-      console.log("Full Tiered API Response:", response.data);
       const data = response.data || {};
       
       setScheduleData({
         next_class: data.next_class || null,
         today_classes: Array.isArray(data.today_classes) ? data.today_classes : [],
         week_schedule: data.week_schedule || {},
-        upcoming_sessions: Array.isArray(data.upcoming_sessions) ? data.upcoming_sessions : []
+        upcoming_sessions: Array.isArray(data.upcoming_sessions) ? data.upcoming_sessions : [],
+        sessions: Array.isArray(data.sessions) ? data.sessions : (Array.isArray(data.upcoming_sessions) ? data.upcoming_sessions : []),
+        classes: Array.isArray(data.classes) ? data.classes : []
       });
 
     } catch (error) {
@@ -79,11 +89,11 @@ export default function TutorMasterClass() {
     if (feedbackSessionId) {
       sessionStorage.removeItem("just_completed_class_session_id");
 
-      // Find the session in any of the loaded lists
       const allSessions = [
         ...(scheduleData.today_classes || []),
         ...Object.values(scheduleData.week_schedule || {}).flat(),
         ...(scheduleData.upcoming_sessions || []),
+        ...(scheduleData.sessions || []),
         ...(scheduleData.next_class ? [scheduleData.next_class] : [])
       ];
 
@@ -99,10 +109,9 @@ export default function TutorMasterClass() {
           time: `${session.starts_at || 'TBD'} - ${session.ends_at || 'TBD'}`,
           tutor_name: staffName,
           present_count: session.attendances?.length ?? 0,
-          total_students: 20,
+          total_students: session.enrolled_count || 20,
         });
       } else {
-        // Fallback default so popup opens instantly even before list loads
         setFeedbackSession({
           id: feedbackSessionId,
           class_id: feedbackSessionId,
@@ -119,7 +128,6 @@ export default function TutorMasterClass() {
 
       setFeedbackModalOpen(true);
       
-      // Clean up URL and state
       if (location.search || location.state?.promptPostClassReport) {
         navigate(location.pathname, { replace: true, state: {} });
       }
@@ -130,306 +138,807 @@ export default function TutorMasterClass() {
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     const d = new Date(dateStr);
-    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const formatDayName = (dateStr) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { weekday: "short" });
   };
 
   const formatTime = (timeStr) => {
     if (!timeStr) return "";
     const [h, m] = timeStr.split(":");
-    const hour = parseInt(h);
+    const hour = parseInt(h, 10);
     const ampm = hour >= 12 ? "pm" : "am";
     const h12 = hour % 12 || 12;
     return `${h12}:${m}${ampm}`;
   };
 
   const getInitials = (title) => {
-    if (!title) return "ME";
+    if (!title) return "MC";
     return title.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   };
 
-  // --- SEARCH FILTERING ---
-  const filteredData = useMemo(() => {
-    if (!searchQuery) return scheduleData;
-    
-    const filterFn = (s) => (
-      s.session_date?.includes(searchQuery) ||
-      s.class?.title?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const isPast = (session) => {
+    if (!session || !session.session_date) return false;
+    const now = new Date();
+    const sDate = new Date(session.session_date);
+    const sessionDay = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    return {
-      next_class: scheduleData.next_class && filterFn(scheduleData.next_class) ? scheduleData.next_class : null,
-      today_classes: scheduleData.today_classes.filter(filterFn),
-      week_schedule: Object.entries(scheduleData.week_schedule).reduce((acc, [date, sessions]) => {
-        const matching = sessions.filter(filterFn);
-        if (matching.length > 0) acc[date] = matching;
-        return acc;
-      }, {}),
-      upcoming_sessions: scheduleData.upcoming_sessions.filter(filterFn)
-    };
-  }, [scheduleData, searchQuery]);
+    if (sessionDay < today) return true;
+    if (sessionDay > today) return false;
 
-  // --- ACTIONS ---
-  const handleJoinMeeting = (e) => {
-    e.preventDefault();
-    if (!selectedSession || !selectedSession.class_link) return;
-    
-    const isZoom = selectedSession.class_link.includes("zoom.us") || selectedSession.class_link.includes("zoom");
-    if (isZoom) {
-      setShowJoinOptions(true);
-    } else {
-      window.open(selectedSession.class_link, '_blank');
+    const timeStr = session.ends_at || session.starts_at;
+    if (timeStr) {
+      const parts = timeStr.split(":");
+      const sessionEnd = new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate(), parseInt(parts[0], 10), parseInt(parts[1], 10));
+      if (sessionEnd < now) return true;
     }
+    return false;
   };
 
-  const openModal = (session) => {
+  // --- DERIVED METRICS ---
+  const stats = useMemo(() => {
+    const assignedClassesCount = scheduleData.classes?.length || 0;
+    const upcomingCount = scheduleData.upcoming_sessions?.length || 0;
+    
+    // Total distinct enrolled students across all assigned classes
+    const studentIdSet = new Set();
+    scheduleData.classes?.forEach(c => {
+      if (Array.isArray(c.enrolled_students)) {
+        c.enrolled_students.forEach(s => {
+          if (s.id) studentIdSet.add(s.id);
+        });
+      } else if (c.enrolled_count) {
+        // Fallback to cumulative count
+        for (let i = 0; i < c.enrolled_count; i++) studentIdSet.add(`fallback_${c.id}_${i}`);
+      }
+    });
+    
+    return {
+      classesCount: assignedClassesCount,
+      upcomingCount,
+      studentsCount: studentIdSet.size,
+      nextSession: scheduleData.next_class
+    };
+  }, [scheduleData]);
+
+  // --- FILTERED DATA ---
+  const filteredClasses = useMemo(() => {
+    if (!searchQuery.trim()) return scheduleData.classes || [];
+    const q = searchQuery.toLowerCase();
+    return (scheduleData.classes || []).filter(c => 
+      c.title?.toLowerCase().includes(q) ||
+      c.subject?.name?.toLowerCase().includes(q) ||
+      (Array.isArray(c.subject?.courses) && c.subject.courses.some(cr => cr.title?.toLowerCase().includes(q)))
+    );
+  }, [scheduleData.classes, searchQuery]);
+
+  const flattenedSessions = useMemo(() => {
+    const map = new Map();
+    const add = (s) => {
+      if (!s || !s.id) return;
+      if (!map.has(s.id)) map.set(s.id, s);
+    };
+
+    if (scheduleData.next_class) add(scheduleData.next_class);
+    (scheduleData.today_classes || []).forEach(add);
+    Object.values(scheduleData.week_schedule || {}).flat().forEach(add);
+    (scheduleData.upcoming_sessions || []).forEach(add);
+    (scheduleData.sessions || []).forEach(add);
+
+    return Array.from(map.values()).sort((a, b) => {
+      const dateA = new Date(`${a.session_date}T${a.starts_at || '00:00'}`);
+      const dateB = new Date(`${b.session_date}T${b.starts_at || '00:00'}`);
+      return dateA - dateB;
+    });
+  }, [scheduleData]);
+
+  const filteredSessions = useMemo(() => {
+    let list = flattenedSessions;
+
+    // Timeline tab filters
+    if (timelineFilter === "today") {
+      const todayStr = new Date().toISOString().split("T")[0];
+      list = list.filter(s => s.session_date?.startsWith(todayStr));
+    } else if (timelineFilter === "week") {
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      list = list.filter(s => {
+        const d = new Date(s.session_date);
+        return d >= startOfWeek && d <= endOfWeek;
+      });
+    } else if (timelineFilter === "upcoming") {
+      list = list.filter(s => !isPast(s));
+    } else if (timelineFilter === "past") {
+      list = list.filter(s => isPast(s));
+    }
+
+    // Search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(s => 
+        s.class?.title?.toLowerCase().includes(q) ||
+        s.class?.subject?.name?.toLowerCase().includes(q) ||
+        s.session_date?.includes(q)
+      );
+    }
+
+    return list;
+  }, [flattenedSessions, timelineFilter, searchQuery]);
+
+  // --- ACTIONS ---
+  const handleOpenLaunchModal = (session) => {
     setSelectedSession(session);
     setShowJoinOptions(false);
   };
 
-  // --- UI COMPONENTS ---
-  const SessionRow = ({ session, isNext = false }) => (
-    <div 
-      onClick={() => openModal(session)}
-      className={`flex items-center gap-4 md:gap-8 py-4 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-all px-4 rounded-xl cursor-pointer group ${isNext ? "bg-amber-50/50 hover:bg-amber-50 dark:bg-amber-500/10 dark:hover:bg-amber-500/20" : ""}`}
-    >
-      <div className={`w-10 h-10 rounded-full text-[10px] font-black flex items-center justify-center border border-white dark:border-gray-700 shadow-sm shrink-0 ${isNext ? "bg-amber-500 text-white" : "bg-slate-200 dark:bg-gray-700 text-slate-600 dark:text-gray-300"}`}>
-        {getInitials(session.class?.title)}
-      </div>
-      
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 items-center gap-2 md:gap-4 min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-           {isNext && <span className="text-[10px] font-black bg-amber-500 text-white px-1.5 py-0.5 rounded leading-none">NEXT</span>}
-           <span className="text-[14px] font-bold text-[#374151] dark:text-white truncate" title={session.class?.title}>
-             {session.class?.title || "Master Class"}
-           </span>
-        </div>
-        <span className="text-[13px] font-medium text-slate-500 dark:text-gray-400 md:text-center">
-          {formatDate(session.session_date)}
-        </span>
-        <span className="text-[13px] font-medium text-slate-500 dark:text-gray-400 md:text-center">
-          {formatTime(session.starts_at)}
-        </span>
-        <div className="truncate text-right hidden md:block">
-           {session.class_link ? (
-             <span className="text-[13px] text-blue-400 dark:text-blue-300 font-medium underline underline-offset-4 decoration-dotted">
-               {session.class_link.replace(/^https?:\/\//, '').substring(0, 18) + '...'}
-             </span>
-           ) : (
-             <span className="text-xs text-slate-300 dark:text-gray-600 italic">No link</span>
-           )}
-        </div>
-      </div>
-    </div>
-  );
+  const handleLaunchWebClass = (session) => {
+    if (!session?.id) return;
+    navigate(`/classroom/${session.id}`);
+  };
 
-  const Section = ({ title, sessions, isEmpty = false }) => {
-    if (isEmpty || (Array.isArray(sessions) && sessions.length === 0)) return null;
-    return (
-      <div className="mb-10">
-        <h3 className="text-[11px] font-black text-slate-400 dark:text-gray-500 mb-5 px-4 uppercase tracking-[0.25em]">{title}</h3>
-        <div className="bg-white dark:bg-gray-800 rounded-[32px] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-          {Array.isArray(sessions) ? (
-            sessions.map(s => <SessionRow key={s.id} session={s} />)
-          ) : (
-             Object.entries(sessions).map(([date, dateSessions]) => (
-                <div key={date}>
-                  {dateSessions.map(s => <SessionRow key={s.id} session={s} />)}
-                </div>
-             ))
-          )}
-        </div>
-      </div>
-    );
+  const handleLaunchZoomApp = (session) => {
+    if (!session?.class_link) return;
+    navigate('/staffs/meet/app', {
+      state: {
+        class_link: session.class_link,
+        class_schedule_id: session.id
+      }
+    });
+  };
+
+  const handleOpenReportModal = (session) => {
+    setFeedbackSession({
+      id: session.id,
+      class_id: session.class_id || session.class?.id,
+      class_title: session.class?.title || session.class?.subject?.name || "Masterclass",
+      subject: session.class?.subject?.name || "General Subject",
+      topic: session.class?.title || "Class Session",
+      date: session.session_date ? new Date(session.session_date).toLocaleDateString() : new Date().toLocaleDateString(),
+      time: `${session.starts_at || 'TBD'} - ${session.ends_at || 'TBD'}`,
+      tutor_name: staffName,
+      present_count: session.attendances?.length ?? 0,
+      total_students: session.enrolled_count || 20,
+    });
+    setFeedbackModalOpen(true);
+    setSelectedSession(null);
   };
 
   return (
     <>
-    <StaffDashboardLayout pagetitle="Master Class">
-      {toast && (
-        <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl text-white font-bold text-sm ${toast.type === "success" ? "bg-[#10B981]" : "bg-[#EF4444] animate-bounce"}`}>
-          {toast.message}
-          <button onClick={() => setToast(null)} className="ml-4 hover:opacity-70">×</button>
-        </div>
-      )}
-
-      <div className="p-6 max-w-[1600px] xl:px-10 mx-auto w-full min-h-screen">
-
-        <div className="mb-10 max-w-sm">
-          <div className="relative group">
-            <MagnifyingGlassIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#0F2843] dark:group-focus-within:text-blue-500 transition-colors" />
-            <input
-              type="text"
-              placeholder="Search by date"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-14 pr-6 py-4 border border-gray-200 dark:border-gray-700 rounded-[24px] text-[15px] font-bold text-[#1F2937] dark:text-white focus:ring-4 focus:ring-[#0F2843]/5 dark:focus:ring-blue-500/10 focus:border-[#0F2843] dark:focus:border-blue-500 bg-white dark:bg-gray-800 shadow-sm transition-all"
-            />
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#0F2843] dark:border-blue-500 mx-auto" />
-            <p className="mt-4 text-slate-400 dark:text-gray-500 font-bold">Refining your schedule...</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Next Class - Special Focus */}
-            {filteredData.next_class && (
-              <div className="mb-12">
-                <h3 className="text-[11px] font-black text-amber-500 mb-5 px-4 uppercase tracking-[0.25em]">Next Up</h3>
-                <div className="bg-white dark:bg-gray-800 rounded-[32px] border border-amber-100 dark:border-amber-500/20 shadow-lg shadow-amber-50/20 dark:shadow-none overflow-hidden ring-2 ring-amber-500/10">
-                  <SessionRow session={filteredData.next_class} isNext={true} />
-                </div>
-              </div>
-            )}
-
-            <Section title="Today" sessions={filteredData.today_classes} />
-            <Section title="This Week" sessions={filteredData.week_schedule} />
-            <Section title="Upcoming" sessions={filteredData.upcoming_sessions} />
-
-            {/* Empty State */}
-            {!filteredData.next_class && 
-             filteredData.today_classes.length === 0 && 
-             Object.keys(filteredData.week_schedule).length === 0 && 
-             filteredData.upcoming_sessions.length === 0 && (
-              <div className="text-center py-24 bg-gray-50/50 dark:bg-gray-800/20 rounded-[48px] border-2 border-dashed border-gray-200 dark:border-gray-700 mx-4">
-                <Icon icon="mdi:calendar-blank" className="w-16 h-16 text-gray-200 dark:text-gray-700 mx-auto mb-4" />
-                <p className="text-slate-400 dark:text-gray-500 text-lg font-bold">Your agenda is clear.</p>
-              </div>
-            )}
+      <StaffDashboardLayout pagetitle="Tutor Master Class">
+        {toast && (
+          <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3.5 rounded-2xl shadow-2xl text-white font-bold text-sm flex items-center gap-3 transition-all ${toast.type === "success" ? "bg-emerald-600" : "bg-red-600 animate-bounce"}`}>
+            <Icon icon={toast.type === "success" ? "lucide:check-circle" : "lucide:alert-circle"} className="w-5 h-5" />
+            <span>{toast.message}</span>
+            <button onClick={() => setToast(null)} className="ml-3 hover:opacity-75 font-black text-lg">×</button>
           </div>
         )}
-      </div>
 
-      {/* Details Modal */}
-      {selectedSession && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm" onClick={() => setSelectedSession(null)} />
-          <div className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[32px] p-8 md:p-10 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="text-2xl font-black text-[#0F2843] dark:text-white mb-8">Details</h2>
-            
-            <div className="space-y-6">
-              <div className="bg-slate-50 dark:bg-gray-900/50 rounded-2xl p-4 border border-slate-100 dark:border-gray-700">
-                <p className="text-[15px] font-bold text-slate-700 dark:text-gray-300">
-                  {staffRole} - {staffName}
+        <div className="p-4 sm:p-6 lg:p-10 max-w-[1600px] mx-auto w-full space-y-8 min-h-screen">
+          
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* 1. HERO & METRIC BANNER                                             */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          <div className="relative overflow-hidden rounded-[32px] sm:rounded-[40px] bg-gradient-to-br from-[#07243B] via-[#09314F] to-[#0A3D63] text-white p-6 sm:p-8 lg:p-10 shadow-2xl border border-white/10">
+            {/* Ambient background glow & grid lines */}
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#C5A97A]/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-black uppercase tracking-widest text-[#C5A97A]">
+                  <SparklesIcon className="w-3.5 h-3.5" />
+                  <span>Tutor Masterclass Hub</span>
+                </div>
+                <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
+                  Welcome back, <span className="text-[#C5A97A]">{staffName}</span>
+                </h1>
+                <p className="text-slate-300 text-xs sm:text-sm font-medium max-w-2xl leading-relaxed">
+                  Manage your assigned live cohorts, launch upcoming classroom sessions, track enrolled student attendance, and submit post-class performance reports.
                 </p>
               </div>
 
-              <div className="flex items-center gap-4 text-slate-600 dark:text-gray-300">
-                <CalendarIcon className="w-5 h-5 shrink-0 text-slate-400 dark:text-gray-500" />
-                <span className="text-[14px] font-bold uppercase tracking-tight">
-                  {new Date(selectedSession.session_date).toLocaleDateString("en-US", { weekday: 'short' })}, {formatDate(selectedSession.session_date)} / {formatTime(selectedSession.starts_at).toUpperCase()}
-                </span>
+              <div className="flex items-center gap-3 self-start lg:self-center shrink-0">
+                <button
+                  onClick={fetchSessions}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
+                  title="Refresh Schedule"
+                >
+                  <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin text-[#C5A97A]' : ''}`} />
+                  <span>{loading ? "Refreshing..." : "Refresh"}</span>
+                </button>
+                <button
+                  onClick={() => navigate('/staffs/tutor/calendar')}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#C5A97A] hover:bg-[#b09262] active:scale-95 text-[#09314F] font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-[#C5A97A]/20"
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  <span>Center Calendar</span>
+                </button>
+              </div>
+            </div>
+
+            {/* KPI STATS ROW */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-8 pt-6 border-t border-white/10">
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-300">
+                  <span className="text-[11px] font-black uppercase tracking-wider">My Classes</span>
+                  <AcademicCapIcon className="w-4 h-4 text-[#C5A97A]" />
+                </div>
+                <div className="mt-2">
+                  <span className="text-2xl sm:text-3xl font-black text-white">{stats.classesCount}</span>
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-tight">Active Cohorts</span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-4 text-slate-600 dark:text-gray-300">
-                <div className="w-5 h-5 bg-[#C5A97A] rounded shrink-0" />
-                <span className="text-[14px] font-bold">
-                  {selectedSession.class?.title}
-                </span>
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-300">
+                  <span className="text-[11px] font-black uppercase tracking-wider">Upcoming</span>
+                  <ClockIcon className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="mt-2">
+                  <span className="text-2xl sm:text-3xl font-black text-white">{stats.upcomingCount}</span>
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-tight">Scheduled Sessions</span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-4 text-blue-500 dark:text-blue-300">
-                <LinkIcon className="w-5 h-5 text-blue-400 dark:text-blue-500 shrink-0" />
-                {showJoinOptions ? (
-                  <div className="flex flex-col gap-2 w-full pr-4">
-                    <button 
-                      onClick={() => {
-                        if (selectedSession?.id) navigate(`/classroom/${selectedSession.id}`);
-                      }}
-                      className="w-full py-2 bg-[#09314F] hover:bg-[#1a4a75] text-white font-bold text-xs rounded-xl shadow-sm transition-all"
-                    >
-                      Join on Web
-                    </button>
-                    <button 
-                      onClick={() => {
-                        if (selectedSession?.class_link) {
-                          navigate('/staffs/meet/app', {
-                            state: {
-                              class_link: selectedSession.class_link,
-                              class_schedule_id: selectedSession.id
-                            }
-                          });
-                        }
-                      }}
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
-                    >
-                      Join via Zoom App
-                    </button>
-                  </div>
-                ) : (
-                  <button 
-                    onClick={handleJoinMeeting}
-                    className="text-[14px] font-medium underline underline-offset-4 decoration-dotted truncate text-left focus:outline-none"
-                  >
-                    {selectedSession.class_link ? (selectedSession.class_link.includes("zoom") ? "Join Zoom Class Room" : "Open Google Meet") : "No link assigned"}
-                  </button>
-                )}
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-300">
+                  <span className="text-[11px] font-black uppercase tracking-wider">Students</span>
+                  <UserGroupIcon className="w-4 h-4 text-blue-400" />
+                </div>
+                <div className="mt-2">
+                  <span className="text-2xl sm:text-3xl font-black text-white">{stats.studentsCount}</span>
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-tight">Enrolled in Cohorts</span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <VideoCameraIcon className="w-5 h-5 text-slate-400 dark:text-gray-500 shrink-0" />
-                <div className="flex-1">
-                  {selectedSession.recording_link ? (
-                    <a 
-                      href={selectedSession.recording_link} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="text-[14px] font-bold text-green-500 dark:text-green-400 underline underline-offset-4 decoration-dotted truncate"
-                    >
-                      Watch Recording
-                    </a>
-                  ) : (
-                    <span className="text-[14px] font-medium text-slate-300 dark:text-gray-600 italic">No recording available</span>
-                  )}
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-300">
+                  <span className="text-[11px] font-black uppercase tracking-wider">Next Live Class</span>
+                  <VideoCameraIcon className="w-4 h-4 text-amber-400" />
+                </div>
+                <div className="mt-2 truncate">
+                  <span className="text-sm sm:text-base font-black text-[#C5A97A] truncate block">
+                    {stats.nextSession ? (stats.nextSession.class?.title || "Upcoming Session") : "None Pending"}
+                  </span>
+                  <span className="text-[10px] text-slate-300 font-bold block truncate">
+                    {stats.nextSession ? `${formatDayName(stats.nextSession.session_date)}, ${formatTime(stats.nextSession.starts_at)}` : "All sessions clear"}
+                  </span>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="mt-8 space-y-3">
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* 2. NEXT UP / LIVE NOW SPOTLIGHT CARD                               */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {scheduleData.next_class && (
+            <div className="relative rounded-[32px] p-6 sm:p-8 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-500/15 dark:to-transparent border-2 border-amber-500/30 dark:border-amber-500/40 shadow-xl overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-white text-[10px] font-black tracking-widest uppercase animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                      Next Up on Your Agenda
+                    </span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-gray-400">
+                      {formatDayName(scheduleData.next_class.session_date)}, {formatDate(scheduleData.next_class.session_date)}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black text-[#0F2843] dark:text-white flex items-center gap-3">
+                      <span>{scheduleData.next_class.class?.title || "Live Masterclass Session"}</span>
+                    </h2>
+                    <p className="text-sm font-semibold text-[#C5A97A] mt-0.5">
+                      Subject: {scheduleData.next_class.class?.subject?.name || "General"} • {formatTime(scheduleData.next_class.starts_at)} - {formatTime(scheduleData.next_class.ends_at)}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-gray-300 pt-1">
+                    <span className="flex items-center gap-1 font-bold bg-white dark:bg-gray-800 px-3 py-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                      <UserGroupIcon className="w-4 h-4 text-blue-500" />
+                      {scheduleData.next_class.enrolled_count ?? scheduleData.next_class.class?.enrolled_count ?? 0} Students Enrolled
+                    </span>
+                    {scheduleData.next_class.class_link && (
+                      <span className="flex items-center gap-1 font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                        <Icon icon="lucide:video" className="w-4 h-4" />
+                        Meeting Room Configured
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Direct Action Launcher */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
+                  <button
+                    onClick={() => handleOpenLaunchModal(scheduleData.next_class)}
+                    className="w-full sm:w-auto px-6 py-3.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-[#09314F]/20 flex items-center justify-center gap-2 transition-all"
+                  >
+                    <Icon icon="lucide:play-circle" className="w-4 h-4 text-[#C5A97A]" />
+                    <span>Launch Session</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenReportModal(scheduleData.next_class)}
+                    className="w-full sm:w-auto px-5 py-3.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    <Icon icon="lucide:clipboard-check" className="w-4 h-4" />
+                    <span>Submit Report</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* 3. VIEW CONTROLS & SEARCH BAR                                      */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
+            
+            {/* Dual Tabs: My Classes vs Sessions Timeline */}
+            <div className="flex items-center p-1.5 bg-gray-100 dark:bg-gray-800/90 rounded-2xl border border-gray-200 dark:border-gray-700 w-full sm:w-auto self-start">
               <button
-                onClick={() => {
-                  setFeedbackSession({
-                    id: selectedSession.id,
-                    class_id: selectedSession.class_id,
-                    class_title: selectedSession.class?.title || selectedSession.class?.subject?.name || "Masterclass",
-                    subject: selectedSession.class?.subject?.name || "General Subject",
-                    topic: selectedSession.class?.title || "Topic Lesson",
-                    date: selectedSession.session_date ? new Date(selectedSession.session_date).toLocaleDateString() : new Date().toLocaleDateString(),
-                    time: `${selectedSession.starts_at || 'TBD'} - ${selectedSession.ends_at || 'TBD'}`,
-                    tutor_name: staffName,
-                    present_count: selectedSession.attendances?.length ?? 15,
-                    total_students: 20,
-                  });
-                  setFeedbackModalOpen(true);
-                  setSelectedSession(null);
-                }}
-                className="w-full py-3.5 bg-[#C5A97A] hover:bg-[#b5996a] text-[#09314F] font-black rounded-2xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                onClick={() => setActiveTab("classes")}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === "classes" ? "bg-white dark:bg-gray-700 text-[#09314F] dark:text-white shadow-md" : "text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white"}`}
               >
-                <Icon icon="lucide:clipboard-check" className="w-4 h-4" />
-                <span>Submit Post-Class Tutor Report</span>
+                <AcademicCapIcon className="w-4 h-4" />
+                <span>My Masterclasses ({scheduleData.classes?.length || 0})</span>
               </button>
-
-              <button 
-                onClick={() => setSelectedSession(null)}
-                className="w-full py-3.5 bg-[#0F2843] dark:bg-blue-600 text-white font-bold rounded-2xl hover:bg-[#1a3d5c] dark:hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-slate-200 dark:shadow-none uppercase text-[11px] tracking-widest"
+              <button
+                onClick={() => setActiveTab("timeline")}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === "timeline" ? "bg-white dark:bg-gray-700 text-[#09314F] dark:text-white shadow-md" : "text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white"}`}
               >
-                Close
+                <CalendarIcon className="w-4 h-4" />
+                <span>Sessions Timeline ({flattenedSessions.length})</span>
               </button>
             </div>
+
+            {/* Instant Search Filter */}
+            <div className="relative w-full md:w-80">
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder={activeTab === "classes" ? "Search classes or subjects..." : "Search by class, subject, date..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#09314F] dark:focus:ring-[#C5A97A] shadow-sm transition-all placeholder:text-gray-400"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-black"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* 4. TAB 1: MY MASTERCLASSES (CARD GRID)                              */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === "classes" && (
+            <div className="space-y-6">
+              {loading ? (
+                <div className="text-center py-20 bg-white dark:bg-gray-800/40 rounded-[32px] border border-gray-100 dark:border-gray-700/60">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#09314F] dark:border-[#C5A97A] mx-auto" />
+                  <p className="mt-4 text-slate-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest">
+                    Loading your assigned classes...
+                  </p>
+                </div>
+              ) : filteredClasses.length === 0 ? (
+                <div className="text-center py-20 bg-white dark:bg-gray-800/40 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 p-8">
+                  <AcademicCapIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <h3 className="text-base font-black text-gray-700 dark:text-gray-200">
+                    {searchQuery ? "No matching classes found" : "No Masterclasses Assigned Yet"}
+                  </h3>
+                  <p className="text-xs text-gray-400 max-w-md mx-auto mt-1">
+                    {searchQuery ? "Try clearing your search filter to see all your assigned cohorts." : "You do not have any active masterclasses assigned to your tutor account by the administrator."}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredClasses.map((cls) => {
+                    const enrolledCount = cls.enrolled_count ?? (Array.isArray(cls.enrolled_students) ? cls.enrolled_students.length : 0);
+                    const courseTitles = Array.isArray(cls.subject?.courses) ? cls.subject.courses.map(c => c.title).join(", ") : null;
+                    const schedulesList = Array.isArray(cls.schedules) ? cls.schedules : [];
+                    
+                    return (
+                      <div
+                        key={cls.id}
+                        className="group bg-white dark:bg-gray-800 rounded-[30px] p-6 border border-gray-100 dark:border-gray-700/80 shadow-sm hover:shadow-xl hover:border-[#C5A97A]/40 dark:hover:border-[#C5A97A]/40 transition-all duration-300 flex flex-col justify-between"
+                      >
+                        <div className="space-y-4">
+                          {/* Card Header Badges */}
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="px-3 py-1 rounded-xl bg-[#09314F]/10 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] text-[10px] font-black uppercase tracking-wider">
+                              {cls.subject?.name || "Subject Cohort"}
+                            </span>
+                            <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-gray-400">
+                              <UserGroupIcon className="w-3.5 h-3.5 text-blue-500" />
+                              <span>{enrolledCount} enrolled</span>
+                            </span>
+                          </div>
+
+                          {/* Title */}
+                          <div>
+                            <h3 className="text-lg font-black text-[#0F2843] dark:text-white group-hover:text-[#09314F] dark:group-hover:text-[#C5A97A] transition-colors line-clamp-1">
+                              {cls.title}
+                            </h3>
+                            {courseTitles && (
+                              <p className="text-[11px] font-semibold text-slate-400 dark:text-gray-400 truncate mt-0.5">
+                                Program: {courseTitles}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Timetable / Recurring Schedules */}
+                          <div className="space-y-1.5 pt-2">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest block">
+                              Weekly Timetable
+                            </span>
+                            {schedulesList.length === 0 ? (
+                              <span className="text-xs text-gray-400 italic">Schedule to be announced</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-1.5">
+                                {schedulesList.map((sched, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-gray-700/60 border border-gray-100 dark:border-gray-600 text-[11px] font-bold text-slate-700 dark:text-gray-300"
+                                  >
+                                    <ClockIcon className="w-3 h-3 text-[#C5A97A]" />
+                                    <span>{sched.day_of_week}: {formatTime(sched.start_time)} - {formatTime(sched.end_time)}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Co-Staff / Tutors Assigned */}
+                          {Array.isArray(cls.staffs) && cls.staffs.length > 1 && (
+                            <div className="pt-2 flex items-center gap-2">
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Co-Tutors:</span>
+                              <div className="flex -space-x-2 overflow-hidden">
+                                {cls.staffs.filter(s => s.id !== staffName).map((st) => (
+                                  <div
+                                    key={st.id}
+                                    title={`${st.firstname} ${st.surname} (${st.pivot?.role || 'tutor'})`}
+                                    className="w-6 h-6 rounded-full bg-slate-200 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center text-[9px] font-black text-slate-600 dark:text-gray-300"
+                                  >
+                                    {st.firstname?.[0]}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Card Actions */}
+                        <div className="pt-6 mt-6 border-t border-gray-100 dark:border-gray-700/80 flex items-center gap-3">
+                          <button
+                            onClick={() => {
+                              setActiveTab("timeline");
+                              setSearchQuery(cls.title);
+                            }}
+                            className="flex-1 py-2.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/60 dark:hover:bg-gray-700 active:scale-95 text-[#09314F] dark:text-white font-black text-xs rounded-xl transition-all text-center flex items-center justify-center gap-1.5"
+                          >
+                            <CalendarIcon className="w-3.5 h-3.5" />
+                            <span>View Sessions</span>
+                          </button>
+
+                          {cls.zoom_start_url || cls.zoom_join_url ? (
+                            <a
+                              href={cls.zoom_start_url || cls.zoom_join_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-4 py-2.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 shadow-sm"
+                              title="Direct Zoom Link"
+                            >
+                              <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                              <span>Room</span>
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* 5. TAB 2: TIMELINE & SESSIONS                                      */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === "timeline" && (
+            <div className="space-y-6">
+              {/* Timeline Filter Pills */}
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { id: "all", label: "All Sessions" },
+                  { id: "today", label: "Today" },
+                  { id: "week", label: "This Week" },
+                  { id: "upcoming", label: "Upcoming" },
+                  { id: "past", label: "Past / Completed" }
+                ].map((flt) => {
+                  const isActive = timelineFilter === flt.id;
+                  return (
+                    <button
+                      key={flt.id}
+                      onClick={() => setTimelineFilter(flt.id)}
+                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 ${isActive ? "bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] shadow-sm" : "bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700"}`}
+                    >
+                      {flt.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Sessions Table / List */}
+              {loading ? (
+                <div className="text-center py-20 bg-white dark:bg-gray-800/40 rounded-[32px] border border-gray-100 dark:border-gray-700/60">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#09314F] dark:border-[#C5A97A] mx-auto" />
+                  <p className="mt-4 text-slate-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest">
+                    Loading sessions timeline...
+                  </p>
+                </div>
+              ) : filteredSessions.length === 0 ? (
+                <div className="text-center py-20 bg-white dark:bg-gray-800/40 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 p-8">
+                  <CalendarIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <h3 className="text-base font-black text-gray-700 dark:text-gray-200">
+                    No sessions match this filter
+                  </h3>
+                  <p className="text-xs text-gray-400 max-w-md mx-auto mt-1">
+                    Try choosing a different timeline pill or clearing your search keywords.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-gray-800 rounded-[32px] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/80">
+                  {filteredSessions.map((session) => {
+                    const sessionIsPast = isPast(session);
+                    const isNext = scheduleData.next_class && String(scheduleData.next_class.id) === String(session.id);
+                    
+                    return (
+                      <div
+                        key={session.id}
+                        className={`p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:bg-gray-50/70 dark:hover:bg-gray-700/40 ${isNext ? "bg-amber-500/5 dark:bg-amber-500/10 border-l-4 border-l-amber-500" : ""}`}
+                      >
+                        {/* Left Side: Avatar + Details */}
+                        <div className="flex items-start sm:items-center gap-4 min-w-0">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 shadow-sm ${isNext ? "bg-amber-500 text-white shadow-amber-500/20" : sessionIsPast ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500" : "bg-[#09314F] text-white"}`}>
+                            {getInitials(session.class?.title || session.title)}
+                          </div>
+
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {isNext && (
+                                <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest">
+                                  Next Up
+                                </span>
+                              )}
+                              <span className="px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider">
+                                {session.class?.subject?.name || "Subject"}
+                              </span>
+                              <span className="text-[11px] font-bold text-slate-400">
+                                {formatDayName(session.session_date)}, {formatDate(session.session_date)}
+                              </span>
+                            </div>
+
+                            <h4 className="text-base font-black text-[#0F2843] dark:text-white truncate">
+                              {session.class?.title || session.title || "Class Session"}
+                            </h4>
+
+                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-gray-400">
+                              <span className="flex items-center gap-1 font-bold">
+                                <ClockIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                                {formatTime(session.starts_at)} - {formatTime(session.ends_at)}
+                              </span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1 font-bold">
+                                <UserGroupIcon className="w-3.5 h-3.5 text-blue-500" />
+                                {session.enrolled_count ?? session.class?.enrolled_count ?? 0} students
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right Side: Meeting Link / Actions */}
+                        <div className="flex items-center gap-2 self-end md:self-center shrink-0 pt-2 md:pt-0">
+                          <button
+                            onClick={() => handleOpenLaunchModal(session)}
+                            className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-[#09314F] dark:text-white font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+                          >
+                            <Icon icon="lucide:info" className="w-4 h-4" />
+                            <span>Details</span>
+                          </button>
+
+                          {session.recording_link && (
+                            <a
+                              href={session.recording_link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-3.5 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold text-xs hover:bg-emerald-100 transition-all flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800"
+                            >
+                              <VideoCameraIcon className="w-4 h-4" />
+                              <span>Recording</span>
+                            </a>
+                          )}
+
+                          <button
+                            onClick={() => handleOpenReportModal(session)}
+                            className="px-4 py-2.5 rounded-xl bg-[#C5A97A] hover:bg-[#b09262] text-[#09314F] font-black text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5"
+                            title="Submit Post-Class Tutor Report"
+                          >
+                            <Icon icon="lucide:clipboard-check" className="w-4 h-4" />
+                            <span>Report</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
-      )}
-    </StaffDashboardLayout>
-    <TutorPostClassReportModal 
-      isOpen={feedbackModalOpen}
-      onClose={() => setFeedbackModalOpen(false)}
-      sessionDetails={feedbackSession}
-      onSubmitSuccess={() => {
-        setToast({ type: "success", message: "Post-Class Tutor Report submitted successfully!" });
-      }}
-    />
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* 6. CLASS SESSION DETAILS / QUICK LAUNCH MODAL                      */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {selectedSession && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <div 
+              className="absolute inset-0 bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm animate-in fade-in duration-200" 
+              onClick={() => setSelectedSession(null)} 
+            />
+            
+            <div className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[36px] p-6 sm:p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 space-y-6">
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-4">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#C5A97A]">Session Overview</span>
+                  <h2 className="text-xl sm:text-2xl font-black text-[#0F2843] dark:text-white">Class Details</h2>
+                </div>
+                <button
+                  onClick={() => setSelectedSession(null)}
+                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center font-bold text-gray-500 dark:text-gray-300 text-sm transition-all"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="bg-slate-50 dark:bg-gray-900/60 rounded-2xl p-4 border border-slate-100 dark:border-gray-700/60 space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Class & Subject</span>
+                  <h3 className="text-base font-black text-[#0F2843] dark:text-white">
+                    {selectedSession.class?.title || selectedSession.title}
+                  </h3>
+                  <p className="text-xs font-bold text-[#C5A97A]">
+                    Subject: {selectedSession.class?.subject?.name || "General Subject"}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Session Date</span>
+                    <span className="font-bold text-slate-700 dark:text-gray-200 mt-1 block">
+                      {formatDayName(selectedSession.session_date)}, {formatDate(selectedSession.session_date)}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Time Range</span>
+                    <span className="font-bold text-slate-700 dark:text-gray-200 mt-1 block">
+                      {formatTime(selectedSession.starts_at)} - {formatTime(selectedSession.ends_at)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Meeting Link & Launcher Options */}
+                <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                      <LinkIcon className="w-4 h-4" />
+                      Classroom Meeting Room
+                    </span>
+                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                      {selectedSession.class_link ? "Configured" : "Pending link"}
+                    </span>
+                  </div>
+
+                  {showJoinOptions ? (
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <button 
+                        onClick={() => handleLaunchWebClass(selectedSession)}
+                        className="py-2.5 bg-[#09314F] hover:bg-[#15466f] text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+                      >
+                        Join on Web
+                      </button>
+                      <button 
+                        onClick={() => handleLaunchZoomApp(selectedSession)}
+                        className="py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+                      >
+                        Join via Zoom App
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs text-slate-600 dark:text-gray-300 truncate max-w-[240px]">
+                        {selectedSession.class_link ? selectedSession.class_link.replace(/^https?:\/\//, '').substring(0, 30) + '...' : "No link assigned"}
+                      </span>
+                      {selectedSession.class_link && (
+                        <button
+                          onClick={() => setShowJoinOptions(true)}
+                          className="text-xs font-black text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          Options ›
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {selectedSession.recording_link && (
+                  <div className="flex items-center justify-between p-3.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-100 dark:border-emerald-900/50">
+                    <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                      <VideoCameraIcon className="w-4 h-4" />
+                      Past Recording Available
+                    </span>
+                    <a
+                      href={selectedSession.recording_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-black text-emerald-600 dark:text-emerald-400 hover:underline"
+                    >
+                      Watch Now ↗
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Bottom Actions */}
+              <div className="pt-2 space-y-2">
+                <button
+                  onClick={() => handleOpenReportModal(selectedSession)}
+                  className="w-full py-3.5 bg-[#C5A97A] hover:bg-[#b09262] text-[#09314F] font-black rounded-2xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                >
+                  <Icon icon="lucide:clipboard-check" className="w-4 h-4" />
+                  <span>Submit Post-Class Tutor Report</span>
+                </button>
+
+                <button 
+                  onClick={() => setSelectedSession(null)}
+                  className="w-full py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-white font-bold rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-wider"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </StaffDashboardLayout>
+
+      {/* Post-Class Tutor Report Modal Integration */}
+      <TutorPostClassReportModal 
+        isOpen={feedbackModalOpen}
+        onClose={() => setFeedbackModalOpen(false)}
+        sessionDetails={feedbackSession}
+        onSubmitSuccess={() => {
+          setToast({ type: "success", message: "Post-Class Tutor Report submitted successfully!" });
+        }}
+      />
     </>
   );
 }

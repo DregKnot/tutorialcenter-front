@@ -4,6 +4,7 @@ import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { updateStudentData } from "./studentStorageHelper";
 
 export default function StudentPhoneVerification() {
   const navigate = useNavigate(); // Initializing navigation
@@ -136,10 +137,14 @@ export default function StudentPhoneVerification() {
       if (response.status === 200) {
         setToast({ type: "success", message: response?.data?.message || "Phone number verified successfully!" });
         setMsg(<span className="text-green-500">{response.data.message}</span>);
-        localStorage.setItem("studentTel", tel); // Store phone number for later steps
+        updateStudentData({
+          tel: tel,
+          tel_verified: true,
+        });
+        localStorage.setItem("studentTel", tel);
         setTimeout(() => {
           navigate("/register/student/training/selection");
-        }, 2000);
+        }, 1500);
       }
     } catch (error) {
       console.error("Verification error:", error.response?.data || error);
