@@ -4,6 +4,7 @@ import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { updateStudentData } from "./studentStorageHelper";
 
 export default function StudentEmailVerification() {
   const navigate = useNavigate();
@@ -152,9 +153,14 @@ export default function StudentEmailVerification() {
 
       if (response.status === 200) {
         setToast({ type: "success", message: "Email verified successfully!" });
+        updateStudentData({
+          email: email,
+          email_verified: true,
+        });
+        localStorage.setItem("studentEmail", email);
         setTimeout(() => {
           navigate("/register/student/training/selection");
-        }, 2000);
+        }, 1500);
       }
     } catch (error) {
       console.error("Verification error:", error.response?.data || error);

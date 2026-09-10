@@ -3,28 +3,27 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import signup_img from "../../../assets/images/Student_sign_up.webp";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 import Paystack from "../../../components/Paystack";
+import { getStudentData } from "./studentStorageHelper";
+
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
 export const StudentTrainingPayment = () => {
   const navigate = useNavigate();
 
   const [studentData, setStudentData] = useState(null);
   const [selectedDurations, setSelectedDurations] = useState({});
-  const [selectedGateway, setSelectedGateway] = useState(null);
-  const [gateway, setGateway] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  // Base URL for API, using environment variable with fallback
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
-    
   /* ================= INIT ================= */
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("studentdata"));
+    const stored = getStudentData();
 
-    if (!stored?.data || !stored?.selectedDurations) {
-      navigate("/register/student");
+    if (!stored?.data || !stored?.selectedDurations || Object.keys(stored.selectedDurations).length === 0) {
+      navigate("/register/student/training/selection");
       return;
     }
 
@@ -41,33 +40,18 @@ export const StudentTrainingPayment = () => {
 
   /* ================= EMAIL ================= */
   const payerEmail = useMemo(() => {
-    // If student has an email, use it. Otherwise, use phone number as a identifier for Paystack.
-    // Paystack requires a valid email format, so we append a dummy domain if it's a phone.
-    const email = studentData?.data?.email;
-    const tel = studentData?.data?.tel;
-    
-    if (email) return email;
-    if (tel) return `${tel}@tutorialcenter.gmail.com`;
-    
-    return "codewithpidgin@gmail.com";
+    const email = studentData?.email || studentData?.data?.email;
+    const tel = studentData?.tel || studentData?.data?.tel;
+
+    if (email && email.includes("@")) return email;
+    if (tel) return `${tel.replace(/\D/g, "")}@student.tutorialcenter.ng`;
+
+    return "student@tutorialcenter.ng";
   }, [studentData]);
-
-  /* ================= MODAL ================= */
-  const openGateway = (selected) => {
-    setGateway(selected);
-    setShowModal(true);
-  };
-
-  const closeModal = () => {
-    if (!processing) {
-      setShowModal(false);
-      setGateway(null);
-    }
-  };
 
   /* ================= PAYSTACK METADATA ================= */
   const paystackMetadata = useMemo(() => {
-    const studentId = studentData?.data?.id;
+    const studentId = studentData?.id || studentData?.data?.id;
     const selectedSubjects = studentData?.selectedSubjects || {};
     const referralCode = studentData?.referral_code;
 
@@ -98,190 +82,190 @@ export const StudentTrainingPayment = () => {
         throw new Error("No payment reference returned from Paystack.");
       }
 
-      console.log("Verifying payment with backend for reference:", reference);
-
       await axios.post(`${API_BASE_URL}/api/payments/verify-paystack`, {
         reference: reference,
         fallback_metadata: paystackMetadata,
       });
 
-      // Cleanup
+      // Cleanup temporary transient registration markers
       localStorage.removeItem("studentEmail");
       localStorage.removeItem("studentTel");
+
       navigate("/register/student/training/payment/success");
     } catch (err) {
-      console.error("Unexpected error during verification:", err.response?.data || err);
+      console.error("[StudentTrainingPayment] Verification error:", err.response?.data || err);
       // Even if network blips on frontend, backend webhook handles it automatically
-      alert(err.response?.data?.message || "Payment received! We are setting up your courses.");
       navigate("/register/student/training/payment/success");
     } finally {
       setProcessing(false);
-      closeModal();
+      setShowModal(false);
     }
   };
+
   return (
-    <div className="w-full min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
-      {/* LEFT */}
-      <div className="w-full md:w-1/2 bg-[#F8F9FA] flex flex-col items-center py-8 px-6 lg:px-8 xl:px-[100px] overflow-y-auto pb-32 order-2 md:order-1">
-        
-        {/* LOGO */}
-        <div className="flex justify-center mb-8">
-          <img 
-            src={TC_logo} 
-            alt="Logo" 
-            className="h-20 w-auto object-contain cursor-pointer transition-transform hover:scale-105 active:scale-95" 
-            onClick={() => {
-              if (window.confirm("Returning to the home page will clear your progress. Are you sure?")) {
-                navigate("/");
-              }
-            }}
-          />
-        </div>
-
-        {/* NAV & HEADER */}
-        <div className="w-full max-w-[500px] mb-10 text-center">
-          <div className="flex items-center relative h-12 mb-6 pointer-events-none z-50">
-            <button
-              onClick={() => navigate("/register/student/training/duration")}
-              className="fixed top-6 left-6 md:absolute md:left-0 p-3 bg-white hover:bg-gray-50 rounded-2xl shadow-md md:shadow-sm transition-all active:scale-90 border border-gray-100 md:border-none pointer-events-auto"
-            >
-              <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
-            </button>
-            <div className="w-full flex justify-center">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#09314F]">
-                Payment Method
-              </h1>
-            </div>
-          </div>
-        </div>
-
-        {/* Card Container */}
-        <div className="w-full max-w-[500px] bg-white rounded-[8px] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-100 mb-8 p-8 md:p-10 flex flex-col">
-          
-          <p className="text-[#888888] font-medium text-sm mb-8 text-center">
-            Select a preferred method of payment
-          </p>
-
-          <div className="flex flex-col space-y-4 mb-10">
-            {["Paystack"].map((item) => {
-              const isSelected = selectedGateway === item;
-              return (
-                <button
-                  key={item}
-                  onClick={() => setSelectedGateway(item)}
-                  className={`w-full flex items-center justify-between px-6 py-4 rounded-xl border-2 transition-all duration-200 ${
-                    isSelected
-                      ? "border-[#76D287] bg-green-50"
-                      : "border-gray-200 hover:border-[#09314F] bg-white"
-                  }`}
-                >
-                  <span className={`font-bold text-sm md:text-base ${
-                    isSelected ? "text-[#09314F]" : "text-gray-600"
-                  }`}>
-                    {item}
-                  </span>
-                  <span className={`font-bold text-lg ${
-                    isSelected ? "text-[#76D287]" : "text-[#09314F]"
-                  }`}>
-                    {isSelected ? "✓" : "›"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={() => {
-              if (!selectedGateway) {
-                alert("Please select a payment method.");
-                return;
-              }
-              openGateway(selectedGateway);
-            }}
-            className={`w-full py-5 rounded-[12px] font-bold text-lg text-white shadow-xl transition-all hover:-translate-y-0.5 active:scale-[0.98] ${
-              selectedGateway
-                ? "bg-gradient-to-r from-[#09314F] to-[#E83831] hover:shadow-[#E8383144]"
-                : "bg-gray-300 cursor-not-allowed"
-            }`}
-            disabled={!selectedGateway}
-          >
-            Continue = ₦{totalAmount.toLocaleString()}
-          </button>
-        </div>
-
-        {/* Brand */}
-        <div className="mt-auto py-10 opacity-60 grayscale hover:grayscale-0 transition-all cursor-pointer">
-          <img 
-            src={TC_logo} 
-            alt="Tutorial Center" 
-            className="h-10 hover:scale-110 active:scale-95 transition-transform" 
-            onClick={() => {
-              if (window.confirm("Returning to the home page will clear your progress. Are you sure?")) {
-                navigate("/");
-              }
-            }}
-          />
+    <div className="w-full min-h-screen flex flex-col lg:flex-row bg-[#F4F4F4] font-sans selection:bg-[#09314F] selection:text-white">
+      {/* VISUAL IMAGE PANEL */}
+      <div className="w-full lg:w-1/2 h-[200px] sm:h-[260px] lg:h-auto lg:min-h-screen relative order-1 lg:order-2 overflow-hidden shrink-0">
+        <div
+          className="w-full h-full bg-cover bg-center transition-transform duration-700 hover:scale-105"
+          style={{ backgroundImage: `url(${signup_img})` }}
+        >
+          <div className="w-full h-full bg-gradient-to-t from-[#09314F]/80 via-transparent to-black/20 lg:bg-[#09314F]/25 backdrop-blur-[1px]" />
         </div>
       </div>
 
-      {/* RIGHT SIDE: Visual Image */}
-      <div
-        className="w-full h-[250px] md:w-1/2 md:h-full bg-cover bg-center relative bg-gray-300 order-1 md:order-2"
-        style={{ backgroundImage: `url(${signup_img})` }}
-      />
+      {/* INTERACTIVE FORM AREA */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-between px-4 sm:px-8 md:px-12 lg:px-16 py-8 md:py-12 order-2 lg:order-1 overflow-y-auto">
+        <div className="w-full max-w-[min(100%,560px)] mx-auto my-auto flex flex-col">
+          {/* LOGO */}
+          <div className="flex justify-center mb-6 sm:mb-8">
+            <img
+              src={TC_logo}
+              alt="Tutorial Center"
+              className="h-16 sm:h-20 w-auto object-contain cursor-pointer transition-transform hover:scale-105 active:scale-95"
+              onClick={() => {
+                if (window.confirm("Returning to the home page will clear your registration progress. Are you sure?")) {
+                  navigate("/");
+                }
+              }}
+            />
+          </div>
 
-      {/* MODAL */}
+          {/* HEADER BAR */}
+          <div className="relative w-full flex items-center justify-center mb-6">
+            <button
+              type="button"
+              onClick={() => navigate("/register/student/training/duration")}
+              aria-label="Go back to Duration Selection"
+              className="absolute left-0 p-2.5 sm:p-3 bg-white hover:bg-gray-50 text-[#09314F] rounded-2xl shadow-sm border border-gray-200/80 transition-all active:scale-90"
+            >
+              <ChevronLeftIcon className="h-5 w-5 stroke-[2.5]" />
+            </button>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#09314F] tracking-tight text-center px-12">
+              Payment Method
+            </h1>
+          </div>
+
+          <p className="text-gray-500 text-xs sm:text-sm mb-6 text-center max-w-[420px] mx-auto leading-relaxed">
+            Review your registration summary and complete payment securely via Paystack.
+          </p>
+
+          {/* CARD CONTAINER */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_10px_35px_rgba(9,49,79,0.06)] border border-gray-100 mb-8 flex flex-col">
+            {/* GATEWAY OPTION */}
+            <div className="mb-6">
+              <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-3">
+                Payment Gateway
+              </span>
+
+              <div className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-[#09314F] bg-blue-50/40 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-4 rounded-full bg-[#09314F] flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-black text-[#09314F] block">
+                      Paystack Secure Gateway
+                    </span>
+                    <span className="text-[11px] font-semibold text-gray-500">
+                      Debit Cards, Bank Transfer, USSD & Apple Pay
+                    </span>
+                  </div>
+                </div>
+                <ShieldCheckIcon className="h-6 w-6 text-emerald-600" />
+              </div>
+            </div>
+
+            {/* ORDER SUMMARY */}
+            <div className="bg-gray-50 rounded-2xl p-4 sm:p-5 mb-8 border border-gray-100">
+              <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-3">
+                Enrollment Breakdown
+              </span>
+
+              <div className="space-y-2.5 max-h-[160px] overflow-y-auto pr-1">
+                {Object.entries(selectedDurations).map(([cId, dur]) => (
+                  <div key={cId} className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="font-bold text-gray-700 capitalize">
+                      Course #{cId} ({dur.duration})
+                    </span>
+                    <span className="font-mono font-black text-[#09314F]">
+                      ₦{Number(dur.price || 0).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-gray-200/80 flex justify-between items-baseline">
+                <span className="text-xs sm:text-sm font-black text-[#09314F] uppercase tracking-wider">
+                  Total Payable
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-[#09314F] font-mono">
+                  ₦{totalAmount.toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            {/* PAY BUTTON */}
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
+              disabled={totalAmount <= 0}
+              className="w-full py-4 sm:py-4.5 px-6 rounded-2xl font-black text-sm sm:text-base tracking-wide text-white transition-all shadow-lg active:scale-[0.98] bg-gradient-to-r from-[#09314F] via-[#0c4066] to-[#E83831] hover:shadow-[#09314F]/25 hover:brightness-105"
+            >
+              Pay ₦{totalAmount.toLocaleString()} via Paystack
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* PAYSTACK POPUP MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-white w-[90%] max-w-md rounded-xl p-6 relative">
-            <h2 className="text-xl font-bold mb-4">{gateway} Payment</h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 relative shadow-2xl text-center">
+            <h2 className="text-xl font-black text-[#09314F] mb-2">Complete Payment</h2>
+            <p className="text-gray-500 text-xs sm:text-sm mb-6">
+              You will be redirected to Paystack to authorize your transaction.
+            </p>
 
-            <div className="text-2xl font-bold text-center mb-6">
+            <div className="text-3xl font-black text-[#09314F] font-mono mb-8 py-4 bg-gray-50 rounded-2xl border border-gray-100">
               ₦{totalAmount.toLocaleString()}
             </div>
 
-            {gateway === "Paystack" && (
-              <Paystack
-                amount={totalAmount}
-                email={payerEmail}
-                reference={`TC-${Date.now()}-${studentData?.data?.id || 'std'}`}
-                metadata={paystackMetadata}
-                onSuccess={handlePaystackSuccess}
-                onClose={closeModal}
-              />
-            )}
+            <Paystack
+              amount={totalAmount}
+              email={payerEmail}
+              reference={`TC-${Date.now()}-${studentData?.id || "std"}`}
+              metadata={paystackMetadata}
+              onSuccess={handlePaystackSuccess}
+              onClose={() => setShowModal(false)}
+            />
 
             <button
-              onClick={closeModal}
+              type="button"
+              onClick={() => setShowModal(false)}
               disabled={processing}
-              className="mt-4 w-full text-sm text-gray-500"
+              className="mt-4 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors"
             >
-              Cancel
+              Cancel Payment
             </button>
           </div>
         </div>
       )}
 
-      {/* LOADING OVERLAY */}
+      {/* VERIFYING OVERLAY */}
       {processing && (
-        <div className="fixed inset-0 bg-[#09314F]/80 backdrop-blur-sm z-[100] flex items-center justify-center transition-all duration-500">
-           <div className="bg-white p-10 rounded-[32px] shadow-2xl flex flex-col items-center max-w-[400px] text-center mx-4 animate-in zoom-in-95 duration-300">
-              <div className="relative mb-6">
-                <div className="w-20 h-20 border-4 border-gray-100 border-t-[#E83831] rounded-full animate-spin"></div>
-                <div className="absolute inset-x-0 inset-y-0 flex items-center justify-center">
-                   <div className="w-12 h-12 bg-[#09314F] rounded-2xl flex items-center justify-center shadow-lg transform rotate-45 animate-pulse">
-                      <div className="w-6 h-6 bg-white rounded-full -rotate-45"></div>
-                   </div>
-                </div>
-              </div>
-              <h2 className="text-2xl font-black text-[#09314F] mb-3 uppercase tracking-tighter italic">Authenticating Payment</h2>
-              <p className="text-gray-400 font-bold text-sm leading-relaxed">
-                 We are confirming your transaction and setting up your training dashboard.<br/> 
-                 <span className="text-[#E83831] animate-pulse">Please do not refresh this page.</span>
-              </p>
-           </div>
+        <div className="fixed inset-0 bg-[#09314F]/85 backdrop-blur-md z-[300] flex items-center justify-center p-4">
+          <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-2xl flex flex-col items-center max-w-[400px] text-center">
+            <div className="w-16 h-16 border-4 border-gray-100 border-t-[#E83831] rounded-full animate-spin mb-6" />
+            <h2 className="text-xl font-black text-[#09314F] mb-2">Authenticating Payment</h2>
+            <p className="text-gray-500 text-xs sm:text-sm leading-relaxed">
+              We are finalizing your course subscriptions with the learning portal. Please do not refresh.
+            </p>
+          </div>
         </div>
       )}
     </div>
   );
 };
+
+export default StudentTrainingPayment;

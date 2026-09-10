@@ -6,6 +6,7 @@ import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { dropdownTheme } from "../../../utils/dropdownTheme";
 import DateOfBirthPicker from "../../../components/common/DateOfBirthPicker";
+import { updateStudentData } from "./studentStorageHelper";
 import { 
   UserIcon, 
   MapPinIcon, 
@@ -167,8 +168,8 @@ export default function StudentBiodata() {
       const response = await axios.post(`${API_BASE_URL}/api/students/biodata`, formDataToSend, { headers: { 'Content-Type': 'multipart/form-data' } });
       if (response.status === 200 || response.status === 201) {
         setToast({ type: "success", message: response.data.message || "Biodata saved successfully!" });
-        localStorage.setItem('studentdata', JSON.stringify({ data: response.data.student }));
-        setTimeout(() => navigate('/register/student/training/selection'), 2000);
+        updateStudentData({ data: response.data.student });
+        setTimeout(() => navigate('/register/student/training/selection'), 1500);
       }
     } catch (error) {
       console.error("Submit error:", error.response?.data || error);

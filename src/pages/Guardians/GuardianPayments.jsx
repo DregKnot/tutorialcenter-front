@@ -40,7 +40,18 @@ export default function GuardianPayments() {
   const [configuredDuration, setConfiguredDuration] = useState('quarterly');
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
-  const PAYSTACK_KEY = process.env.REACT_APP_PAYSTACK_PUBLIC_KEY || "pk_test_d810e0935d60a336bea860384aabbc753cdd78ff";
+  const isLocalHost = 
+    typeof window !== "undefined" && 
+    (window.location.hostname === "localhost" || 
+     window.location.hostname === "127.0.0.1" || 
+     window.location.hostname.endsWith(".test") ||
+     process.env.NODE_ENV === "development");
+
+  const PAYSTACK_KEY = 
+    process.env.REACT_APP_PAYSTACK_PUBLIC_KEY || 
+    (isLocalHost 
+      ? "pk_test_d810e0935d60a336bea860384aabbc753cdd78ff" 
+      : "pk_live_f1017d3c645e69b33b1f8cc538b306088b655244");
 
   // Standard Academic Billing Cycles & Durations (Monthly, Quarterly, Semi-Annually, Annually)
   const DURATION_PLANS = {

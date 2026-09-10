@@ -6,6 +6,7 @@ import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { dropdownTheme } from "../../../utils/dropdownTheme";
 import DateOfBirthPicker from "../../../components/common/DateOfBirthPicker";
+import { updateStudentData } from "./studentStorageHelper";
 import { 
   EyeIcon, 
   EyeSlashIcon, 
@@ -195,12 +196,12 @@ export default function StudentRegistration() {
 
       if (registerRes.status === 200 || registerRes.status === 201) {
         if (registerRes.data?.student) {
-          const studentStorage = { data: registerRes.data.student };
-          // Save referral code to localStorage (not sent to backend registration)
-          if (formData.referral_code.trim()) {
-            studentStorage.referral_code = formData.referral_code.trim();
-          }
-          localStorage.setItem('studentdata', JSON.stringify(studentStorage));
+          updateStudentData({
+            data: registerRes.data.student,
+            referral_code: formData.referral_code.trim(),
+          });
+          localStorage.setItem("studentEmail", formData.email);
+          localStorage.setItem("studentTel", formData.tel);
         }
         setToast({ type: "success", message: "Registration Successful!" });
         setShowModal(true);

@@ -167,6 +167,16 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
     }
   }, [editClass, selectedCourse, selectedSubject]);
 
+  const extractStaffNumericId = (s) => {
+    if (!s) return null;
+    if (typeof s === "number") return s;
+    if (typeof s === "string" && !isNaN(Number(s))) return Number(s);
+    if (s.id && !isNaN(Number(s.id))) return Number(s.id);
+    if (s.staff && s.staff.id && !isNaN(Number(s.staff.id))) return Number(s.staff.id);
+    if (s.pivot && s.pivot.staff_id && !isNaN(Number(s.pivot.staff_id))) return Number(s.pivot.staff_id);
+    return null;
+  };
+
   // Pre-fill existing data when editing a Master Class
   useEffect(() => {
     if (editClass) {
@@ -178,24 +188,83 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         : (editClass.schedules?.[0]?.end_date ? editClass.schedules[0].end_date.substring(0, 10) : "");
       
       const subjectObj = editClass.subject;
-      const courseId = subjectObj?.course_id?.[0] || editClass.course_id || "";
+
+      // 1. Resolve Course: from subject.courses, editClass.course_id, or infer from title prefix (e.g. "GCE - English")
+      let courseObj = subjectObj?.courses?.[0] || editClass.course || null;
+      if (!courseObj && courses.length > 0) {
+        if (editClass.course_id) {
+          courseObj = courses.find(c => c.id === editClass.course_id);
+        }
+        if (!courseObj && editClass.title && editClass.title.includes(" - ")) {
+          const prefix = editClass.title.split(" - ")[0].trim().toLowerCase();
+          courseObj = courses.find(c => 
+            (c.title || "").toLowerCase() === prefix || 
+            (c.name || "").toLowerCase() === prefix
+          );
+        }
+      }
+
+      const resolvedCourseId = courseObj?.id || editClass.course_id || "";
+      if (courseObj) {
+        setSelectedCourse(courseObj);
+        setCourseSearch(courseObj.title || courseObj.name || "");
+      } else if (editClass.title && editClass.title.includes(" - ")) {
+        setCourseSearch(editClass.title.split(" - ")[0].trim());
+      }
+
+      // 2. Resolve Subject
+      const resolvedSubjectId = editClass.subject_id || subjectObj?.id || "";
+      if (subjectObj) {
+        setSelectedSubject(subjectObj);
+        setSubjectSearch(subjectObj.name || "");
+      }
+
+      // 3. Resolve Tutors & Assistants (extract real numeric IDs)
+      const isAssistant = (s) => {
+        const role = (s.pivot?.role || s.role || "").toLowerCase();
+        return role === "assistant" || role === "advisor";
+      };
+
+      const tutorsRaw = (editClass.staffs || []).filter(s => !isAssistant(s));
+      const assistantsRaw = (editClass.staffs || []).filter(s => isAssistant(s));
+
+      const tutorNumericIds = tutorsRaw.map(extractStaffNumericId).filter(Boolean);
+      const assistantNumericIds = assistantsRaw.map(extractStaffNumericId).filter(Boolean);
+
+      const tutorsList = tutorsRaw.map(s => {
+        const id = extractStaffNumericId(s);
+        const firstname = s.firstname || s.staff?.firstname || "";
+        const surname = s.surname || s.staff?.surname || "";
+        const name = (firstname && surname) ? `${firstname} ${surname}` : (s.name || s.staff?.name || "Assigned Tutor");
+        return { ...s, id, name, firstname, surname };
+      });
+
+      const assistantsList = assistantsRaw.map(s => {
+        const id = extractStaffNumericId(s);
+        const firstname = s.firstname || s.staff?.firstname || "";
+        const surname = s.surname || s.staff?.surname || "";
+        const name = (firstname && surname) ? `${firstname} ${surname}` : (s.name || s.staff?.name || "Assigned Advisor");
+        return { ...s, id, name, firstname, surname };
+      });
+
+      setSelectedTutors(tutorsList);
+      setSelectedAssistants(assistantsList);
 
       setFormData({
-        course_id: courseId,
-        subject_id: editClass.subject_id || subjectObj?.id || "",
+        course_id: resolvedCourseId,
+        subject_id: resolvedSubjectId,
         title: editClass.title || "",
         start_date: startD,
         end_date: endD,
-        tutor_ids: (editClass.staffs || []).filter(s => s.role !== "assistant" && s.role !== "advisor").map(s => s.staff_id || s.id),
-        assistant_ids: (editClass.staffs || []).filter(s => s.role === "assistant" || s.role === "advisor").map(s => s.staff_id || s.id),
+        tutor_ids: tutorNumericIds,
+        assistant_ids: assistantNumericIds,
         link: editClass.class_link || editClass.zoom_join_url || "",
         status: editClass.status || "active",
         description: editClass.description || "",
       });
 
-      if (subjectObj) {
-        setSelectedSubject(subjectObj);
-        setSubjectSearch(subjectObj.name || "");
+      if (resolvedCourseId) {
+        fetchSubjects(resolvedCourseId);
       }
 
       if (editClass.schedules && editClass.schedules.length > 0) {
@@ -205,15 +274,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
           end_time: s.end_time ? s.end_time.substring(0, 5) : "13:00"
         })));
       }
-
-      if (editClass.staffs && editClass.staffs.length > 0) {
-        const tutorsList = editClass.staffs.filter(s => s.role !== "assistant" && s.role !== "advisor").map(s => s.staff || s);
-        const assistantsList = editClass.staffs.filter(s => s.role === "assistant" || s.role === "advisor").map(s => s.staff || s);
-        setSelectedTutors(tutorsList);
-        setSelectedAssistants(assistantsList);
-      }
     }
-  }, [editClass]);
+  }, [editClass, courses, fetchSubjects]);
 
   /* =============================
      INPUT HANDLERS
@@ -374,11 +436,11 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
     console.log("daySchedules:", daySchedules);
     console.log("=====================");
 
-    if (!formData.course_id) newErrors.course_id = "Course is required";
+    if (!formData.course_id && !editClass) newErrors.course_id = "Course is required";
 
-    if (!formData.subject_id) newErrors.subject_id = "Subject is required";
+    if (!formData.subject_id && !editClass?.subject_id && !editClass?.subject?.id) newErrors.subject_id = "Subject is required";
 
-    if (!formData.title?.trim()) newErrors.title = "Title is required";
+    if (!formData.title?.trim() && !editClass?.title) newErrors.title = "Title is required";
 
     if (!formData.start_date) newErrors.start_date = "Start date required";
 
@@ -388,7 +450,11 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
       newErrors.link = "Please enter a valid URL (e.g., https://...)";
     }
 
-    if (formData.tutor_ids.length === 0)
+    const hasTutors = (formData.tutor_ids && formData.tutor_ids.length > 0) || 
+                      (selectedTutors && selectedTutors.length > 0) || 
+                      (editClass?.staffs && editClass.staffs.length > 0);
+
+    if (!hasTutors)
       newErrors.tutor_ids = "At least one tutor is required";
 
     if (daySchedules.length === 0) newErrors.days = "Select schedule days";
@@ -431,8 +497,27 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
        BUILD STAFF ARRAY
     ============================= */
 
-      const validTutors = (formData.tutor_ids || []).filter(id => id && !isNaN(Number(id)));
-      const validAssistants = (formData.assistant_ids || []).filter(id => id && !isNaN(Number(id)));
+      let validTutors = (formData.tutor_ids || []).map(Number).filter(id => id && !isNaN(id));
+      let validAssistants = (formData.assistant_ids || []).map(Number).filter(id => id && !isNaN(id));
+
+      // If editing and tutors weren't modified, keep existing tutors from selectedTutors or editClass
+      if (validTutors.length === 0 && selectedTutors.length > 0) {
+        validTutors = selectedTutors.map(extractStaffNumericId).filter(Boolean);
+      } else if (validTutors.length === 0 && editClass?.staffs) {
+        validTutors = (editClass.staffs || [])
+          .filter(s => (s.pivot?.role || s.role || "").toLowerCase() !== "assistant" && (s.pivot?.role || s.role || "").toLowerCase() !== "advisor")
+          .map(extractStaffNumericId)
+          .filter(Boolean);
+      }
+
+      if (validAssistants.length === 0 && selectedAssistants.length > 0) {
+        validAssistants = selectedAssistants.map(extractStaffNumericId).filter(Boolean);
+      } else if (validAssistants.length === 0 && editClass?.staffs) {
+        validAssistants = (editClass.staffs || [])
+          .filter(s => (s.pivot?.role || s.role || "").toLowerCase() === "assistant" || (s.pivot?.role || s.role || "").toLowerCase() === "advisor")
+          .map(extractStaffNumericId)
+          .filter(Boolean);
+      }
 
       const staffs = [
         ...validTutors.map((id) => ({
@@ -445,7 +530,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         })),
       ];
 
-      if (staffs.length === 0) {
+      if (!editClass && staffs.length === 0) {
         setApiError("Please assign at least one staff member.");
         setLoading(false);
         return;
@@ -478,15 +563,18 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
       const payload = {
         subject_id: subId,
-        title: formData.title.trim(),
+        title: formData.title?.trim() || editClass?.title || "Master Class",
         description: formData.description?.trim() || null,
         status: formData.status || "active",
         class_link: formData.link?.trim() ? formData.link.trim() : null,
         start_date: formData.start_date ? formData.start_date.substring(0, 10) : null,
         end_date: formData.end_date ? formData.end_date.substring(0, 10) : null,
-        staffs,
         schedules,
       };
+
+      if (staffs.length > 0) {
+        payload.staffs = staffs;
+      }
 
       /* =============================
        API REQUEST
