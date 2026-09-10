@@ -168,6 +168,8 @@ export default function StaffEmailVerification() {
     }
   };
 
+  const [resending, setResending] = useState(false);
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -175,15 +177,28 @@ export default function StaffEmailVerification() {
   };
 
   const handleResend = async () => {
+    if (resending || count > 0) return;
+    setResending(true);
     try {
-      await axios.post(
+      const cleanEmail = email ? email.trim() : "";
+      const res = await axios.post(
         `${API_BASE_URL}/api/staffs/resend-email-verification`,
-        { email: email },
+        { email: cleanEmail },
       );
-      setToast({ type: "success", message: "OTP resent successfully." });
+      setToast({ type: "success", message: res.data?.message || "OTP resent successfully." });
       setCount(60);
+      setMsg("");
     } catch (error) {
-      setToast({ type: "error", message: "Failed to resend OTP." });
+      console.error("Staff resend OTP error:", error.response?.data || error);
+      const backendMsg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.response?.data?.errors?.email?.[0] ||
+        "Failed to resend OTP. Please try again.";
+      setToast({ type: "error", message: backendMsg });
+      setMsg(backendMsg);
+    } finally {
+      setResending(false);
     }
   };
 
@@ -263,9 +278,17 @@ export default function StaffEmailVerification() {
                   <button
                     type="button"
                     onClick={handleResend}
-                    className="mt-2 text-sm font-black text-[#E83831] hover:underline"
+                    disabled={resending}
+                    className="mt-2 text-sm font-black text-[#E83831] hover:underline disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto transition-all"
                   >
-                    Resend Code
+                    {resending ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-[#E83831] border-t-transparent rounded-full animate-spin" />
+                        <span>Sending OTP...</span>
+                      </>
+                    ) : (
+                      "Resend Code"
+                    )}
                   </button>
                 )}
               </div>

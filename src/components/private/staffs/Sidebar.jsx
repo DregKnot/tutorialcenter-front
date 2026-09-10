@@ -15,87 +15,209 @@ import {
   MoonIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronDownIcon,
   ClipboardDocumentListIcon,
   CreditCardIcon,
   TrophyIcon,
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
 import logo from "../../../assets/images/tutorial_logo.webp";
 import collapselogo from "../../../assets/images/TC 1.webp";
 import { useStaffAuth } from "../../../context/StaffAuthContext";
 
-const adminMenuItems = [
-  { label: "Dashboard", icon: HomeIcon, destination: "/staffs/dashboard" },
-  { label: "Manage Staffs", icon: UsersIcon, destination: "/staffs/manage-staffs" },
-  { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
-  { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/manage-guardians" },
-  { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
-  { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
-  { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
-  { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
-  { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
-  { label: "School Tests", icon: ClipboardDocumentListIcon, destination: "/staffs/school-tests" },
-  { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
-  { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
-  { label: "Blogs", icon: DocumentTextIcon, destination: "/staffs/manage-blogs" },
-  { label: "Audit Log", icon: ChartBarIcon, destination: "/staffs/audit-logs" },
-  { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
-  { label: "Settings", icon: Cog6ToothIcon },
+const adminNavSections = [
+  {
+    title: null,
+    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/dashboard" }],
+  },
+  {
+    id: "management",
+    title: "Management",
+    icon: UserGroupIcon,
+    items: [
+      { label: "Manage Staffs", icon: UsersIcon, destination: "/staffs/manage-staffs" },
+      { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
+      { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/manage-guardians" },
+      { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
+    ],
+  },
+  {
+    id: "class",
+    title: "Class",
+    icon: AcademicCapIcon,
+    items: [
+      { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
+      { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
+      { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
+    ],
+  },
+  {
+    id: "exam",
+    title: "Exam",
+    icon: ClipboardDocumentCheckIcon,
+    items: [
+      { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
+      { label: "School Tests", icon: ClipboardDocumentListIcon, destination: "/staffs/school-tests" },
+      { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
+    ],
+  },
+  {
+    id: "finance_governance",
+    title: "Finance & Governance",
+    icon: CreditCardIcon,
+    items: [
+      { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
+      { label: "Blogs", icon: DocumentTextIcon, destination: "/staffs/manage-blogs" },
+      { label: "Audit Log", icon: ChartBarIcon, destination: "/staffs/audit-logs" },
+      { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
+      { label: "Settings", icon: Cog6ToothIcon },
+    ],
+  },
 ];
 
-const cooMenuItems = [
-  { label: "Dashboard", icon: HomeIcon, destination: "/staffs/coo/dashboard" },
-  { label: "Manage Staffs", icon: UsersIcon, destination: "/staffs/manage-staffs" },
-  { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
-  { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/manage-guardians" },
-  { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
-  { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
-  { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
-  { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
-  { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
-  { label: "School Tests", icon: ClipboardDocumentListIcon, destination: "/staffs/school-tests" },
-  { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
-  { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
-  { label: "Blogs", icon: DocumentTextIcon, destination: "/staffs/manage-blogs" },
-  { label: "Audit Log", icon: ChartBarIcon, destination: "/staffs/audit-logs" },
-  { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
-  { label: "Settings", icon: Cog6ToothIcon },
+const cooNavSections = [
+  {
+    title: null,
+    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/coo/dashboard" }],
+  },
+  {
+    id: "management",
+    title: "Management",
+    icon: UserGroupIcon,
+    items: [
+      { label: "Manage Staffs", icon: UsersIcon, destination: "/staffs/manage-staffs" },
+      { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
+      { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/manage-guardians" },
+      { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
+    ],
+  },
+  {
+    id: "class",
+    title: "Class",
+    icon: AcademicCapIcon,
+    items: [
+      { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
+      { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
+      { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
+    ],
+  },
+  {
+    id: "exam",
+    title: "Exam",
+    icon: ClipboardDocumentCheckIcon,
+    items: [
+      { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
+      { label: "School Tests", icon: ClipboardDocumentListIcon, destination: "/staffs/school-tests" },
+      { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
+    ],
+  },
+  {
+    id: "finance_governance",
+    title: "Finance & Governance",
+    icon: CreditCardIcon,
+    items: [
+      { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
+      { label: "Blogs", icon: DocumentTextIcon, destination: "/staffs/manage-blogs" },
+      { label: "Audit Log", icon: ChartBarIcon, destination: "/staffs/audit-logs" },
+      { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
+      { label: "Settings", icon: Cog6ToothIcon },
+    ],
+  },
 ];
 
-const tutorMenuItems = [
-  { label: "Dashboard", icon: HomeIcon, destination: "/staffs/tutor/dashboard" },
-  { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/tutor/master-class" },
-  { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/tutor/calendar" },
-  { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
-  { label: "Assessment", icon: ClipboardDocumentListIcon, destination: "/staffs/tutor/assessments" },
-  { label: "Exams", icon: ClipboardDocumentCheckIcon },
-  { label: "Settings", icon: Cog6ToothIcon },
+const tutorNavSections = [
+  {
+    title: null,
+    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/tutor/dashboard" }],
+  },
+  {
+    id: "class",
+    title: "Class",
+    icon: AcademicCapIcon,
+    items: [
+      { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/tutor/master-class" },
+      { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/tutor/calendar" },
+    ],
+  },
+  {
+    id: "exam",
+    title: "Exam & Performance",
+    icon: ClipboardDocumentCheckIcon,
+    items: [
+      { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
+      { label: "Assessment", icon: ClipboardDocumentListIcon, destination: "/staffs/tutor/assessments" },
+      { label: "Exams", icon: ClipboardDocumentCheckIcon },
+      { label: "Settings", icon: Cog6ToothIcon },
+    ],
+  },
 ];
 
-const courseAdvisorMenuItems = [
-  { label: "Dashboard", icon: HomeIcon, destination: "/staffs/course-advisor/dashboard" },
-  { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/course-advisor/students" },
-  { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/course-advisor/guardians" },
-  { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/course-advisor/master-class" },
-  { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/student-schedule" },
-  { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/calendar" },
-  { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
-  { label: "Exams", icon: ClipboardDocumentCheckIcon },
-  { label: "Settings", icon: Cog6ToothIcon },
+const courseAdvisorNavSections = [
+  {
+    title: null,
+    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/course-advisor/dashboard" }],
+  },
+  {
+    id: "management",
+    title: "Management",
+    icon: UserGroupIcon,
+    items: [
+      { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/course-advisor/students" },
+      { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/course-advisor/guardians" },
+    ],
+  },
+  {
+    id: "class",
+    title: "Class",
+    icon: AcademicCapIcon,
+    items: [
+      { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/course-advisor/master-class" },
+      { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/student-schedule" },
+      { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/calendar" },
+    ],
+  },
+  {
+    id: "exam",
+    title: "Exam",
+    icon: ClipboardDocumentCheckIcon,
+    items: [
+      { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
+      { label: "Exams", icon: ClipboardDocumentCheckIcon },
+      { label: "Settings", icon: Cog6ToothIcon },
+    ],
+  },
 ];
 
-const moderatorMenuItems = [
-  { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
+const moderatorNavSections = [
+  {
+    title: null,
+    items: [{ label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" }],
+  },
 ];
 
 export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose }) {
   const { theme, setTheme } = useTheme();
   const { logout } = useStaffAuth();
+  const location = useLocation();
 
   const [staffInfo, setStaffInfo] = useState(null);
   const [staffRole, setStaffRole] = useState("Staff");
+  const [openGroups, setOpenGroups] = useState({
+    management: true,
+    class: true,
+    exam: true,
+    finance_governance: true,
+  });
+
+  const toggleGroup = (groupId) => {
+    if (!groupId) return;
+    setOpenGroups((prev) => ({
+      ...prev,
+      [groupId]: prev[groupId] !== undefined ? !prev[groupId] : false,
+    }));
+  };
 
   useEffect(() => {
     const updateProfileData = () => {
@@ -149,16 +271,16 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
     logout();
   };
 
-  const getMenuItems = () => {
+  const getNavSections = () => {
     const roleLower = staffRole.toLowerCase();
-    if (roleLower === "coo" || roleLower === "preview" || roleLower === "operations") return cooMenuItems;
-    if (roleLower === "tutor") return tutorMenuItems;
-    if (roleLower === "moderator") return moderatorMenuItems;
-    if (roleLower === "course advisor" || roleLower === "advisor") return courseAdvisorMenuItems;
-    return adminMenuItems;
+    if (roleLower === "coo" || roleLower === "preview" || roleLower === "operations") return cooNavSections;
+    if (roleLower === "tutor") return tutorNavSections;
+    if (roleLower === "moderator") return moderatorNavSections;
+    if (roleLower === "course advisor" || roleLower === "advisor") return courseAdvisorNavSections;
+    return adminNavSections;
   };
 
-  const menuItems = getMenuItems();
+  const navSections = getNavSections();
 
   return (
     <>
@@ -190,52 +312,48 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
               }`}
           />
 
+          {/* Collapse Button (Desktop Only) */}
           <button
-            onClick={() => {
-              if (isOpen !== undefined && onClose) {
-                onClose();
-                return;
-              }
-              setCollapsed(!collapsed);
-            }}
-            className="
-              absolute -right-0 top-[70%] -translate-y-1/2
-              bg-[#09314F] text-white
-              w-5 h-9
-              rounded-l-xl
-              flex items-center justify-center
-              hover:bg-[#09314F]/80 z-10
-              transition-all duration-300 ease-in-out
-            "
+            onClick={() => setCollapsed(!collapsed)}
+            className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-1.5 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 z-50 transition-transform active:scale-95"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
-              <ChevronRightIcon className="w-5 h-5 ml-1" />
+              <ChevronRightIcon className="w-3.5 h-3.5" />
             ) : (
-              <ChevronLeftIcon className="w-5 h-5 mr-1" />
+              <ChevronLeftIcon className="w-3.5 h-3.5" />
             )}
           </button>
         </div>
 
-        {/* Scrollable Content Area */}
-        <div className={`flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll flex flex-col ${collapsed ? "items-center" : "px-3 md:px-4"}`}>
-          {/* Avatar & Name */}
-          <div className="flex flex-col min-h-0 flex-1 justify-between">
-            <div className={`flex py-1 md:py-2 items-center ${collapsed ? "justify-center" : "gap-2 md:gap-3"}`}>
-              {staffLoaded ? (
-                profilePic ? (
-                  <img
-                    src={profilePic}
-                    alt={fullName}
-                    className="rounded-full shadow-lg h-10 w-10 object-cover border-2 border-[#BB9E7F] flex-shrink-0"
-                  />
-                ) : (
-                  <div className="rounded-full shadow-lg h-10 w-10 flex items-center justify-center bg-[#09314F] text-white font-bold border-2 border-[#BB9E7F] flex-shrink-0">
-                    {fullName?.[0] || "S"}
-                  </div>
-                )
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse flex-shrink-0" />
-              )}
+        {/* Profile Card */}
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col overflow-y-auto px-1 md:px-2">
+            <div
+              className={`flex items-center gap-3 p-3 bg-[#09314F]/5 dark:bg-white/5 rounded-xl transition-all duration-300 ${collapsed ? "justify-center" : "mx-1"
+                }`}
+            >
+              <div className="relative flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#09314F] to-[#1a4a75] text-white flex items-center justify-center font-bold text-sm shadow-sm overflow-hidden border border-white/20">
+                  {profilePic ? (
+                    <img
+                      src={profilePic}
+                      alt={fullName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <span>
+                      {staffInfo?.firstname ? staffInfo.firstname.charAt(0) : "S"}
+                    </span>
+                  )}
+                </div>
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
+              </div>
+
               {!collapsed && (
                 <div className="min-w-0">
                   {staffLoaded ? (
@@ -258,38 +376,113 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
             </div>
 
             {/* Menu */}
-            <nav className="px-0.5 md:px-2 lg:px-3 space-y-1 md:space-y-1.5 lg:space-y-2 mt-2 md:mt-3 lg:mt-6 flex flex-col flex-1">
-              {menuItems.map(({ label, icon: Icon, destination }) => {
-                if (!destination) {
-                  return (
-                    <div
-                      key={label}
-                      className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 dark:text-gray-700 cursor-not-allowed ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 py-1.5 md:py-2 lg:py-2.5"
-                        }`}
-                    >
-                      <Icon className="w-5 h-5 flex-shrink-0" />
-                      {!collapsed && <span>{label}</span>}
-                    </div>
-                  );
-                }
+            <nav className="px-0.5 md:px-1 lg:px-2 space-y-1.5 mt-2 md:mt-3 flex flex-col flex-1 overflow-y-auto overflow-x-hidden select-none pb-4">
+              {navSections.map((section, sIdx) => {
+                const isSectionOpen = section.id ? openGroups[section.id] !== false : true;
+                const isChildActive = section.items?.some(
+                  (item) => item.destination && location.pathname.startsWith(item.destination)
+                );
+                const SectionIcon = section.icon;
 
                 return (
-                  <NavLink
-                    key={label}
-                    to={destination}
-                    className={({ isActive }) => `
-                    w-full flex items-center rounded-lg
-                    text-xs md:text-sm font-medium transition duration-200
-                    ${collapsed ? "justify-center py-2.5" : "gap-3 px-2 md:px-3 lg:px-3 py-1.5 md:py-2 lg:py-2.5"}
-                    ${isActive
-                        ? "bg-[#09314F] text-white shadow-md"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-gray-800"
-                      }
-                  `}
-                  >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    {!collapsed && <span className="truncate">{label}</span>}
-                  </NavLink>
+                  <div key={section.id || sIdx} className="space-y-1">
+                    {/* Section Header Button (Expanded mode) */}
+                    {section.title && !collapsed && (
+                      <button
+                        type="button"
+                        onClick={() => toggleGroup(section.id)}
+                        className={`
+                          w-full flex items-center justify-between px-3 py-2 md:py-2.5 mt-2.5 rounded-xl
+                          text-xs font-bold uppercase tracking-wider transition-all duration-200 select-none
+                          active:scale-[0.99]
+                          ${
+                            isSectionOpen
+                              ? "bg-[#BB9E7F] text-white shadow-sm hover:bg-[#aa8d6f]"
+                              : isChildActive
+                              ? "bg-[#BB9E7F]/25 dark:bg-[#BB9E7F]/30 text-[#6B4B1C] dark:text-[#F3E7D7] border border-[#BB9E7F]/50 shadow-xs"
+                              : "bg-[#BB9E7F]/15 dark:bg-[#BB9E7F]/20 text-[#765524] dark:text-[#F3E7D7] border border-[#BB9E7F]/30 hover:bg-[#BB9E7F]/25"
+                          }
+                        `}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {SectionIcon && (
+                            <SectionIcon
+                              className={`w-4 h-4 shrink-0 ${isSectionOpen ? "text-white" : "text-[#BB9E7F]"}`}
+                            />
+                          )}
+                          <span className="truncate">{section.title}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                              isSectionOpen
+                                ? "bg-white/20 text-white"
+                                : "bg-[#BB9E7F]/20 text-[#765524] dark:text-[#F3E7D7]"
+                            }`}
+                          >
+                            {section.items.length}
+                          </span>
+                          <ChevronDownIcon
+                            className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                              isSectionOpen ? "rotate-0 text-white" : "-rotate-90 text-[#BB9E7F]"
+                            }`}
+                          />
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Divider in collapsed mode */}
+                    {section.title && collapsed && (
+                      <div className="my-2 border-t border-gray-100 dark:border-gray-800" />
+                    )}
+
+                    {/* Section Items - Nested in Grouped Tray Background */}
+                    {(!section.title || collapsed || isSectionOpen) && (
+                      <div
+                        className={
+                          section.title && !collapsed
+                            ? "p-1.5 rounded-xl bg-slate-100/70 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 space-y-1 transition-all"
+                            : "space-y-1"
+                        }
+                      >
+                        {section.items.map(({ label, icon: Icon, destination }) => {
+                          if (!destination) {
+                            return (
+                              <div
+                                key={label}
+                                className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 dark:text-gray-700 cursor-not-allowed ${
+                                  collapsed ? "justify-center py-2.5" : "gap-3 px-2.5 py-1.5 md:py-2"
+                                }`}
+                              >
+                                <Icon className="w-5 h-5 flex-shrink-0" />
+                                {!collapsed && <span>{label}</span>}
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <NavLink
+                              key={label}
+                              to={destination}
+                              className={({ isActive }) => `
+                                w-full flex items-center rounded-lg
+                                text-xs md:text-sm font-medium transition duration-200
+                                ${collapsed ? "justify-center py-2.5" : "gap-3 px-2.5 py-1.5 md:py-2"}
+                                ${
+                                  isActive
+                                    ? "bg-[#09314F] text-white shadow-md font-semibold"
+                                    : "text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-gray-800/80 hover:text-[#09314F] dark:hover:text-white"
+                                }
+                              `}
+                            >
+                              <Icon className="w-5 h-5 flex-shrink-0" />
+                              {!collapsed && <span className="truncate">{label}</span>}
+                            </NavLink>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </nav>

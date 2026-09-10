@@ -106,6 +106,14 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
                     throw new Error(data.message || "Failed to fetch Zoom credentials.");
                 }
 
+                // If Google Meet or direct external link is returned
+                if (data.provider === 'google_meet' || data.meeting_type === 'google_meet' || (!data.signature && data.meeting_url)) {
+                    if (data.meeting_url) {
+                        window.location.href = data.meeting_url;
+                        return;
+                    }
+                }
+
                 if (!isMounted) return;
 
                 const { ZoomMtg } = await import("@zoom/meetingsdk");
@@ -278,23 +286,46 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
                         maxWidth: 400,
                         marginBottom: 24
                     }}>{error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        style={{
-                            padding: "10px 24px",
-                            backgroundColor: "#dc2626",
-                            color: "white",
-                            fontWeight: 700,
-                            borderRadius: 12,
-                            border: "none",
-                            cursor: "pointer",
-                            fontSize: 12,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.1em"
-                        }}
-                    >
-                        Retry Connection
-                    </button>
+                    <div style={{ display: "flex", gap: 12 }}>
+                        <button
+                            onClick={() => window.location.reload()}
+                            style={{
+                                padding: "10px 24px",
+                                backgroundColor: "#dc2626",
+                                color: "white",
+                                fontWeight: 700,
+                                borderRadius: 12,
+                                border: "none",
+                                cursor: "pointer",
+                                fontSize: 12,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.1em"
+                            }}
+                        >
+                            Retry Connection
+                        </button>
+                        <button
+                            onClick={() => {
+                                const leaveUrl = getLeaveUrl();
+                                if (leaveUrl) window.location.href = leaveUrl;
+                                else if (onLeave) onLeave();
+                            }}
+                            style={{
+                                padding: "10px 24px",
+                                backgroundColor: "#1f2937",
+                                color: "#9ca3af",
+                                fontWeight: 700,
+                                borderRadius: 12,
+                                border: "1px solid #374151",
+                                cursor: "pointer",
+                                fontSize: 12,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.1em"
+                            }}
+                        >
+                            Return to Schedule
+                        </button>
+                    </div>
                 </div>
             )}
         </>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import CreateMasterClassModal from "../../../components/private/staffs/AdminMasterclassModal.jsx";
 import axios from "axios";
@@ -222,8 +223,18 @@ const extractFlatSessions = (data) => {
 };
 
 export default function AdminCalendar() {
+  const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
+
+  const staffInfo = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("staff_info") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
+  const userRole = (staffInfo?.role || staffInfo?.role_name || "").toLowerCase();
 
   // --- STATE ---
   const [sessions, setSessions] = useState([]);
@@ -443,7 +454,7 @@ export default function AdminCalendar() {
                     Master Class Calendar
                   </h1>
                   <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-primary/10 text-primary border border-primary/20">
-                    Admin Oversight
+                    {userRole === "coo" ? "COO Oversight" : "Admin Oversight"}
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
@@ -978,11 +989,15 @@ export default function AdminCalendar() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(session.class_link, "_blank");
+                              if (session.id) {
+                                navigate(`/classroom/${session.id}`);
+                              } else {
+                                window.open(session.class_link, "_blank");
+                              }
                             }}
-                            className="px-4 py-2 bg-gradient-to-r from-[#09314F] to-[#E83831] text-white text-xs font-bold rounded-xl shadow-md hover:opacity-90 flex items-center gap-1.5"
+                            className="px-4 py-2 bg-[#09314F] hover:bg-[#1a4a75] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-all active:scale-95"
                           >
-                            <ArrowTopRightOnSquareIcon className="w-4 h-4" /> Join
+                            <VideoCameraIcon className="w-4 h-4" /> Join
                           </button>
                         )}
                       </div>
@@ -1090,10 +1105,16 @@ export default function AdminCalendar() {
                           </button>
                           {session.class_link && (
                             <button
-                              onClick={() => window.open(session.class_link, "_blank")}
-                              className="px-4 py-2 bg-gradient-to-r from-[#09314F] to-[#E83831] text-white text-xs font-bold rounded-xl shadow-md hover:opacity-90 flex items-center gap-1.5"
+                              onClick={() => {
+                                if (session.id) {
+                                  navigate(`/classroom/${session.id}`);
+                                } else {
+                                  window.open(session.class_link, "_blank");
+                                }
+                              }}
+                              className="px-4 py-2 bg-[#09314F] hover:bg-[#1a4a75] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-all active:scale-95"
                             >
-                              <ArrowTopRightOnSquareIcon className="w-4 h-4" /> Join
+                              <VideoCameraIcon className="w-4 h-4" /> Join
                             </button>
                           )}
                         </div>
@@ -1390,12 +1411,35 @@ export default function AdminCalendar() {
                     Close
                   </button>
                   {selectedSession.class_link && (
-                    <button
-                      onClick={() => window.open(selectedSession.class_link, "_blank")}
-                      className="px-5 py-2.5 bg-gradient-to-r from-[#09314F] to-[#E83831] text-white text-xs font-bold rounded-xl shadow-md hover:opacity-90 flex items-center gap-1.5 active:scale-95 transition-all"
-                    >
-                      <ArrowTopRightOnSquareIcon className="w-4 h-4" /> Launch / Join Classroom
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          if (selectedSession.id) {
+                            navigate(`/classroom/${selectedSession.id}`);
+                          } else {
+                            window.open(selectedSession.class_link, "_blank");
+                          }
+                        }}
+                        className="px-4 py-2.5 bg-[#09314F] hover:bg-[#1a4a75] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all"
+                        title="Join through Tutorial Center unified Zoom Classroom"
+                      >
+                        <VideoCameraIcon className="w-4 h-4" /> Join on Web
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/staffs/meet/app', {
+                            state: {
+                              class_link: selectedSession.class_link,
+                              class_schedule_id: selectedSession.id
+                            }
+                          });
+                        }}
+                        className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all"
+                        title="Launch directly in Zoom desktop/mobile application"
+                      >
+                        <ArrowTopRightOnSquareIcon className="w-4 h-4" /> Zoom App
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

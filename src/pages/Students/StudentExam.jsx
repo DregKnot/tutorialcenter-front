@@ -640,8 +640,8 @@ export default function StudentExam() {
                           </div>
                           <div className="min-w-0">
                             <h4
-                              className={`font-black uppercase tracking-tight text-sm truncate ${
-                                isSelected ? "text-[#09314F] dark:text-white" : "text-gray-700 dark:text-gray-200"
+                              className={`font-black uppercase tracking-tight text-sm truncate transition-colors ${
+                                isSelected ? "text-[#09314F] dark:text-[#C5A97A]" : "text-gray-800 dark:text-white"
                               }`}
                             >
                               {title}
@@ -735,10 +735,20 @@ export default function StudentExam() {
                               </div>
 
                               <div className="mt-1 min-w-0 w-full">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-[#C5A97A] block">
+                                <span
+                                  className={`text-[9px] font-black uppercase tracking-widest block transition-colors ${
+                                    isSelected ? "text-white/80 dark:text-gray-300" : "text-[#C5A97A]"
+                                  }`}
+                                >
                                   SUBJECT
                                 </span>
-                                <h4 className="text-sm font-black uppercase tracking-tight truncate mt-1 w-full">
+                                <h4
+                                  className={`text-sm font-black uppercase tracking-tight truncate mt-1 w-full transition-colors ${
+                                    isSelected
+                                      ? "text-[#C5A97A]"
+                                      : "text-[#09314F] dark:text-white group-hover:text-[#09314F] dark:group-hover:text-[#C5A97A]"
+                                  }`}
+                                >
                                   {name}
                                 </h4>
                               </div>
@@ -880,68 +890,89 @@ export default function StudentExam() {
         )}
       </div>
 
-      {/* Custom Floating Clock Picker Modal */}
-      {/* Custom Floating Clock Picker Modal */}
+      {/* Custom Floating Clock Picker Modal (Ultra-Responsive down to Smartwatch screens) */}
       {isClockModalOpen && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsClockModalOpen(false)} />
-          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-[28px] md:rounded-[32px] p-6 md:p-8 w-full max-w-md max-h-[90vh] flex flex-col overflow-y-auto shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white my-auto scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
-            <div className="text-center mb-6 shrink-0">
-              <Icon icon="lucide:clock" className="w-10 h-10 text-[#C5A97A] mx-auto mb-2" />
-              <h3 className="text-lg font-black uppercase tracking-widest text-[#09314F] dark:text-white">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsClockModalOpen(false)} />
+          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-2xl sm:rounded-[28px] md:rounded-[32px] p-3.5 xs:p-5 sm:p-7 md:p-8 w-full max-w-[94vw] xs:max-w-[360px] sm:max-w-md max-h-[94vh] flex flex-col overflow-y-auto shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white my-auto scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
+            {/* Modal Header */}
+            <div className="text-center mb-3 sm:mb-5 shrink-0">
+              <div className="w-8 h-8 sm:w-11 sm:h-11 bg-[#09314F]/5 dark:bg-white/5 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-1.5 sm:mb-2 border border-[#C5A97A]/20">
+                <Icon icon="lucide:clock" className="w-4 h-4 sm:w-6 sm:h-6 text-[#C5A97A]" />
+              </div>
+              <h3 className="text-xs sm:text-base md:text-lg font-black uppercase tracking-wider text-[#09314F] dark:text-white">
                 Choose Practice Time
               </h3>
-              <p className="text-xs text-gray-400 mt-1">Set hours and minutes for your exam session</p>
+              <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 hidden xs:block">
+                Set hours and minutes for your exam session
+              </p>
+              
+              {/* Dynamic live badge */}
+              <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#09314F]/5 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] font-mono text-[10px] xs:text-xs font-black border border-[#C5A97A]/20">
+                <span className="opacity-70">Total:</span>
+                <span>
+                  {modalHours > 0 ? `${modalHours}h ` : ""}
+                  {modalMinutes}m ({(modalHours * 60) + modalMinutes} mins)
+                </span>
+              </div>
             </div>
 
-            {/* Hours and Minutes Adjuster */}
-            <div className="flex items-center justify-center gap-6 bg-gray-50 dark:bg-[#06243A] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6 shrink-0">
+            {/* Hours and Minutes Adjuster (Fluid flex down to 220px) */}
+            <div className="flex items-center justify-center gap-1.5 xs:gap-3 sm:gap-6 bg-gray-50 dark:bg-[#06243A] p-2 xs:p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-800 mb-3 sm:mb-5 shrink-0">
               {/* Hours section */}
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hours</span>
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col items-center gap-1 sm:gap-1.5">
+                <span className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-wider">Hours</span>
+                <div className="flex items-center gap-1 sm:gap-2">
                   <button
                     type="button"
                     onClick={() => setModalHours(prev => Math.max(0, prev - 1))}
-                    className="w-8 h-8 rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white"
+                    className="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white shrink-0 select-none"
+                    aria-label="Decrease hours"
                   >
                     -
                   </button>
-                  <span className="text-3xl font-black font-mono w-12 text-center">{String(modalHours).padStart(2, '0')}</span>
+                  <span className="text-xl xs:text-2xl sm:text-3xl font-black font-mono w-7 xs:w-9 sm:w-12 text-center text-[#09314F] dark:text-white">
+                    {String(modalHours).padStart(2, '0')}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setModalHours(prev => Math.min(12, prev + 1))}
-                    className="w-8 h-8 rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white"
+                    className="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white shrink-0 select-none"
+                    aria-label="Increase hours"
                   >
                     +
                   </button>
                 </div>
               </div>
 
-              <span className="text-3xl font-black text-gray-300 dark:text-gray-600">:</span>
+              <span className="text-lg xs:text-2xl sm:text-3xl font-black text-gray-300 dark:text-gray-600 px-0.5">:</span>
 
               {/* Minutes section */}
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Minutes</span>
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col items-center gap-1 sm:gap-1.5">
+                <span className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-wider">Minutes</span>
+                <div className="flex items-center gap-1 sm:gap-2">
                   <button
                     type="button"
                     onClick={() => setModalMinutes(prev => {
                       if (prev === 0) return 59;
                       return prev - 1;
                     })}
-                    className="w-8 h-8 rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white"
+                    className="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white shrink-0 select-none"
+                    aria-label="Decrease minutes"
                   >
                     -
                   </button>
-                  <span className="text-3xl font-black font-mono w-12 text-center">{String(modalMinutes).padStart(2, '0')}</span>
+                  <span className="text-xl xs:text-2xl sm:text-3xl font-black font-mono w-7 xs:w-9 sm:w-12 text-center text-[#09314F] dark:text-white">
+                    {String(modalMinutes).padStart(2, '0')}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setModalMinutes(prev => {
                       if (prev === 59) return 0;
                       return prev + 1;
                     })}
-                    className="w-8 h-8 rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white"
+                    className="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-full bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm hover:border-[#C5A97A] active:scale-95 transition-all text-gray-700 dark:text-white shrink-0 select-none"
+                    aria-label="Increase minutes"
                   >
                     +
                   </button>
@@ -949,38 +980,70 @@ export default function StudentExam() {
               </div>
             </div>
 
+            {/* Smartwatch / Touch Scrubbing Slider */}
+            <div className="mb-3 sm:mb-4 px-1 shrink-0">
+              <div className="flex items-center justify-between text-[8px] xs:text-[9px] sm:text-[10px] font-bold text-gray-400 mb-1">
+                <span>10m</span>
+                <span className="text-[#C5A97A] font-black uppercase tracking-wider">Quick Scrub</span>
+                <span>180m</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="180"
+                step="5"
+                value={Math.max(10, Math.min(180, (modalHours * 60) + modalMinutes))}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  setModalHours(Math.floor(val / 60));
+                  setModalMinutes(val % 60);
+                }}
+                className="w-full accent-[#C5A97A] h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg cursor-pointer transition-all"
+                aria-label="Quick adjust duration slider"
+              />
+            </div>
+
             {/* Quick Presets */}
-            <div className="mb-6 shrink-0">
-              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-3 text-center">Quick Presets</span>
-              <div className="flex flex-wrap justify-center gap-2">
+            <div className="mb-3 sm:mb-5 shrink-0">
+              <span className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 sm:mb-2 text-center">
+                Quick Presets
+              </span>
+              <div className="grid grid-cols-3 xs:grid-cols-5 gap-1 xs:gap-1.5 sm:gap-2">
                 {[
                   { label: "30m", h: 0, m: 30 },
                   { label: "45m", h: 0, m: 45 },
                   { label: "1h", h: 1, m: 0 },
                   { label: "1h 30m", h: 1, m: 30 },
                   { label: "2h", h: 2, m: 0 },
-                ].map((preset, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setModalHours(preset.h);
-                      setModalMinutes(preset.m);
-                    }}
-                    className="px-3.5 py-1.5 rounded-xl border border-gray-200 dark:border-[#1a4a75] bg-white dark:bg-[#06243A] text-xs font-bold hover:border-[#C5A97A] hover:bg-[#C5A97A]/5 transition-all text-gray-700 dark:text-white"
-                  >
-                    {preset.label}
-                  </button>
-                ))}
+                ].map((preset, idx) => {
+                  const isCurrent = modalHours === preset.h && modalMinutes === preset.m;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setModalHours(preset.h);
+                        setModalMinutes(preset.m);
+                      }}
+                      className={`px-1.5 xs:px-2.5 sm:px-3 py-1 xs:py-1.5 rounded-lg sm:rounded-xl border text-[10px] xs:text-xs font-bold transition-all text-center ${
+                        isCurrent
+                          ? "bg-[#09314F] text-white dark:bg-[#C5A97A] dark:text-[#09314F] border-transparent font-black shadow-xs scale-102"
+                          : "border-gray-200 dark:border-[#1a4a75] bg-white dark:bg-[#06243A] text-gray-700 dark:text-white hover:border-[#C5A97A] hover:bg-[#C5A97A]/5"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Buttons */}
-            <div className="flex gap-4 shrink-0">
+            {/* Action Buttons (Stacked on smartwatch/ultra-compact, inline on larger) */}
+            <div className="flex flex-col xs:flex-row gap-2 xs:gap-3 sm:gap-4 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsClockModalOpen(false)}
-                className="flex-1 py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 uppercase tracking-widest transition-all"
+                className="w-full xs:flex-1 py-2.5 sm:py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 uppercase tracking-widest transition-all order-2 xs:order-1"
               >
                 Cancel
               </button>
@@ -991,7 +1054,7 @@ export default function StudentExam() {
                   setTimer(String(total > 0 ? total : 10)); // Min 10 mins
                   setIsClockModalOpen(false);
                 }}
-                className="flex-1 py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md"
+                className="w-full xs:flex-1 py-2.5 sm:py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-98 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md order-1 xs:order-2"
               >
                 Apply Time
               </button>
@@ -1002,15 +1065,15 @@ export default function StudentExam() {
 
       {/* Exam Integrity Warning Modal */}
       {isWarningModalOpen && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsWarningModalOpen(false)} />
-          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-[28px] md:rounded-[32px] p-6 md:p-8 w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white my-auto">
+          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-2xl sm:rounded-[28px] md:rounded-[32px] p-4 sm:p-6 md:p-8 w-full max-w-lg max-h-[94vh] flex flex-col shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white my-auto">
             {/* Modal Header */}
             <div className="text-center shrink-0 mb-3 md:mb-4">
-              <div className="w-14 h-14 md:w-16 md:h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-3 border border-red-200 dark:border-red-800/40">
-                <Icon icon="lucide:shield-alert" className="w-8 h-8 md:w-9 md:h-9 text-red-500" />
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3 border border-red-200 dark:border-red-800/40">
+                <Icon icon="lucide:shield-alert" className="w-6 h-6 md:w-9 md:h-9 text-red-500" />
               </div>
-              <h3 className="text-lg md:text-xl font-black uppercase tracking-widest text-[#09314F] dark:text-white mb-1">
+              <h3 className="text-base md:text-xl font-black uppercase tracking-widest text-[#09314F] dark:text-white mb-1">
                 Exam Integrity Notice
               </h3>
               <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-[#C5A97A] to-transparent mx-auto" />

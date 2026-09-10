@@ -10,9 +10,7 @@ import {
   VideoCameraIcon,
   ArrowPathIcon,
   ClockIcon,
-  UserGroupIcon,
   AcademicCapIcon,
-  SparklesIcon,
   ArrowTopRightOnSquareIcon
 } from "@heroicons/react/24/outline";
 import { Icon } from "@iconify/react";
@@ -32,7 +30,6 @@ export default function TutorMasterClass() {
   const [timelineFilter, setTimelineFilter] = useState("all"); // "all" | "today" | "week" | "upcoming" | "past"
   const [toast, setToast] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
-  const [showJoinOptions, setShowJoinOptions] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -109,7 +106,7 @@ export default function TutorMasterClass() {
           time: `${session.starts_at || 'TBD'} - ${session.ends_at || 'TBD'}`,
           tutor_name: staffName,
           present_count: session.attendances?.length ?? 0,
-          total_students: session.enrolled_count || 20,
+          total_students: 20,
         });
       } else {
         setFeedbackSession({
@@ -179,32 +176,6 @@ export default function TutorMasterClass() {
     }
     return false;
   };
-
-  // --- DERIVED METRICS ---
-  const stats = useMemo(() => {
-    const assignedClassesCount = scheduleData.classes?.length || 0;
-    const upcomingCount = scheduleData.upcoming_sessions?.length || 0;
-    
-    // Total distinct enrolled students across all assigned classes
-    const studentIdSet = new Set();
-    scheduleData.classes?.forEach(c => {
-      if (Array.isArray(c.enrolled_students)) {
-        c.enrolled_students.forEach(s => {
-          if (s.id) studentIdSet.add(s.id);
-        });
-      } else if (c.enrolled_count) {
-        // Fallback to cumulative count
-        for (let i = 0; i < c.enrolled_count; i++) studentIdSet.add(`fallback_${c.id}_${i}`);
-      }
-    });
-    
-    return {
-      classesCount: assignedClassesCount,
-      upcomingCount,
-      studentsCount: studentIdSet.size,
-      nextSession: scheduleData.next_class
-    };
-  }, [scheduleData]);
 
   // --- FILTERED DATA ---
   const filteredClasses = useMemo(() => {
@@ -276,7 +247,6 @@ export default function TutorMasterClass() {
   // --- ACTIONS ---
   const handleOpenLaunchModal = (session) => {
     setSelectedSession(session);
-    setShowJoinOptions(false);
   };
 
   const handleLaunchWebClass = (session) => {
@@ -305,7 +275,7 @@ export default function TutorMasterClass() {
       time: `${session.starts_at || 'TBD'} - ${session.ends_at || 'TBD'}`,
       tutor_name: staffName,
       present_count: session.attendances?.length ?? 0,
-      total_students: session.enrolled_count || 20,
+      total_students: 20,
     });
     setFeedbackModalOpen(true);
     setSelectedSession(null);
@@ -313,7 +283,7 @@ export default function TutorMasterClass() {
 
   return (
     <>
-      <StaffDashboardLayout pagetitle="Tutor Master Class">
+      <StaffDashboardLayout pagetitle="Master Class">
         {toast && (
           <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3.5 rounded-2xl shadow-2xl text-white font-bold text-sm flex items-center gap-3 transition-all ${toast.type === "success" ? "bg-emerald-600" : "bg-red-600 animate-bounce"}`}>
             <Icon icon={toast.type === "success" ? "lucide:check-circle" : "lucide:alert-circle"} className="w-5 h-5" />
@@ -322,114 +292,56 @@ export default function TutorMasterClass() {
           </div>
         )}
 
-        <div className="p-4 sm:p-6 lg:p-10 max-w-[1600px] mx-auto w-full space-y-8 min-h-screen">
+        <div className="p-4 sm:p-6 lg:p-10 max-w-[1600px] mx-auto w-full space-y-6 min-h-screen">
           
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {/* 1. HERO & METRIC BANNER                                             */}
+          {/* 1. SUBTLE TOP BAR                                                  */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          <div className="relative overflow-hidden rounded-[32px] sm:rounded-[40px] bg-gradient-to-br from-[#07243B] via-[#09314F] to-[#0A3D63] text-white p-6 sm:p-8 lg:p-10 shadow-2xl border border-white/10">
-            {/* Ambient background glow & grid lines */}
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#C5A97A]/15 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-black uppercase tracking-widest text-[#C5A97A]">
-                  <SparklesIcon className="w-3.5 h-3.5" />
-                  <span>Tutor Masterclass Hub</span>
-                </div>
-                <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
-                  Welcome back, <span className="text-[#C5A97A]">{staffName}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-100 dark:border-gray-800">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#0F2843] dark:text-white tracking-tight">
+                  Master Class
                 </h1>
-                <p className="text-slate-300 text-xs sm:text-sm font-medium max-w-2xl leading-relaxed">
-                  Manage your assigned live cohorts, launch upcoming classroom sessions, track enrolled student attendance, and submit post-class performance reports.
-                </p>
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider">
+                  Tutor
+                </span>
               </div>
-
-              <div className="flex items-center gap-3 self-start lg:self-center shrink-0">
-                <button
-                  onClick={fetchSessions}
-                  disabled={loading}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
-                  title="Refresh Schedule"
-                >
-                  <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin text-[#C5A97A]' : ''}`} />
-                  <span>{loading ? "Refreshing..." : "Refresh"}</span>
-                </button>
-                <button
-                  onClick={() => navigate('/staffs/tutor/calendar')}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#C5A97A] hover:bg-[#b09262] active:scale-95 text-[#09314F] font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-[#C5A97A]/20"
-                >
-                  <CalendarIcon className="w-4 h-4" />
-                  <span>Center Calendar</span>
-                </button>
-              </div>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-gray-400 mt-1 font-medium">
+                Your assigned masterclasses, weekly schedules, and upcoming live sessions.
+              </p>
             </div>
 
-            {/* KPI STATS ROW */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-8 pt-6 border-t border-white/10">
-              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col justify-between">
-                <div className="flex items-center justify-between text-slate-300">
-                  <span className="text-[11px] font-black uppercase tracking-wider">My Classes</span>
-                  <AcademicCapIcon className="w-4 h-4 text-[#C5A97A]" />
-                </div>
-                <div className="mt-2">
-                  <span className="text-2xl sm:text-3xl font-black text-white">{stats.classesCount}</span>
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-tight">Active Cohorts</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2.5 self-start sm:self-center shrink-0">
+              <button
+                onClick={fetchSessions}
+                disabled={loading}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 border border-gray-200 dark:border-gray-700 text-slate-700 dark:text-gray-200 font-bold text-xs transition-all disabled:opacity-50 shadow-sm"
+                title="Refresh Schedule"
+              >
+                <ArrowPathIcon className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#C5A97A]' : 'text-slate-400'}`} />
+                <span>{loading ? "Refreshing..." : "Refresh"}</span>
+              </button>
 
-              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col justify-between">
-                <div className="flex items-center justify-between text-slate-300">
-                  <span className="text-[11px] font-black uppercase tracking-wider">Upcoming</span>
-                  <ClockIcon className="w-4 h-4 text-emerald-400" />
-                </div>
-                <div className="mt-2">
-                  <span className="text-2xl sm:text-3xl font-black text-white">{stats.upcomingCount}</span>
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-tight">Scheduled Sessions</span>
-                </div>
-              </div>
-
-              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col justify-between">
-                <div className="flex items-center justify-between text-slate-300">
-                  <span className="text-[11px] font-black uppercase tracking-wider">Students</span>
-                  <UserGroupIcon className="w-4 h-4 text-blue-400" />
-                </div>
-                <div className="mt-2">
-                  <span className="text-2xl sm:text-3xl font-black text-white">{stats.studentsCount}</span>
-                  <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-tight">Enrolled in Cohorts</span>
-                </div>
-              </div>
-
-              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col justify-between">
-                <div className="flex items-center justify-between text-slate-300">
-                  <span className="text-[11px] font-black uppercase tracking-wider">Next Live Class</span>
-                  <VideoCameraIcon className="w-4 h-4 text-amber-400" />
-                </div>
-                <div className="mt-2 truncate">
-                  <span className="text-sm sm:text-base font-black text-[#C5A97A] truncate block">
-                    {stats.nextSession ? (stats.nextSession.class?.title || "Upcoming Session") : "None Pending"}
-                  </span>
-                  <span className="text-[10px] text-slate-300 font-bold block truncate">
-                    {stats.nextSession ? `${formatDayName(stats.nextSession.session_date)}, ${formatTime(stats.nextSession.starts_at)}` : "All sessions clear"}
-                  </span>
-                </div>
-              </div>
+              <button
+                onClick={() => navigate('/staffs/tutor/calendar')}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 border border-gray-200 dark:border-gray-700 text-slate-700 dark:text-gray-200 font-bold text-xs transition-all shadow-sm"
+              >
+                <CalendarIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                <span>Calendar</span>
+              </button>
             </div>
           </div>
 
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {/* 2. NEXT UP / LIVE NOW SPOTLIGHT CARD                               */}
+          {/* 2. SUBTLE NEXT UP SPOTLIGHT CARD                                   */}
           {/* ══════════════════════════════════════════════════════════════════ */}
           {scheduleData.next_class && (
-            <div className="relative rounded-[32px] p-6 sm:p-8 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-500/15 dark:to-transparent border-2 border-amber-500/30 dark:border-amber-500/40 shadow-xl overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
-
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-3">
+            <div className="relative rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-500/15 dark:to-transparent border border-amber-500/25 dark:border-amber-500/30 shadow-sm overflow-hidden">
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-white text-[10px] font-black tracking-widest uppercase animate-pulse">
-                      <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-black tracking-widest uppercase">
                       Next Up on Your Agenda
                     </span>
                     <span className="text-xs font-bold text-slate-500 dark:text-gray-400">
@@ -438,33 +350,33 @@ export default function TutorMasterClass() {
                   </div>
 
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-[#0F2843] dark:text-white flex items-center gap-3">
-                      <span>{scheduleData.next_class.class?.title || "Live Masterclass Session"}</span>
+                    <h2 className="text-lg sm:text-xl font-black text-[#0F2843] dark:text-white">
+                      {scheduleData.next_class.class?.title || "Live Masterclass Session"}
                     </h2>
-                    <p className="text-sm font-semibold text-[#C5A97A] mt-0.5">
+                    <p className="text-xs font-semibold text-[#C5A97A] mt-0.5">
                       Subject: {scheduleData.next_class.class?.subject?.name || "General"} • {formatTime(scheduleData.next_class.starts_at)} - {formatTime(scheduleData.next_class.ends_at)}
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-gray-300 pt-1">
-                    <span className="flex items-center gap-1 font-bold bg-white dark:bg-gray-800 px-3 py-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                      <UserGroupIcon className="w-4 h-4 text-blue-500" />
-                      {scheduleData.next_class.enrolled_count ?? scheduleData.next_class.class?.enrolled_count ?? 0} Students Enrolled
-                    </span>
-                    {scheduleData.next_class.class_link && (
-                      <span className="flex items-center gap-1 font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                        <Icon icon="lucide:video" className="w-4 h-4" />
+                  <div className="flex items-center gap-2 text-xs pt-0.5">
+                    {scheduleData.next_class.class_link ? (
+                      <span className="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/60 text-[11px]">
+                        <Icon icon="lucide:video" className="w-3.5 h-3.5" />
                         Meeting Room Configured
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-medium text-slate-400 italic">
+                        No meeting link assigned yet
                       </span>
                     )}
                   </div>
                 </div>
 
                 {/* Direct Action Launcher */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0">
                   <button
                     onClick={() => handleOpenLaunchModal(scheduleData.next_class)}
-                    className="w-full sm:w-auto px-6 py-3.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-[#09314F]/20 flex items-center justify-center gap-2 transition-all"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
                   >
                     <Icon icon="lucide:play-circle" className="w-4 h-4 text-[#C5A97A]" />
                     <span>Launch Session</span>
@@ -472,7 +384,7 @@ export default function TutorMasterClass() {
 
                   <button
                     onClick={() => handleOpenReportModal(scheduleData.next_class)}
-                    className="w-full sm:w-auto px-5 py-3.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md transition-all flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
                   >
                     <Icon icon="lucide:clipboard-check" className="w-4 h-4" />
                     <span>Submit Report</span>
@@ -485,20 +397,20 @@ export default function TutorMasterClass() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* 3. VIEW CONTROLS & SEARCH BAR                                      */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1">
             
             {/* Dual Tabs: My Classes vs Sessions Timeline */}
-            <div className="flex items-center p-1.5 bg-gray-100 dark:bg-gray-800/90 rounded-2xl border border-gray-200 dark:border-gray-700 w-full sm:w-auto self-start">
+            <div className="flex items-center p-1 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 w-full sm:w-auto self-start">
               <button
                 onClick={() => setActiveTab("classes")}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === "classes" ? "bg-white dark:bg-gray-700 text-[#09314F] dark:text-white shadow-md" : "text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white"}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-black text-xs uppercase tracking-wider transition-all ${activeTab === "classes" ? "bg-white dark:bg-gray-700 text-[#09314F] dark:text-white shadow-sm" : "text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white"}`}
               >
                 <AcademicCapIcon className="w-4 h-4" />
                 <span>My Masterclasses ({scheduleData.classes?.length || 0})</span>
               </button>
               <button
                 onClick={() => setActiveTab("timeline")}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all ${activeTab === "timeline" ? "bg-white dark:bg-gray-700 text-[#09314F] dark:text-white shadow-md" : "text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white"}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-black text-xs uppercase tracking-wider transition-all ${activeTab === "timeline" ? "bg-white dark:bg-gray-700 text-[#09314F] dark:text-white shadow-sm" : "text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white"}`}
               >
                 <CalendarIcon className="w-4 h-4" />
                 <span>Sessions Timeline ({flattenedSessions.length})</span>
@@ -507,13 +419,13 @@ export default function TutorMasterClass() {
 
             {/* Instant Search Filter */}
             <div className="relative w-full md:w-80">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder={activeTab === "classes" ? "Search classes or subjects..." : "Search by class, subject, date..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs font-bold text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#09314F] dark:focus:ring-[#C5A97A] shadow-sm transition-all placeholder:text-gray-400"
+                className="w-full pl-10 pr-8 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#09314F] dark:focus:ring-[#C5A97A] shadow-sm transition-all placeholder:text-gray-400"
               />
               {searchQuery && (
                 <button
@@ -532,49 +444,44 @@ export default function TutorMasterClass() {
           {activeTab === "classes" && (
             <div className="space-y-6">
               {loading ? (
-                <div className="text-center py-20 bg-white dark:bg-gray-800/40 rounded-[32px] border border-gray-100 dark:border-gray-700/60">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#09314F] dark:border-[#C5A97A] mx-auto" />
-                  <p className="mt-4 text-slate-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest">
+                <div className="text-center py-16 bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-gray-700/60">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#09314F] dark:border-[#C5A97A] mx-auto" />
+                  <p className="mt-3 text-slate-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest">
                     Loading your assigned classes...
                   </p>
                 </div>
               ) : filteredClasses.length === 0 ? (
-                <div className="text-center py-20 bg-white dark:bg-gray-800/40 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 p-8">
-                  <AcademicCapIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                  <h3 className="text-base font-black text-gray-700 dark:text-gray-200">
+                <div className="text-center py-16 bg-white dark:bg-gray-800/40 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-6">
+                  <AcademicCapIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <h3 className="text-sm font-black text-gray-700 dark:text-gray-200">
                     {searchQuery ? "No matching classes found" : "No Masterclasses Assigned Yet"}
                   </h3>
                   <p className="text-xs text-gray-400 max-w-md mx-auto mt-1">
-                    {searchQuery ? "Try clearing your search filter to see all your assigned cohorts." : "You do not have any active masterclasses assigned to your tutor account by the administrator."}
+                    {searchQuery ? "Try clearing your search filter to see all your assigned cohorts." : "You do not have any active masterclasses assigned to your tutor account."}
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {filteredClasses.map((cls) => {
-                    const enrolledCount = cls.enrolled_count ?? (Array.isArray(cls.enrolled_students) ? cls.enrolled_students.length : 0);
                     const courseTitles = Array.isArray(cls.subject?.courses) ? cls.subject.courses.map(c => c.title).join(", ") : null;
                     const schedulesList = Array.isArray(cls.schedules) ? cls.schedules : [];
                     
                     return (
                       <div
                         key={cls.id}
-                        className="group bg-white dark:bg-gray-800 rounded-[30px] p-6 border border-gray-100 dark:border-gray-700/80 shadow-sm hover:shadow-xl hover:border-[#C5A97A]/40 dark:hover:border-[#C5A97A]/40 transition-all duration-300 flex flex-col justify-between"
+                        className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-[#C5A97A]/40 transition-all flex flex-col justify-between"
                       >
-                        <div className="space-y-4">
-                          {/* Card Header Badges */}
+                        <div className="space-y-3">
+                          {/* Card Header Badge */}
                           <div className="flex items-center justify-between gap-2">
-                            <span className="px-3 py-1 rounded-xl bg-[#09314F]/10 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] text-[10px] font-black uppercase tracking-wider">
+                            <span className="px-2.5 py-0.5 rounded-lg bg-[#09314F]/10 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] text-[10px] font-black uppercase tracking-wider">
                               {cls.subject?.name || "Subject Cohort"}
-                            </span>
-                            <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-gray-400">
-                              <UserGroupIcon className="w-3.5 h-3.5 text-blue-500" />
-                              <span>{enrolledCount} enrolled</span>
                             </span>
                           </div>
 
                           {/* Title */}
                           <div>
-                            <h3 className="text-lg font-black text-[#0F2843] dark:text-white group-hover:text-[#09314F] dark:group-hover:text-[#C5A97A] transition-colors line-clamp-1">
+                            <h3 className="text-base font-black text-[#0F2843] dark:text-white group-hover:text-[#09314F] dark:group-hover:text-[#C5A97A] transition-colors line-clamp-1">
                               {cls.title}
                             </h3>
                             {courseTitles && (
@@ -585,9 +492,9 @@ export default function TutorMasterClass() {
                           </div>
 
                           {/* Timetable / Recurring Schedules */}
-                          <div className="space-y-1.5 pt-2">
+                          <div className="space-y-1.5 pt-1">
                             <span className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest block">
-                              Weekly Timetable
+                              Weekly Schedule
                             </span>
                             {schedulesList.length === 0 ? (
                               <span className="text-xs text-gray-400 italic">Schedule to be announced</span>
@@ -596,7 +503,7 @@ export default function TutorMasterClass() {
                                 {schedulesList.map((sched, idx) => (
                                   <span
                                     key={idx}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-gray-700/60 border border-gray-100 dark:border-gray-600 text-[11px] font-bold text-slate-700 dark:text-gray-300"
+                                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-gray-50 dark:bg-gray-700/60 border border-gray-100 dark:border-gray-600 text-[11px] font-bold text-slate-700 dark:text-gray-300"
                                   >
                                     <ClockIcon className="w-3 h-3 text-[#C5A97A]" />
                                     <span>{sched.day_of_week}: {formatTime(sched.start_time)} - {formatTime(sched.end_time)}</span>
@@ -608,14 +515,14 @@ export default function TutorMasterClass() {
 
                           {/* Co-Staff / Tutors Assigned */}
                           {Array.isArray(cls.staffs) && cls.staffs.length > 1 && (
-                            <div className="pt-2 flex items-center gap-2">
+                            <div className="pt-1 flex items-center gap-2">
                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Co-Tutors:</span>
-                              <div className="flex -space-x-2 overflow-hidden">
-                                {cls.staffs.filter(s => s.id !== staffName).map((st) => (
+                              <div className="flex -space-x-1.5 overflow-hidden">
+                                {cls.staffs.map((st) => (
                                   <div
                                     key={st.id}
                                     title={`${st.firstname} ${st.surname} (${st.pivot?.role || 'tutor'})`}
-                                    className="w-6 h-6 rounded-full bg-slate-200 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center text-[9px] font-black text-slate-600 dark:text-gray-300"
+                                    className="w-5 h-5 rounded-full bg-slate-200 dark:bg-gray-700 border border-white dark:border-gray-800 flex items-center justify-center text-[8px] font-black text-slate-600 dark:text-gray-300"
                                   >
                                     {st.firstname?.[0]}
                                   </div>
@@ -626,13 +533,13 @@ export default function TutorMasterClass() {
                         </div>
 
                         {/* Card Actions */}
-                        <div className="pt-6 mt-6 border-t border-gray-100 dark:border-gray-700/80 flex items-center gap-3">
+                        <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2.5">
                           <button
                             onClick={() => {
                               setActiveTab("timeline");
                               setSearchQuery(cls.title);
                             }}
-                            className="flex-1 py-2.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/60 dark:hover:bg-gray-700 active:scale-95 text-[#09314F] dark:text-white font-black text-xs rounded-xl transition-all text-center flex items-center justify-center gap-1.5"
+                            className="flex-1 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/60 dark:hover:bg-gray-700 active:scale-95 text-[#09314F] dark:text-white font-black text-xs rounded-xl transition-all text-center flex items-center justify-center gap-1.5"
                           >
                             <CalendarIcon className="w-3.5 h-3.5" />
                             <span>View Sessions</span>
@@ -643,7 +550,7 @@ export default function TutorMasterClass() {
                               href={cls.zoom_start_url || cls.zoom_join_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="px-4 py-2.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 shadow-sm"
+                              className="px-3 py-2 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 shadow-sm"
                               title="Direct Zoom Link"
                             >
                               <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
@@ -663,9 +570,9 @@ export default function TutorMasterClass() {
           {/* 5. TAB 2: TIMELINE & SESSIONS                                      */}
           {/* ══════════════════════════════════════════════════════════════════ */}
           {activeTab === "timeline" && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Timeline Filter Pills */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
                 {[
                   { id: "all", label: "All Sessions" },
                   { id: "today", label: "Today" },
@@ -678,7 +585,7 @@ export default function TutorMasterClass() {
                     <button
                       key={flt.id}
                       onClick={() => setTimelineFilter(flt.id)}
-                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 ${isActive ? "bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] shadow-sm" : "bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700"}`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all active:scale-95 ${isActive ? "bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] shadow-sm" : "bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700"}`}
                     >
                       {flt.label}
                     </button>
@@ -688,16 +595,16 @@ export default function TutorMasterClass() {
 
               {/* Sessions Table / List */}
               {loading ? (
-                <div className="text-center py-20 bg-white dark:bg-gray-800/40 rounded-[32px] border border-gray-100 dark:border-gray-700/60">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#09314F] dark:border-[#C5A97A] mx-auto" />
-                  <p className="mt-4 text-slate-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest">
+                <div className="text-center py-16 bg-white dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-gray-700/60">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#09314F] dark:border-[#C5A97A] mx-auto" />
+                  <p className="mt-3 text-slate-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest">
                     Loading sessions timeline...
                   </p>
                 </div>
               ) : filteredSessions.length === 0 ? (
-                <div className="text-center py-20 bg-white dark:bg-gray-800/40 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 p-8">
-                  <CalendarIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                  <h3 className="text-base font-black text-gray-700 dark:text-gray-200">
+                <div className="text-center py-16 bg-white dark:bg-gray-800/40 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-6">
+                  <CalendarIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <h3 className="text-sm font-black text-gray-700 dark:text-gray-200">
                     No sessions match this filter
                   </h3>
                   <p className="text-xs text-gray-400 max-w-md mx-auto mt-1">
@@ -705,7 +612,7 @@ export default function TutorMasterClass() {
                   </p>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-gray-800 rounded-[32px] border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/80">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/80">
                   {filteredSessions.map((session) => {
                     const sessionIsPast = isPast(session);
                     const isNext = scheduleData.next_class && String(scheduleData.next_class.id) === String(session.id);
@@ -713,22 +620,22 @@ export default function TutorMasterClass() {
                     return (
                       <div
                         key={session.id}
-                        className={`p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:bg-gray-50/70 dark:hover:bg-gray-700/40 ${isNext ? "bg-amber-500/5 dark:bg-amber-500/10 border-l-4 border-l-amber-500" : ""}`}
+                        className={`p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-all hover:bg-gray-50/70 dark:hover:bg-gray-700/40 ${isNext ? "bg-amber-500/5 dark:bg-amber-500/10 border-l-4 border-l-amber-500" : ""}`}
                       >
                         {/* Left Side: Avatar + Details */}
-                        <div className="flex items-start sm:items-center gap-4 min-w-0">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 shadow-sm ${isNext ? "bg-amber-500 text-white shadow-amber-500/20" : sessionIsPast ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500" : "bg-[#09314F] text-white"}`}>
+                        <div className="flex items-start sm:items-center gap-3 min-w-0">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0 shadow-sm ${isNext ? "bg-amber-500 text-white shadow-amber-500/20" : sessionIsPast ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500" : "bg-[#09314F] text-white"}`}>
                             {getInitials(session.class?.title || session.title)}
                           </div>
 
-                          <div className="space-y-1 min-w-0">
+                          <div className="space-y-0.5 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               {isNext && (
-                                <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest">
+                                <span className="px-2 py-0.5 rounded bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest">
                                   Next Up
                                 </span>
                               )}
-                              <span className="px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider">
+                              <span className="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider">
                                 {session.class?.subject?.name || "Subject"}
                               </span>
                               <span className="text-[11px] font-bold text-slate-400">
@@ -736,31 +643,26 @@ export default function TutorMasterClass() {
                               </span>
                             </div>
 
-                            <h4 className="text-base font-black text-[#0F2843] dark:text-white truncate">
+                            <h4 className="text-sm font-black text-[#0F2843] dark:text-white truncate">
                               {session.class?.title || session.title || "Class Session"}
                             </h4>
 
-                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-gray-400">
+                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-gray-400">
                               <span className="flex items-center gap-1 font-bold">
-                                <ClockIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                                <ClockIcon className="w-3 h-3 text-[#C5A97A]" />
                                 {formatTime(session.starts_at)} - {formatTime(session.ends_at)}
-                              </span>
-                              <span>•</span>
-                              <span className="flex items-center gap-1 font-bold">
-                                <UserGroupIcon className="w-3.5 h-3.5 text-blue-500" />
-                                {session.enrolled_count ?? session.class?.enrolled_count ?? 0} students
                               </span>
                             </div>
                           </div>
                         </div>
 
                         {/* Right Side: Meeting Link / Actions */}
-                        <div className="flex items-center gap-2 self-end md:self-center shrink-0 pt-2 md:pt-0">
+                        <div className="flex items-center gap-2 self-end md:self-center shrink-0 pt-1 md:pt-0">
                           <button
                             onClick={() => handleOpenLaunchModal(session)}
-                            className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-[#09314F] dark:text-white font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+                            className="px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-[#09314F] dark:text-white font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
                           >
-                            <Icon icon="lucide:info" className="w-4 h-4" />
+                            <Icon icon="lucide:info" className="w-3.5 h-3.5" />
                             <span>Details</span>
                           </button>
 
@@ -769,19 +671,19 @@ export default function TutorMasterClass() {
                               href={session.recording_link}
                               target="_blank"
                               rel="noreferrer"
-                              className="px-3.5 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold text-xs hover:bg-emerald-100 transition-all flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800"
+                              className="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold text-xs hover:bg-emerald-100 transition-all flex items-center gap-1 border border-emerald-200 dark:border-emerald-800"
                             >
-                              <VideoCameraIcon className="w-4 h-4" />
+                              <VideoCameraIcon className="w-3.5 h-3.5" />
                               <span>Recording</span>
                             </a>
                           )}
 
                           <button
                             onClick={() => handleOpenReportModal(session)}
-                            className="px-4 py-2.5 rounded-xl bg-[#C5A97A] hover:bg-[#b09262] text-[#09314F] font-black text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5"
+                            className="px-3.5 py-2 rounded-xl bg-[#C5A97A] hover:bg-[#b09262] text-[#09314F] font-black text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5"
                             title="Submit Post-Class Tutor Report"
                           >
-                            <Icon icon="lucide:clipboard-check" className="w-4 h-4" />
+                            <Icon icon="lucide:clipboard-check" className="w-3.5 h-3.5" />
                             <span>Report</span>
                           </button>
                         </div>
@@ -796,7 +698,7 @@ export default function TutorMasterClass() {
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* 6. CLASS SESSION DETAILS / QUICK LAUNCH MODAL                      */}
+        {/* 6. CLASS SESSION DETAILS / DIRECT LAUNCH MODAL                     */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         {selectedSession && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -805,24 +707,24 @@ export default function TutorMasterClass() {
               onClick={() => setSelectedSession(null)} 
             />
             
-            <div className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-[36px] p-6 sm:p-8 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 space-y-6">
-              <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-4">
+            <div className="relative bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200 space-y-5">
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3.5">
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-[#C5A97A]">Session Overview</span>
-                  <h2 className="text-xl sm:text-2xl font-black text-[#0F2843] dark:text-white">Class Details</h2>
+                  <h2 className="text-xl font-black text-[#0F2843] dark:text-white">Class Details</h2>
                 </div>
                 <button
                   onClick={() => setSelectedSession(null)}
-                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center font-bold text-gray-500 dark:text-gray-300 text-sm transition-all"
+                  className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center font-bold text-gray-500 dark:text-gray-300 text-xs transition-all"
                 >
                   ✕
                 </button>
               </div>
               
-              <div className="space-y-4">
-                <div className="bg-slate-50 dark:bg-gray-900/60 rounded-2xl p-4 border border-slate-100 dark:border-gray-700/60 space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Class & Subject</span>
-                  <h3 className="text-base font-black text-[#0F2843] dark:text-white">
+              <div className="space-y-3.5">
+                <div className="bg-slate-50 dark:bg-gray-900/60 rounded-xl p-3.5 border border-slate-100 dark:border-gray-700/60 space-y-0.5">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Class & Subject</span>
+                  <h3 className="text-sm font-black text-[#0F2843] dark:text-white">
                     {selectedSession.class?.title || selectedSession.title}
                   </h3>
                   <p className="text-xs font-bold text-[#C5A97A]">
@@ -830,27 +732,27 @@ export default function TutorMasterClass() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-2 gap-2.5 text-xs">
                   <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl border border-gray-100 dark:border-gray-700">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Session Date</span>
-                    <span className="font-bold text-slate-700 dark:text-gray-200 mt-1 block">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block">Session Date</span>
+                    <span className="font-bold text-slate-700 dark:text-gray-200 mt-0.5 block">
                       {formatDayName(selectedSession.session_date)}, {formatDate(selectedSession.session_date)}
                     </span>
                   </div>
 
                   <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl border border-gray-100 dark:border-gray-700">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">Time Range</span>
-                    <span className="font-bold text-slate-700 dark:text-gray-200 mt-1 block">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block">Time Range</span>
+                    <span className="font-bold text-slate-700 dark:text-gray-200 mt-0.5 block">
                       {formatTime(selectedSession.starts_at)} - {formatTime(selectedSession.ends_at)}
                     </span>
                   </div>
                 </div>
 
-                {/* Meeting Link & Launcher Options */}
-                <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 space-y-3">
+                {/* Meeting Room - OPTIONS SHOWN DIRECTLY WITHOUT EXTRA CLICK */}
+                <div className="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
-                      <LinkIcon className="w-4 h-4" />
+                      <LinkIcon className="w-3.5 h-3.5" />
                       Classroom Meeting Room
                     </span>
                     <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
@@ -858,43 +760,40 @@ export default function TutorMasterClass() {
                     </span>
                   </div>
 
-                  {showJoinOptions ? (
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button 
-                        onClick={() => handleLaunchWebClass(selectedSession)}
-                        className="py-2.5 bg-[#09314F] hover:bg-[#15466f] text-white font-bold text-xs rounded-xl shadow-sm transition-all"
-                      >
-                        Join on Web
-                      </button>
-                      <button 
-                        onClick={() => handleLaunchZoomApp(selectedSession)}
-                        className="py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
-                      >
-                        Join via Zoom App
-                      </button>
+                  {selectedSession.class_link ? (
+                    <div className="space-y-2">
+                      <div className="text-[11px] text-slate-500 dark:text-gray-400 truncate font-medium">
+                        {selectedSession.class_link.replace(/^https?:\/\//, '')}
+                      </div>
+
+                      {/* Direct Launch Options Displayed Instantly */}
+                      <div className="grid grid-cols-2 gap-2 pt-0.5">
+                        <button 
+                          onClick={() => handleLaunchWebClass(selectedSession)}
+                          className="py-2.5 bg-[#09314F] hover:bg-[#15466f] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                        >
+                          <Icon icon="lucide:globe" className="w-3.5 h-3.5 text-[#C5A97A]" />
+                          <span>Join on Web</span>
+                        </button>
+                        <button 
+                          onClick={() => handleLaunchZoomApp(selectedSession)}
+                          className="py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                        >
+                          <Icon icon="lucide:video" className="w-3.5 h-3.5" />
+                          <span>Join via Zoom App</span>
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs text-slate-600 dark:text-gray-300 truncate max-w-[240px]">
-                        {selectedSession.class_link ? selectedSession.class_link.replace(/^https?:\/\//, '').substring(0, 30) + '...' : "No link assigned"}
-                      </span>
-                      {selectedSession.class_link && (
-                        <button
-                          onClick={() => setShowJoinOptions(true)}
-                          className="text-xs font-black text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                          Options ›
-                        </button>
-                      )}
-                    </div>
+                    <p className="text-xs text-slate-400 italic">No meeting link configured for this session yet.</p>
                   )}
                 </div>
 
                 {selectedSession.recording_link && (
-                  <div className="flex items-center justify-between p-3.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl border border-emerald-100 dark:border-emerald-900/50">
+                  <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
                     <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                      <VideoCameraIcon className="w-4 h-4" />
-                      Past Recording Available
+                      <VideoCameraIcon className="w-3.5 h-3.5" />
+                      Recording Available
                     </span>
                     <a
                       href={selectedSession.recording_link}
@@ -912,7 +811,7 @@ export default function TutorMasterClass() {
               <div className="pt-2 space-y-2">
                 <button
                   onClick={() => handleOpenReportModal(selectedSession)}
-                  className="w-full py-3.5 bg-[#C5A97A] hover:bg-[#b09262] text-[#09314F] font-black rounded-2xl transition-all shadow-md active:scale-95 text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-[#C5A97A] hover:bg-[#b09262] text-[#09314F] font-black rounded-xl transition-all shadow-sm active:scale-95 text-xs uppercase tracking-wider flex items-center justify-center gap-2"
                 >
                   <Icon icon="lucide:clipboard-check" className="w-4 h-4" />
                   <span>Submit Post-Class Tutor Report</span>
@@ -920,7 +819,7 @@ export default function TutorMasterClass() {
 
                 <button 
                   onClick={() => setSelectedSession(null)}
-                  className="w-full py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-white font-bold rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-wider"
+                  className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-white font-bold rounded-xl transition-all active:scale-95 text-xs uppercase tracking-wider"
                 >
                   Close
                 </button>

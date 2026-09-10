@@ -69,7 +69,7 @@ function SessionModal({ session, onClose }) {
     const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
 
     if (isZoom && session.id) {
-      navigate(`/classroom/${session.id}`);
+      navigate(`/zoom/masterclass/class/${session.id}`);
     } else if (link) {
       window.open(link, '_blank');
       navigate('/student/meet', {
@@ -149,13 +149,13 @@ function SessionModal({ session, onClose }) {
             </a>
           )
         ) : (
-          session.class_link && (
+          (session.class_link || session.id) && (
             <button
               onClick={handleJoin}
-              className="flex items-center justify-center gap-2 w-full py-3 bg-[#09314F] hover:bg-[#0a426b] text-white rounded-xl font-black text-sm transition-colors shadow-lg"
+              className="flex items-center justify-center gap-2 w-full py-3 bg-[#09314F] hover:bg-[#0a426b] text-white rounded-xl font-black text-sm transition-colors shadow-lg active:scale-95"
             >
               <Icon icon="logos:zoom" className="w-4 h-4" />
-              Join Zoom Meeting
+              Join Live Classroom
             </button>
           )
         )}
@@ -183,7 +183,7 @@ function SessionCard({ session, onClick }) {
     const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
 
     if (isZoom && session.id) {
-      navigate(`/classroom/${session.id}`);
+      navigate(`/zoom/masterclass/class/${session.id}`);
     } else if (link) {
       window.open(link, '_blank');
       navigate('/student/meet', {
@@ -232,12 +232,15 @@ function SessionCard({ session, onClick }) {
             <Icon icon="lucide:play-circle" className="w-3.5 h-3.5" />
             Recorded Class
           </a>
-        ) : session.class_link ? (
+        ) : (session.class_link || session.id) ? (
           <button
             onClick={handlePillClick}
-            className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 text-[12px] font-bold text-gray-700 dark:text-gray-200 hover:border-blue-400 transition-colors shadow-sm"
+            className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 text-[12px] font-bold text-gray-700 dark:text-gray-200 hover:border-blue-400 transition-colors shadow-sm active:scale-95"
           >
             <Icon icon="logos:zoom" className="w-10 h-3.5" />
+            <span className="text-[#09314F] dark:text-blue-300 font-extrabold text-[11px]">
+              Join Class
+            </span>
           </button>
         ) : (
           <span className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 text-[12px] font-bold text-gray-700 dark:text-gray-200 shadow-sm">

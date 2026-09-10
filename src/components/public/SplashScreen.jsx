@@ -5,6 +5,7 @@ import gsap from 'gsap';
 const SplashScreen = ({ isGlobal = false, isVisible = true, onInitialLoadDone }) => {
   const containerRef = useRef(null);
   const [animationPlayed, setAnimationPlayed] = useState(false);
+  const [keepContentMounted, setKeepContentMounted] = useState(isVisible);
 
   useEffect(() => {
     if (!isGlobal) return;
@@ -37,11 +38,13 @@ const SplashScreen = ({ isGlobal = false, isVisible = true, onInitialLoadDone })
           pointerEvents: "none",
           onComplete: () => {
             gsap.set(containerRef.current, { display: "none" });
+            setKeepContentMounted(false);
           }
         });
       } else if (isVisible) {
         gsap.set(containerRef.current, { display: "flex", pointerEvents: "auto", opacity: 1 });
         setAnimationPlayed(true);
+        setKeepContentMounted(true);
       }
     }
   }, [isVisible, animationPlayed, isGlobal]);
@@ -52,7 +55,7 @@ const SplashScreen = ({ isGlobal = false, isVisible = true, onInitialLoadDone })
       className={`fixed inset-0 z-[9999] flex items-center justify-center bg-white overflow-hidden ${!isGlobal ? 'opacity-100' : ''}`}
     >
       <div className="w-full h-full flex items-center justify-center p-0 md:p-4">
-        { (isVisible || !isGlobal) && <LogoAnimation /> }
+        { (isVisible || keepContentMounted || !isGlobal) && <LogoAnimation /> }
       </div>
     </div>
   );

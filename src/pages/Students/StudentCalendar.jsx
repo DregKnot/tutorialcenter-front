@@ -89,7 +89,7 @@ export default function StudentCalendar() {
 
     const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
     if (isZoom && s.id) {
-      navigate(`/classroom/${s.id}`);
+      navigate(`/zoom/masterclass/class/${s.id}`);
     } else if (link) {
       window.open(link, '_blank');
       navigate('/student/meet', {
@@ -947,31 +947,23 @@ export default function StudentCalendar() {
                 </span>
               </div>
               <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2 gap-4">
-                <span className="text-xs font-bold text-gray-400 dark:text-blue-300 shrink-0">Class Link:</span>
-                {selectedSession.class_link ? (
-                  <a
-                    href={selectedSession.class_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-bold text-blue-600 dark:text-blue-400 underline decoration-dotted underline-offset-4 hover:opacity-85 truncate"
-                  >
-                    {selectedSession.class_link}
-                  </a>
+                <span className="text-xs font-bold text-gray-400 dark:text-blue-300 shrink-0">Class Access:</span>
+                {selectedSession.class_link || selectedSession.id ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                    <Icon icon="lucide:shield-check" className="w-3 h-3 text-emerald-600" />
+                    In-App Classroom Protected
+                  </span>
                 ) : (
-                  <span className="text-xs text-gray-300 dark:text-gray-500 italic">No link yet</span>
+                  <span className="text-xs text-gray-300 dark:text-gray-500 italic">No link assigned</span>
                 )}
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-xs font-bold text-gray-400 dark:text-blue-300 shrink-0">Video Link:</span>
-                {selectedSession.recording_link ? (
-                  <a
-                    href={selectedSession.recording_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-bold text-blue-600 dark:text-blue-400 underline decoration-dotted underline-offset-4 hover:opacity-85 truncate"
-                  >
-                    {selectedSession.recording_link}
-                  </a>
+                <span className="text-xs font-bold text-gray-400 dark:text-blue-300 shrink-0">Video Recording:</span>
+                {selectedSession.recording_link || selectedSession.recording_url ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">
+                    <Icon icon="lucide:video" className="w-3 h-3 text-purple-600" />
+                    Available In App
+                  </span>
                 ) : (
                   <span className="text-xs text-gray-300 dark:text-gray-500 italic">No video uploaded yet</span>
                 )}

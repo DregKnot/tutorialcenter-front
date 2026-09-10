@@ -21,6 +21,26 @@ const menuItems = [
     destination: "/student/dashboard",
   },
   {
+    label: "Master Class",
+    icon: "healthicons:i-training-class",
+    destination: "/student/class-schedule",
+  },
+  {
+    label: "Calendar",
+    icon: "mdi:calendar-month",
+    destination: "/student/calendar",
+  },
+  {
+    label: "Assessment",
+    icon: "mdi:file-document-edit-outline",
+    destination: "/student/assessments",
+  },
+  {
+    label: "Exam Practice",
+    icon: "mdi:clipboard-text-outline",
+    destination: "/student/exams",
+  },
+  {
     label: "Leaderboard",
     icon: "material-symbols:crown-outline-rounded",
     destination: "/student/leaderboard",
@@ -36,27 +56,6 @@ const menuItems = [
     // destination: "/student/courses",
   },
   {
-    label: "Master Class",
-    icon: "healthicons:i-training-class",
-    // destination: "/student/master-class",
-    destination: "/student/class-schedule",
-  },
-  {
-    label: "Exam Practice",
-    icon: "mdi:clipboard-text-outline",
-    destination: "/student/exams",
-  },
-  {
-    label: "Calendar",
-    icon: "mdi:calendar-month",
-    destination: "/student/calendar",
-  },
-  {
-    label: "Assessment",
-    icon: "mdi:file-document-edit-outline",
-    destination: "/student/assessments",
-  },
-  {
     label: "Games & Fun",
     icon: "mdi:controller-classic",
     destination: "/student/games",
@@ -68,17 +67,17 @@ const menuItems = [
   {
     label: "Payment",
     icon: "mdi:credit-card-outline",
-    destination: "/student/payment-history", // This makes it clickable!
-  },
-  {
-    label: "Settings",
-    icon: "mdi:cog-outline",
-    destination: "/student/settings",
+    destination: "/student/payment-history",
   },
   {
     label: "Feedback",
     icon: "mdi:message-star-outline",
     destination: "/student/feedback",
+  },
+  {
+    label: "Settings",
+    icon: "mdi:cog-outline",
+    destination: "/student/settings",
   },
   {
     label: "Help",

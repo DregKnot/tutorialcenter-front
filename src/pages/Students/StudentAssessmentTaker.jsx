@@ -56,8 +56,17 @@ export default function StudentAssessmentTaker() {
       const data = res.data || {};
       setAssessmentData(data);
 
+      // Check if assessment is missed or deadline passed without submission
+      const isPastDue = data.assessment?.due_at && new Date(data.assessment.due_at) < new Date();
+      const hasSubmission = data.submission && (data.submission.status === "graded" || data.submission.status === "submitted");
+
+      if (data.is_missed || (isPastDue && !hasSubmission)) {
+        setError("The deadline for this assessment has passed. Submissions are closed.");
+        return;
+      }
+
       // If already graded or submitted, redirect to result
-      if (data.submission && (data.submission.status === "graded" || data.submission.status === "submitted")) {
+      if (hasSubmission) {
         setSubmissionResult(data);
         setResultModalOpen(true);
         return;
