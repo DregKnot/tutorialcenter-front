@@ -5,9 +5,9 @@ import { location } from "../../../data/locations";
 import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { dropdownTheme } from "../../../utils/dropdownTheme";
+import DateOfBirthPicker from "../../../components/common/DateOfBirthPicker";
 import { 
   UserIcon, 
-  CalendarIcon, 
   MapPinIcon, 
   AcademicCapIcon, 
   ChevronLeftIcon,
@@ -15,9 +15,6 @@ import {
   UserCircleIcon,
   MapIcon
 } from "@heroicons/react/24/outline";
-
-const isIOS = () =>
-  /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 export default function StudentBiodata() {
   const navigate = useNavigate();
@@ -27,8 +24,6 @@ export default function StudentBiodata() {
   const [focusedField, setFocusedField] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
-  const dateInputRef = useRef(null);
-  const dateContainerRef = useRef(null);
 
   // Custom dropdown states
   const [isGenderOpen, setIsGenderOpen] = useState(false);
@@ -47,9 +42,6 @@ export default function StudentBiodata() {
       }
       if (departmentRef.current && !departmentRef.current.contains(event.target)) {
         setIsDepartmentOpen(false);
-      }
-      if (dateContainerRef.current && !dateContainerRef.current.contains(event.target)) {
-        dateInputRef.current?.blur();
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -337,48 +329,16 @@ export default function StudentBiodata() {
                 {errors.surname && <p className="text-xs text-red-500 font-bold px-1">{errors.surname}</p>}
               </div>
 
-              {/* Date of Birth */}
-              <div className="space-y-2">
-                <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">Date of Birth</label>
-                <div ref={dateContainerRef} className={getInputStyles("date_of_birth").container} style={{ position: "relative" }}>
-                  <CalendarIcon 
-                    className={`${getInputStyles("date_of_birth").icon} pointer-events-none hover:text-[#09314F] transition-colors relative z-10`} 
-                    onClick={() => {
-                      if (!isIOS() && dateInputRef.current?.showPicker) {
-                        dateInputRef.current.showPicker();
-                      } else if (!isIOS()) {
-                        dateInputRef.current?.focus();
-                      }
-                    }}
-                  />
-                  <input
-                    ref={dateInputRef}
-                    name="date_of_birth"
-                    type="date"
-                    value={formData.date_of_birth}
-                    onChange={handleChange}
-                    onClick={() => {
-                      if (!isIOS() && dateInputRef.current?.showPicker) {
-                        dateInputRef.current.showPicker();
-                      }
-                    }}
-                    onFocus={() => setFocusedField("date_of_birth")}
-                    onBlur={() => setFocusedField(null)}
-                    className={`${getInputStyles("date_of_birth").input} cursor-pointer`}
-                    style={isIOS() ? {
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      opacity: 0,
-                      cursor: "pointer",
-                      zIndex: 40,
-                    } : {}}
-                  />
-                </div>
-                {errors.date_of_birth && <p className="text-xs text-red-500 font-bold px-1">{errors.date_of_birth}</p>}
-              </div>
+              {/* Date of Birth (Revamped Dual Manual/Calendar with Dynamic Allocation) */}
+              <DateOfBirthPicker
+                name="date_of_birth"
+                value={formData.date_of_birth}
+                onChange={handleChange}
+                error={errors.date_of_birth}
+                onFocus={() => setFocusedField("date_of_birth")}
+                onBlur={() => setFocusedField(null)}
+                required={true}
+              />
 
               {/* Gender */}
               <div className="space-y-2">

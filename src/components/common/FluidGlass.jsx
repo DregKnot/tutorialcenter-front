@@ -145,29 +145,31 @@ function Bar({ modeProps = {}, ...p }) {
   );
 }
 
+const NAV_DEVICE = {
+  mobile: { max: 639, spacing: 0.2, fontSize: 0.035 },
+  tablet: { max: 1023, spacing: 0.24, fontSize: 0.045 },
+  desktop: { max: Infinity, spacing: 0.3, fontSize: 0.045 }
+};
+
+const getNavDevice = () => {
+  if (typeof window === 'undefined') return 'desktop';
+  const w = window.innerWidth;
+  return w <= NAV_DEVICE.mobile.max ? 'mobile' : w <= NAV_DEVICE.tablet.max ? 'tablet' : 'desktop';
+};
+
 function NavItems({ items }) {
   const group = useRef();
   const { viewport, camera } = useThree();
 
-  const DEVICE = {
-    mobile: { max: 639, spacing: 0.2, fontSize: 0.035 },
-    tablet: { max: 1023, spacing: 0.24, fontSize: 0.045 },
-    desktop: { max: Infinity, spacing: 0.3, fontSize: 0.045 }
-  };
-  const getDevice = () => {
-    const w = window.innerWidth;
-    return w <= DEVICE.mobile.max ? 'mobile' : w <= DEVICE.tablet.max ? 'tablet' : 'desktop';
-  };
-
-  const [device, setDevice] = useState(getDevice());
+  const [device, setDevice] = useState(getNavDevice);
 
   useEffect(() => {
-    const onResize = () => setDevice(getDevice());
+    const onResize = () => setDevice(getNavDevice());
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const { spacing, fontSize } = DEVICE[device];
+  const { spacing, fontSize } = NAV_DEVICE[device];
 
   useFrame(() => {
     if (!group.current) return;

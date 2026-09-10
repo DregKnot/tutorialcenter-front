@@ -25,7 +25,7 @@ export default function GuardianPayments() {
 
   // Payment UI State
   const [activePaymentTab, setActivePaymentTab] = useState('renew'); // 'renew' | 'add_course'
-  const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' | 'quarterly' | 'annual'
+  const [billingCycle, setBillingCycle] = useState('quarterly'); // 'quarterly' | 'semi_annual' | 'annual'
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState(null);
   const [receiptModalData, setReceiptModalData] = useState(null);
@@ -37,16 +37,54 @@ export default function GuardianPayments() {
   const [courseSubjects, setCourseSubjects] = useState([]);
   const [selectedSubjectIds, setSelectedSubjectIds] = useState([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
-  const [configuredDuration, setConfiguredDuration] = useState('monthly');
+  const [configuredDuration, setConfiguredDuration] = useState('quarterly');
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const PAYSTACK_KEY = process.env.REACT_APP_PAYSTACK_PUBLIC_KEY || "pk_test_d810e0935d60a336bea860384aabbc753cdd78ff";
 
-  // Standard pricing multipliers
-  const pricingPlans = {
-    monthly: { label: 'Monthly Plan (30 Days)', multiplier: 1, tag: 'Standard' },
-    quarterly: { label: 'Term / Quarterly (90 Days)', multiplier: 2.7, tag: 'Save 10%' },
-    annual: { label: 'Full Academic Session (365 Days)', multiplier: 10, tag: 'Save 20%' }
+  // Standard Academic Billing Cycles & Durations (Monthly, Quarterly, Semi-Annually, Annually)
+  const DURATION_PLANS = {
+    monthly: {
+      key: 'monthly',
+      label: 'Monthly (1 Month / 30 Days)',
+      months: 1,
+      tag: 'Flexible',
+      savings: '',
+      description: 'Standard 30-day single month access'
+    },
+    quarterly: {
+      key: 'quarterly',
+      label: 'Term / Quarterly (3 Months)',
+      months: 3,
+      tag: 'Most Popular',
+      savings: 'Save 5%',
+      description: 'Quarterly access covering 1 full school term (3 months) with 5% discount'
+    },
+    semi_annual: {
+      key: 'semi_annual',
+      label: 'Semi-Annually (6 Months)',
+      months: 6,
+      tag: 'Save 5%',
+      savings: 'Save 5%',
+      description: 'Half academic session preparation (6 months) with 5% discount'
+    },
+    annual: {
+      key: 'annual',
+      label: 'Full Academic Session (1 Year)',
+      months: 12,
+      tag: 'Best Value',
+      savings: 'Save 5%',
+      description: 'Comprehensive 1-year exam preparation & mock CBT coverage with 5% discount'
+    }
+  };
+
+  // Full suite for renewal & new enrollment duration selection
+  const SELECTABLE_RENEWAL_PLANS = ['monthly', 'quarterly', 'semi_annual', 'annual'];
+
+  // Helper to dynamically calculate discounted plan price from base catalog price
+  const calculatePlanPrice = (basePrice, months = 1) => {
+    const total = Number(basePrice || 0) * (months || 1);
+    return months === 1 ? total : Math.round(total * 0.95);
   };
 
   // Helper to format course banner image URL from backend storage
@@ -255,19 +293,19 @@ export default function GuardianPayments() {
   }, [guardian, selectedWard]);
 
   // Dynamic Renewal Price based on current selected enrollment from backend
-  const currentPlanMultiplier = pricingPlans[billingCycle]?.multiplier || 1;
   const baseRenewalCoursePrice = Number(
     currentEnrollment?.course_price ??
-    currentEnrollment?.cost ??
+    currentEnrollment?.course?.price ??
     (availableCourses.length > 0 ? availableCourses[0]?.price : 0) ??
-    0
+    10000
   );
-  const calculatedRenewalTotal = Math.max(100, Math.round(baseRenewalCoursePrice * currentPlanMultiplier));
+  const currentPlanMonths = DURATION_PLANS[billingCycle]?.months || 3;
+  const calculatedRenewalTotal = Math.max(100, calculatePlanPrice(baseRenewalCoursePrice, currentPlanMonths));
 
   // 3. Open Add Training Config Modal & Fetch Live Subjects
   const openTrainingConfig = async (course) => {
     setSelectedCourse(course);
-    setConfiguredDuration('monthly');
+    setConfiguredDuration('quarterly');
     setConfigStep(1);
     setShowConfigModal(true);
     setLoadingSubjects(true);
@@ -323,8 +361,9 @@ export default function GuardianPayments() {
   };
 
   // Calculated configured course price
-  const configDurationPlan = pricingPlans[configuredDuration] || pricingPlans.monthly;
-  const configuredCoursePrice = Math.max(100, Math.round(Number(selectedCourse?.price || 0) * configDurationPlan.multiplier));
+  const configPlanMonths = DURATION_PLANS[configuredDuration]?.months || 3;
+  const configDurationPlan = DURATION_PLANS[configuredDuration] || DURATION_PLANS.quarterly;
+  const configuredCoursePrice = Math.max(100, calculatePlanPrice(Number(selectedCourse?.price || 0), configPlanMonths));
 
   // 4. Server-Side Atomic Verification
   const verifyPaymentOnBackend = async (reference, metadata) => {
@@ -734,9 +773,10 @@ export default function GuardianPayments() {
 
               {/* Cycle Cards */}
               <div className="space-y-3">
-                {Object.entries(pricingPlans).map(([key, plan]) => {
+                {SELECTABLE_RENEWAL_PLANS.map((key) => {
+                  const plan = DURATION_PLANS[key];
                   const isSelected = billingCycle === key;
-                  const planAmount = Math.round(baseRenewalCoursePrice * plan.multiplier);
+                  const planAmount = calculatePlanPrice(baseRenewalCoursePrice, plan.months);
 
                   return (
                     <div
@@ -764,6 +804,7 @@ export default function GuardianPayments() {
                               <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase ${
                                 key === 'annual' ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" :
                                 key === 'quarterly' ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
+                                key === 'semi_annual' ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" :
                                 "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                               }`}>
                                 {plan.tag}
@@ -771,7 +812,7 @@ export default function GuardianPayments() {
                             )}
                           </div>
                           <p className="text-[11px] text-gray-400 mt-0.5">
-                            {key === 'monthly' ? "Standard 30-day billing cycle" : key === 'quarterly' ? "Quarterly access with 10% discount" : "Best value for full academic preparation"}
+                            {plan.description}
                           </p>
                         </div>
                       </div>
@@ -920,7 +961,7 @@ export default function GuardianPayments() {
               <div className="flex justify-between">
                 <span className="text-gray-500">Billing Duration:</span>
                 <strong className="text-gray-900 dark:text-white">
-                  {activePaymentTab === 'renew' ? pricingPlans[billingCycle]?.label : configDurationPlan.label}
+                  {activePaymentTab === 'renew' ? DURATION_PLANS[billingCycle]?.label : configDurationPlan.label}
                 </strong>
               </div>
 
@@ -1192,9 +1233,10 @@ export default function GuardianPayments() {
                     </label>
 
                     <div className="space-y-2.5">
-                      {Object.entries(pricingPlans).map(([key, plan]) => {
+                      {SELECTABLE_RENEWAL_PLANS.map((key) => {
+                        const plan = DURATION_PLANS[key];
                         const isSelected = configuredDuration === key;
-                        const planPrice = Math.round(Number(selectedCourse?.price || 0) * plan.multiplier);
+                        const planPrice = calculatePlanPrice(Number(selectedCourse?.price || 0), plan.months);
                         return (
                           <div
                             key={key}
@@ -1211,7 +1253,12 @@ export default function GuardianPayments() {
                               }`}>
                                 {isSelected && <div className="w-2 h-2 rounded-full bg-[#09314F] dark:bg-[#C5A97A]" />}
                               </div>
-                              <span className="text-xs font-bold">{plan.label}</span>
+                              <div>
+                                <span className="text-xs font-bold block">{plan.label}</span>
+                                {plan.tag && (
+                                  <span className="text-[10px] text-gray-400 font-semibold">{plan.tag}</span>
+                                )}
+                              </div>
                             </div>
                             <span className="text-sm font-black font-mono">₦{planPrice.toLocaleString()}</span>
                           </div>
