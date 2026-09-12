@@ -12,7 +12,8 @@ export default function StaffEmailVerification() {
   const [msg, setMsg] = useState("");
   const [count, setCount] = useState(60); // 60 seconds
   const [searchParams] = useSearchParams();
-  const email = searchParams.get("email");
+  const email = searchParams.get("email") || "";
+  const urlToken = searchParams.get("token") || searchParams.get("otp") || "";
   const [toast, setToast] = useState(null);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -30,6 +31,23 @@ export default function StaffEmailVerification() {
       navigate("/staff/login");
     }
   }, [email, navigate]);
+
+  // Pre-fill 6 OTP boxes if token exists in URL (e.g. from clicking the verification link)
+  useEffect(() => {
+    if (urlToken) {
+      const cleanDigits = urlToken.replace(/[^0-9]/g, "").slice(0, 6).split("");
+      if (cleanDigits.length === 6) {
+        setFormData({
+          num1: cleanDigits[0] || "",
+          num2: cleanDigits[1] || "",
+          num3: cleanDigits[2] || "",
+          num4: cleanDigits[3] || "",
+          num5: cleanDigits[4] || "",
+          num6: cleanDigits[5] || "",
+        });
+      }
+    }
+  }, [urlToken]);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
@@ -57,14 +75,15 @@ export default function StaffEmailVerification() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (value.length > 1) return;
+    const clean = value.replace(/[^0-9]/g, "");
+    if (clean.length > 1) return;
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: clean,
     }));
 
-    if (value) {
+    if (clean) {
       const nextInput = {
         num1: "num2",
         num2: "num3",
@@ -97,14 +116,12 @@ export default function StaffEmailVerification() {
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData("text").trim();
-    if (!pasteData) return;
+    const rawPaste = e.clipboardData.getData("text") || "";
+    const cleanDigits = rawPaste.replace(/[^0-9]/g, "").slice(0, 6).split("");
+    if (cleanDigits.length === 0) return;
 
-    // Take the first 6 characters to match our fields
-    const digits = pasteData.slice(0, 6).split("");
-    
     const newFormData = { ...formData };
-    digits.forEach((digit, index) => {
+    cleanDigits.forEach((digit, index) => {
       const fieldName = `num${index + 1}`;
       if (index < 6) {
         newFormData[fieldName] = digit;
@@ -114,7 +131,7 @@ export default function StaffEmailVerification() {
     setFormData(newFormData);
 
     // Focus the last filled input or the 6th input if all filled
-    const lastIndex = Math.min(digits.length, 6);
+    const lastIndex = Math.min(cleanDigits.length, 6);
     const lastField = `num${lastIndex}`;
     if (inputRefs[lastField]) {
       inputRefs[lastField].current.focus();
@@ -135,31 +152,42 @@ export default function StaffEmailVerification() {
     if (!validateForm()) return;
 
     setLoading(true);
-    const token =
+    setMsg("");
+    const token = (
       formData.num1 +
       formData.num2 +
       formData.num3 +
       formData.num4 +
       formData.num5 +
-      formData.num6;
+      formData.num6
+    ).trim();
 
     try {
+      const cleanEmail = email ? email.trim() : "";
       const response = await axios.post(
         `${API_BASE_URL}/api/staffs/verify-email`,
         {
-          email: email,
+          email: cleanEmail,
           token: token,
         },
       );
 
       if (response.status === 200) {
-        setToast({ type: "success", message: "Email verified successfully!" });
+        const successMessage = response.data?.message || "Email verified successfully!";
+        setToast({ type: "success", message: successMessage });
         setTimeout(() => {
           navigate("/staff/login");
         }, 2000);
       }
     } catch (error) {
       console.error("Verification error:", error.response?.data || error);
+      if (error.response?.data?.already_verified) {
+        setToast({ type: "success", message: "Email is already verified! Redirecting to login..." });
+        setTimeout(() => {
+          navigate("/staff/login");
+        }, 2000);
+        return;
+      }
       const backendMessage = error?.response?.data?.message || "Verification failed. Please try again.";
       setToast({ type: "error", message: backendMessage });
       setMsg(backendMessage);
