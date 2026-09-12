@@ -581,6 +581,7 @@ export default function AdminCreateStudent() {
   ========================================= */
   const [courses, setCourses] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [subjectSearch, setSubjectSearch] = useState("");
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -629,65 +630,43 @@ export default function AdminCreateStudent() {
     }
   }, []);
 
-  // Fetch subjects when course or department changes
+  // Fetch all subjects for course once and cache in state (department filtering is memoized in-memory)
   const fetchSubjectsForCourse = useCallback(
-    async (courseId, department) => {
+    async (courseId) => {
       if (!courseId) {
         setSubjects([]);
         return;
       }
       setLoadingSubjects(true);
 
-      // We query /api/courses/{courseId}/subjects directly
       const endpoint = `${API_BASE_URL}/api/courses/${courseId}/subjects`;
-      console.log(`[AdminCreateStudent] [GET] Fetching Subjects -> ${endpoint} (Course ID: ${courseId}, Dept: ${department || "all"})`);
+      console.log(`[AdminCreateStudent] [GET] Fetching Subjects -> ${endpoint} (Course ID: ${courseId})`);
 
       try {
         const res = await axios.get(endpoint, config);
         console.log("[AdminCreateStudent] Subjects API Response:", res.data);
 
-        let fetchedSubjects =
+        const fetchedSubjects =
           res.data?.subjects ||
           res.data?.data ||
           (Array.isArray(res.data) ? res.data : []);
 
-        // If department is selected, filter subjects by department if they specify departments
-        if (department && fetchedSubjects.length > 0) {
-          const deptFiltered = fetchedSubjects.filter((s) => {
-            if (!s.departments || !Array.isArray(s.departments) || s.departments.length === 0) return true;
-            return s.departments.some(
-              (d) => d.toLowerCase() === department.toLowerCase()
-            );
-          });
-          if (deptFiltered.length > 0) {
-            fetchedSubjects = deptFiltered;
-          }
-        }
-
-        console.log(`[AdminCreateStudent] Formatted ${fetchedSubjects.length} subjects for display:`, fetchedSubjects);
+        console.log(`[AdminCreateStudent] Formatted ${fetchedSubjects.length} subjects:`, fetchedSubjects);
         setSubjects(fetchedSubjects);
       } catch (err) {
-        console.error("[AdminCreateStudent] Fetch Subjects Error via /api/courses/{id}/subjects, attempting fallback to /api/admin/subjects/all:", err.response?.data || err);
+        console.error("[AdminCreateStudent] Fetch Subjects Error via /api/courses/{id}/subjects, attempting fallback:", err.response?.data || err);
 
-        // Fallback: fetch /api/admin/subjects/all and filter by course pivot relationship
         try {
           const fallbackEndpoint = `${API_BASE_URL}/api/admin/subjects/all`;
           console.log(`[AdminCreateStudent] [GET] Fallback -> ${fallbackEndpoint}`);
           const fallbackRes = await axios.get(fallbackEndpoint, config);
-          console.log("[AdminCreateStudent] Fallback Subjects Response:", fallbackRes.data);
-
           const allSubjects = fallbackRes.data?.subjects || fallbackRes.data?.data || [];
           const filtered = allSubjects.filter((s) => {
-            const courseMatch =
+            return (
               s.courses?.some((c) => c.id === parseInt(courseId) || c.id === courseId) ||
               s.course_id === parseInt(courseId) ||
-              s.course_id === courseId;
-            if (!courseMatch) return false;
-
-            if (department && s.departments && Array.isArray(s.departments) && s.departments.length > 0) {
-              return s.departments.some((d) => d.toLowerCase() === department.toLowerCase());
-            }
-            return true;
+              s.course_id === courseId
+            );
           });
 
           console.log(`[AdminCreateStudent] Fallback filtered ${filtered.length} subjects:`, filtered);
@@ -700,21 +679,54 @@ export default function AdminCreateStudent() {
         setLoadingSubjects(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [token]
+    [config]
   );
+
+  // In-memory filtered subjects by department and search query
+  const filteredSubjects = useMemo(() => {
+    if (!subjects || subjects.length === 0) return [];
+    let list = subjects;
+
+    // Fuzzy department filtering (matches "art" with "arts", "science", "commercial")
+    if (formData.department) {
+      const targetDept = formData.department.toLowerCase().trim();
+      list = list.filter((s) => {
+        if (!s.departments || !Array.isArray(s.departments) || s.departments.length === 0) return true;
+        return s.departments.some((d) => {
+          const dNorm = (d || "").toLowerCase().trim();
+          if (dNorm === targetDept) return true;
+          if (targetDept.startsWith("art") && dNorm.startsWith("art")) return true;
+          if (targetDept.startsWith("sci") && dNorm.startsWith("sci")) return true;
+          if (targetDept.startsWith("com") && dNorm.startsWith("com")) return true;
+          return false;
+        });
+      });
+    }
+
+    // Search query filtering
+    if (subjectSearch.trim()) {
+      const q = subjectSearch.toLowerCase().trim();
+      list = list.filter((s) => {
+        const name = (s.name || s.title || "").toLowerCase();
+        return name.includes(q);
+      });
+    }
+
+    return list;
+  }, [subjects, formData.department, subjectSearch]);
 
   useEffect(() => {
     if (mode === "create") fetchCourses();
   }, [mode, fetchCourses]);
 
+  // Fetch subjects only when course_id changes; NEVER wipes on subject selection
   useEffect(() => {
     if (formData.course_id) {
-      fetchSubjectsForCourse(formData.course_id, formData.department);
+      fetchSubjectsForCourse(formData.course_id);
     } else {
       setSubjects([]);
     }
-  }, [formData.course_id, formData.department, fetchSubjectsForCourse]);
+  }, [formData.course_id, fetchSubjectsForCourse]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -724,17 +736,33 @@ export default function AdminCreateStudent() {
     // Clear subject selections when course changes
     if (name === "course_id") {
       setFormData((prev) => ({ ...prev, subject_ids: [] }));
+      setSubjectSearch("");
     }
   };
 
   const handleSubjectToggle = (subjectId) => {
+    const numericId = parseInt(subjectId);
     setFormData((prev) => {
-      const ids = prev.subject_ids.includes(subjectId)
-        ? prev.subject_ids.filter((id) => id !== subjectId)
-        : [...prev.subject_ids, subjectId];
-      return { ...prev, subject_ids: ids };
+      const exists = prev.subject_ids.some((id) => parseInt(id) === numericId);
+      const updated = exists
+        ? prev.subject_ids.filter((id) => parseInt(id) !== numericId)
+        : [...prev.subject_ids, numericId];
+      return { ...prev, subject_ids: updated };
     });
     if (errors.subject_ids) setErrors((prev) => ({ ...prev, subject_ids: null }));
+  };
+
+  const handleSelectAllSubjects = () => {
+    const visibleIds = filteredSubjects.map((s) => s.id);
+    setFormData((prev) => {
+      const merged = Array.from(new Set([...prev.subject_ids, ...visibleIds]));
+      return { ...prev, subject_ids: merged };
+    });
+    if (errors.subject_ids) setErrors((prev) => ({ ...prev, subject_ids: null }));
+  };
+
+  const handleClearSubjects = () => {
+    setFormData((prev) => ({ ...prev, subject_ids: [] }));
   };
 
   const handleGeneratePassword = () => {
@@ -793,7 +821,7 @@ export default function AdminCreateStudent() {
     setMode("create");
 
     if (prefilledCourseId) {
-      fetchSubjectsForCourse(prefilledCourseId, student.department);
+      fetchSubjectsForCourse(prefilledCourseId);
     }
 
     setToast({
