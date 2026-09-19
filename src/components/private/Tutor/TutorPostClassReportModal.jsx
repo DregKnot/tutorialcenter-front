@@ -1,6 +1,48 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 import axios from "axios";
+
+// Default (blank) report state. Used on mount and whenever the form is reset.
+const createInitialFormData = () => ({
+  // Section 1: Attendance
+  presentCount: 0,
+  totalCount: 0,
+  hasAttendanceIssues: false,
+  attendanceIssuesDetail: "",
+
+  // Section 2: Lesson Delivery
+  aspectsCovered: "",
+  completionStatus: "Fully", // Fully, Partially, Not completed
+  leftReason: "",
+
+  // Section 3: Student Understanding
+  evidenceObserved: "",
+  struggledConcepts: "",
+  studentsNeedingAttention: "",
+
+  // Section 4: Student Engagement
+  participationLevel: "Active", // Very Active, Active, Moderate, Low
+  respondedWellTo: "",
+  issuesAffectingConcentration: "",
+
+  // Section 5: Assessment
+  assessedToday: true,
+  generalPerformance: "Good", // Excellent, Good, Average, Poor
+
+  // Section 6: Class Challenges
+  selectedChallenges: [],
+  otherChallengeDetail: "",
+  challengeExplanation: "",
+
+  // Section 7: Next Step
+  improvementPlan: "",
+  supportRequired: false,
+  supportDetail: "",
+
+  // Tutor's Overall Assessment
+  managementSummary: "",
+  tutorSignature: "",
+});
 
 export default function TutorPostClassReportModal({
   isOpen,
@@ -16,50 +58,19 @@ export default function TutorPostClassReportModal({
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   // Form State matching Official Post-Class Tutor Report
-  const [formData, setFormData] = useState({
-    // Section 1: Attendance
-    presentCount: 0,
-    totalCount: 0,
-    hasAttendanceIssues: false,
-    attendanceIssuesDetail: "",
+  const [formData, setFormData] = useState(createInitialFormData);
+  // Tracks which session the form is populated for, so a different session resets it.
+  const activeSessionIdRef = useRef(null);
 
-    // Section 2: Lesson Delivery
-    aspectsCovered: "",
-    completionStatus: "Fully", // Fully, Partially, Not completed
-    leftReason: "",
-
-    // Section 3: Student Understanding
-    evidenceObserved: "",
-    struggledConcepts: "",
-    studentsNeedingAttention: "",
-
-    // Section 4: Student Engagement
-    participationLevel: "Active", // Very Active, Active, Moderate, Low
-    respondedWellTo: "",
-    issuesAffectingConcentration: "",
-
-    // Section 5: Assessment
-    assessedToday: true,
-    generalPerformance: "Good", // Excellent, Good, Average, Poor
-
-    // Section 6: Class Challenges
-    selectedChallenges: [],
-    otherChallengeDetail: "",
-    challengeExplanation: "",
-
-    // Section 7: Next Step
-    improvementPlan: "",
-    supportRequired: false,
-    supportDetail: "",
-
-    // Tutor's Overall Assessment
-    managementSummary: "",
-    tutorSignature: "",
-  });
-
-  // Pre-fill header and attendance when modal opens
+  // Pre-fill header and attendance when modal opens.
+  // A different session starts from a blank report so answers never carry over
+  // from a report filed for another class.
   useEffect(() => {
     if (isOpen && sessionDetails) {
+      const sessionId = String(sessionDetails.id ?? "");
+      const isNewSession = activeSessionIdRef.current !== sessionId;
+      activeSessionIdRef.current = sessionId;
+
       const storedStaff = localStorage.getItem("staff_user") || localStorage.getItem("user");
       let tutorName = "Course Tutor";
       try {
@@ -70,7 +81,7 @@ export default function TutorPostClassReportModal({
       } catch (e) {}
 
       setFormData((prev) => ({
-        ...prev,
+        ...(isNewSession ? createInitialFormData() : prev),
         presentCount: sessionDetails.present_count ?? (sessionDetails.attendances_count ?? 0),
         totalCount: sessionDetails.total_students ?? 0,
         tutorSignature: sessionDetails.tutor_name || tutorName,
@@ -193,6 +204,9 @@ export default function TutorPostClassReportModal({
       setTimeout(() => {
         onSubmitSuccess(response.data?.data);
         onClose();
+        // Clear the submitted report so the next one starts blank.
+        setFormData(createInitialFormData());
+        activeSessionIdRef.current = null;
       }, 1200);
     } catch (err) {
       setLoading(false);
