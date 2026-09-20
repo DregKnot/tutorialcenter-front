@@ -52,12 +52,29 @@ function isPastSession(session) {
   return false;
 }
 
+const getSubjectName = (session) => {
+  if (!session) return "";
+  if (typeof session.subject === "object" && session.subject?.name) return session.subject.name;
+  if (typeof session.subject === "string") return session.subject;
+  if (session.subject_name) return session.subject_name;
+  if (session.class?.subject?.name) return session.class.subject.name;
+  return "";
+};
+
+const formatSafeDate = (dateVal, options = {}) => {
+  if (!dateVal) return "";
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-GB", options);
+};
+
 // ── Session detail popup ──────────────────────────────────────────────────────
-function SessionModal({ session, onClose }) {
+function SessionModal({ session, onClose, token, API_BASE_URL }) {
   const navigate = useNavigate();
   if (!session) return null;
   const isPast = isPastSession(session);
   const recUrl = session.recording_link || session.recording_url;
+  const subjectName = getSubjectName(session);
 
   const handleJoin = (e) => {
     if (e) {
@@ -65,22 +82,22 @@ function SessionModal({ session, onClose }) {
       e.preventDefault();
     }
     const link = session.class_link || session.recording_link;
-    if (!link && !session.id) return;
-    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
-
-    if (isZoom && session.id) {
-      navigate(`/zoom/masterclass/class/${session.id}`);
-    } else if (link) {
-      window.open(link, '_blank');
-      navigate('/student/meet', {
-        state: {
-          class_link: link,
-          class_schedule_id: session.id,
-          alreadyOpened: true
-        }
-      });
+    if (link && typeof link === "string" && (link.startsWith("http://") || link.startsWith("https://"))) {
+      window.open(link, "_blank", "noopener,noreferrer");
+      if (session.id && token) {
+        axios.post(
+          `${API_BASE_URL}/api/students/classes/attendance/join`,
+          { class_session_id: session.id },
+          { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+        ).catch(() => {});
+      }
+      onClose();
+      return;
     }
-    onClose();
+    if (session.id) {
+      navigate(`/zoom/masterclass/class/${session.id}`);
+      onClose();
+    }
   };
 
   return (
@@ -109,7 +126,7 @@ function SessionModal({ session, onClose }) {
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Icon icon="lucide:calendar" className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <span className="font-semibold">
-              {new Date(session.session_date).toLocaleDateString("en-GB", {
+              {formatSafeDate(session.session_date, {
                 weekday: "long", day: "numeric", month: "long",
               })}
             </span>
@@ -120,10 +137,10 @@ function SessionModal({ session, onClose }) {
               {formatTimeRange(session.starts_at, session.ends_at)}
             </span>
           </div>
-          {session.subject && (
+          {subjectName && (
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <Icon icon="lucide:book-open" className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              <span className="font-semibold">{session.subject}</span>
+              <span className="font-semibold">{subjectName}</span>
             </div>
           )}
         </div>
@@ -165,9 +182,9 @@ function SessionModal({ session, onClose }) {
 }
 
 // ── Session card (matching image 2 style) ─────────────────────────────────────
-function SessionCard({ session, onClick }) {
+function SessionCard({ session, onClick, token, API_BASE_URL }) {
   const navigate = useNavigate();
-  const startDate = new Date(session.session_date);
+  const startDate = session.session_date ? new Date(session.session_date) : new Date();
   const isToday = isSameDay(startDate, new Date());
   const isPast = isPastSession(session);
   const recUrl = session.recording_link || session.recording_url;
@@ -179,41 +196,43 @@ function SessionCard({ session, onClick }) {
     e.stopPropagation();
     e.preventDefault();
     const link = session.class_link || session.recording_link;
-    if (!link && !session.id) return;
-    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
-
-    if (isZoom && session.id) {
+    if (link && typeof link === "string" && (link.startsWith("http://") || link.startsWith("https://"))) {
+      window.open(link, "_blank", "noopener,noreferrer");
+      if (session.id && token) {
+        axios.post(
+          `${API_BASE_URL}/api/students/classes/attendance/join`,
+          { class_session_id: session.id },
+          { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+        ).catch(() => {});
+      }
+      return;
+    }
+    if (session.id) {
       navigate(`/zoom/masterclass/class/${session.id}`);
-    } else if (link) {
-      window.open(link, '_blank');
-      navigate('/student/meet', {
-        state: {
-          class_link: link,
-          class_schedule_id: session.id,
-          alreadyOpened: true
-        }
-      });
     }
   };
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="w-full text-left bg-gray-50 dark:bg-gray-700/40 hover:bg-gray-100 dark:bg-gray-700/60 rounded-2xl p-4 transition-all duration-150 group"
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(e); }}
+      className="w-full text-left bg-gray-50 dark:bg-gray-700/40 hover:bg-gray-100 dark:bg-gray-700/60 rounded-2xl p-4 transition-all duration-150 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#09314F]"
     >
       {/* Title + dots */}
       <div className="flex items-start justify-between mb-1">
         <p className="text-[14px] font-black text-gray-900 dark:text-white leading-snug">
           {session.class?.title || session.title || "Class Session"}
         </p>
-        <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-0.5">
+        <span className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-0.5">
           <Icon icon="lucide:more-horizontal" className="w-4 h-4" />
-        </button>
+        </span>
       </div>
 
       {/* Date + time */}
       <p className="text-[12px] text-gray-400 font-semibold mb-3">
-        {isToday ? "Today" : startDate.toLocaleDateString("en-GB", { weekday: "long" })}
+        {isToday ? "Today" : formatSafeDate(startDate, { weekday: "long" })}
         {" • "}
         {formatTimeRange(session.starts_at, session.ends_at)}
       </p>
@@ -270,7 +289,7 @@ function SessionCard({ session, onClick }) {
           )}
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -338,7 +357,12 @@ export default function MiniCalendarWidget() {
   return (
     <>
       {selectedSession && (
-        <SessionModal session={selectedSession} onClose={() => setSelectedSession(null)} />
+        <SessionModal
+          session={selectedSession}
+          onClose={() => setSelectedSession(null)}
+          token={token}
+          API_BASE_URL={API_BASE_URL}
+        />
       )}
 
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm flex flex-col gap-5">
@@ -425,6 +449,8 @@ export default function MiniCalendarWidget() {
                 key={i}
                 session={s}
                 onClick={() => setSelectedSession(s)}
+                token={token}
+                API_BASE_URL={API_BASE_URL}
               />
             ))
           )}

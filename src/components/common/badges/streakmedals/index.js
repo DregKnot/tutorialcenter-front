@@ -6,3 +6,5 @@ export { default as LearningMachineStreakBadge } from './LearningMachineStreakBa
 export { default as AcademicMarathonerBadge } from './AcademicMarathonerBadge';
 export { default as StudyLegendBadge } from './StudyLegendBadge';
 export { default as YearOfExcellenceBadge } from './YearOfExcellenceBadge';
+export { default as CosmicStreakCanvas } from './CosmicStreakCanvas';
+export { default as CosmicStreakCelebrationModal } from './CosmicStreakCelebrationModal';

@@ -19,7 +19,9 @@ export default function TCMedal({
   glow = true,
   className = "",
   title = "",
-  subtitle = ""
+  subtitle = "",
+  useTrophyCup = true,
+  animated = true,
 }) {
   const id = React.useId().replace(/:/g, "_");
 
@@ -130,10 +132,10 @@ export default function TCMedal({
         {/* Icy Blue Glow Aura */}
         {glow && (
           <div 
-            className="absolute inset-0 rounded-full blur-2xl pointer-events-none transition-all duration-500 ease-out opacity-70 group-hover:opacity-100 group-hover:scale-110"
+            className={`absolute inset-0 rounded-full blur-2xl pointer-events-none transition-all duration-500 ease-out opacity-70 group-hover:opacity-100 group-hover:scale-110 ${isDiamond && animated ? 'animate-pulse' : ''}`}
             style={{ 
               background: isDiamond 
-                ? 'radial-gradient(circle, rgba(186, 230, 253, 0.8) 0%, rgba(56, 189, 248, 0.45) 50%, rgba(2, 132, 199, 0.15) 75%, transparent 100%)' 
+                ? 'radial-gradient(circle, rgba(186, 230, 253, 0.85) 0%, rgba(56, 189, 248, 0.5) 45%, rgba(2, 132, 199, 0.2) 70%, transparent 100%)' 
                 : theme.aura, 
               transform: 'scale(0.88)' 
             }}
@@ -174,6 +176,24 @@ export default function TCMedal({
               <stop offset="0%" stopColor={theme.wingLight} />
               <stop offset="40%" stopColor={theme.wingBase} />
               <stop offset="100%" stopColor={theme.wingDark} />
+            </linearGradient>
+
+            <linearGradient id={`${id}_featherLight`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={theme.wingLight} />
+              <stop offset="50%" stopColor={theme.wingBase} />
+              <stop offset="100%" stopColor={theme.wingDark} />
+            </linearGradient>
+
+            <linearGradient id={`${id}_featherDark`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={theme.wingBase} />
+              <stop offset="100%" stopColor={theme.wingDark} />
+            </linearGradient>
+
+            <linearGradient id={`${id}_crownBase`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={theme.rimLight} />
+              <stop offset="30%" stopColor={theme.rimAccent} />
+              <stop offset="70%" stopColor={theme.rimBase} />
+              <stop offset="100%" stopColor={theme.rimDark} />
             </linearGradient>
 
             {/* ============================================================ */}
@@ -225,135 +245,319 @@ export default function TCMedal({
             <filter id={`${id}_shadow`} x="-30%" y="-30%" width="160%" height="160%">
               <feDropShadow dx="0" dy="5" stdDeviation="3.5" floodColor="#000" floodOpacity="0.7" />
             </filter>
+
+            {/* ============================================================ */}
+            {/* 3D SCULPTED VICTORY CUP / CHALICE GRADIENTS */}
+            {/* ============================================================ */}
+            <linearGradient id={`${id}_cupBody`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor={theme.rimLight} />
+              <stop offset="22%" stopColor={theme.rimAccent} />
+              <stop offset="50%" stopColor={theme.rimBase} />
+              <stop offset="85%" stopColor={theme.rimDark} />
+              <stop offset="100%" stopColor={theme.rimLight} />
+            </linearGradient>
+
+            <linearGradient id={`${id}_cupPedestal`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={theme.rimAccent} />
+              <stop offset="45%" stopColor={theme.rimBase} />
+              <stop offset="100%" stopColor={theme.rimDark} />
+            </linearGradient>
+
+            <radialGradient id={`${id}_cupHighlight`} cx="35%" cy="30%" r="60%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+              <stop offset="40%" stopColor={theme.rimAccent} stopOpacity="0.6" />
+              <stop offset="100%" stopColor={theme.rimBase} stopOpacity="0" />
+            </radialGradient>
+
+            {/* Diamond Diagonal Ice Caustic Shimmer Gradient */}
+            <linearGradient id={`${id}_diamondSweep`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="30%" stopColor="#bae6fd" stopOpacity="0.2" />
+              <stop offset="50%" stopColor="#ffffff" stopOpacity="0.95" />
+              <stop offset="70%" stopColor="#38bdf8" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+            </linearGradient>
+
+            {/* Diamond Inner Plate ClipPath */}
+            <clipPath id={`${id}_diamondPlateClip`}>
+              <polygon points="100,34 152,62 152,128 100,156 48,128 48,62" />
+            </clipPath>
+
+            {/* Pure GPU-Accelerated Diamond Glistening & Carat Scintillation Animations */}
+            {isDiamond && animated && (
+              <style>{`
+                @keyframes ${id}_sparkle_twinkle {
+                  0%, 100% {
+                    transform: scale(0) rotate(0deg);
+                    opacity: 0;
+                  }
+                  20% {
+                    transform: scale(0.25) rotate(15deg);
+                    opacity: 0.35;
+                  }
+                  45% {
+                    transform: scale(1.35) rotate(45deg);
+                    opacity: 1;
+                    filter: drop-shadow(0 0 5px #ffffff) drop-shadow(0 0 10px #38bdf8);
+                  }
+                  55% {
+                    transform: scale(1.1) rotate(55deg);
+                    opacity: 0.9;
+                  }
+                  75% {
+                    transform: scale(0.25) rotate(80deg);
+                    opacity: 0.25;
+                  }
+                  90% {
+                    transform: scale(0) rotate(90deg);
+                    opacity: 0;
+                  }
+                }
+                @keyframes ${id}_shimmer_sweep {
+                  0% {
+                    transform: translateX(-120px) rotate(-35deg);
+                    opacity: 0;
+                  }
+                  15% {
+                    opacity: 1;
+                  }
+                  50% {
+                    transform: translateX(180px) rotate(-35deg);
+                    opacity: 0.95;
+                  }
+                  58%, 100% {
+                    transform: translateX(180px) rotate(-35deg);
+                    opacity: 0;
+                  }
+                }
+                @keyframes ${id}_micro_ice_float {
+                  0% {
+                    transform: translateY(0px) scale(0.5);
+                    opacity: 0;
+                  }
+                  50% {
+                    transform: translateY(-9px) scale(1.2);
+                    opacity: 0.85;
+                  }
+                  100% {
+                    transform: translateY(-18px) scale(0.3);
+                    opacity: 0;
+                  }
+                }
+                .${id}_sparkle_elem {
+                  transform-origin: 0px 0px;
+                  animation: ${id}_sparkle_twinkle 2.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .${id}_shimmer_bar {
+                  animation: ${id}_shimmer_sweep 3.5s infinite ease-in-out;
+                  transform-origin: 100px 95px;
+                }
+                .${id}_ice_micro {
+                  animation: ${id}_micro_ice_float 3s infinite ease-in-out;
+                }
+              `}</style>
+            )}
           </defs>
 
           {/* ============================================================ */}
-          {/* LAYER 1: BACK ACCENTS & WINGS (Attached firmly behind frame) */}
+          {/* LAYER 1: AUTHENTIC FEATHERED AVIAN WINGS (Flight Plumage) */}
           {/* ============================================================ */}
-          
-          {/* --- BRONZE: 8-Pointed Starburst Backplate --- */}
-          {tier === "bronze" && (
-            <g fill={`url(#${id}_wing)`} filter={`url(#${id}_shadow)`}>
-              <polygon points="100,12 120,42 162,32 145,72 188,95 145,118 162,158 120,148 100,178 80,148 38,158 55,118 12,95 55,72 38,32 80,42" />
-            </g>
-          )}
+          <g filter={`url(#${id}_shadow)`}>
+            {/* Structural Wing Shoulder Armatures (Anchoring to hexagon lateral chassis) */}
+            <path 
+              d="M 44,58 C 30,66 26,90 28,124 L 44,132 Z" 
+              fill={`url(#${id}_rim)`} 
+            />
+            <path 
+              d="M 156,58 C 170,66 174,90 172,124 L 156,132 Z" 
+              fill={`url(#${id}_rim)`} 
+            />
 
-          {/* --- SILVER & GOLD: 3 Sleek Sculpted Metallic Wings --- */}
-          {(tier === "silver" || tier === "gold") && (
-            <g fill={`url(#${id}_wing)`} filter={`url(#${id}_shadow)`}>
-              {/* Left Wing */}
-              <path d="M 52,62 C 22,50 14,64 8,82 C 24,85 40,78 52,85 Z" />
-              <path d="M 50,80 C 20,74 14,92 10,108 C 26,108 40,98 50,105 Z" />
-              <path d="M 50,100 C 26,98 22,120 20,130 C 34,124 42,116 50,122 Z" />
+            {/* --- LEFT WING: Sweeping Feathered Plumage --- */}
+            <g>
+              {/* Feather 1: High Grand Flight Feather (Sweeping Up and Out) */}
+              <path 
+                d="M 42,60 C 28,34 10,22 -14,20 C 4,32 20,48 36,66 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingTop)` : `url(#${id}_featherLight)`} 
+              />
+              <path 
+                d="M 38,62 C 16,42 2,30 -14,20 C 4,34 20,50 36,66 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingBottom)` : `url(#${id}_featherDark)`} 
+                opacity="0.85"
+              />
+              {/* Quill / Rachis Line */}
+              <path 
+                d="M 40,61 C 20,40 6,28 -14,20" 
+                stroke={isDiamond || tier === "platinum" ? "#ffffff" : theme.rimAccent} 
+                strokeWidth={isDiamond ? "1.8" : "1.4"} 
+                strokeLinecap="round" 
+                fill="none" 
+              />
 
-              {/* Right Wing */}
-              <path d="M 148,62 C 178,50 186,64 192,82 C 176,85 160,78 148,85 Z" />
-              <path d="M 150,80 C 180,74 186,92 190,108 C 174,108 160,98 150,105 Z" />
-              <path d="M 150,100 C 174,98 178,120 180,130 C 166,124 158,116 150,122 Z" />
+              {/* Feather 2: Second Primary Flight Feather */}
+              <path 
+                d="M 36,66 C 14,50 -6,42 -24,48 C -4,60 14,72 34,80 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingTop)` : `url(#${id}_wing)`} 
+              />
+              <path 
+                d="M 34,70 C 10,58 -8,52 -24,48 C -4,62 14,74 34,80 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingBottom)` : `url(#${id}_featherDark)`} 
+                opacity="0.75"
+              />
+              <path 
+                d="M 36,68 C 12,56 -4,48 -24,48" 
+                stroke={isDiamond || tier === "platinum" ? "#ffffff" : theme.rimAccent} 
+                strokeWidth="1.4" 
+                strokeLinecap="round" 
+                fill="none" 
+              />
 
-              {/* Extra Gold Texture: Wing Ribbing */}
-              {tier === "gold" && (
-                <g fill="#fef08a" opacity="0.6">
-                  <path d="M 46,70 Q 25,65 14,80 Q 30,76 46,74 Z" />
-                  <path d="M 44,88 Q 24,84 16,104 Q 30,100 44,92 Z" />
-                  <path d="M 154,70 Q 175,65 186,80 Q 170,76 154,74 Z" />
-                  <path d="M 156,88 Q 176,84 184,104 Q 170,100 156,92 Z" />
-                  <polygon points="100,20 106,30 94,30" fill={theme.rimLight} />
-                </g>
+              {/* Feather 3: Mid-Wing Power Feather */}
+              <path 
+                d="M 34,80 C 12,72 -6,72 -22,78 C -4,90 14,92 34,96 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingTop)` : `url(#${id}_featherLight)`} 
+              />
+              <path 
+                d="M 32,84 C 10,80 -6,78 -22,78 C -4,90 14,92 34,96 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingBottom)` : `url(#${id}_featherDark)`} 
+                opacity="0.75"
+              />
+              <path 
+                d="M 34,82 C 12,77 -2,75 -22,78" 
+                stroke={isDiamond || tier === "platinum" ? "#ffffff" : theme.rimAccent} 
+                strokeWidth="1.3" 
+                strokeLinecap="round" 
+                fill="none" 
+              />
+
+              {/* Feather 4: Lower Secondary Feather */}
+              <path 
+                d="M 34,96 C 16,96 2,98 -12,104 C 2,112 18,114 36,116 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingTop)` : `url(#${id}_wing)`} 
+              />
+              <path 
+                d="M 34,99 C 14,102 0,104 -12,104 C 2,112 18,114 36,116 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingBottom)` : `url(#${id}_featherDark)`} 
+                opacity="0.75"
+              />
+              <path 
+                d="M 35,98 C 16,100 4,102 -12,104" 
+                stroke={isDiamond || tier === "platinum" ? "#ffffff" : theme.rimAccent} 
+                strokeWidth="1.1" 
+                strokeLinecap="round" 
+                fill="none" 
+              />
+
+              {/* Feather 5: Bottom Plumage (Gold, Platinum, Diamond) */}
+              {(tier === "gold" || tier === "platinum" || isDiamond) && (
+                <>
+                  <path 
+                    d="M 36,116 C 22,118 12,120 2,124 C 14,128 28,128 40,126 Z" 
+                    fill={isDiamond ? `url(#${id}_glassWingTop)` : `url(#${id}_featherLight)`} 
+                  />
+                  <path 
+                    d="M 37,118 C 24,120 14,122 2,124" 
+                    stroke={isDiamond || tier === "platinum" ? "#ffffff" : theme.rimAccent} 
+                    strokeWidth="1.0" 
+                    strokeLinecap="round" 
+                    fill="none" 
+                  />
+                </>
               )}
             </g>
-          )}
 
-          {/* --- PLATINUM: 3 Grand Cybernetic Crystal Wings --- */}
-          {tier === "platinum" && (
-            <g fill={`url(#${id}_wing)`} filter={`url(#${id}_shadow)`}>
-              {/* Top Crown Spikes */}
-              <polygon points="100,16 108,30 92,30" fill="#ffffff" />
-              <polygon points="84,22 92,32 78,32" fill={`url(#${id}_plate)`} />
-              <polygon points="116,22 122,32 108,32" fill={`url(#${id}_plate)`} />
+            {/* --- RIGHT WING: Symmetrical Sweeping Feathered Plumage --- */}
+            <g>
+              {/* Feather 1: High Grand Flight Feather */}
+              <path 
+                d="M 158,60 C 172,34 190,22 214,20 C 196,32 180,48 164,66 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingTop)` : `url(#${id}_featherLight)`} 
+              />
+              <path 
+                d="M 162,62 C 184,42 198,30 214,20 C 196,34 180,50 164,66 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingBottom)` : `url(#${id}_featherDark)`} 
+                opacity="0.85"
+              />
+              <path 
+                d="M 160,61 C 180,40 194,28 214,20" 
+                stroke={isDiamond || tier === "platinum" ? "#ffffff" : theme.rimAccent} 
+                strokeWidth={isDiamond ? "1.8" : "1.4"} 
+                strokeLinecap="round" 
+                fill="none" 
+              />
 
-              {/* Left Wings */}
-              <path d="M 52,56 C 20,38 8,52 -4,70 C 14,78 36,70 52,78 Z" />
-              <path d="M 50,76 C 16,68 4,88 -8,104 C 12,110 34,98 50,100 Z" />
-              <path d="M 48,98 C 18,98 8,120 4,134 C 20,136 34,120 48,122 Z" />
+              {/* Feather 2: Second Primary Flight Feather */}
+              <path 
+                d="M 164,66 C 186,50 206,42 224,48 C 204,60 186,72 166,80 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingTop)` : `url(#${id}_wing)`} 
+              />
+              <path 
+                d="M 166,70 C 190,58 208,52 224,48 C 204,62 186,74 166,80 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingBottom)` : `url(#${id}_featherDark)`} 
+                opacity="0.75"
+              />
+              <path 
+                d="M 164,68 C 188,56 204,48 224,48" 
+                stroke={isDiamond || tier === "platinum" ? "#ffffff" : theme.rimAccent} 
+                strokeWidth="1.4" 
+                strokeLinecap="round" 
+                fill="none" 
+              />
 
-              {/* Right Wings */}
-              <path d="M 148,56 C 180,38 192,52 204,70 C 186,78 164,70 148,78 Z" />
-              <path d="M 150,76 C 184,68 196,88 208,104 C 188,110 166,98 150,100 Z" />
-              <path d="M 152,98 C 182,98 192,120 196,134 C 180,136 166,120 152,122 Z" />
+              {/* Feather 3: Mid-Wing Power Feather */}
+              <path 
+                d="M 166,80 C 188,72 206,72 222,78 C 204,90 186,92 166,96 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingTop)` : `url(#${id}_featherLight)`} 
+              />
+              <path 
+                d="M 168,84 C 190,80 206,78 222,78 C 204,90 186,92 166,96 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingBottom)` : `url(#${id}_featherDark)`} 
+                opacity="0.75"
+              />
+              <path 
+                d="M 166,82 C 188,77 202,75 222,78" 
+                stroke={isDiamond || tier === "platinum" ? "#ffffff" : theme.rimAccent} 
+                strokeWidth="1.3" 
+                strokeLinecap="round" 
+                fill="none" 
+              />
+
+              {/* Feather 4: Lower Secondary Feather */}
+              <path 
+                d="M 166,96 C 184,96 198,98 212,104 C 198,112 182,114 164,116 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingTop)` : `url(#${id}_wing)`} 
+              />
+              <path 
+                d="M 166,99 C 186,102 200,104 212,104 C 198,112 182,114 164,116 Z" 
+                fill={isDiamond ? `url(#${id}_glassWingBottom)` : `url(#${id}_featherDark)`} 
+                opacity="0.75"
+              />
+              <path 
+                d="M 165,98 C 184,100 196,102 212,104" 
+                stroke={isDiamond || tier === "platinum" ? "#ffffff" : theme.rimAccent} 
+                strokeWidth="1.1" 
+                strokeLinecap="round" 
+                fill="none" 
+              />
+
+              {/* Feather 5: Bottom Plumage */}
+              {(tier === "gold" || tier === "platinum" || isDiamond) && (
+                <>
+                  <path 
+                    d="M 164,116 C 178,118 188,120 198,124 C 186,128 172,128 160,126 Z" 
+                    fill={isDiamond ? `url(#${id}_glassWingTop)` : `url(#${id}_featherLight)`} 
+                  />
+                  <path 
+                    d="M 163,118 C 176,120 186,122 198,124" 
+                    stroke={isDiamond || tier === "platinum" ? "#ffffff" : theme.rimAccent} 
+                    strokeWidth="1.0" 
+                    strokeLinecap="round" 
+                    fill="none" 
+                  />
+                </>
+              )}
             </g>
-          )}
-
-          {/* --- DIAMOND: 5 Grand 3D Faceted Liquid Glass Wings on each side --- */}
-          {isDiamond && (
-            <g filter={`url(#${id}_shadow)`}>
-              {/* Grand Diamond Tiara Crown (3D Faceted Glass) */}
-              <polygon points="100,4 108,26 92,26" fill={`url(#${id}_glassFacetTop)`} />
-              <polygon points="80,12 90,28 74,26" fill={`url(#${id}_glassFacetBottom)`} />
-              <polygon points="120,12 126,26 110,28" fill={`url(#${id}_glassFacetBottom)`} />
-              <polygon points="62,20 74,32 58,30" fill={`url(#${id}_glassFacetTop)`} />
-              <polygon points="138,20 142,30 126,32" fill={`url(#${id}_glassFacetTop)`} />
-              {/* Crown Brilliant Diamond Center */}
-              <polygon points="100,12 106,19 100,26 94,19" fill="#ffffff" filter={`url(#${id}_neonGlow)`} />
-
-              {/* 5 Left Liquid Glass Faceted Wings (Upper facet light, lower facet shadow for true 3D crystal depth) */}
-              {/* Blade 1 */}
-              <path d="M 52,48 L -8,46 L 52,54 Z" fill={`url(#${id}_glassWingTop)`} />
-              <path d="M 52,54 L -8,46 C 8,62 32,56 52,62 Z" fill={`url(#${id}_glassWingBottom)`} />
-              
-              {/* Blade 2 */}
-              <path d="M 50,60 L -16,76 L 50,70 Z" fill={`url(#${id}_glassWingTop)`} />
-              <path d="M 50,70 L -16,76 C 4,88 28,78 50,80 Z" fill={`url(#${id}_glassWingBottom)`} />
-
-              {/* Blade 3 */}
-              <path d="M 48,78 L -20,108 L 48,88 Z" fill={`url(#${id}_glassWingTop)`} />
-              <path d="M 48,88 L -20,108 C 0,116 26,102 48,98 Z" fill={`url(#${id}_glassWingBottom)`} />
-
-              {/* Blade 4 */}
-              <path d="M 48,96 L -10,138 L 48,106 Z" fill={`url(#${id}_glassWingTop)`} />
-              <path d="M 48,106 L -10,138 C 10,142 28,124 48,116 Z" fill={`url(#${id}_glassWingBottom)`} />
-
-              {/* Blade 5 */}
-              <path d="M 48,114 L 6,158 L 48,124 Z" fill={`url(#${id}_glassWingTop)`} />
-              <path d="M 48,124 L 6,158 C 22,158 36,138 48,132 Z" fill={`url(#${id}_glassWingBottom)`} />
-
-              {/* 5 Right Liquid Glass Faceted Wings */}
-              {/* Blade 1 */}
-              <path d="M 148,48 L 208,46 L 148,54 Z" fill={`url(#${id}_glassWingTop)`} />
-              <path d="M 148,54 L 208,46 C 192,62 168,56 148,62 Z" fill={`url(#${id}_glassWingBottom)`} />
-              
-              {/* Blade 2 */}
-              <path d="M 150,60 L 216,76 L 150,70 Z" fill={`url(#${id}_glassWingTop)`} />
-              <path d="M 150,70 L 216,76 C 196,88 172,78 150,80 Z" fill={`url(#${id}_glassWingBottom)`} />
-
-              {/* Blade 3 */}
-              <path d="M 152,78 L 220,108 L 152,88 Z" fill={`url(#${id}_glassWingTop)`} />
-              <path d="M 152,88 L 220,108 C 200,116 174,102 152,98 Z" fill={`url(#${id}_glassWingBottom)`} />
-
-              {/* Blade 4 */}
-              <path d="M 152,96 L 210,138 L 152,106 Z" fill={`url(#${id}_glassWingTop)`} />
-              <path d="M 152,106 L 210,138 C 190,142 172,124 152,116 Z" fill={`url(#${id}_glassWingBottom)`} />
-
-              {/* Blade 5 */}
-              <path d="M 152,114 L 194,158 L 152,124 Z" fill={`url(#${id}_glassWingTop)`} />
-              <path d="M 152,124 L 194,158 C 178,158 164,138 152,132 Z" fill={`url(#${id}_glassWingBottom)`} />
-
-              {/* Razor-sharp Specular Glass Spine Highlights */}
-              <g stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" opacity="0.9">
-                <line x1="50" y1="51" x2="-6" y2="46" />
-                <line x1="48" y1="67" x2="-14" y2="76" />
-                <line x1="46" y1="85" x2="-18" y2="108" />
-                <line x1="46" y1="103" x2="-8" y2="138" />
-                <line x1="46" y1="121" x2="8" y2="158" />
-
-                <line x1="150" y1="51" x2="206" y2="46" />
-                <line x1="152" y1="67" x2="214" y2="76" />
-                <line x1="154" y1="85" x2="218" y2="108" />
-                <line x1="154" y1="103" x2="208" y2="138" />
-                <line x1="154" y1="121" x2="192" y2="158" />
-              </g>
-            </g>
-          )}
+          </g>
 
           {/* ============================================================ */}
           {/* LAYER 2: HANGING NOTCHED BOTTOM RIBBONS */}
@@ -443,6 +647,20 @@ export default function TCMedal({
               />
             )}
 
+            {/* Shimmering Liquid Ice Glaze Sweep across Diamond Core */}
+            {isDiamond && animated && (
+              <g clipPath={`url(#${id}_diamondPlateClip)`} className="pointer-events-none">
+                <rect 
+                  x="-30" 
+                  y="20" 
+                  width="45" 
+                  height="160" 
+                  fill={`url(#${id}_diamondSweep)`} 
+                  className={`${id}_shimmer_bar`} 
+                />
+              </g>
+            )}
+
             {/* Corner Screws / Prisms (6 Vertices) */}
             <circle cx="100" cy="40" r="3.2" fill={theme.rivet} stroke={theme.rimDark} strokeWidth="1" />
             <line x1="98" y1="40" x2="102" y2="40" stroke={theme.rimDark} strokeWidth="0.8" />
@@ -461,6 +679,191 @@ export default function TCMedal({
 
             <circle cx="55" cy="65" r="3.2" fill={theme.rivet} stroke={theme.rimDark} strokeWidth="1" />
             <line x1="53" y1="64" x2="57" y2="66" stroke={theme.rimDark} strokeWidth="0.8" />
+          </g>
+
+          {/* ============================================================ */}
+          {/* LAYER 3B: WING SHOULDER MOUNTS & COVERT PLUMAGE SCALES */}
+          {/* Physically clasping over lateral hexagon bevels */}
+          {/* ============================================================ */}
+          <g filter={`url(#${id}_shadow)`}>
+            {/* Left Shoulder Coverts (Clasping onto Hexagon's Left Bevel) */}
+            <path 
+              d="M 44,56 C 30,64 30,126 44,132 L 40,126 C 28,114 28,74 40,62 Z" 
+              fill={`url(#${id}_rim)`} 
+            />
+            {/* Overlapping Covert Feather Plumage Scales */}
+            <path 
+              d="M 44,58 C 30,62 28,72 44,76 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_featherLight)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.8" 
+            />
+            <path 
+              d="M 44,76 C 28,82 28,92 44,96 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_wing)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.8" 
+            />
+            <path 
+              d="M 44,96 C 30,102 30,112 44,116 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_featherLight)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.8" 
+            />
+            <path 
+              d="M 44,116 C 34,120 34,126 44,130 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetBottom)` : `url(#${id}_featherDark)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.8" 
+            />
+            {/* Shoulder Anchor Fastener Rivets */}
+            <circle cx="39" cy="68" r="2.2" fill={theme.rivet} stroke={theme.rimDark} strokeWidth="0.8" />
+            <circle cx="39" cy="118" r="2.2" fill={theme.rivet} stroke={theme.rimDark} strokeWidth="0.8" />
+
+            {/* Right Shoulder Coverts (Clasping onto Hexagon's Right Bevel) */}
+            <path 
+              d="M 156,56 C 170,64 170,126 156,132 L 160,126 C 172,114 172,74 160,62 Z" 
+              fill={`url(#${id}_rim)`} 
+            />
+            <path 
+              d="M 156,58 C 170,62 172,72 156,76 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_featherLight)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.8" 
+            />
+            <path 
+              d="M 156,76 C 172,82 172,92 156,96 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_wing)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.8" 
+            />
+            <path 
+              d="M 156,96 C 170,102 170,112 156,116 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_featherLight)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.8" 
+            />
+            <path 
+              d="M 156,116 C 166,120 166,126 156,130 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetBottom)` : `url(#${id}_featherDark)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.8" 
+            />
+            {/* Shoulder Anchor Fastener Rivets */}
+            <circle cx="161" cy="68" r="2.2" fill={theme.rivet} stroke={theme.rimDark} strokeWidth="0.8" />
+            <circle cx="161" cy="118" r="2.2" fill={theme.rivet} stroke={theme.rimDark} strokeWidth="0.8" />
+          </g>
+
+          {/* ============================================================ */}
+          {/* LAYER 3C: IMPERIAL ATTACHED CROWN (Anchored to Hexagon Crest) */}
+          {/* ============================================================ */}
+          <g filter={`url(#${id}_shadow)`}>
+            {/* 1. Base Headband Arch (Conforming precisely to roof slope of hexagon) */}
+            <path 
+              d="M 68,44 L 100,28 L 132,44 L 128,36 L 100,20 L 72,36 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_crownBase)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.8" 
+            />
+
+            {/* 2. Front Clasp Bracket (Clamping over the top hexagon apex) */}
+            <path 
+              d="M 74,44 L 100,31 L 126,44 L 122,49 L 100,36 L 78,49 Z" 
+              fill={`url(#${id}_rim)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.6" 
+            />
+            {/* Clasp Mounting Anchor Rivets */}
+            <circle cx="84" cy="43" r="1.8" fill={theme.rivet} stroke={theme.rimDark} strokeWidth="0.6" />
+            <circle cx="100" cy="33.5" r="1.8" fill={theme.rivet} stroke={theme.rimDark} strokeWidth="0.6" />
+            <circle cx="116" cy="43" r="1.8" fill={theme.rivet} stroke={theme.rimDark} strokeWidth="0.6" />
+
+            {/* 3. Crown Spires (Rising above the Headband) */}
+            {/* Central Imperial Spire / Fleur-de-lis Pinnacle */}
+            <path 
+              d="M 94,22 C 92,15 95,8 100,2 C 105,8 108,15 106,22 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_crownBase)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.8" 
+            />
+            {/* Central Spine Specular Highlight */}
+            <line 
+              x1="100" 
+              y1="2" 
+              x2="100" 
+              y2="22" 
+              stroke="#ffffff" 
+              strokeWidth="1.2" 
+              strokeLinecap="round" 
+            />
+            {/* Top Pinnacle Finial Pearl / Diamond */}
+            <circle 
+              cx="100" 
+              cy="2" 
+              r="2.2" 
+              fill="#ffffff" 
+              stroke={theme.rimLight} 
+              strokeWidth="0.6" 
+            />
+
+            {/* Left Flanking Spire */}
+            <path 
+              d="M 84,29 C 82,20 86,13 90,7 C 93,14 94,21 93,25 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_crownBase)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.6" 
+            />
+            <circle cx="90" cy="7" r="1.8" fill="#ffffff" stroke={theme.rimLight} strokeWidth="0.5" />
+
+            {/* Right Flanking Spire */}
+            <path 
+              d="M 107,25 C 106,21 107,14 110,7 C 114,13 118,20 116,29 Z" 
+              fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_crownBase)`} 
+              stroke={theme.rimAccent} 
+              strokeWidth="0.6" 
+            />
+            <circle cx="110" cy="7" r="1.8" fill="#ffffff" stroke={theme.rimLight} strokeWidth="0.5" />
+
+            {/* Outer Finials (Gold, Platinum, Diamond) */}
+            {(tier !== "bronze") && (
+              <>
+                <path 
+                  d="M 74,37 C 72,29 76,21 81,16 C 83,22 84,28 83,33 Z" 
+                  fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_crownBase)`} 
+                  stroke={theme.rimAccent} 
+                  strokeWidth="0.5" 
+                />
+                <circle cx="81" cy="16" r="1.5" fill="#ffffff" />
+
+                <path 
+                  d="M 117,33 C 116,28 117,22 119,16 C 124,21 128,29 126,37 Z" 
+                  fill={isDiamond ? `url(#${id}_glassFacetTop)` : `url(#${id}_crownBase)`} 
+                  stroke={theme.rimAccent} 
+                  strokeWidth="0.5" 
+                />
+                <circle cx="119" cy="16" r="1.5" fill="#ffffff" />
+              </>
+            )}
+
+            {/* 4. Imperial Brooch Gem (Mounting directly into center of Crown Headband) */}
+            <circle 
+              cx="100" 
+              cy="24" 
+              r="4.8" 
+              fill={theme.rimDark} 
+              stroke={theme.rimAccent} 
+              strokeWidth="1" 
+            />
+            <circle 
+              cx="100" 
+              cy="24" 
+              r="3.4" 
+              fill={`url(#${id}_gem)`} 
+            />
+            {/* Brooch Sparkle Glint */}
+            <circle cx="98.8" cy="22.8" r="1.1" fill="#ffffff" />
+            <line x1="96" y1="24" x2="104" y2="24" stroke="#ffffff" strokeWidth="0.6" opacity="0.8" />
+            <line x1="100" y1="20" x2="100" y2="28" stroke="#ffffff" strokeWidth="0.6" opacity="0.8" />
           </g>
 
           {/* ============================================================ */}
@@ -509,13 +912,99 @@ export default function TCMedal({
           </g>
 
           {/* ============================================================ */}
-          {/* LAYER 5: BIOLUMINESCENT GLOWING CENTER CREST / EMBLEM */}
+          {/* LAYER 5: 3D SCULPTED VICTORY CUP OR CUSTOM ICON */}
           {/* ============================================================ */}
           <g 
             transform="translate(100, 95)" 
             filter={isDiamond ? `url(#${id}_neonGlow)` : `url(#${id}_shadow)`}
           >
-            {Icon ? (
+            {useTrophyCup || !Icon ? (
+              /* HANDCRAFTED 3D SCULPTED VICTORY CHALICE / CUP OF TRIUMPH */
+              <g id={`${id}_victory_chalice`}>
+                {/* 1. Stepped Pedestal Base */}
+                {/* Lower Plinth */}
+                <rect 
+                  x="-12" 
+                  y="16" 
+                  width="24" 
+                  height="4.5" 
+                  rx="1.5" 
+                  fill={`url(#${id}_cupPedestal)`} 
+                  stroke={theme.rimAccent} 
+                  strokeWidth="0.8" 
+                />
+                {/* Stepped Mid-Tier */}
+                <polygon 
+                  points="-8,16 8,16 6,13 -6,13" 
+                  fill={`url(#${id}_cupBody)`} 
+                />
+                {/* Fluted Stem */}
+                <path 
+                  d="M -3.5,13 L -2.5,7 L 2.5,7 L 3.5,13 Z" 
+                  fill={`url(#${id}_cupBody)`} 
+                />
+
+                {/* 2. Twin Sculpted Scroll Loop Handles */}
+                {/* Left Handle Outer */}
+                <path 
+                  d="M -13,-9 C -24,-9 -24,4 -10,4 L -9,2 C -18,2 -18,-7 -11,-7 Z" 
+                  fill={`url(#${id}_cupBody)`} 
+                  stroke={theme.rimAccent} 
+                  strokeWidth="0.6" 
+                />
+                {/* Right Handle Outer */}
+                <path 
+                  d="M 13,-9 C 24,-9 24,4 10,4 L 9,2 C 18,2 18,-7 11,-7 Z" 
+                  fill={`url(#${id}_cupBody)`} 
+                  stroke={theme.rimAccent} 
+                  strokeWidth="0.6" 
+                />
+
+                {/* 3. Flared Chalice Body */}
+                <path 
+                  d="M -15,-10 C -15,5 0,8 0,8 C 0,8 15,5 15,-10 Z" 
+                  fill={`url(#${id}_cupBody)`} 
+                  stroke={theme.rimAccent} 
+                  strokeWidth="0.8" 
+                />
+                {/* Specular Radial Glare on Chalice Belly */}
+                <path 
+                  d="M -13,-9 C -13,3 -2,6 0,6 C 2,6 13,3 13,-9 Z" 
+                  fill={`url(#${id}_cupHighlight)`} 
+                />
+
+                {/* 4. Polished Chalice Top Rim */}
+                <ellipse 
+                  cx="0" 
+                  cy="-10" 
+                  rx="15" 
+                  ry="3.8" 
+                  fill={`url(#${id}_cupBody)`} 
+                  stroke="#ffffff" 
+                  strokeWidth="0.8" 
+                />
+                {/* Inner Cup Opening Shadow */}
+                <ellipse 
+                  cx="0" 
+                  cy="-10" 
+                  rx="12.5" 
+                  ry="2.4" 
+                  fill={theme.rimDark} 
+                />
+
+                {/* 5. Embossed Five-Point Star of Distinction */}
+                <polygon 
+                  points="0,-6 1.8,-1.5 6.5,-1.5 2.8,1.2 4.2,5.5 0,2.8 -4.2,5.5 -2.8,1.2 -6.5,-1.5 -1.8,-1.5" 
+                  fill={isDiamond ? "#ffffff" : "#ffffff"} 
+                  stroke={theme.rimLight} 
+                  strokeWidth="0.5" 
+                  opacity="0.95" 
+                />
+                {/* Specular Glint on Top-Left Cup Rim */}
+                <circle cx="-10" cy="-11" r="1.5" fill="#ffffff" filter={`url(#${id}_neonGlow)`} />
+              </g>
+            ) : (
+              /* Fallback to custom provided Icon component */
               <foreignObject x="-24" y="-24" width="48" height="48">
                 <div className="w-full h-full flex items-center justify-center text-white">
                   <Icon 
@@ -525,17 +1014,140 @@ export default function TCMedal({
                   />
                 </div>
               </foreignObject>
-            ) : (
-              /* Iconic Ace of Spades (Glows with intense neon bloom on Diamond) */
-              <path 
-                d="M 0,-18 C 5,-10 16,-4 16,6 C 16,14 9,18 2,16 C 0,15 -1,13 -1,13 C -1,13 -2,15 -4,16 C -11,18 -18,14 -18,6 C -18,-4 -7,-10 0,-18 Z M -2,11 L -5,20 L 5,20 L 2,11 Z" 
-                fill={isDiamond ? "#ffffff" : `url(#${id}_rim)`} 
-                stroke={isDiamond ? "#e0f2fe" : "#ffffff"}
-                strokeWidth={isDiamond ? "1.5" : "1"}
-                strokeOpacity="0.95"
-              />
             )}
           </g>
+
+          {/* ============================================================ */}
+          {/* LAYER 7: CARATED DIAMOND ICE SPARKLES & SCINTILLATION FLURRIES */}
+          {/* Glistening diamond carats sparking organically across facets */}
+          {/* ============================================================ */}
+          {isDiamond && animated && (
+            <g className="pointer-events-none">
+              {/* 1. Crown Apex Carat Glint (x=100, y=2) */}
+              <g transform="translate(100, 2)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '0s' }}>
+                  <path d="M 0,-9 Q 0,0 9,0 Q 0,0 0,9 Q 0,0 -9,0 Q 0,0 0,-9 Z" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="1.6" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="3.6" fill="#38bdf8" opacity="0.6" />
+                  <line x1="0" y1="-12" x2="0" y2="12" stroke="#ffffff" strokeWidth="0.7" />
+                  <line x1="-12" y1="0" x2="12" y2="0" stroke="#ffffff" strokeWidth="0.7" />
+                </g>
+              </g>
+
+              {/* 2. Left Wing High Flight Feather Tip (x=-14, y=20) */}
+              <g transform="translate(-14, 20)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '0.4s' }}>
+                  <path d="M 0,-8 Q 0,0 8,0 Q 0,0 0,8 Q 0,0 -8,0 Q 0,0 0,-8 Z" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="1.4" fill="#ffffff" />
+                  <line x1="0" y1="-10" x2="0" y2="10" stroke="#bae6fd" strokeWidth="0.6" />
+                  <line x1="-10" y1="0" x2="10" y2="0" stroke="#bae6fd" strokeWidth="0.6" />
+                </g>
+              </g>
+
+              {/* 3. Right Wing High Flight Feather Tip (x=214, y=20) */}
+              <g transform="translate(214, 20)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '1.2s' }}>
+                  <path d="M 0,-8 Q 0,0 8,0 Q 0,0 0,8 Q 0,0 -8,0 Q 0,0 0,-8 Z" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="1.4" fill="#ffffff" />
+                  <line x1="0" y1="-10" x2="0" y2="10" stroke="#bae6fd" strokeWidth="0.6" />
+                  <line x1="-10" y1="0" x2="10" y2="0" stroke="#bae6fd" strokeWidth="0.6" />
+                </g>
+              </g>
+
+              {/* 4. Crown Central Brooch Jewel (x=100, y=24) */}
+              <g transform="translate(100, 24)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '0.75s' }}>
+                  <path d="M 0,-9 Q 0,0 9,0 Q 0,0 0,9 Q 0,0 -9,0 Q 0,0 0,-9 Z" fill="#ffffff" />
+                  <polygon points="0,-4 3,0 0,4 -3,0" fill="#38bdf8" />
+                  <circle cx="0" cy="0" r="1.6" fill="#ffffff" />
+                  <line x1="0" y1="-12" x2="0" y2="12" stroke="#ffffff" strokeWidth="0.7" />
+                  <line x1="-12" y1="0" x2="12" y2="0" stroke="#ffffff" strokeWidth="0.7" />
+                </g>
+              </g>
+
+              {/* 5. Left Shoulder Crystal Chamfer (x=42, y=58) */}
+              <g transform="translate(42, 58)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '1.9s' }}>
+                  <path d="M 0,-7 Q 0,0 7,0 Q 0,0 0,7 Q 0,0 -7,0 Q 0,0 0,-7 Z" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="1.3" fill="#ffffff" />
+                  <line x1="-8" y1="-8" x2="8" y2="8" stroke="#bae6fd" strokeWidth="0.5" />
+                  <line x1="-8" y1="8" x2="8" y2="-8" stroke="#bae6fd" strokeWidth="0.5" />
+                </g>
+              </g>
+
+              {/* 6. Right Shoulder Crystal Chamfer (x=158, y=58) */}
+              <g transform="translate(158, 58)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '0.95s' }}>
+                  <path d="M 0,-7 Q 0,0 7,0 Q 0,0 0,7 Q 0,0 -7,0 Q 0,0 0,-7 Z" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="1.3" fill="#ffffff" />
+                  <line x1="-8" y1="-8" x2="8" y2="8" stroke="#bae6fd" strokeWidth="0.5" />
+                  <line x1="-8" y1="8" x2="8" y2="-8" stroke="#bae6fd" strokeWidth="0.5" />
+                </g>
+              </g>
+
+              {/* 7. Victory Chalice Left Rim Glint (x=90, y=85) */}
+              <g transform="translate(90, 85)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '1.5s' }}>
+                  <path d="M 0,-7 Q 0,0 7,0 Q 0,0 0,7 Q 0,0 -7,0 Q 0,0 0,-7 Z" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="1.3" fill="#ffffff" />
+                </g>
+              </g>
+
+              {/* 8. Victory Chalice Star Brooch (x=100, y=95) */}
+              <g transform="translate(100, 95)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '2.3s' }}>
+                  <path d="M 0,-8 Q 0,0 8,0 Q 0,0 0,8 Q 0,0 -8,0 Q 0,0 0,-8 Z" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="1.4" fill="#ffffff" />
+                  <line x1="0" y1="-10" x2="0" y2="10" stroke="#ffffff" strokeWidth="0.6" />
+                  <line x1="-10" y1="0" x2="10" y2="0" stroke="#ffffff" strokeWidth="0.6" />
+                </g>
+              </g>
+
+              {/* 9. Left Wing Mid Feather Tip (x=-22, y=78) */}
+              <g transform="translate(-22, 78)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '1.65s' }}>
+                  <path d="M 0,-7 Q 0,0 7,0 Q 0,0 0,7 Q 0,0 -7,0 Q 0,0 0,-7 Z" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="1.2" fill="#ffffff" />
+                </g>
+              </g>
+
+              {/* 10. Right Wing Mid Feather Tip (x=222, y=78) */}
+              <g transform="translate(222, 78)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '0.2s' }}>
+                  <path d="M 0,-7 Q 0,0 7,0 Q 0,0 0,7 Q 0,0 -7,0 Q 0,0 0,-7 Z" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="1.2" fill="#ffffff" />
+                </g>
+              </g>
+
+              {/* 11. Bottom Crystal Hexagon Apex (x=100, y=162) */}
+              <g transform="translate(100, 162)">
+                <g className={`${id}_sparkle_elem`} style={{ animationDelay: '1.35s' }}>
+                  <path d="M 0,-7 Q 0,0 7,0 Q 0,0 0,7 Q 0,0 -7,0 Q 0,0 0,-7 Z" fill="#ffffff" />
+                  <circle cx="0" cy="0" r="1.2" fill="#ffffff" />
+                </g>
+              </g>
+
+              {/* 12. Floating Micro Ice Crystals around the Wings */}
+              <g transform="translate(16, 45)" className={`${id}_ice_micro`} style={{ animationDelay: '0.3s' }}>
+                <circle cx="0" cy="0" r="1.4" fill="#ffffff" opacity="0.9" />
+              </g>
+              <g transform="translate(184, 45)" className={`${id}_ice_micro`} style={{ animationDelay: '1.5s' }}>
+                <circle cx="0" cy="0" r="1.4" fill="#ffffff" opacity="0.9" />
+              </g>
+              <g transform="translate(-4, 94)" className={`${id}_ice_micro`} style={{ animationDelay: '0.8s' }}>
+                <circle cx="0" cy="0" r="1.2" fill="#bae6fd" opacity="0.85" />
+              </g>
+              <g transform="translate(204, 94)" className={`${id}_ice_micro`} style={{ animationDelay: '2.1s' }}>
+                <circle cx="0" cy="0" r="1.2" fill="#bae6fd" opacity="0.85" />
+              </g>
+              <g transform="translate(60, 142)" className={`${id}_ice_micro`} style={{ animationDelay: '1.2s' }}>
+                <circle cx="0" cy="0" r="1.3" fill="#ffffff" opacity="0.9" />
+              </g>
+              <g transform="translate(140, 142)" className={`${id}_ice_micro`} style={{ animationDelay: '2.5s' }}>
+                <circle cx="0" cy="0" r="1.3" fill="#ffffff" opacity="0.9" />
+              </g>
+            </g>
+          )}
         </svg>
       </div>
 
