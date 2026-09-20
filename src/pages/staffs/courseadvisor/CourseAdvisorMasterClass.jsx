@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
+import TutorPostClassReportModal from "../../../components/private/Tutor/TutorPostClassReportModal";
 import { 
   MagnifyingGlassIcon,
   CalendarIcon,
@@ -34,8 +35,11 @@ export default function CourseAdvisorMasterClass() {
   const [selectedSession, setSelectedSession] = useState(null);
   const [videoLink, setVideoLink] = useState("");
   const [saveLoading, setSaveLoading] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackSession, setFeedbackSession] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const staffName = localStorage.getItem("staff_name") || "Course Advisor";
   const token = localStorage.getItem("staff_token");
@@ -74,6 +78,63 @@ export default function CourseAdvisorMasterClass() {
     fetchSessions();
   }, [fetchSessions]);
 
+  // Open the post-class report modal when returning from a masterclass.
+  // Triggered by the ?feedback_session= param, router state, or sessionStorage.
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const feedbackSessionId =
+      searchParams.get("feedback_session") ||
+      location.state?.completedSessionId ||
+      sessionStorage.getItem("just_completed_class_session_id");
+
+    if (feedbackSessionId) {
+      sessionStorage.removeItem("just_completed_class_session_id");
+
+      const allSessions = [
+        ...(scheduleData.today_classes || []),
+        ...Object.values(scheduleData.week_schedule || {}).flat(),
+        ...(scheduleData.upcoming_sessions || []),
+        ...(scheduleData.sessions || []),
+        ...(scheduleData.next_class ? [scheduleData.next_class] : [])
+      ];
+
+      const session = allSessions.find(s => String(s.id) === String(feedbackSessionId));
+      if (session) {
+        setFeedbackSession({
+          id: session.id,
+          class_id: session.class_id || session.id,
+          class_title: session.class?.title || session.class?.subject?.name || session.title || "Masterclass",
+          subject: (typeof session.class?.subject === "object" ? session.class?.subject?.name : session.class?.subject) || "General Subject",
+          topic: session.class?.title || session.title || "Lesson Session",
+          date: session.session_date ? new Date(session.session_date).toLocaleDateString() : new Date().toLocaleDateString(),
+          time: `${session.starts_at || 'TBD'} - ${session.ends_at || 'TBD'}`,
+          tutor_name: staffName,
+          present_count: session.attendances?.length ?? 0,
+          total_students: 20,
+        });
+      } else {
+        setFeedbackSession({
+          id: feedbackSessionId,
+          class_id: feedbackSessionId,
+          class_title: "Master Class",
+          subject: "Live Masterclass",
+          topic: "Class Lesson",
+          date: new Date().toLocaleDateString(),
+          time: "Just Concluded",
+          tutor_name: staffName,
+          present_count: 0,
+          total_students: 20,
+        });
+      }
+
+      setFeedbackModalOpen(true);
+
+      if (location.search || location.state?.promptPostClassReport) {
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.search, location.state, scheduleData, navigate, location.pathname, staffName]);
+
   // --- RECORDING MANAGEMENT ---
   const handleSaveVideoLink = async () => {
     if (!selectedSession) return;
@@ -109,7 +170,7 @@ export default function CourseAdvisorMasterClass() {
           try {
             await axios.post(`${API_BASE_URL}/api/advisor/classes/session/recording`, payload, { headers });
           } catch (err3) {
-            await axios.post(`${API_BASE_URL}/api/staff/classes/session/recording`, payload, { headers });
+            await axios.post(`${API_BASE_URL}/api/staffs/classes/session/recording`, payload, { headers });
           }
         }
       }
@@ -286,6 +347,7 @@ export default function CourseAdvisorMasterClass() {
   };
 
   return (
+    <>
     <StaffDashboardLayout pagetitle="Master Class">
       {toast && (
         <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3.5 rounded-2xl shadow-2xl text-white font-bold text-sm flex items-center gap-3 transition-all ${toast.type === "success" ? "bg-emerald-600" : "bg-red-600 animate-bounce"}`}>
@@ -887,5 +949,16 @@ export default function CourseAdvisorMasterClass() {
         </div>
       )}
     </StaffDashboardLayout>
+
+      <TutorPostClassReportModal
+        isOpen={feedbackModalOpen}
+        onClose={() => setFeedbackModalOpen(false)}
+        sessionDetails={feedbackSession}
+        onSubmitSuccess={() => {
+          setFeedbackModalOpen(false);
+          setToast({ type: "success", message: "Post-Class Report submitted successfully!" });
+        }}
+      />
+    </>
   );
 }
