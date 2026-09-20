@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
+import CourseAdvisorFeedbackModal from "../../../components/private/staffs/CourseAdvisorFeedbackModal";
 import { 
   MagnifyingGlassIcon,
   CalendarIcon,
@@ -12,8 +13,7 @@ import {
   UserGroupIcon,
   AcademicCapIcon,
   SparklesIcon,
-  ArrowTopRightOnSquareIcon,
-  UserIcon
+  ShieldCheckIcon
 } from "@heroicons/react/24/outline";
 import { Icon } from "@iconify/react";
 
@@ -34,8 +34,11 @@ export default function CourseAdvisorMasterClass() {
   const [selectedSession, setSelectedSession] = useState(null);
   const [videoLink, setVideoLink] = useState("");
   const [saveLoading, setSaveLoading] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackSession, setFeedbackSession] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const staffName = localStorage.getItem("staff_name") || "Course Advisor";
   const token = localStorage.getItem("staff_token");
@@ -74,6 +77,96 @@ export default function CourseAdvisorMasterClass() {
     fetchSessions();
   }, [fetchSessions]);
 
+  // Persistent tracking for post-class report trigger to prevent race conditions with async fetchSessions
+  const [pendingFeedbackId, setPendingFeedbackId] = useState(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    return (
+      searchParams.get("feedback_session") ||
+      sessionStorage.getItem("just_completed_class_session_id") ||
+      null
+    );
+  });
+
+  // Open the post-class report modal when returning from a masterclass.
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const feedbackParam = searchParams.get("feedback_session");
+    const stateSessionId = location.state?.completedSessionId;
+    const sessionStoredId = sessionStorage.getItem("just_completed_class_session_id");
+
+    const incomingId = feedbackParam || stateSessionId || sessionStoredId;
+    if (incomingId && incomingId !== pendingFeedbackId) {
+      setPendingFeedbackId(incomingId);
+    }
+  }, [location.search, location.state, pendingFeedbackId]);
+
+  useEffect(() => {
+    if (!pendingFeedbackId) return;
+
+    const allSessions = [
+      ...(scheduleData.today_classes || []),
+      ...Object.values(scheduleData.week_schedule || {}).flat(),
+      ...(scheduleData.upcoming_sessions || []),
+      ...(scheduleData.sessions || []),
+      ...(scheduleData.next_class ? [scheduleData.next_class] : [])
+    ];
+
+    const session = allSessions.find(s => String(s.id) === String(pendingFeedbackId));
+    if (session) {
+      // Differentiate and extract real tutor name rather than advisor name
+      const tutorStaff = session.class?.staffs?.find(st => {
+        const r = String(st.pivot?.role || st.role || st.staff?.role || "").toLowerCase();
+        return !r.includes("advisor") && !r.includes("assistant");
+      });
+      const tutorName = tutorStaff 
+        ? `${tutorStaff.firstname} ${tutorStaff.surname}`.trim()
+        : session.tutor_name || session.class?.tutor_name || "Course Tutor";
+
+      setFeedbackSession({
+        id: session.id,
+        class_id: session.class_id || session.id,
+        class_title: session.class?.title || session.class?.subject?.name || session.title || "Masterclass",
+        subject: (typeof session.class?.subject === "object" ? session.class?.subject?.name : session.class?.subject) || "General Subject",
+        topic: session.class?.title || session.title || "Lesson Session",
+        date: session.session_date ? new Date(session.session_date).toLocaleDateString() : new Date().toLocaleDateString(),
+        time: `${session.starts_at || 'TBD'} - ${session.ends_at || 'TBD'}`,
+        tutor_name: tutorName,
+        present_count: session.attendances?.length ?? 0,
+        total_students: session.enrolled_count ?? session.class?.enrolled_count ?? 20,
+      });
+
+      setFeedbackModalOpen(true);
+      setPendingFeedbackId(null);
+      sessionStorage.removeItem("just_completed_class_session_id");
+
+      if (location.search || location.state?.promptPostClassReport) {
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    } else if (!loading) {
+      // Fallback when schedule has loaded but session was external/custom
+      setFeedbackSession({
+        id: pendingFeedbackId,
+        class_id: pendingFeedbackId,
+        class_title: "Master Class",
+        subject: "Live Masterclass",
+        topic: "Class Lesson",
+        date: new Date().toLocaleDateString(),
+        time: "Just Concluded",
+        tutor_name: "Course Tutor",
+        present_count: 0,
+        total_students: 20,
+      });
+
+      setFeedbackModalOpen(true);
+      setPendingFeedbackId(null);
+      sessionStorage.removeItem("just_completed_class_session_id");
+
+      if (location.search || location.state?.promptPostClassReport) {
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [pendingFeedbackId, scheduleData, loading, navigate, location.pathname, location.search, location.state]);
+
   // --- RECORDING MANAGEMENT ---
   const handleSaveVideoLink = async () => {
     if (!selectedSession) return;
@@ -109,7 +202,7 @@ export default function CourseAdvisorMasterClass() {
           try {
             await axios.post(`${API_BASE_URL}/api/advisor/classes/session/recording`, payload, { headers });
           } catch (err3) {
-            await axios.post(`${API_BASE_URL}/api/staff/classes/session/recording`, payload, { headers });
+            await axios.post(`${API_BASE_URL}/api/staffs/classes/session/recording`, payload, { headers });
           }
         }
       }
@@ -285,7 +378,32 @@ export default function CourseAdvisorMasterClass() {
     });
   };
 
+  const handleOpenClassRoom = (cls) => {
+    // Locate upcoming or active session for this class
+    const targetSession = 
+      flattenedSessions.find(s => String(s.class_id || s.class?.id) === String(cls.id) && !isPast(s)) ||
+      flattenedSessions.find(s => String(s.class_id || s.class?.id) === String(cls.id)) ||
+      (scheduleData.next_class && String(scheduleData.next_class.class_id || scheduleData.next_class.class?.id) === String(cls.id) ? scheduleData.next_class : null);
+
+    if (targetSession) {
+      handleOpenLaunchModal(targetSession);
+    } else {
+      // Synthetic proxy session so advisor launches the in-app SDK wrapper without being booted externally
+      handleOpenLaunchModal({
+        id: cls.id,
+        class_id: cls.id,
+        class: cls,
+        title: cls.title,
+        class_link: cls.zoom_start_url || cls.zoom_join_url,
+        session_date: new Date().toISOString().split("T")[0],
+        starts_at: "Live",
+        ends_at: "Classroom",
+      });
+    }
+  };
+
   return (
+    <>
     <StaffDashboardLayout pagetitle="Master Class">
       {toast && (
         <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3.5 rounded-2xl shadow-2xl text-white font-bold text-sm flex items-center gap-3 transition-all ${toast.type === "success" ? "bg-emerald-600" : "bg-red-600 animate-bounce"}`}>
@@ -564,23 +682,44 @@ export default function CourseAdvisorMasterClass() {
                           )}
                         </div>
 
-                        {/* Assigned Tutors */}
-                        <div className="pt-2 space-y-1">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Assigned Tutors</span>
+                        {/* Assigned Staffs */}
+                        <div className="pt-2 space-y-1.5">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Assigned Staffs</span>
                           {Array.isArray(cls.staffs) && cls.staffs.length > 0 ? (
                             <div className="flex flex-wrap gap-1.5">
-                              {cls.staffs.map((st) => (
-                                <span
-                                  key={st.id}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-gray-700 text-[11px] font-bold text-slate-700 dark:text-gray-300"
-                                >
-                                  <UserIcon className="w-3 h-3 text-[#C5A97A]" />
-                                  <span>{st.firstname} {st.surname}</span>
-                                </span>
-                              ))}
+                              {cls.staffs.map((st) => {
+                                const rawRole = String(st.pivot?.role || st.role || st.staff?.role || st.staff_role || "").toLowerCase();
+                                const isAdvisor = rawRole.includes("advisor") || rawRole.includes("assistant") || rawRole.includes("coordinator");
+                                return (
+                                  <span
+                                    key={st.id}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                                      isAdvisor
+                                        ? "bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/30 text-amber-900 dark:text-amber-200"
+                                        : "bg-blue-500/10 dark:bg-blue-500/15 border-blue-500/30 text-blue-900 dark:text-blue-200"
+                                    }`}
+                                  >
+                                    {isAdvisor ? (
+                                      <ShieldCheckIcon className="w-3 h-3 text-[#C5A97A] shrink-0" />
+                                    ) : (
+                                      <AcademicCapIcon className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+                                    )}
+                                    <span>{st.firstname} {st.surname}</span>
+                                    <span
+                                      className={`px-1.5 py-0.2 rounded text-[8px] font-black uppercase tracking-wider ${
+                                        isAdvisor
+                                          ? "bg-[#C5A97A]/25 text-amber-800 dark:text-amber-300"
+                                          : "bg-blue-600/15 text-blue-700 dark:text-blue-300"
+                                      }`}
+                                    >
+                                      {isAdvisor ? "Advisor" : "Tutor"}
+                                    </span>
+                                  </span>
+                                );
+                              })}
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400 italic">No tutors assigned</span>
+                            <span className="text-xs text-gray-400 italic">No staffs assigned</span>
                           )}
                         </div>
                       </div>
@@ -598,17 +737,16 @@ export default function CourseAdvisorMasterClass() {
                           <span>View Sessions</span>
                         </button>
 
-                        {cls.zoom_start_url || cls.zoom_join_url ? (
-                          <a
-                            href={cls.zoom_start_url || cls.zoom_join_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-4 py-2.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 shadow-sm"
-                            title="Direct Meeting Room"
+                        {(cls.zoom_start_url || cls.zoom_join_url || flattenedSessions.some(s => String(s.class_id || s.class?.id) === String(cls.id))) ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenClassRoom(cls)}
+                            className="px-4 py-2.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                            title="Join Classroom (In-App SDK Wrapper)"
                           >
-                            <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                            <VideoCameraIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
                             <span>Room</span>
-                          </a>
+                          </button>
                         ) : null}
                       </div>
                     </div>
@@ -887,5 +1025,16 @@ export default function CourseAdvisorMasterClass() {
         </div>
       )}
     </StaffDashboardLayout>
+
+      <CourseAdvisorFeedbackModal
+        isOpen={feedbackModalOpen}
+        onClose={() => setFeedbackModalOpen(false)}
+        sessionDetails={feedbackSession}
+        onSubmitSuccess={() => {
+          setFeedbackModalOpen(false);
+          setToast({ type: "success", message: "Course Advisor Post-Class Report submitted successfully!" });
+        }}
+      />
+    </>
   );
 }

@@ -371,20 +371,24 @@ export default function TutorAssessmentModal({
     setLoading(true);
 
     try {
-      const formattedQuestions = questions.map((q, idx) => ({
-        type: q.type,
-        question: q.question.trim(),
-        marks: parseFloat(q.marks),
-        order: idx,
-        explanation: q.explanation ? q.explanation.trim() : null,
-        options:
-          q.type === "mcq"
-            ? q.options.map((opt) => ({
-                option_text: opt.option_text.trim(),
-                is_correct: !!opt.is_correct
-              }))
-            : []
-      }));
+      const formattedQuestions = questions.map((q, idx) => {
+        const item = {
+          type: q.type === "theory" ? "essay" : q.type,
+          question: q.question.trim(),
+          marks: parseFloat(q.marks),
+          order: idx,
+          explanation: q.explanation ? q.explanation.trim() : null,
+        };
+
+        if (q.type === "mcq") {
+          item.options = (q.options || []).map((opt) => ({
+            option_text: opt.option_text.trim(),
+            is_correct: !!opt.is_correct
+          }));
+        }
+
+        return item;
+      });
 
       const payload = {
         class_id: parseInt(classId),
@@ -423,7 +427,12 @@ export default function TutorAssessmentModal({
       onClose();
     } catch (err) {
       console.error("Save assessment error:", err);
+      const firstBackendError =
+        err.response?.data?.errors &&
+        Object.values(err.response.data.errors).flat()[0];
+
       const msg =
+        firstBackendError ||
         err.response?.data?.errors?.class_id?.[0] ||
         err.response?.data?.errors?.questions?.[0] ||
         err.response?.data?.message ||

@@ -310,6 +310,7 @@ export default function AchievementVisualRenderer({
               Icon={IconComponent} 
               size={size} 
               glow={true}
+              useTrophyCup={category === "exam_performance" || !IconComponent}
             />
           ) : (
             <BaseBadge3D 
@@ -390,6 +391,7 @@ export default function AchievementVisualRenderer({
               Icon={IconComponent} 
               size={size} 
               glow={false}
+              useTrophyCup={category === "exam_performance" || !IconComponent}
             />
           ) : (
             <BaseBadge3D 

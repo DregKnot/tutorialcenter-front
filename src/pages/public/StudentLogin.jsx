@@ -29,6 +29,14 @@ export default function StudentLogin() {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
+  const handleBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate("/login");
+    }
+  };
+
   // Capture each user entries
   const handleChange = (e) => {
     setFormData({
@@ -173,8 +181,9 @@ export default function StudentLogin() {
           {/* 1. TOP NAV */}
           <div className="relative w-full flex items-center justify-center mb-8 md:mb-10">
             <button
-              onClick={() => navigate("/register")}
+              onClick={handleBack}
               className="absolute left-0 p-3 bg-white hover:bg-gray-50 rounded-2xl shadow-sm transition-all active:scale-90 z-10"
+              title="Go Back"
             >
               <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
             </button>

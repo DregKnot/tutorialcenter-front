@@ -77,6 +77,20 @@ const getClassColor = (title) => {
   return COLORS[index];
 };
 
+const getSubjectDisplayName = (session) => {
+  if (!session) return "Class";
+  if (typeof session.subject === "object" && session.subject?.name) return session.subject.name;
+  if (typeof session.subject === "string" && session.subject.trim()) return session.subject;
+  if (session.subject_name) return session.subject_name;
+  if (session.class?.subject?.name) return session.class.subject.name;
+  return session.class?.title || session.title || "Class";
+};
+
+const getInitials = (str) => {
+  if (!str || typeof str !== "string") return "MC";
+  return str.split(" ").filter(Boolean).map(w => w[0]).join("").slice(0, 2).toUpperCase() || "MC";
+};
+
 export default function StudentCalendar() {
   const navigate = useNavigate();
   const { token } = useAuth();
@@ -85,22 +99,21 @@ export default function StudentCalendar() {
   const handleJoinClass = useCallback((s) => {
     if (!s) return;
     const link = s.class_link || s.recording_link;
-    if (!link && !s.id) return;
-
-    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
-    if (isZoom && s.id) {
-      navigate(`/zoom/masterclass/class/${s.id}`);
-    } else if (link) {
-      window.open(link, '_blank');
-      navigate('/student/meet', {
-        state: {
-          class_link: link,
-          class_schedule_id: s.id,
-          alreadyOpened: true
-        }
-      });
+    if (link && typeof link === "string" && (link.startsWith("http://") || link.startsWith("https://"))) {
+      window.open(link, "_blank", "noopener,noreferrer");
+      if (s.id && token) {
+        axios.post(
+          `${API_BASE_URL}/api/students/classes/attendance/join`,
+          { class_session_id: s.id },
+          { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+        ).catch(() => {});
+      }
+      return;
     }
-  }, [navigate]);
+    if (s.id) {
+      navigate(`/zoom/masterclass/class/${s.id}`);
+    }
+  }, [API_BASE_URL, navigate, token]);
 
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -836,7 +849,7 @@ export default function StudentCalendar() {
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${colors.text} bg-white/60 dark:bg-black/30 backdrop-blur-sm`}>
-                            {s.subject || s.class?.title || "Class"}
+                            {getSubjectDisplayName(s)}
                           </span>
                           <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
                             past ? "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
@@ -926,7 +939,7 @@ export default function StudentCalendar() {
           <div className="relative bg-white dark:bg-[#09314F] rounded-3xl p-6 md:p-8 w-[90%] max-w-md shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 border border-gray-150 dark:border-[#1a4a75]">
             <div className="flex items-center gap-3.5 mb-6">
               <div className="w-11 h-11 rounded-full bg-[#09314F] dark:bg-black/20 flex items-center justify-center text-white font-extrabold text-sm shrink-0">
-                {(selectedSession.class?.title || selectedSession.title || "MC").split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase()}
+                {getInitials(selectedSession.class?.title || selectedSession.title)}
               </div>
               <h3 className="text-base font-extrabold text-[#09314F] dark:text-white leading-tight">
                 {selectedSession.class?.title || selectedSession.title || "Master Class"}
@@ -937,7 +950,7 @@ export default function StudentCalendar() {
               <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2">
                 <span className="text-xs font-bold text-gray-400 dark:text-blue-300">Date:</span>
                 <span className="text-xs font-extrabold text-[#09314F] dark:text-white">
-                  {new Date(selectedSession.session_date).toLocaleDateString("en-US", { weekday: "short", day: "2-digit", month: "short", year: "numeric" })}
+                  {selectedSession.session_date ? new Date(selectedSession.session_date).toLocaleDateString("en-US", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }) : "Scheduled Date"}
                 </span>
               </div>
               <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2">

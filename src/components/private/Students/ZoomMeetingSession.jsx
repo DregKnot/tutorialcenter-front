@@ -202,6 +202,16 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
                     { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
                 ).catch(() => {});
             }
+
+            // Guarantee #root is visible when unmounting from Zoom session
+            const rootNode = document.getElementById("root");
+            if (rootNode) {
+                rootNode.style.display = "block";
+            }
+            const zmmtgNode = document.getElementById("zmmtg-root");
+            if (zmmtgNode) {
+                zmmtgNode.style.display = "none";
+            }
         };
     }, [sdkReady, classSessionId, signatureEndpoint, token, getLeaveUrl, isStaff, API_BASE_URL]);
 

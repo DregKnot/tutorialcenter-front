@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { X, Sparkles, CheckCircle, ArrowRight } from 'lucide-react';
 import AchievementVisualRenderer, { getAchievementCondition } from './badges/AchievementVisualRenderer';
+import CosmicStreakCelebrationModal from './badges/streakmedals/CosmicStreakCelebrationModal';
+import ExamPerformanceCelebrationModal from './badges/examperformance/ExamPerformanceCelebrationModal';
 
 export default function AchievementCelebrationModal({
   achievement,
@@ -18,10 +20,34 @@ export default function AchievementCelebrationModal({
 
   if (!achievement || !active) return null;
 
+  const category = (achievement.category || "Milestone").toLowerCase();
+  const code = (achievement.code || "").toLowerCase();
+  const isStreak = category === "learning_streak" || category === "streak" || code.startsWith("streak.") || Boolean(achievement.streak_days);
+  const isExamPerformance = category === "exam_performance" || code.startsWith("exam_performance.");
+
+  // If this is a streak achievement, launch the full-screen cinematic fly-in & crash celebration
+  if (isStreak) {
+    return (
+      <CosmicStreakCelebrationModal
+        achievement={achievement}
+        onClose={onClose}
+      />
+    );
+  }
+
+  // If this is an exam performance achievement, launch the royal academic celebration
+  if (isExamPerformance) {
+    return (
+      <ExamPerformanceCelebrationModal
+        achievement={achievement}
+        onClose={onClose}
+      />
+    );
+  }
+
   const condition = getAchievementCondition(achievement);
   const tier = achievement.tier || "";
   const name = achievement.name || "Achievement Unlocked!";
-  const category = achievement.category || "Milestone";
 
   const count = Number(achievement.earned_count ?? achievement.multiplier ?? achievement.awards?.length ?? 1);
 

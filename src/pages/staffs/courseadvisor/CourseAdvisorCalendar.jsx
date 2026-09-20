@@ -3,7 +3,6 @@ import StaffDashboardLayout from "../../../components/private/staffs/DashboardLa
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
-import JoinMethodModal from "../../../components/common/JoinMethodModal";
 
 // SVG Icons to match premium look
 const ChevronLeftIcon = () => (
@@ -57,8 +56,7 @@ export default function CourseAdvisorCalendar() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
-  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const [sessionToJoin, setSessionToJoin] = useState(null);
+  const [joiningSessionId, setJoiningSessionId] = useState(null);
 
   const handleJoinClass = useCallback((s) => {
     if (!s) return;
@@ -67,8 +65,7 @@ export default function CourseAdvisorCalendar() {
 
     const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
     if (isZoom && s.id) {
-      setSessionToJoin(s);
-      setIsJoinModalOpen(true);
+      setJoiningSessionId((prev) => (prev === s.id ? null : s.id));
     } else if (link) {
       window.open(link, '_blank');
       navigate('/staffs/meet', {
@@ -438,7 +435,6 @@ export default function CourseAdvisorCalendar() {
   };
 
   return (
-    <>
     <StaffDashboardLayout pagetitle="Calendar">
       {toast && (
         <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl text-white font-bold text-sm ${toast.type === "success" ? "bg-[#10B981]" : "bg-[#EF4444] animate-bounce"}`}>
@@ -879,7 +875,10 @@ export default function CourseAdvisorCalendar() {
                 </p>
               </div>
               <button
-                onClick={() => setSelectedDateModal(null)}
+                onClick={() => {
+                  setSelectedDateModal(null);
+                  setJoiningSessionId(null);
+                }}
                 className="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all"
               >
                 <Icon icon="lucide:x" className="w-5 h-5" />
@@ -951,6 +950,41 @@ export default function CourseAdvisorCalendar() {
                           )
                         ) : (
                           s.class_link ? (
+                            joiningSessionId === s.id ? (
+                              <div className="flex flex-col gap-2 w-full animate-in fade-in duration-200">
+                                <button 
+                                  onClick={() => {
+                                    if (s.id) navigate(`/classroom/${s.id}`);
+                                  }}
+                                  className="w-full py-2.5 bg-[#09314F] hover:bg-[#1a4a75] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
+                                >
+                                  <Icon icon="lucide:monitor" className="w-4 h-4" />
+                                  Join on Web
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    navigate('/staffs/meet/app', {
+                                      state: {
+                                        class_link: s.class_link,
+                                        class_schedule_id: s.id,
+                                        topic: s.class?.title || s.title
+                                      }
+                                    });
+                                  }}
+                                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
+                                >
+                                  <Icon icon="logos:zoom" className="w-4 h-4" />
+                                  Join via Zoom App
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setJoiningSessionId(null)}
+                                  className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-semibold py-0.5 text-center transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
                               <button
                                 onClick={() => {
                                   handleJoinClass(s);
@@ -960,6 +994,7 @@ export default function CourseAdvisorCalendar() {
                                 <Icon icon="logos:zoom" className="w-4 h-4" />
                                 Start Class Now
                               </button>
+                            )
                           ) : (
                             <div className="text-center py-2 text-xs font-bold text-gray-400 dark:text-gray-500 italic">
                               Class Link Pending
@@ -979,7 +1014,10 @@ export default function CourseAdvisorCalendar() {
 
             <div className="mt-6 flex justify-end">
               <button
-                onClick={() => setSelectedDateModal(null)}
+                onClick={() => {
+                  setSelectedDateModal(null);
+                  setJoiningSessionId(null);
+                }}
                 className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-700 dark:text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
               >
                 Close
@@ -1035,6 +1073,54 @@ export default function CourseAdvisorCalendar() {
                 )}
               </div>
 
+              {selectedSession.class_link && !isPastSession(selectedSession) && (
+                <div className="pt-2">
+                  {joiningSessionId === selectedSession.id ? (
+                    <div className="flex flex-col gap-2 w-full animate-in fade-in duration-200">
+                      <button 
+                        onClick={() => {
+                          if (selectedSession.id) navigate(`/classroom/${selectedSession.id}`);
+                        }}
+                        className="w-full bg-[#09314F] hover:bg-[#1a4a75] text-white py-3 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md"
+                      >
+                        <Icon icon="lucide:monitor" className="w-4 h-4" />
+                        Join on Web
+                      </button>
+                      <button 
+                        onClick={() => {
+                          navigate('/staffs/meet/app', {
+                            state: {
+                              class_link: selectedSession.class_link,
+                              class_schedule_id: selectedSession.id,
+                              topic: selectedSession.class?.title || selectedSession.title
+                            }
+                          });
+                        }}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md"
+                      >
+                        <Icon icon="logos:zoom" className="w-4 h-4" />
+                        Join via Zoom App
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setJoiningSessionId(null)}
+                        className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-semibold py-1 text-center transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setJoiningSessionId(selectedSession.id)}
+                      className="w-full bg-[#09314F] hover:bg-[#E83831] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-98"
+                    >
+                      <Icon icon="logos:zoom" className="w-4 h-4" />
+                      Start Class Now
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Video Recording Manager */}
               <div className="border-t border-slate-100 dark:border-white/5 pt-6 mt-6">
                 <label className="block text-xs font-black text-[#0F2843] dark:text-blue-300 uppercase tracking-widest mb-3">
@@ -1072,26 +1158,5 @@ export default function CourseAdvisorCalendar() {
         </div>
       )}
     </StaffDashboardLayout>
-    <JoinMethodModal 
-      isOpen={isJoinModalOpen}
-      onClose={() => setIsJoinModalOpen(false)}
-      onJoinApp={() => {
-        setIsJoinModalOpen(false);
-        const link = sessionToJoin?.class_link || sessionToJoin?.recording_link;
-        if (link) {
-          navigate('/staffs/meet/app', {
-            state: {
-              class_link: link,
-              class_schedule_id: sessionToJoin.id
-            }
-          });
-        }
-      }}
-      onJoinWeb={() => {
-        setIsJoinModalOpen(false);
-        if (sessionToJoin?.id) navigate(`/classroom/${sessionToJoin.id}`);
-      }}
-    />
-    </>
   );
 }

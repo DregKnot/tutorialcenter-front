@@ -9,6 +9,7 @@ import { useAuth } from "./context/AuthContext.jsx";
 import { useStaffAuth } from "./context/StaffAuthContext.jsx";
 import { AchievementProvider } from "./context/AchievementContext.jsx";
 import usePageTracking from "./hooks/usePageTracking.js";
+import ErrorBoundary from "./components/common/ErrorBoundary.jsx";
 
 // Lazy loaded components
 const Home = lazy(() => import("./pages/public/Home.jsx"));
@@ -145,8 +146,9 @@ function App() {
       <StickyButtons />
 
       <AchievementProvider>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/cognitive-test" element={<CognitiveTest />} />
@@ -277,7 +279,8 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
-      </AchievementProvider>
+      </ErrorBoundary>
+    </AchievementProvider>
     </>
   );
 }
