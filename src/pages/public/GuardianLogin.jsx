@@ -19,6 +19,14 @@ export default function GuardianLogin() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate("/login");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -93,8 +101,9 @@ export default function GuardianLogin() {
       <div className="w-full md:w-1/2 h-full bg-[#F4F4F4] flex flex-col justify-center relative px-6 py-10 lg:px-[100px] lg:py-[60px] order-2 md:order-1 overflow-y-auto">
         <div className="relative w-full flex items-center justify-center mb-8 md:mb-10">
           <button
-            onClick={() => navigate("/")}
+            onClick={handleBack}
             className="absolute left-0 p-3 bg-white hover:bg-gray-50 rounded-2xl shadow-sm transition-all active:scale-90 z-10"
+            title="Go Back"
           >
             <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
           </button>

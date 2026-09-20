@@ -16,6 +16,14 @@ export default function LoginSelection() {
     }
   };
 
+  const handleBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
+
   return (
     <>
       <div className="w-full min-h-screen md:h-screen flex flex-col md:flex-row font-sans overflow-x-hidden">
@@ -33,8 +41,9 @@ export default function LoginSelection() {
           {/* 1. TOP NAV */}
           <div className="relative w-full flex items-center justify-center mb-8 md:mb-10">
             <button
-               onClick={() => navigate("/")}
+               onClick={handleBack}
                className="absolute left-0 p-3 bg-white hover:bg-gray-50 rounded-2xl shadow-sm transition-all active:scale-90 z-10"
+               title="Go Back"
              >
                <ChevronLeftIcon className="h-5 w-5 text-[#09314F] stroke-[2.5]" />
              </button>
