@@ -58,6 +58,25 @@ export default function CourseAdvisorFeedbackModal({
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const activeSessionIdRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+
+  // Auto-scroll questions container back to top on step transition
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentStep]);
+
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      if (formData.numberPresent === "" || formData.numberAbsent === "") {
+        setError("Please specify both number present and number absent.");
+        return;
+      }
+    }
+    setError(null);
+    setCurrentStep((prev) => Math.min(prev + 1, 3));
+  };
 
   // Initialize and populate default counts when modal opens
   useEffect(() => {
@@ -300,14 +319,17 @@ export default function CourseAdvisorFeedbackModal({
               <button
                 key={st.num}
                 type="button"
-                onClick={() => setCurrentStep(st.num)}
-                className={`flex-1 py-1.5 px-2 text-center rounded-xl text-[10px] sm:text-xs font-bold transition-all ${
+                onClick={() => {
+                  setError(null);
+                  setCurrentStep(st.num);
+                }}
+                className={`flex-1 py-1.5 px-2 text-center rounded-xl text-[10px] sm:text-xs font-bold transition-all cursor-pointer select-none ${
                   currentStep === st.num
                     ? "bg-[#C5A97A] text-[#09314F] shadow-sm font-black"
                     : "bg-white/5 text-slate-300 hover:bg-white/10"
                 }`}
               >
-                {st.title}
+                <span className="pointer-events-none select-none">{st.title}</span>
               </button>
             ))}
           </div>
@@ -315,402 +337,418 @@ export default function CourseAdvisorFeedbackModal({
 
         {/* ALERTS */}
         {error && (
-          <div className="mx-6 mt-4 p-3.5 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-between text-red-700 dark:text-red-300 text-xs font-bold">
+          <div className="mx-6 mt-4 p-3.5 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-between text-red-700 dark:text-red-300 text-xs font-bold shrink-0">
             <div className="flex items-center gap-2">
               <ExclamationCircleIcon className="w-4 h-4 shrink-0 text-red-500" />
               <span>{error}</span>
             </div>
-            <button onClick={() => setError(null)} className="text-red-500 hover:underline">
+            <button onClick={() => setError(null)} className="text-red-500 hover:underline cursor-pointer select-none">
               Dismiss
             </button>
           </div>
         )}
 
         {successMessage && (
-          <div className="mx-6 mt-4 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center gap-2.5 text-emerald-700 dark:text-emerald-300 text-xs font-bold animate-fade-in">
+          <div className="mx-6 mt-4 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center gap-2.5 text-emerald-700 dark:text-emerald-300 text-xs font-bold animate-fade-in shrink-0">
             <CheckCircleIcon className="w-4 h-4 shrink-0 text-emerald-500" />
             <span>{successMessage}</span>
           </div>
         )}
 
         {/* FORM CONTENT BODY */}
-        <form onSubmit={handleSubmit} className="p-5 sm:p-7 overflow-y-auto space-y-6 flex-1 text-slate-800 dark:text-slate-200">
-          
-          {/* ================= STEP 1 ================= */}
-          {currentStep === 1 && (
-            <div className="space-y-6 animate-fade-in">
-              {/* QUESTION 1 */}
-              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">1</span>
-                    <span>How would you rate the tutor’s overall performance?</span>
-                  </label>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
-                  {["Excellent", "Very Good", "Good", "Fair", "Poor"].map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => handleFieldChange("tutorPerformance", opt)}
-                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all ${
-                        formData.tutorPerformance === opt
-                          ? "bg-[#09314F] text-white border-[#09314F] shadow-sm scale-100"
-                          : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pt-2">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                    Comments:
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={formData.tutorPerformanceComments}
-                    onChange={(e) => handleFieldChange("tutorPerformanceComments", e.target.value)}
-                    placeholder="Provide specific feedback or commendations regarding the tutor's delivery, punctuality, and methodology..."
-                    className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
-                  />
-                </div>
-              </div>
-
-              {/* QUESTION 2 */}
-              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">2</span>
-                    <span>How was student attendance?</span>
-                  </label>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
-                </div>
-
-                <div className="space-y-2 pt-1">
-                  {[
-                    "Excellent – almost all students attended",
-                    "Good – most students attended",
-                    "Fair – several students were absent",
-                    "Poor – many students were absent",
-                  ].map((opt) => (
-                    <label
-                      key={opt}
-                      onClick={() => handleFieldChange("attendanceRating", opt)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
-                        formData.attendanceRating === opt
-                          ? "bg-amber-500/10 border-[#C5A97A] text-[#09314F] dark:text-white"
-                          : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-slate-700 dark:text-slate-300 hover:border-slate-300"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="attendanceRating"
-                        checked={formData.attendanceRating === opt}
-                        onChange={() => handleFieldChange("attendanceRating", opt)}
-                        className="w-4 h-4 text-[#09314F] focus:ring-[#C5A97A]"
-                      />
-                      <span>{opt}</span>
+        <form 
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
+              e.preventDefault();
+              if (currentStep < 3) {
+                handleNextStep();
+              }
+            }
+          }}
+          className="flex flex-col flex-1 min-h-0 overflow-hidden text-slate-800 dark:text-slate-200"
+        >
+          {/* SCROLLABLE STEP QUESTIONS CONTAINER */}
+          <div 
+            ref={scrollContainerRef} 
+            className="p-5 sm:p-7 overflow-y-auto flex-1 space-y-6"
+          >
+            {/* ================= STEP 1 ================= */}
+            {currentStep === 1 && (
+              <div className="space-y-6 animate-fade-in">
+                {/* QUESTION 1 */}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
+                  <div className="flex items-center justify-between select-none">
+                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                      <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">1</span>
+                      <span>How would you rate the tutor’s overall performance?</span>
                     </label>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div>
-                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                      Number Present:
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={formData.numberPresent}
-                      onChange={(e) => handleFieldChange("numberPresent", e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
-                    />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                      Number Absent:
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                    {["Excellent", "Very Good", "Good", "Fair", "Poor"].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => handleFieldChange("tutorPerformance", opt)}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer select-none ${
+                          formData.tutorPerformance === opt
+                            ? "bg-[#09314F] text-white border-[#09314F] shadow-sm scale-100"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
+                        }`}
+                      >
+                        <span className="pointer-events-none select-none">{opt}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                      Comments:
                     </label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={formData.numberAbsent}
-                      onChange={(e) => handleFieldChange("numberAbsent", e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
+                    <textarea
+                      rows={2}
+                      value={formData.tutorPerformanceComments}
+                      onChange={(e) => handleFieldChange("tutorPerformanceComments", e.target.value)}
+                      placeholder="Provide specific feedback or commendations regarding the tutor's delivery, punctuality, and methodology..."
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                     />
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                    Names/Details of notable absences or late arrivals:
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={formData.attendanceDetails}
-                    onChange={(e) => handleFieldChange("attendanceDetails", e.target.value)}
-                    placeholder="Specify names of students who arrived significantly late or were unexcused..."
-                    className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ================= STEP 2 ================= */}
-          {currentStep === 2 && (
-            <div className="space-y-6 animate-fade-in">
-              {/* QUESTION 3 */}
-              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">3</span>
-                    <span>How would you rate students’ participation and engagement?</span>
-                  </label>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
-                  {["Very High", "High", "Moderate", "Low", "Very Low"].map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => handleFieldChange("participationRating", opt)}
-                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all ${
-                        formData.participationRating === opt
-                          ? "bg-[#09314F] text-white border-[#09314F] shadow-sm"
-                          : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pt-2">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                    Comments:
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={formData.participationComments}
-                    onChange={(e) => handleFieldChange("participationComments", e.target.value)}
-                    placeholder="Observations regarding student questions, chat responses, voice participation, and attentiveness..."
-                    className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
-                  />
-                </div>
-              </div>
-
-              {/* QUESTION 4 */}
-              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">4</span>
-                    <span>How well did students appear to understand the lesson?</span>
-                  </label>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
-                  {["Very Well", "Well", "Fairly Well", "Poorly", "Unable to determine"].map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => handleFieldChange("understandingRating", opt)}
-                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all ${
-                        formData.understandingRating === opt
-                          ? "bg-[#09314F] text-white border-[#09314F] shadow-sm"
-                          : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pt-2">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                    What did students struggle with or understand particularly well?
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={formData.understandingDetails}
-                    onChange={(e) => handleFieldChange("understandingDetails", e.target.value)}
-                    placeholder="Specific concepts mastered or topics requiring revision during subsequent tutorial sessions..."
-                    className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ================= STEP 3 ================= */}
-          {currentStep === 3 && (
-            <div className="space-y-6 animate-fade-in">
-              {/* QUESTION 5 */}
-              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">5</span>
-                    <span>Were the lesson materials/resources properly used and accessible?</span>
-                  </label>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                  {["Yes, fully", "Yes, but with minor issues", "Partially", "No"].map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => handleFieldChange("materialsRating", opt)}
-                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all ${
-                        formData.materialsRating === opt
-                          ? "bg-[#09314F] text-white border-[#09314F] shadow-sm"
-                          : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pt-2">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                    Comments:
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={formData.materialsComments}
-                    onChange={(e) => handleFieldChange("materialsComments", e.target.value)}
-                    placeholder="Slides clarity, screen sharing, past question availability, syllabus alignment..."
-                    className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
-                  />
-                </div>
-              </div>
-
-              {/* QUESTION 6 */}
-              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">6</span>
-                    <span>Were there any challenges, incidents, or issues during the class?</span>
-                  </label>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                  {[
-                    "No significant issues",
-                    "Technical/network issue",
-                    "Student participation issue",
-                    "Tutor-related issue",
-                    "Platform/access issue",
-                    "Other",
-                  ].map((opt) => (
-                    <label
-                      key={opt}
-                      onClick={() => handleFieldChange("challengeCategory", opt)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
-                        formData.challengeCategory === opt
-                          ? "bg-amber-500/10 border-[#C5A97A] text-[#09314F] dark:text-white"
-                          : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-slate-700 dark:text-slate-300 hover:border-slate-300"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="challengeCategory"
-                        checked={formData.challengeCategory === opt}
-                        onChange={() => handleFieldChange("challengeCategory", opt)}
-                        className="w-4 h-4 text-[#09314F] focus:ring-[#C5A97A]"
-                      />
-                      <span>{opt}</span>
+                {/* QUESTION 2 */}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
+                  <div className="flex items-center justify-between select-none">
+                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                      <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">2</span>
+                      <span>How was student attendance?</span>
                     </label>
-                  ))}
-                </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
+                  </div>
 
-                <div className="pt-2">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                    Please provide details:
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={formData.challengeDetails}
-                    onChange={(e) => handleFieldChange("challengeDetails", e.target.value)}
-                    placeholder="Describe specific disruptions, connectivity breaks, or behavioral matters..."
-                    className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
-                  />
-                </div>
-              </div>
+                  <div className="space-y-2 pt-1">
+                    {[
+                      "Excellent – almost all students attended",
+                      "Good – most students attended",
+                      "Fair – several students were absent",
+                      "Poor – many students were absent",
+                    ].map((opt) => (
+                      <label
+                        key={opt}
+                        className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-bold cursor-pointer select-none transition-all ${
+                          formData.attendanceRating === opt
+                            ? "bg-amber-500/10 border-[#C5A97A] text-[#09314F] dark:text-white"
+                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="attendanceRating"
+                          checked={formData.attendanceRating === opt}
+                          onChange={() => handleFieldChange("attendanceRating", opt)}
+                          className="w-4 h-4 text-[#09314F] focus:ring-[#C5A97A] cursor-pointer"
+                        />
+                        <span className="pointer-events-none select-none">{opt}</span>
+                      </label>
+                    ))}
+                  </div>
 
-              {/* QUESTION 7 */}
-              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">7</span>
-                    <span>What follow-up action or support is required before the next class?</span>
-                  </label>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                  {[
-                    "No action required",
-                    "Student follow-up",
-                    "Tutor follow-up",
-                    "Additional learning materials",
-                    "Technical support",
-                    "Management attention",
-                    "Other",
-                  ].map((opt) => (
-                    <label
-                      key={opt}
-                      onClick={() => handleFieldChange("followUpCategory", opt)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
-                        formData.followUpCategory === opt
-                          ? "bg-amber-500/10 border-[#C5A97A] text-[#09314F] dark:text-white"
-                          : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-slate-700 dark:text-slate-300 hover:border-slate-300"
-                      }`}
-                    >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                        Number Present:
+                      </label>
                       <input
-                        type="radio"
-                        name="followUpCategory"
-                        checked={formData.followUpCategory === opt}
-                        onChange={() => handleFieldChange("followUpCategory", opt)}
-                        className="w-4 h-4 text-[#09314F] focus:ring-[#C5A97A]"
+                        type="number"
+                        min={0}
+                        value={formData.numberPresent}
+                        onChange={(e) => handleFieldChange("numberPresent", e.target.value)}
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                       />
-                      <span>{opt}</span>
-                    </label>
-                  ))}
-                </div>
+                    </div>
 
-                <div className="pt-2">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                    Please specify the action required:
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={formData.followUpDetails}
-                    onChange={(e) => handleFieldChange("followUpDetails", e.target.value)}
-                    placeholder="Actionable steps for academic support, student counseling, or IT assistance..."
-                    className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
-                  />
+                    <div>
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                        Number Absent:
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formData.numberAbsent}
+                        onChange={(e) => handleFieldChange("numberAbsent", e.target.value)}
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                      Names/Details of notable absences or late arrivals:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={formData.attendanceDetails}
+                      onChange={(e) => handleFieldChange("attendanceDetails", e.target.value)}
+                      placeholder="Specify names of students who arrived significantly late or were unexcused..."
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* BOTTOM CONTROLS & SUBMISSION */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3 shrink-0">
+            {/* ================= STEP 2 ================= */}
+            {currentStep === 2 && (
+              <div className="space-y-6 animate-fade-in">
+                {/* QUESTION 3 */}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
+                  <div className="flex items-center justify-between select-none">
+                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                      <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">3</span>
+                      <span>How would you rate students’ participation and engagement?</span>
+                    </label>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                    {["Very High", "High", "Moderate", "Low", "Very Low"].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => handleFieldChange("participationRating", opt)}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer select-none ${
+                          formData.participationRating === opt
+                            ? "bg-[#09314F] text-white border-[#09314F] shadow-sm"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
+                        }`}
+                      >
+                        <span className="pointer-events-none select-none">{opt}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                      Comments:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={formData.participationComments}
+                      onChange={(e) => handleFieldChange("participationComments", e.target.value)}
+                      placeholder="Observations regarding student questions, chat responses, voice participation, and attentiveness..."
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                    />
+                  </div>
+                </div>
+
+                {/* QUESTION 4 */}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
+                  <div className="flex items-center justify-between select-none">
+                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                      <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">4</span>
+                      <span>How well did students appear to understand the lesson?</span>
+                    </label>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                    {["Very Well", "Well", "Fairly Well", "Poorly", "Unable to determine"].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => handleFieldChange("understandingRating", opt)}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer select-none ${
+                          formData.understandingRating === opt
+                            ? "bg-[#09314F] text-white border-[#09314F] shadow-sm"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
+                        }`}
+                      >
+                        <span className="pointer-events-none select-none">{opt}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                      What did students struggle with or understand particularly well?
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.understandingDetails}
+                      onChange={(e) => handleFieldChange("understandingDetails", e.target.value)}
+                      placeholder="Specific concepts mastered or topics requiring revision during subsequent tutorial sessions..."
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ================= STEP 3 ================= */}
+            {currentStep === 3 && (
+              <div className="space-y-6 animate-fade-in">
+                {/* QUESTION 5 */}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
+                  <div className="flex items-center justify-between select-none">
+                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                      <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">5</span>
+                      <span>Were the lesson materials/resources properly used and accessible?</span>
+                    </label>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                    {["Yes, fully", "Yes, but with minor issues", "Partially", "No"].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => handleFieldChange("materialsRating", opt)}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer select-none ${
+                          formData.materialsRating === opt
+                            ? "bg-[#09314F] text-white border-[#09314F] shadow-sm"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
+                        }`}
+                      >
+                        <span className="pointer-events-none select-none">{opt}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                      Comments:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={formData.materialsComments}
+                      onChange={(e) => handleFieldChange("materialsComments", e.target.value)}
+                      placeholder="Slides clarity, screen sharing, past question availability, syllabus alignment..."
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                    />
+                  </div>
+                </div>
+
+                {/* QUESTION 6 */}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
+                  <div className="flex items-center justify-between select-none">
+                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                      <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">6</span>
+                      <span>Were there any challenges, incidents, or issues during the class?</span>
+                    </label>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {[
+                      "No significant issues",
+                      "Technical/network issue",
+                      "Student participation issue",
+                      "Tutor-related issue",
+                      "Platform/access issue",
+                      "Other",
+                    ].map((opt) => (
+                      <label
+                        key={opt}
+                        className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-bold cursor-pointer select-none transition-all ${
+                          formData.challengeCategory === opt
+                            ? "bg-amber-500/10 border-[#C5A97A] text-[#09314F] dark:text-white"
+                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="challengeCategory"
+                          checked={formData.challengeCategory === opt}
+                          onChange={() => handleFieldChange("challengeCategory", opt)}
+                          className="w-4 h-4 text-[#09314F] focus:ring-[#C5A97A] cursor-pointer"
+                        />
+                        <span className="pointer-events-none select-none">{opt}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                      Please provide details:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={formData.challengeDetails}
+                      onChange={(e) => handleFieldChange("challengeDetails", e.target.value)}
+                      placeholder="Describe specific disruptions, connectivity breaks, or behavioral matters..."
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                    />
+                  </div>
+                </div>
+
+                {/* QUESTION 7 */}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
+                  <div className="flex items-center justify-between select-none">
+                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                      <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">7</span>
+                      <span>What follow-up action or support is required before the next class?</span>
+                    </label>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Required</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {[
+                      "No action required",
+                      "Student follow-up",
+                      "Tutor follow-up",
+                      "Additional learning materials",
+                      "Technical support",
+                      "Management attention",
+                      "Other",
+                    ].map((opt) => (
+                      <label
+                        key={opt}
+                        className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-bold cursor-pointer select-none transition-all ${
+                          formData.followUpCategory === opt
+                            ? "bg-amber-500/10 border-[#C5A97A] text-[#09314F] dark:text-white"
+                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="followUpCategory"
+                          checked={formData.followUpCategory === opt}
+                          onChange={() => handleFieldChange("followUpCategory", opt)}
+                          className="w-4 h-4 text-[#09314F] focus:ring-[#C5A97A] cursor-pointer"
+                        />
+                        <span className="pointer-events-none select-none">{opt}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                      Please specify the action required:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={formData.followUpDetails}
+                      onChange={(e) => handleFieldChange("followUpDetails", e.target.value)}
+                      placeholder="Actionable steps for academic support, student counseling, or IT assistance..."
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* PINNED BOTTOM CONTROLS & SUBMISSION */}
+          <div className="p-4 sm:p-5 bg-slate-50/90 dark:bg-[#0a1827] border-t border-gray-200 dark:border-white/10 flex items-center justify-between gap-3 shrink-0">
             {currentStep > 1 ? (
               <button
                 type="button"
-                onClick={() => setCurrentStep((p) => p - 1)}
-                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-gray-100 dark:hover:bg-slate-800 transition-all active:scale-95"
+                onClick={() => {
+                  setError(null);
+                  setCurrentStep((p) => p - 1);
+                }}
+                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-gray-100 dark:hover:bg-slate-800 transition-all active:scale-95 cursor-pointer select-none"
               >
                 Previous Section
               </button>
@@ -718,7 +756,7 @@ export default function CourseAdvisorFeedbackModal({
               <button
                 type="button"
                 onClick={handleDismissWithoutFreezing}
-                className="px-4 py-2.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-xs transition-all"
+                className="px-4 py-2.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-xs transition-all cursor-pointer select-none"
               >
                 Close / Later
               </button>
@@ -728,16 +766,17 @@ export default function CourseAdvisorFeedbackModal({
               {currentStep < 3 ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep((p) => p + 1)}
-                  className="px-6 py-2.5 rounded-xl bg-[#09314F] hover:bg-[#15466f] text-white font-bold text-xs transition-all active:scale-95 shadow-md shadow-[#09314F]/20"
+                  onClick={handleNextStep}
+                  className="px-6 py-2.5 rounded-xl bg-[#09314F] hover:bg-[#15466f] text-white font-bold text-xs transition-all active:scale-95 shadow-md shadow-[#09314F]/20 cursor-pointer select-none flex items-center gap-1.5"
                 >
-                  Continue to Next Section
+                  <span>Continue to Next Section</span>
+                  <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5" />
                 </button>
               ) : (
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#C5A97A] to-[#b09262] text-[#09314F] font-black text-xs uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-[#C5A97A]/25 disabled:opacity-50 flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#C5A97A] to-[#b09262] text-[#09314F] font-black text-xs uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-[#C5A97A]/25 disabled:opacity-50 flex items-center gap-2 cursor-pointer select-none"
                 >
                   {loading ? (
                     <>

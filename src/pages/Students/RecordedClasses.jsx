@@ -3,6 +3,42 @@ import DashboardLayout from "../../components/private/Students/DashboardLayout.j
 import { Icon } from "@iconify/react";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
+// Extract YouTube video ID from URL
+const getYoutubeVideoId = (url) => {
+  if (!url) return null;
+  const match = String(url).match(/(?:youtube(?:-nocookie)?\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/i);
+  return match ? match[1] : null;
+};
+
+// Retrieve high-quality YouTube thumbnail
+const getThumbnailUrl = (cls) => {
+  if (cls.thumbnail) return cls.thumbnail;
+  const vidId = cls.videoId || getYoutubeVideoId(cls.videoUrl || cls.recording_link);
+  if (vidId) {
+    return `https://img.youtube.com/vi/${vidId}/hqdefault.jpg`;
+  }
+  return null;
+};
+
+// Format recorded date prioritizing the saved/updated date
+const formatRecordedDate = (cls) => {
+  if (cls.saved_at) {
+    try {
+      return new Date(cls.saved_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    } catch {
+      // ignore
+    }
+  }
+  if (cls.date) return cls.date;
+  if (cls.session_date) {
+    try {
+      return new Date(cls.session_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    } catch {
+      // ignore
+    }
+  }
+  return "Recent";
+};
 
 const RecordedClasses = () => {
   const [selectedVideo, setSelectedVideo] = useState(null);
@@ -37,7 +73,9 @@ const RecordedClasses = () => {
           Accept: "application/json"
         };
         const response = await axios.get(`${API_BASE_URL}/api/students/recorded-classes`, { headers });
+        console.log("Recorded Classes Response:", response.data);
         if (response.data?.success) {
+          console.log("Recorded Classes List:", response.data.data);
           setRecordedClasses(response.data.data || []);
         }
       } catch (err) {
@@ -51,6 +89,36 @@ const RecordedClasses = () => {
     
     if (token) fetchClasses();
   }, [token, API_BASE_URL]);
+
+  const handleSelectVideo = async (cls) => {
+    setSelectedVideo(cls);
+
+    // Call the backend record view endpoint
+    if (cls.id && token) {
+      try {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        };
+        const res = await axios.post(`${API_BASE_URL}/api/students/recorded-classes/${cls.id}/view`, {}, { headers });
+        if (res.data?.success && res.data.data) {
+          setRecordedClasses((prev) =>
+            prev.map((item) =>
+              item.id === cls.id
+                ? {
+                    ...item,
+                    views: res.data.data.views,
+                    view_count: res.data.data.view_count,
+                  }
+                : item
+            )
+          );
+        }
+      } catch (err) {
+        console.warn("Could not record class view:", err?.response?.data?.message || err.message);
+      }
+    }
+  };
 
   const filteredClasses = recordedClasses.filter(c => 
     (c.title || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -109,25 +177,54 @@ const RecordedClasses = () => {
           <div className="text-center py-20 text-red-500 font-semibold">{error}</div>
         ) : filteredClasses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredClasses.map((cls) => (
+            {filteredClasses.map((cls) => {
+              const thumbUrl = getThumbnailUrl(cls);
+
+              return (
               <div 
                 key={cls.id} 
                 className="group flex flex-col bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-                onClick={() => setSelectedVideo(cls)}
+                onClick={() => handleSelectVideo(cls)}
               >
                 {/* Thumbnail Area */}
-                <div className={`relative aspect-video w-full bg-gradient-to-br ${cls.color} flex items-center justify-center overflow-hidden`}>
-                  {/* Decorative pattern */}
-                  <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,white_2px,transparent_2px)] bg-[size:16px_16px]"></div>
-                  
+                <div className="relative aspect-video w-full bg-slate-900 flex items-center justify-center overflow-hidden">
+                  {thumbUrl ? (
+                    <>
+                      <img
+                        src={thumbUrl}
+                        alt={cls.title || "Recorded Class"}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                      {/* Dark overlay for contrast */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10 group-hover:from-black/70 transition-colors" />
+                    </>
+                  ) : (
+                    /* Fallback decorative pattern */
+                    <div className={`absolute inset-0 bg-gradient-to-br ${cls.color || "from-blue-600 to-indigo-600"} flex items-center justify-center`}>
+                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,white_2px,transparent_2px)] bg-[size:16px_16px]" />
+                    </div>
+                  )}
+
                   {/* Play Button Overlay */}
-                  <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 group-hover:scale-110 group-hover:bg-white/30 transition-transform duration-300">
-                    <Icon icon="lucide:play" className="w-6 h-6 text-white ml-1" />
+                  <div className="relative z-10 w-12 h-12 md:w-14 md:h-14 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center border border-white/40 group-hover:scale-110 group-hover:bg-[#E83831] group-hover:border-[#E83831] transition-all duration-300 shadow-xl">
+                    <Icon icon="lucide:play" className="w-5 h-5 md:w-6 md:h-6 text-white ml-0.5" />
                   </div>
+
+                  {/* Views Badge (Student Record Class Preview) */}
+                  {typeof cls.views !== "undefined" && (
+                    <div className="absolute top-3 left-3 z-10 bg-black/75 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-md tracking-wider flex items-center gap-1.5 border border-white/10 shadow-sm">
+                      <Icon icon="solar:eye-bold" className="w-3.5 h-3.5 text-blue-400" />
+                      <span>{cls.views} {cls.views === 1 ? "view" : "views"}</span>
+                    </div>
+                  )}
                   
                   {/* Duration Badge */}
-                  <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-black px-2 py-1 rounded-md tracking-wider">
-                    {cls.duration}
+                  <div className="absolute bottom-3 right-3 z-10 bg-black/75 backdrop-blur-sm text-white text-[10px] font-black px-2 py-1 rounded-md tracking-wider border border-white/10">
+                    {cls.duration || "1h"}
                   </div>
                 </div>
 
@@ -139,7 +236,7 @@ const RecordedClasses = () => {
                     </span>
                     <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 flex items-center gap-1">
                       <Icon icon="lucide:calendar" className="w-3.5 h-3.5" />
-                      {cls.date}
+                      {formatRecordedDate(cls)}
                     </span>
                   </div>
 
@@ -170,7 +267,8 @@ const RecordedClasses = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="w-full flex flex-col items-center justify-center p-20 bg-gray-50/50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 mt-8">
