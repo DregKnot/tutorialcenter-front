@@ -117,7 +117,7 @@ export default function CourseAdvisorDashboard() {
   }, [fetchData]);
 
   return (
-    <StaffDashboardLayout pagetitle="Dashboard" hideHeader={false}>
+    <StaffDashboardLayout pagetitle="Overview" hideHeader={false}>
       <div className="space-y-6 max-w-7xl mx-auto pb-10">
         
         {/* Alert Banner */}

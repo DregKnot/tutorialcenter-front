@@ -30,7 +30,7 @@ import { useStaffAuth } from "../../../context/StaffAuthContext";
 const adminNavSections = [
   {
     title: null,
-    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/dashboard" }],
+    items: [{ label: "Overview", icon: HomeIcon, destination: "/staffs/dashboard" }],
   },
   {
     id: "management",
@@ -80,7 +80,7 @@ const adminNavSections = [
 const cooNavSections = [
   {
     title: null,
-    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/coo/dashboard" }],
+    items: [{ label: "Overview", icon: HomeIcon, destination: "/staffs/coo/dashboard" }],
   },
   {
     id: "management",
@@ -130,7 +130,7 @@ const cooNavSections = [
 const tutorNavSections = [
   {
     title: null,
-    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/tutor/dashboard" }],
+    items: [{ label: "Overview", icon: HomeIcon, destination: "/staffs/tutor/dashboard" }],
   },
   {
     id: "class",
@@ -157,7 +157,7 @@ const tutorNavSections = [
 const courseAdvisorNavSections = [
   {
     title: null,
-    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/course-advisor/dashboard" }],
+    items: [{ label: "Overview", icon: HomeIcon, destination: "/staffs/course-advisor/dashboard" }],
   },
   {
     id: "management",

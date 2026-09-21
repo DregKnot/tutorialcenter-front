@@ -16,7 +16,7 @@ import collapselogo from "../../../assets/images/TC 1.webp";
 
 const menuItems = [
   {
-    label: "Dashboard",
+    label: "Overview",
     icon: "mynaui:home-solid",
     destination: "/student/dashboard",
   },
