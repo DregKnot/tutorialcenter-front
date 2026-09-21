@@ -184,7 +184,7 @@ const courseAdvisorNavSections = [
     icon: ClipboardDocumentCheckIcon,
     items: [
       { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
-      { label: "Exams", icon: ClipboardDocumentCheckIcon },
+      { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/course-advisor/exams" },
       { label: "Settings", icon: Cog6ToothIcon },
     ],
   },
