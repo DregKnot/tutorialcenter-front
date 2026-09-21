@@ -60,10 +60,14 @@ export default function CourseAdvisorFeedbackModal({
   const activeSessionIdRef = useRef(null);
   const scrollContainerRef = useRef(null);
 
-  // Auto-scroll questions container back to top on step transition
+  // Auto-scroll questions container back to top on step transition safely across both browser and test environments
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+      if (typeof scrollContainerRef.current.scrollTo === "function") {
+        scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        scrollContainerRef.current.scrollTop = 0;
+      }
     }
   }, [currentStep]);
 
