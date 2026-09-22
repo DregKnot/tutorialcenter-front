@@ -59,6 +59,7 @@ export default function CourseAdvisorFeedbackModal({
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const activeSessionIdRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const step3TransitionTimeRef = useRef(0);
 
   // Auto-scroll questions container back to top on step transition safely across both browser and test environments
   useEffect(() => {
@@ -81,15 +82,32 @@ export default function CourseAdvisorFeedbackModal({
     });
 
     if (currentStep === 1) {
+      if (!formData.tutorPerformance) {
+        setError("Please select Tutor Overall Performance (Question 1).");
+        return;
+      }
       if (formData.numberPresent === "" || formData.numberAbsent === "") {
         console.warn("⚠️ [CourseAdvisorFeedbackModal] Validation failed: present/absent counts empty");
-        setError("Please specify both number present and number absent.");
+        setError("Please specify both number present and number absent (Question 2).");
+        return;
+      }
+    } else if (currentStep === 2) {
+      if (!formData.participationRating) {
+        setError("Please select Students Participation & Engagement (Question 3).");
+        return;
+      }
+      if (!formData.understandingRating) {
+        setError("Please select Student Understanding (Question 4).");
         return;
       }
     }
+
     setError(null);
     setCurrentStep((prev) => {
       const next = Math.min(prev + 1, 3);
+      if (next === 3) {
+        step3TransitionTimeRef.current = Date.now();
+      }
       console.log("✅ [CourseAdvisorFeedbackModal] Advanced to step:", next);
       return next;
     });
@@ -158,6 +176,55 @@ export default function CourseAdvisorFeedbackModal({
   const handleSubmit = async (e) => {
     e?.preventDefault();
     console.log("🚀 [CourseAdvisorFeedbackModal] Submit initiated with formData:", formData);
+
+    // Prevent accidental click-through when transitioning from step 2 to step 3
+    if (Date.now() - step3TransitionTimeRef.current < 450) {
+      console.warn("⚠️ [CourseAdvisorFeedbackModal] Submit blocked: step 3 transition cooldown active");
+      return;
+    }
+
+    // Comprehensive multi-section validation
+    if (!formData.tutorPerformance) {
+      setError("Please select Tutor Overall Performance (Question 1) in Section 1.");
+      setCurrentStep(1);
+      return;
+    }
+    if (formData.numberPresent === "" || formData.numberAbsent === "") {
+      setError("Please specify attendance numbers (Question 2) in Section 1.");
+      setCurrentStep(1);
+      return;
+    }
+    if (!formData.participationRating) {
+      setError("Please select Students Participation & Engagement (Question 3) in Section 2.");
+      setCurrentStep(2);
+      return;
+    }
+    if (!formData.understandingRating) {
+      setError("Please select Student Understanding (Question 4) in Section 2.");
+      setCurrentStep(2);
+      return;
+    }
+    if (!formData.materialsRating) {
+      setError("Please answer Question 5 regarding lesson materials usage in Section 3.");
+      return;
+    }
+    if (!formData.challengeCategory) {
+      setError("Please select an option for Question 6 regarding challenges/incidents in Section 3.");
+      return;
+    }
+    if (!formData.followUpCategory) {
+      setError("Please select an option for Question 7 regarding follow-up action in Section 3.");
+      return;
+    }
+    if (formData.challengeCategory === "Other" && !formData.challengeDetails.trim()) {
+      setError("Please provide details for the 'Other' challenge under Question 6.");
+      return;
+    }
+    if (formData.followUpCategory !== "No action required" && !formData.followUpDetails.trim()) {
+      setError("Please specify the follow-up action details under Question 7.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -227,12 +294,10 @@ export default function CourseAdvisorFeedbackModal({
     // Always cache locally first so zero data is lost
     handleSaveToLocalStorage(payload);
 
-    // Resilient endpoint cascade
+    // Target dedicated advisor post-class supervisory endpoints only
     const candidateEndpoints = [
       `${API_BASE_URL}/api/staffs/classes/advisor-report`,
       `${API_BASE_URL}/api/advisor/classes/report`,
-      `${API_BASE_URL}/api/staffs/classes/feedback`,
-      `${API_BASE_URL}/api/staffs/classes/tutor-report`,
     ];
 
     let requestSucceeded = false;
@@ -810,7 +875,8 @@ export default function CourseAdvisorFeedbackModal({
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleSubmit}
                   disabled={loading}
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#C5A97A] to-[#b09262] text-[#09314F] font-black text-xs uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-[#C5A97A]/25 disabled:opacity-50 flex items-center gap-2 cursor-pointer select-none"
                 >

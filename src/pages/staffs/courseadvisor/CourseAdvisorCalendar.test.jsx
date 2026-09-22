@@ -96,8 +96,10 @@ describe("CourseAdvisorCalendar Component", () => {
     fireEvent.click(startClassBtn);
 
     // Should now display "Join on Web" and "Join via Zoom App" buttons inline
-    const joinWebBtn = await screen.findByRole("button", { name: /join on web/i });
-    const joinAppBtn = await screen.findByRole("button", { name: /join via zoom app/i });
+    const joinWebBtns = await screen.findAllByRole("button", { name: /join on web/i });
+    const joinAppBtns = await screen.findAllByRole("button", { name: /join via zoom app/i });
+    const joinWebBtn = joinWebBtns[joinWebBtns.length - 1];
+    const joinAppBtn = joinAppBtns[joinAppBtns.length - 1];
     expect(joinWebBtn).toBeInTheDocument();
     expect(joinAppBtn).toBeInTheDocument();
 
