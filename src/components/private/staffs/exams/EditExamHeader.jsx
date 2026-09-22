@@ -14,8 +14,10 @@ import {
   PlusIcon
 } from "@heroicons/react/24/outline";
 import ExamYearCreateModal from "./ExamYearCreateModal";
+import { canManageExams, getExamBasePath } from "../../../../utils/examAccess";
 
 export default function EditExamHeader() {
+
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -50,11 +52,18 @@ export default function EditExamHeader() {
   const [isAddYearModalOpen, setIsAddYearModalOpen] = useState(false);
 
   useEffect(() => {
+    if (!canManageExams()) {
+      navigate(getExamBasePath(), { replace: true });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
     if (messageToast) {
       const timer = setTimeout(() => setMessageToast(null), 4000);
       return () => clearTimeout(timer);
     }
   }, [messageToast]);
+
 
   // Fetch Exam Years List
   const fetchYears = useCallback(async () => {

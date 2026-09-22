@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import StudentPaymentsRecovery from "./StudentPaymentsRecovery.jsx";
+import { isReadOnlyStaff } from "../../../utils/roleUtils.js";
+
 
 /**
  * Reusable input for the student profile matching the Staff profile style
@@ -102,7 +104,8 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
   const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
-  const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
+  const isPreview = isReadOnlyStaff(staffRole);
+
   const isAdvisor = staffRole === "advisor" || staffRole === "course_advisor" || staffRole === "course advisor";
   const apiPrefix = isAdvisor ? "advisor" : "admin";
 

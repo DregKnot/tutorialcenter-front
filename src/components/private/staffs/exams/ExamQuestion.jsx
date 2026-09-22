@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import StaffDashboardLayout from '../DashboardLayout.jsx';
 import { 
   PlusIcon, 
@@ -15,6 +15,7 @@ import ExamGroupSection from './components/ExamGroupSection';
 import QuestionItem from './components/QuestionItem';
 import BatchSubmissionOverlay from './components/BatchSubmissionOverlay';
 import useExamForm from './components/useExamForm';
+import { canManageExams, getExamBasePath } from '../../../../utils/examAccess';
 
 export default function ExamQuestion() {
   const {
@@ -77,6 +78,12 @@ export default function ExamQuestion() {
     deleting,
     existingQuestions
   } = useExamForm();
+
+  useEffect(() => {
+    if (!canManageExams()) {
+      navigate(getExamBasePath(), { replace: true });
+    }
+  }, [navigate]);
 
   return (
     <StaffDashboardLayout pagetitle="Exam Question">

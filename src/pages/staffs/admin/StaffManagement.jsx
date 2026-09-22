@@ -18,12 +18,15 @@ import {
   NoSymbolIcon,
   EyeIcon
 } from "@heroicons/react/24/outline";
+import { isReadOnlyStaff } from "../../../utils/roleUtils.js";
+
 
 export default function StaffManagement() {
   const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
-  const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
+  const isPreview = isReadOnlyStaff(staffRole);
+
 
   const token = localStorage.getItem("staff_token");
 

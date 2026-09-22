@@ -21,6 +21,8 @@ import CourseDetailModal from "../../../components/private/staffs/CourseDetailMo
 import SubjectDetailModal from "../../../components/private/staffs/SubjectDetailModal.jsx";
 import SubjectCreate from "../../../components/private/staffs/SubjectCreate.jsx";
 import { stripHtmlAndDecode } from "../../../utils/textUtils.js";
+import { isReadOnlyStaff } from "../../../utils/roleUtils.js";
+
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
@@ -44,7 +46,8 @@ export default function CoursesManagement() {
   const [initialEditItem, setInitialEditItem] = useState(null);
 
   const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
-  const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
+  const isPreview = isReadOnlyStaff(staffRole);
+
 
   const token = localStorage.getItem("staff_token");
   const config = { 

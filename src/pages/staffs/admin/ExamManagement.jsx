@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { useNavigate } from "react-router-dom";
 import { getExamApiBase, getExamBasePath, canManageExams } from "../../../utils/examAccess";
+import { isReadOnlyStaff } from "../../../utils/roleUtils";
+
 // import { Icon } from "@iconify/react";
 import axios from "axios";
 import { 
@@ -22,7 +24,7 @@ export default function ExamManagement() {
   const navigate = useNavigate();
 
   const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
-  const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
+  const isPreview = isReadOnlyStaff(staffRole);
 
   const examApiBase = getExamApiBase();
   const examBasePath = getExamBasePath();

@@ -15,6 +15,8 @@ import {
   ChevronDownIcon,
   UserPlusIcon
 } from "@heroicons/react/24/outline";
+import { isReadOnlyStaff } from "../../../utils/roleUtils.js";
+
 
 export default function AdminStudentManagement() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,7 +28,8 @@ export default function AdminStudentManagement() {
   const [activeTab, setActiveTab] = useState("All");
 
   const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
-  const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
+  const isPreview = isReadOnlyStaff(staffRole);
+
 
   const [stats, setStats] = useState([
     { 
