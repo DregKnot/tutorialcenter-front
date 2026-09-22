@@ -62,6 +62,7 @@ export default function CourseAdvisorFeedbackModal({
 
   // Auto-scroll questions container back to top on step transition safely across both browser and test environments
   useEffect(() => {
+    console.log("📜 [CourseAdvisorFeedbackModal] Current step changed to:", currentStep);
     if (scrollContainerRef.current) {
       if (typeof scrollContainerRef.current.scrollTo === "function") {
         scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
@@ -72,24 +73,44 @@ export default function CourseAdvisorFeedbackModal({
   }, [currentStep]);
 
   const handleNextStep = () => {
+    console.log("➡️ [CourseAdvisorFeedbackModal] handleNextStep called from step:", currentStep, {
+      numberPresent: formData.numberPresent,
+      numberAbsent: formData.numberAbsent,
+      tutorPerformance: formData.tutorPerformance,
+      attendanceRating: formData.attendanceRating,
+    });
+
     if (currentStep === 1) {
       if (formData.numberPresent === "" || formData.numberAbsent === "") {
+        console.warn("⚠️ [CourseAdvisorFeedbackModal] Validation failed: present/absent counts empty");
         setError("Please specify both number present and number absent.");
         return;
       }
     }
     setError(null);
-    setCurrentStep((prev) => Math.min(prev + 1, 3));
+    setCurrentStep((prev) => {
+      const next = Math.min(prev + 1, 3);
+      console.log("✅ [CourseAdvisorFeedbackModal] Advanced to step:", next);
+      return next;
+    });
   };
 
   // Initialize and populate default counts when modal opens
   useEffect(() => {
+    console.log("🔍 [CourseAdvisorFeedbackModal] Modal open/session effect:", {
+      isOpen,
+      sessionDetailsId: sessionDetails?.id,
+      currentActiveSessionId: activeSessionIdRef.current,
+    });
+
     if (isOpen && sessionDetails) {
       const sessionId = String(sessionDetails.id || "");
       const isNewSession = activeSessionIdRef.current !== sessionId;
-      activeSessionIdRef.current = sessionId;
 
       if (isNewSession) {
+        console.log("🆕 [CourseAdvisorFeedbackModal] New session detected. Initializing form data for session ID:", sessionId);
+        activeSessionIdRef.current = sessionId;
+
         const present = sessionDetails.present_count ?? sessionDetails.attendances_count ?? 0;
         const total = sessionDetails.total_students ?? sessionDetails.enrolled_count ?? 20;
         const absent = Math.max(0, total - present);
@@ -99,17 +120,20 @@ export default function CourseAdvisorFeedbackModal({
           numberPresent: present,
           numberAbsent: absent,
         });
-      }
 
-      setError(null);
-      setSuccessMessage(null);
-      setCurrentStep(1);
+        setError(null);
+        setSuccessMessage(null);
+        setCurrentStep(1);
+      }
+    } else if (!isOpen) {
+      activeSessionIdRef.current = null;
     }
   }, [isOpen, sessionDetails]);
 
   if (!isOpen) return null;
 
   const handleFieldChange = (field, value) => {
+    console.log(`✏️ [CourseAdvisorFeedbackModal] Field change: "${field}" =>`, value);
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -125,13 +149,15 @@ export default function CourseAdvisorFeedbackModal({
         saved_locally_at: new Date().toISOString(),
       });
       localStorage.setItem("advisor_completed_reports", JSON.stringify(existing.slice(0, 50)));
+      console.log("💾 [CourseAdvisorFeedbackModal] Cached report to localStorage successfully:", payload);
     } catch (e) {
-      console.warn("Could not cache advisor report to localStorage:", e);
+      console.warn("⚠️ [CourseAdvisorFeedbackModal] Could not cache advisor report to localStorage:", e);
     }
   };
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
+    console.log("🚀 [CourseAdvisorFeedbackModal] Submit initiated with formData:", formData);
     setLoading(true);
     setError(null);
 
@@ -196,6 +222,8 @@ export default function CourseAdvisorFeedbackModal({
       submitted_at: new Date().toISOString(),
     };
 
+    console.log("📦 [CourseAdvisorFeedbackModal] Form submission payload constructed:", payload);
+
     // Always cache locally first so zero data is lost
     handleSaveToLocalStorage(payload);
 
@@ -212,6 +240,7 @@ export default function CourseAdvisorFeedbackModal({
 
     for (const url of candidateEndpoints) {
       try {
+        console.log(`🌐 [CourseAdvisorFeedbackModal] Sending POST request to: ${url}`);
         const res = await axios.post(url, payload, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -220,26 +249,28 @@ export default function CourseAdvisorFeedbackModal({
           timeout: 7000,
         });
         if (res.status >= 200 && res.status < 300) {
+          console.log(`✅ [CourseAdvisorFeedbackModal] Successfully saved report at: ${url}`, res.data);
           requestSucceeded = true;
           successData = res.data;
           break;
         }
       } catch (postErr) {
-        // Continue to fallback candidates
-        console.info(`Endpoint ${url} failed or unrouted, attempting next fallback...`);
+        console.info(`ℹ️ [CourseAdvisorFeedbackModal] Endpoint ${url} rejected/unreachable:`, postErr.response?.data || postErr.message);
       }
     }
 
     setLoading(false);
 
     // Even if backend routes are pending deployment, we confirmed local persistence and complete the action
-    setSuccessMessage(
-      requestSucceeded
-        ? "Course Advisor Post-Class Report submitted successfully to management."
-        : "Report saved successfully! Management audit record has been updated."
-    );
+    const message = requestSucceeded
+      ? "Course Advisor Post-Class Report submitted successfully to management."
+      : "Report saved successfully! Management audit record has been updated.";
+
+    console.log("📢 [CourseAdvisorFeedbackModal] Showing user message:", message);
+    setSuccessMessage(message);
 
     setTimeout(() => {
+      console.log("🏁 [CourseAdvisorFeedbackModal] Triggering onSubmitSuccess and closing modal.");
       onSubmitSuccess(successData || payload);
       onClose();
       setFormData(initialFormState());
@@ -248,6 +279,7 @@ export default function CourseAdvisorFeedbackModal({
   };
 
   const handleDismissWithoutFreezing = () => {
+    console.log("🚪 [CourseAdvisorFeedbackModal] Dismissing modal without submitting.");
     setError(null);
     onClose();
   };

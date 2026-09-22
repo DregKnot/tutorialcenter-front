@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
@@ -77,17 +77,10 @@ export default function CourseAdvisorMasterClass() {
     fetchSessions();
   }, [fetchSessions]);
 
-  // Persistent tracking for post-class report trigger to prevent race conditions with async fetchSessions
-  const [pendingFeedbackId, setPendingFeedbackId] = useState(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    return (
-      searchParams.get("feedback_session") ||
-      sessionStorage.getItem("just_completed_class_session_id") ||
-      null
-    );
-  });
+  // Prevent feedback loop when returning from a masterclass
+  const handledFeedbackRef = useRef(new Set());
 
-  // Open the post-class report modal when returning from a masterclass.
+  // Open the post-class report modal when returning from a masterclass without infinite reloads
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const feedbackParam = searchParams.get("feedback_session");
@@ -95,13 +88,10 @@ export default function CourseAdvisorMasterClass() {
     const sessionStoredId = sessionStorage.getItem("just_completed_class_session_id");
 
     const incomingId = feedbackParam || stateSessionId || sessionStoredId;
-    if (incomingId && incomingId !== pendingFeedbackId) {
-      setPendingFeedbackId(incomingId);
-    }
-  }, [location.search, location.state, pendingFeedbackId]);
+    if (!incomingId) return;
 
-  useEffect(() => {
-    if (!pendingFeedbackId) return;
+    const idStr = String(incomingId);
+    if (handledFeedbackRef.current.has(idStr)) return;
 
     const allSessions = [
       ...(scheduleData.today_classes || []),
@@ -111,8 +101,12 @@ export default function CourseAdvisorMasterClass() {
       ...(scheduleData.next_class ? [scheduleData.next_class] : [])
     ];
 
-    const session = allSessions.find(s => String(s.id) === String(pendingFeedbackId));
+    const session = allSessions.find(s => String(s.id) === idStr);
+
     if (session) {
+      handledFeedbackRef.current.add(idStr);
+      sessionStorage.removeItem("just_completed_class_session_id");
+
       // Differentiate and extract real tutor name rather than advisor name
       const tutorStaff = session.class?.staffs?.find(st => {
         const r = String(st.pivot?.role || st.role || st.staff?.role || "").toLowerCase();
@@ -136,17 +130,19 @@ export default function CourseAdvisorMasterClass() {
       });
 
       setFeedbackModalOpen(true);
-      setPendingFeedbackId(null);
-      sessionStorage.removeItem("just_completed_class_session_id");
 
-      if (location.search || location.state?.promptPostClassReport) {
-        navigate(location.pathname, { replace: true, state: {} });
+      // Clean the query string without triggering React Router navigation loops
+      if (location.search.includes("feedback_session") || location.state?.completedSessionId) {
+        window.history.replaceState({}, document.title, location.pathname);
       }
     } else if (!loading) {
       // Fallback when schedule has loaded but session was external/custom
+      handledFeedbackRef.current.add(idStr);
+      sessionStorage.removeItem("just_completed_class_session_id");
+
       setFeedbackSession({
-        id: pendingFeedbackId,
-        class_id: pendingFeedbackId,
+        id: idStr,
+        class_id: idStr,
         class_title: "Master Class",
         subject: "Live Masterclass",
         topic: "Class Lesson",
@@ -158,14 +154,13 @@ export default function CourseAdvisorMasterClass() {
       });
 
       setFeedbackModalOpen(true);
-      setPendingFeedbackId(null);
-      sessionStorage.removeItem("just_completed_class_session_id");
 
-      if (location.search || location.state?.promptPostClassReport) {
-        navigate(location.pathname, { replace: true, state: {} });
+      // Clean the query string without triggering React Router navigation loops
+      if (location.search.includes("feedback_session") || location.state?.completedSessionId) {
+        window.history.replaceState({}, document.title, location.pathname);
       }
     }
-  }, [pendingFeedbackId, scheduleData, loading, navigate, location.pathname, location.search, location.state]);
+  }, [location.search, location.state, scheduleData, loading, location.pathname]);
 
   // --- RECORDING MANAGEMENT ---
   const handleSaveVideoLink = async () => {

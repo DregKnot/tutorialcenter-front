@@ -82,9 +82,8 @@ describe("CourseAdvisorCalendar Component", () => {
     const sessionCard = await screen.findByText("GCE - English");
     expect(sessionCard).toBeInTheDocument();
 
-    // Click the day cell to open selectedDateModal
-    const dayCell = sessionCard.closest(".cursor-pointer") || sessionCard.closest("div");
-    fireEvent.click(dayCell);
+    // Click the session card to open session modal
+    fireEvent.click(sessionCard);
 
     // Day modal should display "Class Session Scheduled" and "Start Class Now"
     const startClassBtn = await screen.findByRole("button", { name: /start class now/i });
@@ -120,8 +119,8 @@ describe("CourseAdvisorCalendar Component", () => {
     });
 
     // Test Cancel button reverts to Start Class Now
-    const cancelBtn = screen.getByRole("button", { name: /cancel/i });
-    fireEvent.click(cancelBtn);
+    const cancelBtns = screen.getAllByRole("button", { name: /cancel/i });
+    fireEvent.click(cancelBtns[0]);
     expect(screen.getByRole("button", { name: /start class now/i })).toBeInTheDocument();
   });
 });
