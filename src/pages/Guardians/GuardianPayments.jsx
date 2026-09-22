@@ -49,9 +49,13 @@ export default function GuardianPayments() {
 
   const PAYSTACK_KEY = 
     process.env.REACT_APP_PAYSTACK_PUBLIC_KEY || 
-    (isLocalHost 
-      ? "pk_test_d810e0935d60a336bea860384aabbc753cdd78ff" 
-      : "pk_live_f1017d3c645e69b33b1f8cc538b306088b655244");
+    "pk_test_d810e0935d60a336bea860384aabbc753cdd78ff";
+
+  if (!isLocalHost && !process.env.REACT_APP_PAYSTACK_PUBLIC_KEY) {
+    console.warn(
+      "[GuardianPayments] REACT_APP_PAYSTACK_PUBLIC_KEY is not defined in production environment. Defaulting to sandbox test key."
+    );
+  }
 
   // Standard Academic Billing Cycles & Durations (Monthly, Quarterly, Semi-Annually, Annually)
   const DURATION_PLANS = {
