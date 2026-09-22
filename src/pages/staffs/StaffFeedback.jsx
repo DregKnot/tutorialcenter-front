@@ -785,7 +785,7 @@ export default function StaffFeedback() {
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-gray-900 text-gray-800 dark:text-white border border-gray-100 dark:border-gray-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
@@ -795,7 +795,7 @@ export default function StaffFeedback() {
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-gray-900 dark:text-white">Review & Feedback Inspector</h3>
-                    <p className="text-xs text-gray-400 font-mono">Feedback ID: #{selectedFeedback.id}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">Feedback ID: #{selectedFeedback.id}</p>
                   </div>
                 </div>
 
@@ -1467,7 +1467,7 @@ export default function StaffFeedback() {
               <div className="pt-2 flex items-center justify-between">
                 <button
                   onClick={() => handleToggleStatus(selectedFeedback.id, selectedFeedback.status)}
-                  className="px-4 py-2.5 rounded-2xl text-xs font-bold border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                  className="px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
                 >
                   {selectedFeedback.status === "published" ? "Hide from Public" : "Publish to Public"}
                 </button>
