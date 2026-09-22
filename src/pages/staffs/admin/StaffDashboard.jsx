@@ -158,7 +158,7 @@ export default function StaffDashboard() {
 
         {/* ─── Academic Subject Hierarchy ─────────────────────────────────── */}
         <div className="w-full">
-          <SubjectHierarchy />
+          <SubjectHierarchy payments={payments} />
         </div>
       </div>
     </StaffDashboardLayout>

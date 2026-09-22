@@ -117,7 +117,9 @@ export default function ExamManagement() {
             </div>
             <div>
               <h2 className="text-xl md:text-2xl font-black text-[#0F2843] dark:text-white uppercase tracking-tight">Exams</h2>
-              <p className="text-gray-400 dark:text-gray-500 font-bold text-[10px] md:text-xs uppercase tracking-widest mt-1">Set Questions And Save In The Database</p>
+              <p className="text-gray-400 dark:text-gray-500 font-bold text-[10px] md:text-xs uppercase tracking-widest mt-1">
+                {canManage ? "Set Questions And Save In The Database" : "Browse Exam Bodies And Past Questions"}
+              </p>
             </div>
           </div>
           {!isPreview && canManage && (
@@ -262,7 +264,7 @@ export default function ExamManagement() {
               </div>
               <h4 className="text-xl font-black text-[#0F2843] dark:text-white mb-2 uppercase tracking-tight">No exam created</h4>
               <p className="text-sm text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest max-w-xs">
-                create one today by clicking the button above
+                {canManage ? "create one today by clicking the button above" : "No examination bodies are currently registered in the database."}
               </p>
               {canManage && (
                 <button 

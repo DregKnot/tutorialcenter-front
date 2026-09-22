@@ -81,5 +81,15 @@ describe("roleUtils - Role and Permission Testing", () => {
       expect(getExamApiBase()).toBe("/api/admin");
       expect(getExamBasePath()).toBe("/staffs/manage-exams");
     });
+
+    test("routes advisor to admin exam endpoints for browsing with dedicated base path", () => {
+      localStorage.setItem("staff_role", "advisor");
+      expect(getExamApiBase()).toBe("/api/admin");
+      expect(getExamBasePath()).toBe("/staffs/course-advisor/exams");
+
+      localStorage.setItem("staff_role", "course advisor");
+      expect(getExamApiBase()).toBe("/api/admin");
+      expect(getExamBasePath()).toBe("/staffs/course-advisor/exams");
+    });
   });
 });
