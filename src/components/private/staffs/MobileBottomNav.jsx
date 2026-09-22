@@ -13,7 +13,7 @@ import {
 import { useStaffAuth } from "../../../context/StaffAuthContext";
 
 const adminTabs = [
-  { label: "Dashboard", icon: HomeIcon, to: "/staffs/dashboard" },
+  { label: "Overview", icon: HomeIcon, to: "/staffs/dashboard" },
   { label: "Staffs", icon: UsersIcon, to: "/staffs/manage-staffs" },
   { label: "Students", icon: UserGroupIcon, to: "/staffs/manage-students" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, to: "/staffs/manage-exams" },
@@ -21,7 +21,7 @@ const adminTabs = [
 ];
 
 const tutorTabs = [
-  { label: "Dashboard", icon: HomeIcon, to: "/staffs/tutor/dashboard" },
+  { label: "Overview", icon: HomeIcon, to: "/staffs/tutor/dashboard" },
   { label: "Master Class", icon: AcademicCapIcon, to: "/staffs/tutor/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon, to: "/staffs/tutor/calendar" },
   { label: "Leaderboard", icon: TrophyIcon, to: "/staffs/leaderboard" },
@@ -29,7 +29,7 @@ const tutorTabs = [
 ];
 
 const courseAdvisorTabs = [
-  { label: "Dashboard", icon: HomeIcon, to: "/staffs/course-advisor/dashboard" },
+  { label: "Overview", icon: HomeIcon, to: "/staffs/course-advisor/dashboard" },
   { label: "Students", icon: UserGroupIcon, to: "/staffs/course-advisor/students" },
   { label: "Master Class", icon: AcademicCapIcon, to: "/staffs/course-advisor/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon, to: "/staffs/course-advisor/calendar" },

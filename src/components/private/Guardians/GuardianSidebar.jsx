@@ -14,7 +14,7 @@ import collapselogo from "../../../assets/images/TC 1.webp";
 
 const guardianMenuItems = [
   {
-    label: "Dashboard",
+    label: "Overview",
     icon: "mynaui:home-solid",
     destination: "/guardian/dashboard",
   },
