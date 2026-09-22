@@ -846,12 +846,260 @@ export default function StaffFeedback() {
                 </div>
               </div>
 
-              {/* Modal Body: Check if Post-Class Tutor Report or Standard Review */}
+              {/* Modal Body: Check if Advisor Report, Tutor Report, or Standard Review */}
               {(() => {
+                const isAdvisorReport = Boolean(
+                  selectedFeedback.title?.toLowerCase().includes("course advisor post-class report") ||
+                  selectedFeedback.ratings?.tutor_overall_performance ||
+                  selectedFeedback.ratings?.challenges_and_incidents ||
+                  selectedFeedback.ratings?.follow_up_action
+                );
+
+                if (isAdvisorReport) {
+                  const r = selectedFeedback.ratings || {};
+                  const meta = r.session_metadata || {};
+                  const tutorPerf = r.tutor_overall_performance || {};
+                  const attendance = r.student_attendance || {};
+                  const participation = r.students_participation_and_engagement || {};
+                  const understanding = r.student_understanding || {};
+                  const materials = r.lesson_materials || {};
+                  const challenges = r.challenges_and_incidents || {};
+                  const followUp = r.follow_up_action || {};
+
+                  return (
+                    <div className="space-y-5">
+                      {/* Advisor Report Header Box */}
+                      <div className="p-5 bg-gradient-to-r from-[#3B0764] to-[#5B21B6] text-white rounded-3xl space-y-2 shadow-lg border border-white/10">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-purple-200 flex items-center gap-1.5">
+                            <Icon icon="lucide:shield-check" className="w-4 h-4" /> Course Advisor Post-Class Report
+                          </span>
+                          <span className="text-xs text-white/80 font-bold">
+                            {meta.date || selectedFeedback.submitted_at?.slice(0, 10) || "Today"}
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-black text-white">
+                          {meta.class_title || selectedFeedback.target_title || "Masterclass Lesson"}
+                        </h3>
+                        <div className="flex items-center gap-3 text-xs text-white/80 flex-wrap pt-1 border-t border-white/10">
+                          <span>Subject: <strong className="text-white">{meta.subject || "N/A"}</strong></span>
+                          <span>&bull;</span>
+                          <span>Advisor: <strong className="text-purple-200">{selectedFeedback.author_name}</strong></span>
+                          {meta.tutor_name && (
+                            <>
+                              <span>&bull;</span>
+                              <span>Tutor: <strong className="text-purple-200">{meta.tutor_name}</strong></span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 1. Tutor Overall Performance */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-purple-700 text-white text-[10px] font-black flex items-center justify-center">1</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-purple-700 dark:text-purple-400">Tutor Overall Performance</h4>
+                        </div>
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">How would you rate the tutor's overall performance?</p>
+                            <div className="px-3.5 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs font-black text-purple-700 dark:text-purple-300 inline-block shadow-sm">
+                              {tutorPerf.rating || "N/A"}
+                            </div>
+                          </div>
+                          {tutorPerf.comments && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Comments:</p>
+                              <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                                {tutorPerf.comments}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 2. Student Attendance */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-purple-700 text-white text-[10px] font-black flex items-center justify-center">2</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-purple-700 dark:text-purple-400">Student Attendance</h4>
+                        </div>
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Attendance Rating:</p>
+                            <div className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs font-black text-amber-700 dark:text-amber-300 inline-block shadow-sm">
+                              {attendance.rating || "N/A"}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Students Present:</p>
+                              <div className="px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-black text-emerald-700 dark:text-emerald-300 inline-block shadow-sm">
+                                {attendance.number_present ?? 0} Present
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Students Absent:</p>
+                              <div className="px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-black text-rose-700 dark:text-rose-300 inline-block shadow-sm">
+                                {attendance.number_absent ?? 0} Absent
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Notable absences or late arrivals:</p>
+                            <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                              {attendance.notable_absences_or_late_arrivals || "None"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. Students Participation & Engagement */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-purple-700 text-white text-[10px] font-black flex items-center justify-center">3</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-purple-700 dark:text-purple-400">Students Participation & Engagement</h4>
+                        </div>
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Participation Rating:</p>
+                            <div className="px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-black text-emerald-700 dark:text-emerald-300 inline-block shadow-sm">
+                              {participation.rating || "N/A"}
+                            </div>
+                          </div>
+                          {participation.comments && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Comments:</p>
+                              <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                                {participation.comments}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 4. Student Understanding */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-purple-700 text-white text-[10px] font-black flex items-center justify-center">4</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-purple-700 dark:text-purple-400">Student Understanding</h4>
+                        </div>
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">How well did students understand the lesson?</p>
+                            <div className="px-3.5 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs font-black text-blue-700 dark:text-blue-300 inline-block shadow-sm">
+                              {understanding.rating || "N/A"}
+                            </div>
+                          </div>
+                          {understanding.struggled_or_understood_well && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">What did students struggle with or understand particularly well?</p>
+                              <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                                {understanding.struggled_or_understood_well}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 5. Lesson Materials */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-purple-700 text-white text-[10px] font-black flex items-center justify-center">5</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-purple-700 dark:text-purple-400">Lesson Materials & Resources</h4>
+                        </div>
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Were lesson materials properly used and accessible?</p>
+                            <div className="px-3.5 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs font-black text-indigo-700 dark:text-indigo-300 inline-block shadow-sm">
+                              {materials.rating || "N/A"}
+                            </div>
+                          </div>
+                          {materials.comments && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Comments:</p>
+                              <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                                {materials.comments}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 6. Challenges & Incidents */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-purple-700 text-white text-[10px] font-black flex items-center justify-center">6</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-purple-700 dark:text-purple-400">Challenges & Incidents</h4>
+                        </div>
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Were there any challenges or incidents during the class?</p>
+                            <div className="px-3.5 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-xs font-black text-orange-700 dark:text-orange-300 inline-block shadow-sm">
+                              {challenges.category || "No significant issues"}
+                            </div>
+                          </div>
+                          {challenges.details && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Details:</p>
+                              <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                                {challenges.details}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 7. Follow-Up Action */}
+                      <div className="bg-gray-50 dark:bg-gray-900/60 p-4 sm:p-5 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-gray-200/60 dark:border-gray-800 pb-2.5">
+                          <span className="w-5 h-5 rounded-full bg-purple-700 text-white text-[10px] font-black flex items-center justify-center">7</span>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-purple-700 dark:text-purple-400">Follow-Up Action Required</h4>
+                        </div>
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">What follow-up action or support is required before the next class?</p>
+                            <div className={`px-3.5 py-2 rounded-xl border text-xs font-black inline-block shadow-sm ${
+                              followUp.action_required === "No action required"
+                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                                : "bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
+                            }`}>
+                              {followUp.action_required || "No action required"}
+                            </div>
+                          </div>
+                          {followUp.details && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Details:</p>
+                              <div className="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-pre-wrap shadow-sm">
+                                {followUp.details}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Submission Footer */}
+                      <div className="pt-3 border-t border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between text-xs">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-gray-400 block">Submitted By:</span>
+                          <span className="font-black text-purple-700 dark:text-purple-400 text-sm">{selectedFeedback.author_name}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] uppercase font-bold text-gray-400 block">Submitted At:</span>
+                          <span className="font-mono text-gray-600 dark:text-gray-300 text-xs">
+                            {selectedFeedback.submitted_at
+                              ? new Date(selectedFeedback.submitted_at).toLocaleString()
+                              : new Date(selectedFeedback.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 const isTutorReport = Boolean(
                   selectedFeedback.ratings?.session_metadata ||
-                  selectedFeedback.ratings?.lesson_delivery ||
-                  selectedFeedback.title?.toLowerCase().includes("post-class report")
+                  selectedFeedback.ratings?.lesson_delivery
                 );
 
                 if (isTutorReport) {
