@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
@@ -77,17 +77,10 @@ export default function CourseAdvisorMasterClass() {
     fetchSessions();
   }, [fetchSessions]);
 
-  // Persistent tracking for post-class report trigger to prevent race conditions with async fetchSessions
-  const [pendingFeedbackId, setPendingFeedbackId] = useState(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    return (
-      searchParams.get("feedback_session") ||
-      sessionStorage.getItem("just_completed_class_session_id") ||
-      null
-    );
-  });
+  // Prevent feedback loop when returning from a masterclass
+  const handledFeedbackRef = useRef(new Set());
 
-  // Open the post-class report modal when returning from a masterclass.
+  // Open the post-class report modal when returning from a masterclass without infinite reloads
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const feedbackParam = searchParams.get("feedback_session");
@@ -95,13 +88,10 @@ export default function CourseAdvisorMasterClass() {
     const sessionStoredId = sessionStorage.getItem("just_completed_class_session_id");
 
     const incomingId = feedbackParam || stateSessionId || sessionStoredId;
-    if (incomingId && incomingId !== pendingFeedbackId) {
-      setPendingFeedbackId(incomingId);
-    }
-  }, [location.search, location.state, pendingFeedbackId]);
+    if (!incomingId) return;
 
-  useEffect(() => {
-    if (!pendingFeedbackId) return;
+    const idStr = String(incomingId);
+    if (handledFeedbackRef.current.has(idStr)) return;
 
     const allSessions = [
       ...(scheduleData.today_classes || []),
@@ -111,8 +101,12 @@ export default function CourseAdvisorMasterClass() {
       ...(scheduleData.next_class ? [scheduleData.next_class] : [])
     ];
 
-    const session = allSessions.find(s => String(s.id) === String(pendingFeedbackId));
+    const session = allSessions.find(s => String(s.id) === idStr);
+
     if (session) {
+      handledFeedbackRef.current.add(idStr);
+      sessionStorage.removeItem("just_completed_class_session_id");
+
       // Differentiate and extract real tutor name rather than advisor name
       const tutorStaff = session.class?.staffs?.find(st => {
         const r = String(st.pivot?.role || st.role || st.staff?.role || "").toLowerCase();
@@ -136,17 +130,19 @@ export default function CourseAdvisorMasterClass() {
       });
 
       setFeedbackModalOpen(true);
-      setPendingFeedbackId(null);
-      sessionStorage.removeItem("just_completed_class_session_id");
 
-      if (location.search || location.state?.promptPostClassReport) {
-        navigate(location.pathname, { replace: true, state: {} });
+      // Clean the query string without triggering React Router navigation loops
+      if (location.search.includes("feedback_session") || location.state?.completedSessionId) {
+        window.history.replaceState({}, document.title, location.pathname);
       }
     } else if (!loading) {
       // Fallback when schedule has loaded but session was external/custom
+      handledFeedbackRef.current.add(idStr);
+      sessionStorage.removeItem("just_completed_class_session_id");
+
       setFeedbackSession({
-        id: pendingFeedbackId,
-        class_id: pendingFeedbackId,
+        id: idStr,
+        class_id: idStr,
         class_title: "Master Class",
         subject: "Live Masterclass",
         topic: "Class Lesson",
@@ -158,14 +154,13 @@ export default function CourseAdvisorMasterClass() {
       });
 
       setFeedbackModalOpen(true);
-      setPendingFeedbackId(null);
-      sessionStorage.removeItem("just_completed_class_session_id");
 
-      if (location.search || location.state?.promptPostClassReport) {
-        navigate(location.pathname, { replace: true, state: {} });
+      // Clean the query string without triggering React Router navigation loops
+      if (location.search.includes("feedback_session") || location.state?.completedSessionId) {
+        window.history.replaceState({}, document.title, location.pathname);
       }
     }
-  }, [pendingFeedbackId, scheduleData, loading, navigate, location.pathname, location.search, location.state]);
+  }, [location.search, location.state, scheduleData, loading, location.pathname]);
 
   // --- RECORDING MANAGEMENT ---
   const handleSaveVideoLink = async () => {
@@ -367,39 +362,49 @@ export default function CourseAdvisorMasterClass() {
     navigate(`/classroom/${session.id}`);
   };
 
+  // Join through the in-app Zoom SDK instead of redirecting to the external
+  // Zoom web/app link, which asks the advisor to sign in.
   const handleLaunchZoomApp = (session) => {
-    if (!session?.class_link) return;
-    navigate('/staffs/meet/app', {
-      state: {
-        class_link: session.class_link,
-        class_schedule_id: session.id,
-        topic: session.class?.title || session.title || 'Master Class'
-      }
-    });
+    if (!session?.id) return;
+    navigate(`/classroom/${session.id}`);
   };
 
-  const handleOpenClassRoom = (cls) => {
-    // Locate upcoming or active session for this class
-    const targetSession = 
-      flattenedSessions.find(s => String(s.class_id || s.class?.id) === String(cls.id) && !isPast(s)) ||
-      flattenedSessions.find(s => String(s.class_id || s.class?.id) === String(cls.id)) ||
-      (scheduleData.next_class && String(scheduleData.next_class.class_id || scheduleData.next_class.class?.id) === String(cls.id) ? scheduleData.next_class : null);
+  // Resolve a session id for a class so the Room button can launch the in-app
+  // classroom. The Zoom signature endpoint falls back to the class-level room,
+  // so any session works; prefer the nearest upcoming one, else the latest.
+  const getClassSessionId = (cls) => {
+    const sessions = (Array.isArray(cls?.schedules) ? cls.schedules : [])
+      .flatMap((schedule) => (Array.isArray(schedule?.sessions) ? schedule.sessions : []));
 
-    if (targetSession) {
-      handleOpenLaunchModal(targetSession);
-    } else {
-      // Synthetic proxy session so advisor launches the in-app SDK wrapper without being booted externally
-      handleOpenLaunchModal({
-        id: cls.id,
-        class_id: cls.id,
-        class: cls,
-        title: cls.title,
-        class_link: cls.zoom_start_url || cls.zoom_join_url,
-        session_date: new Date().toISOString().split("T")[0],
-        starts_at: "Live",
-        ends_at: "Classroom",
-      });
+    if (sessions.length === 0) return null;
+
+    const toTime = (session) => {
+      const date = session.session_date ? String(session.session_date).slice(0, 10) : "";
+      const time = session.starts_at ? String(session.starts_at).slice(0, 8) : "00:00:00";
+      const parsed = new Date(`${date}T${time}`).getTime();
+      return Number.isNaN(parsed) ? 0 : parsed;
+    };
+
+    const now = Date.now();
+    const upcoming = sessions
+      .filter((session) => toTime(session) >= now)
+      .sort((a, b) => toTime(a) - toTime(b))[0];
+
+    if (upcoming) return upcoming.id;
+
+    const latest = [...sessions].sort((a, b) => toTime(b) - toTime(a))[0];
+    return latest?.id ?? null;
+  };
+
+  const handleLaunchClassRoom = (cls) => {
+    const sessionId = getClassSessionId(cls);
+    if (sessionId) {
+      navigate(`/classroom/${sessionId}`);
+      return;
     }
+    // Fallback: no sessions on this class, use the configured room link.
+    const link = cls?.zoom_start_url || cls?.zoom_join_url;
+    if (link) window.open(link, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -737,10 +742,10 @@ export default function CourseAdvisorMasterClass() {
                           <span>View Sessions</span>
                         </button>
 
-                        {(cls.zoom_start_url || cls.zoom_join_url || flattenedSessions.some(s => String(s.class_id || s.class?.id) === String(cls.id))) ? (
+                        {(cls.zoom_start_url || cls.zoom_join_url || flattenedSessions.some(s => String(s.class_id || s.class?.id) === String(cls.id)) || getClassSessionId(cls)) ? (
                           <button
                             type="button"
-                            onClick={() => handleOpenClassRoom(cls)}
+                            onClick={() => handleLaunchClassRoom(cls)}
                             className="px-4 py-2.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                             title="Join Classroom (In-App SDK Wrapper)"
                           >

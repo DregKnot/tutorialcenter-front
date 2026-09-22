@@ -9,11 +9,14 @@ import {
   ClipboardDocumentCheckIcon,
   TrophyIcon,
   ChartBarIcon,
+  CreditCardIcon,
 } from "@heroicons/react/24/outline";
 import { useStaffAuth } from "../../../context/StaffAuthContext";
+import { isReadOnlyStaff, isCsa } from "../../../utils/roleUtils";
+
 
 const adminTabs = [
-  { label: "Dashboard", icon: HomeIcon, to: "/staffs/dashboard" },
+  { label: "Overview", icon: HomeIcon, to: "/staffs/dashboard" },
   { label: "Staffs", icon: UsersIcon, to: "/staffs/manage-staffs" },
   { label: "Students", icon: UserGroupIcon, to: "/staffs/manage-students" },
   { label: "Exams", icon: ClipboardDocumentCheckIcon, to: "/staffs/manage-exams" },
@@ -21,7 +24,7 @@ const adminTabs = [
 ];
 
 const tutorTabs = [
-  { label: "Dashboard", icon: HomeIcon, to: "/staffs/tutor/dashboard" },
+  { label: "Overview", icon: HomeIcon, to: "/staffs/tutor/dashboard" },
   { label: "Master Class", icon: AcademicCapIcon, to: "/staffs/tutor/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon, to: "/staffs/tutor/calendar" },
   { label: "Leaderboard", icon: TrophyIcon, to: "/staffs/leaderboard" },
@@ -29,7 +32,7 @@ const tutorTabs = [
 ];
 
 const courseAdvisorTabs = [
-  { label: "Dashboard", icon: HomeIcon, to: "/staffs/course-advisor/dashboard" },
+  { label: "Overview", icon: HomeIcon, to: "/staffs/course-advisor/dashboard" },
   { label: "Students", icon: UserGroupIcon, to: "/staffs/course-advisor/students" },
   { label: "Master Class", icon: AcademicCapIcon, to: "/staffs/course-advisor/master-class" },
   { label: "Calendar", icon: CalendarDaysIcon, to: "/staffs/course-advisor/calendar" },
@@ -41,6 +44,23 @@ const moderatorTabs = [
   { label: "Leaderboard", icon: TrophyIcon, to: "/staffs/leaderboard" },
   { label: "Feedback", icon: ChartBarIcon, to: "/staffs/feedback" },
 ];
+
+const cooTabs = [
+  { label: "Overview", icon: HomeIcon, to: "/staffs/coo/dashboard" },
+  { label: "Students", icon: UserGroupIcon, to: "/staffs/manage-students" },
+  { label: "Exams", icon: ClipboardDocumentCheckIcon, to: "/staffs/manage-exams" },
+  { label: "Payments", icon: CreditCardIcon, to: "/staffs/payments" },
+  { label: "Leaderboard", icon: TrophyIcon, to: "/staffs/leaderboard" },
+];
+
+const csaTabs = [
+  { label: "Overview", icon: HomeIcon, to: "/staffs/coo/dashboard" },
+  { label: "Students", icon: UserGroupIcon, to: "/staffs/manage-students" },
+  { label: "Questions", icon: ClipboardDocumentCheckIcon, to: "/staffs/manage-exams" },
+  { label: "Payments", icon: CreditCardIcon, to: "/staffs/payments" },
+  { label: "Leaderboard", icon: TrophyIcon, to: "/staffs/leaderboard" },
+];
+
 
 export default function StaffMobileBottomNav() {
   const { role: contextRole } = useStaffAuth() || {};
@@ -83,11 +103,14 @@ export default function StaffMobileBottomNav() {
 
   const getTabs = () => {
     const roleLower = String(staffRole || "").toLowerCase().trim();
+    if (isCsa(roleLower)) return csaTabs;
+    if (isReadOnlyStaff(roleLower)) return cooTabs;
     if (roleLower === "tutor") return tutorTabs;
     if (roleLower === "moderator") return moderatorTabs;
     if (roleLower === "course advisor" || roleLower === "advisor") return courseAdvisorTabs;
     return adminTabs;
   };
+
 
   const tabs = getTabs();
 

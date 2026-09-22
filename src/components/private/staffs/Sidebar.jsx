@@ -26,11 +26,13 @@ import { useTheme } from "../../../context/ThemeContext";
 import logo from "../../../assets/images/tutorial_logo.webp";
 import collapselogo from "../../../assets/images/TC 1.webp";
 import { useStaffAuth } from "../../../context/StaffAuthContext";
+import { isCsa, isReadOnlyStaff } from "../../../utils/roleUtils";
+
 
 const adminNavSections = [
   {
     title: null,
-    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/dashboard" }],
+    items: [{ label: "Overview", icon: HomeIcon, destination: "/staffs/dashboard" }],
   },
   {
     id: "management",
@@ -80,7 +82,7 @@ const adminNavSections = [
 const cooNavSections = [
   {
     title: null,
-    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/coo/dashboard" }],
+    items: [{ label: "Overview", icon: HomeIcon, destination: "/staffs/coo/dashboard" }],
   },
   {
     id: "management",
@@ -127,10 +129,61 @@ const cooNavSections = [
   },
 ];
 
+const csaNavSections = [
+  {
+    title: null,
+    items: [{ label: "Overview", icon: HomeIcon, destination: "/staffs/coo/dashboard" }],
+  },
+  {
+    id: "management",
+    title: "Management",
+    icon: UserGroupIcon,
+    items: [
+      { label: "Manage Staffs", icon: UsersIcon, destination: "/staffs/manage-staffs" },
+      { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
+      { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/manage-guardians" },
+      { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
+    ],
+  },
+  {
+    id: "class",
+    title: "Class",
+    icon: AcademicCapIcon,
+    items: [
+      { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
+      { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
+      { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
+    ],
+  },
+  {
+    id: "exam",
+    title: "Exam & Questions",
+    icon: ClipboardDocumentCheckIcon,
+    items: [
+      { label: "Past Questions", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
+      { label: "School Tests", icon: ClipboardDocumentListIcon, destination: "/staffs/school-tests" },
+      { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
+    ],
+  },
+  {
+    id: "finance_governance",
+    title: "Finance & Governance",
+    icon: CreditCardIcon,
+    items: [
+      { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
+      { label: "Blogs", icon: DocumentTextIcon, destination: "/staffs/manage-blogs" },
+      { label: "Audit Log", icon: ChartBarIcon, destination: "/staffs/audit-logs" },
+      { label: "Feedback", icon: ChartBarIcon, destination: "/staffs/feedback" },
+      { label: "Settings", icon: Cog6ToothIcon },
+    ],
+  },
+];
+
+
 const tutorNavSections = [
   {
     title: null,
-    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/tutor/dashboard" }],
+    items: [{ label: "Overview", icon: HomeIcon, destination: "/staffs/tutor/dashboard" }],
   },
   {
     id: "class",
@@ -157,7 +210,7 @@ const tutorNavSections = [
 const courseAdvisorNavSections = [
   {
     title: null,
-    items: [{ label: "Dashboard", icon: HomeIcon, destination: "/staffs/course-advisor/dashboard" }],
+    items: [{ label: "Overview", icon: HomeIcon, destination: "/staffs/course-advisor/dashboard" }],
   },
   {
     id: "management",
@@ -184,7 +237,7 @@ const courseAdvisorNavSections = [
     icon: ClipboardDocumentCheckIcon,
     items: [
       { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
-      { label: "Exams", icon: ClipboardDocumentCheckIcon },
+      { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/course-advisor/exams" },
       { label: "Settings", icon: Cog6ToothIcon },
     ],
   },
@@ -234,16 +287,25 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
         }
       }
 
+      const formatRoleDisplay = (r) => {
+        if (!r) return "Staff";
+        const trimmed = String(r).trim();
+        if (isCsa(trimmed)) return "CSA";
+        if (trimmed.toLowerCase() === "coo") return "COO";
+        return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+      };
+
       if (storedRole) {
         try {
           const parsed = JSON.parse(storedRole);
-          setStaffRole(parsed.charAt(0).toUpperCase() + parsed.slice(1));
+          setStaffRole(formatRoleDisplay(parsed));
         } catch {
-          setStaffRole(storedRole.charAt(0).toUpperCase() + storedRole.slice(1));
+          setStaffRole(formatRoleDisplay(storedRole));
         }
       } else if (parsedStaff && parsedStaff.role) {
-        setStaffRole(parsedStaff.role.charAt(0).toUpperCase() + parsedStaff.role.slice(1));
+        setStaffRole(formatRoleDisplay(parsedStaff.role));
       }
+
     };
 
     updateProfileData();
@@ -273,12 +335,14 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
 
   const getNavSections = () => {
     const roleLower = staffRole.toLowerCase();
-    if (roleLower === "coo" || roleLower === "preview" || roleLower === "operations") return cooNavSections;
+    if (isCsa(roleLower)) return csaNavSections;
+    if (isReadOnlyStaff(roleLower)) return cooNavSections;
     if (roleLower === "tutor") return tutorNavSections;
     if (roleLower === "moderator") return moderatorNavSections;
     if (roleLower === "course advisor" || roleLower === "advisor") return courseAdvisorNavSections;
     return adminNavSections;
   };
+
 
   const navSections = getNavSections();
 

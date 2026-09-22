@@ -74,7 +74,7 @@ export default function MobileHeader({ pagetitle, hideTitle = false, hideBell = 
 
         {!hideTitle && (
           <h1 className="text-sm font-semibold tracking-wide">
-            {pagetitle || "Dashboard"}
+            {pagetitle || "Overview"}
           </h1>
         )}
 

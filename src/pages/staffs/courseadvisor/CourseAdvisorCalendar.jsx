@@ -91,6 +91,12 @@ export default function CourseAdvisorCalendar() {
   const [selectedDateModal, setSelectedDateModal] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const handleJoinClassRoom = useCallback((s) => {
+    if (!s?.id) return;
+    setSelectedSession(null);
+    navigate(`/classroom/${s.id}`);
+  }, [navigate]);
+
   const isPastSession = useCallback((session) => {
     if (!session || !session.session_date) return false;
     const now = new Date();
@@ -1057,19 +1063,30 @@ export default function CourseAdvisorCalendar() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-4 text-slate-650 dark:text-slate-350">
-                <Icon icon="mdi:link" className="w-5 h-5 shrink-0 text-[#C5A97A]" />
-                {selectedSession.class_link ? (
-                  <a
-                    href={selectedSession.class_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[14px] font-bold text-blue-500 hover:text-blue-600 underline truncate max-w-[280px]"
+              <div className="bg-slate-50 dark:bg-black/25 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
+                <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-3">Join Class</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleJoinClassRoom(selectedSession)}
+                    disabled={!selectedSession.id}
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F2843] hover:bg-[#E83831] disabled:bg-slate-200 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black text-[11px] uppercase tracking-wider text-center leading-tight transition-all active:scale-95"
                   >
-                    Join Class URL
-                  </a>
-                ) : (
-                  <span className="text-[14px] font-bold text-slate-300 dark:text-slate-600 italic">No link assigned</span>
+                    <Icon icon="mdi:web" className="w-4 h-4" />
+                    Join on Web
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleJoinClassRoom(selectedSession)}
+                    disabled={!selectedSession.id}
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black text-[11px] uppercase tracking-wider text-center leading-tight transition-all active:scale-95"
+                  >
+                    <Icon icon="lucide:video" className="w-4 h-4" />
+                    Join via Zoom App
+                  </button>
+                </div>
+                {!selectedSession.id && (
+                  <p className="mt-3 text-[11px] font-bold text-slate-400 dark:text-slate-500 italic text-center">No link assigned</p>
                 )}
               </div>
 

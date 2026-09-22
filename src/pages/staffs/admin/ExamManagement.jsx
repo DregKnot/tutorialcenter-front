@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { useNavigate } from "react-router-dom";
+import { getExamApiBase, getExamBasePath, canManageExams } from "../../../utils/examAccess";
+import { isReadOnlyStaff } from "../../../utils/roleUtils";
+
 // import { Icon } from "@iconify/react";
 import axios from "axios";
 import { 
@@ -21,7 +24,11 @@ export default function ExamManagement() {
   const navigate = useNavigate();
 
   const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
-  const isPreview = staffRole === "coo" || staffRole === "preview" || staffRole === "operations";
+  const isPreview = isReadOnlyStaff(staffRole);
+
+  const examApiBase = getExamApiBase();
+  const examBasePath = getExamBasePath();
+  const canManage = canManageExams();
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
@@ -40,7 +47,7 @@ export default function ExamManagement() {
       console.log("[ExamManagement] Fetching Exam Bodies and Courses via new drilldown API");
       
       const [examRes, coursesRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/admin/exam-data/bodies`, config),
+        axios.get(`${API_BASE_URL}${examApiBase}/exam-data/bodies`, config),
         axios.get(`${API_BASE_URL}/api/courses`, config)
       ]);
 
@@ -54,7 +61,7 @@ export default function ExamManagement() {
       const examsWithSubjects = await Promise.all(
         fetchedExams.map(async (exam) => {
           try {
-            const subRes = await axios.get(`${API_BASE_URL}/api/admin/exam-data/subjects?exam_body_id=${exam.id}`, config);
+            const subRes = await axios.get(`${API_BASE_URL}${examApiBase}/exam-data/subjects?exam_body_id=${exam.id}`, config);
             const subjectsData = Array.isArray(subRes.data) ? subRes.data : (subRes.data?.data || subRes.data?.subjects || []);
             return {
               ...exam,
@@ -91,7 +98,7 @@ export default function ExamManagement() {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, token]);
+  }, [API_BASE_URL, token, examApiBase]);
 
   useEffect(() => {
     fetchData();
@@ -113,9 +120,9 @@ export default function ExamManagement() {
               <p className="text-gray-400 dark:text-gray-500 font-bold text-[10px] md:text-xs uppercase tracking-widest mt-1">Set Questions And Save In The Database</p>
             </div>
           </div>
-          {!isPreview && (
+          {!isPreview && canManage && (
             <button 
-              onClick={() => navigate("/staffs/manage-exams/question")}
+              onClick={() => navigate(`${examBasePath}/question`)}
               className="w-full md:w-auto px-8 md:px-10 py-4 md:py-5 bg-[#0F2843] text-white font-black rounded-2xl md:rounded-3xl shadow-2xl shadow-[#0F2843]/30 hover:scale-[1.03] active:scale-95 transition-all text-xs md:text-sm flex items-center justify-center gap-3"
             >
               <PlusIcon className="w-5 h-5 md:w-6 h-6" />
@@ -150,7 +157,7 @@ export default function ExamManagement() {
                   className="bg-white dark:bg-gray-800 rounded-[40px] h-[450px] overflow-hidden border border-gray-100 dark:border-gray-700 shadow-xl hover:shadow-2xl transition-all group relative"
                 >
                   {/* Full Background Image */}
-                  <div className="absolute inset-0 cursor-pointer" onClick={() => navigate(`/staffs/manage-exams/${exam.id}/subjects`)}>
+                  <div className="absolute inset-0 cursor-pointer" onClick={() => navigate(`${examBasePath}/${exam.id}/subjects`)}>
                     <img 
                       src={exam.image || "https://images.unsplash.com/photo-1579546678183-a9c101ad2f22?q=80&w=2070&auto=format&fit=crop"} 
                       alt={exam.name} 
@@ -182,14 +189,16 @@ export default function ExamManagement() {
                   {/* Actions: Three Dot Menu */}
                   <div className="absolute top-6 left-6 z-20">
                     <div className="relative">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === exam.id ? null : exam.id); }}
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                          activeMenu === exam.id ? "bg-white text-[#0F2843]" : "bg-[#0F2843]/60 backdrop-blur-md text-white hover:bg-white hover:text-[#0F2843]"
-                        }`}
-                      >
-                        <EllipsisVerticalIcon className="w-6 h-6" />
-                      </button>
+                      {canManage && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === exam.id ? null : exam.id); }}
+                          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
+                            activeMenu === exam.id ? "bg-white text-[#0F2843]" : "bg-[#0F2843]/60 backdrop-blur-md text-white hover:bg-white hover:text-[#0F2843]"
+                          }`}
+                        >
+                          <EllipsisVerticalIcon className="w-6 h-6" />
+                        </button>
+                      )}
 
                       {/* Dropdown Menu */}
                       {activeMenu === exam.id && (
@@ -200,7 +209,7 @@ export default function ExamManagement() {
                           ></div>
                           <div className="absolute left-0 mt-3 w-64 bg-white/20 dark:bg-gray-800/20 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/50 p-3 z-40 animate-in zoom-in-95 duration-200">
                             <button 
-                              onClick={(e) => { e.stopPropagation(); navigate(`/staffs/manage-exams/edit/${exam.id}?tab=body`); }}
+                              onClick={(e) => { e.stopPropagation(); navigate(`${examBasePath}/edit/${exam.id}?tab=body`); }}
                               className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left group/item"
                             >
                               <div className="w-10 h-10 bg-[#BB9E7F]/10 rounded-xl flex items-center justify-center text-[#BB9E7F] group-hover/item:bg-[#BB9E7F] group-hover/item:text-white transition-all">
@@ -210,7 +219,7 @@ export default function ExamManagement() {
                             </button>
 
                             <button 
-                              onClick={(e) => { e.stopPropagation(); navigate(`/staffs/manage-exams/edit/${exam.id}?tab=year`); }}
+                              onClick={(e) => { e.stopPropagation(); navigate(`${examBasePath}/edit/${exam.id}?tab=year`); }}
                               className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left group/item"
                             >
                               <div className="w-10 h-10 bg-[#0F2843]/10 rounded-xl flex items-center justify-center text-[#0F2843] dark:text-white group-hover/item:bg-[#0F2843] transition-all">
@@ -220,7 +229,7 @@ export default function ExamManagement() {
                             </button>
 
                             <button 
-                              onClick={(e) => { e.stopPropagation(); navigate(`/staffs/manage-exams/question`); }}
+                              onClick={(e) => { e.stopPropagation(); navigate(`${examBasePath}/question`); }}
                               className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left group/item"
                             >
                               <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center text-green-500 group-hover/item:bg-green-500 group-hover/item:text-white transition-all">
@@ -230,7 +239,7 @@ export default function ExamManagement() {
                             </button>
 
                             <button 
-                              onClick={(e) => { e.stopPropagation(); navigate(`/staffs/manage-exams/${exam.id}/subjects`); }}
+                              onClick={(e) => { e.stopPropagation(); navigate(`${examBasePath}/${exam.id}/subjects`); }}
                               className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-left group/item"
                             >
                               <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 group-hover/item:bg-blue-500 group-hover/item:text-white transition-all">
@@ -255,12 +264,14 @@ export default function ExamManagement() {
               <p className="text-sm text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest max-w-xs">
                 create one today by clicking the button above
               </p>
-              <button 
-                onClick={() => navigate("/staffs/manage-exams/question")}
-                className="mt-8 px-10 py-4 bg-[#0F2843] text-white font-black rounded-2xl hover:scale-105 transition-all active:scale-95 text-xs uppercase tracking-widest"
-              >
-                Get Started
-              </button>
+              {canManage && (
+                <button 
+                  onClick={() => navigate(`${examBasePath}/question`)}
+                  className="mt-8 px-10 py-4 bg-[#0F2843] text-white font-black rounded-2xl hover:scale-105 transition-all active:scale-95 text-xs uppercase tracking-widest"
+                >
+                  Get Started
+                </button>
+              )}
             </div>
           )}
         </div>

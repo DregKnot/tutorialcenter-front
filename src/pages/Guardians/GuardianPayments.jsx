@@ -49,9 +49,13 @@ export default function GuardianPayments() {
 
   const PAYSTACK_KEY = 
     process.env.REACT_APP_PAYSTACK_PUBLIC_KEY || 
-    (isLocalHost 
-      ? "pk_test_d810e0935d60a336bea860384aabbc753cdd78ff" 
-      : "pk_live_f1017d3c645e69b33b1f8cc538b306088b655244");
+    "pk_test_d810e0935d60a336bea860384aabbc753cdd78ff";
+
+  if (!isLocalHost && !process.env.REACT_APP_PAYSTACK_PUBLIC_KEY) {
+    console.warn(
+      "[GuardianPayments] REACT_APP_PAYSTACK_PUBLIC_KEY is not defined in production environment. Defaulting to sandbox test key."
+    );
+  }
 
   // Standard Academic Billing Cycles & Durations (Monthly, Quarterly, Semi-Annually, Annually)
   const DURATION_PLANS = {
@@ -644,7 +648,7 @@ export default function GuardianPayments() {
             className="flex items-center gap-2 px-3.5 py-2 bg-[#09314F] text-white dark:bg-[#C5A97A] dark:text-[#09314F] font-black text-xs rounded-xl shadow-sm transition-all self-start"
           >
             <Icon icon="lucide:arrow-left" className="w-4 h-4" />
-            <span>Dashboard</span>
+            <span>Overview</span>
           </Link>
         </div>
 

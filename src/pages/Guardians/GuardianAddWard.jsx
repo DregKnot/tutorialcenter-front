@@ -124,7 +124,7 @@ export default function GuardianAddWard() {
             className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors self-start shadow-sm"
           >
             <Icon icon="lucide:arrow-left" className="w-4 h-4" />
-            <span>Dashboard</span>
+            <span>Overview</span>
           </Link>
         </div>
 

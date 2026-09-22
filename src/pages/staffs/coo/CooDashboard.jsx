@@ -5,6 +5,8 @@ import StaffDashboardLayout from "../../../components/private/staffs/DashboardLa
 import { useStaffAuth } from "../../../context/StaffAuthContext";
 import { Icon } from "@iconify/react";
 import { stripHtmlAndDecode } from "../../../utils/textUtils.js";
+import { isCsa } from "../../../utils/roleUtils.js";
+
 
 export default function CooDashboard() {
   const { staff } = useStaffAuth();
@@ -177,7 +179,7 @@ export default function CooDashboard() {
   };
 
   return (
-    <StaffDashboardLayout pagetitle="COO Operations Dashboard" hideHeader={false}>
+    <StaffDashboardLayout pagetitle="Overview" hideHeader={false}>
       <div className="max-w-[1400px] mx-auto space-y-6 select-none">
         
         {/* ── TOP BANNER & GREETING ────────────────────────────────────────── */}
@@ -191,14 +193,14 @@ export default function CooDashboard() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  COO • Operations
+                  {isCsa(staff?.role) ? "CSA • Support" : "COO • Operations"}
                 </span>
                 <span className="text-white/60 text-xs font-medium">
                   {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" })}
                 </span>
               </div>
               <h1 className="text-2xl md:text-3xl font-black tracking-tight">
-                {getGreeting()}, {staff?.firstname ? `COO ${staff.firstname}` : "COO"}
+                {getGreeting()}, {staff?.firstname ? (isCsa(staff?.role) ? `Support ${staff.firstname}` : `COO ${staff.firstname}`) : (isCsa(staff?.role) ? "Customer Support" : "COO")}
               </h1>
               <p className="text-sm text-gray-300 mt-1 max-w-xl font-medium">
                 Welcome to your operations command center. Monitor institutional metrics, explore academic curriculums, and manage editorial publications.

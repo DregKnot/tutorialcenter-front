@@ -5,6 +5,8 @@ import login_img from "../../assets/images/login_img.webp";
 import TC_logo from "../../assets/images/tutorial_logo.webp";
 import { EyeIcon, EyeSlashIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { useStaffAuth } from "../../context/StaffAuthContext";
+import { isReadOnlyStaff } from "../../utils/roleUtils";
+
 
 export default function StaffLogin() {
   const navigate = useNavigate();
@@ -37,10 +39,10 @@ export default function StaffLogin() {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (countdown === 0) {
-      const role = localStorage.getItem("staff_role")?.toLowerCase();
+      const role = (localStorage.getItem("staff_role") || "").toLowerCase().trim();
       if (role === "admin") {
         navigate("/staffs/dashboard");
-      } else if (role === "coo" || role === "preview") {
+      } else if (isReadOnlyStaff(role)) {
         navigate("/staffs/coo/dashboard");
       } else if (role === "moderator") {
         navigate("/staffs/manage-exams");

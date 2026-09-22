@@ -74,7 +74,7 @@ export default function StaffDashboard() {
   };
 
   return (
-    <StaffDashboardLayout pagetitle="Dashboard" hideHeader={false}>
+    <StaffDashboardLayout pagetitle="Overview" hideHeader={false}>
       <div className="max-w-[1400px] mx-auto space-y-6">
         {/* ─── Greeting Header ───────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

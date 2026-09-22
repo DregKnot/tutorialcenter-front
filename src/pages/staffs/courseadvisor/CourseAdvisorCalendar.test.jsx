@@ -82,9 +82,8 @@ describe("CourseAdvisorCalendar Component", () => {
     const sessionCard = await screen.findByText("GCE - English");
     expect(sessionCard).toBeInTheDocument();
 
-    // Click the day cell to open selectedDateModal
-    const dayCell = sessionCard.closest(".cursor-pointer") || sessionCard.closest("div");
-    fireEvent.click(dayCell);
+    // Click the session card to open session modal
+    fireEvent.click(sessionCard);
 
     // Day modal should display "Class Session Scheduled" and "Start Class Now"
     const startClassBtn = await screen.findByRole("button", { name: /start class now/i });
@@ -97,8 +96,10 @@ describe("CourseAdvisorCalendar Component", () => {
     fireEvent.click(startClassBtn);
 
     // Should now display "Join on Web" and "Join via Zoom App" buttons inline
-    const joinWebBtn = await screen.findByRole("button", { name: /join on web/i });
-    const joinAppBtn = await screen.findByRole("button", { name: /join via zoom app/i });
+    const joinWebBtns = await screen.findAllByRole("button", { name: /join on web/i });
+    const joinAppBtns = await screen.findAllByRole("button", { name: /join via zoom app/i });
+    const joinWebBtn = joinWebBtns[joinWebBtns.length - 1];
+    const joinAppBtn = joinAppBtns[joinAppBtns.length - 1];
     expect(joinWebBtn).toBeInTheDocument();
     expect(joinAppBtn).toBeInTheDocument();
 
@@ -120,8 +121,8 @@ describe("CourseAdvisorCalendar Component", () => {
     });
 
     // Test Cancel button reverts to Start Class Now
-    const cancelBtn = screen.getByRole("button", { name: /cancel/i });
-    fireEvent.click(cancelBtn);
+    const cancelBtns = screen.getAllByRole("button", { name: /cancel/i });
+    fireEvent.click(cancelBtns[0]);
     expect(screen.getByRole("button", { name: /start class now/i })).toBeInTheDocument();
   });
 });

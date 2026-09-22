@@ -48,10 +48,14 @@ export default function StaffAppMeetWrapper() {
   }, [location, navigate, staffToken, setIsClassActive]);
 
   const handleReturnToDashboard = () => {
+      const sessionId = sessionDetails?.class_schedule_id;
+      if (sessionId) {
+          sessionStorage.setItem("just_completed_class_session_id", String(sessionId));
+      }
       const staffRole = localStorage.getItem("staff_role") || "";
       const redirectPath = staffRole.toLowerCase() === 'course_advisor' || staffRole.toLowerCase() === 'advisor'
-          ? '/staffs/course-advisor/master-class'
-          : '/staffs/tutor/master-class';
+          ? `/staffs/course-advisor/master-class${sessionId ? `?feedback_session=${sessionId}` : ''}`
+          : `/staffs/tutor/master-class${sessionId ? `?feedback_session=${sessionId}` : ''}`;
       navigate(redirectPath);
   };
 
@@ -83,7 +87,7 @@ export default function StaffAppMeetWrapper() {
                 className="w-full bg-[#E83831] hover:bg-red-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-red-500/20 active:scale-95 uppercase tracking-widest text-xs flex items-center justify-center gap-2"
              >
                 <Icon icon="mdi:close-circle" className="w-5 h-5" />
-                End Class & Return to Dashboard
+                End Class & Return to Overview
              </button>
              
              <button

@@ -9,12 +9,16 @@ import {
   TrophyIcon
 } from "@heroicons/react/24/outline";
 import QuestionEditModal from "./QuestionEditModal";
+import { getExamApiBase, getExamBasePath, canManageExams } from "../../../../utils/examAccess";
 
 export default function ExamQuestionList() {
   const { bodyId, subjectId, yearId } = useParams();
   const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
+  const examApiBase = getExamApiBase();
+  const examBasePath = getExamBasePath();
+  const canManage = canManageExams();
 
   const [questions, setQuestions] = useState([]);
   const [examBody, setExamBody] = useState(null);
@@ -64,9 +68,9 @@ export default function ExamQuestionList() {
       // Fetch Context Details via drilldown API
       console.log("[ExamQuestionList] Fetching Meta Data (Bodies, Subjects, Years)");
       const [bodiesRes, subjectsRes, yearsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/admin/exam-data/bodies`, config),
-        axios.get(`${API_BASE_URL}/api/admin/exam-data/subjects?exam_body_id=${bodyId}`, config),
-        axios.get(`${API_BASE_URL}/api/admin/exam-data/years?exam_body_id=${bodyId}&subject_id=${subjectId}`, config)
+        axios.get(`${API_BASE_URL}${examApiBase}/exam-data/bodies`, config),
+        axios.get(`${API_BASE_URL}${examApiBase}/exam-data/subjects?exam_body_id=${bodyId}`, config),
+        axios.get(`${API_BASE_URL}${examApiBase}/exam-data/years?exam_body_id=${bodyId}&subject_id=${subjectId}`, config)
       ]);
 
       const bodies = Array.isArray(bodiesRes.data) ? bodiesRes.data : (bodiesRes.data?.exam_bodies || bodiesRes.data?.data || []);
@@ -91,8 +95,8 @@ export default function ExamQuestionList() {
       });
 
       // Fetch Questions via new drilldown API
-      console.log("[ExamQuestionList] Fetching Past Questions:", `${API_BASE_URL}/api/admin/exam-data/questions?exam_year_id=${yearId}&page=${page}`);
-      const questionsRes = await axios.get(`${API_BASE_URL}/api/admin/exam-data/questions?exam_year_id=${yearId}&page=${page}`, config);
+      console.log("[ExamQuestionList] Fetching Past Questions:", `${API_BASE_URL}${examApiBase}/exam-data/questions?exam_year_id=${yearId}&page=${page}`);
+      const questionsRes = await axios.get(`${API_BASE_URL}${examApiBase}/exam-data/questions?exam_year_id=${yearId}&page=${page}`, config);
       console.log("[ExamQuestionList] Past Questions Response:", questionsRes.data);
       
       const allQuestions = questionsRes.data?.data || questionsRes.data?.questions?.data || [];
@@ -108,7 +112,7 @@ export default function ExamQuestionList() {
     } finally {
       setLoading(false);
     }
-  }, [bodyId, subjectId, yearId, page, API_BASE_URL, token]);
+  }, [bodyId, subjectId, yearId, page, API_BASE_URL, token, examApiBase]);
 
   useEffect(() => {
     fetchData();
@@ -121,18 +125,20 @@ export default function ExamQuestionList() {
         {/* Breadcrumb & Global Edit */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em]">
-            <Link to="/staffs/manage-exams" className="hover:text-[#0F2843] transition-colors">BACK</Link>
+            <Link to={examBasePath} className="hover:text-[#0F2843] transition-colors">BACK</Link>
             <ChevronRightIcon className="w-3 h-3" />
-            <Link to={`/staffs/manage-exams/${bodyId}/subjects`} className="hover:text-[#0F2843] transition-colors">{examBody?.name || "BODY"}</Link>
+            <Link to={`${examBasePath}/${bodyId}/subjects`} className="hover:text-[#0F2843] transition-colors">{examBody?.name || "BODY"}</Link>
             <ChevronRightIcon className="w-3 h-3" />
-            <Link to={`/staffs/manage-exams/${bodyId}/subjects/${subjectId}/years`} className="hover:text-[#0F2843] transition-colors uppercase">{subject?.title || subject?.name || "SUBJECT"}</Link>
+            <Link to={`${examBasePath}/${bodyId}/subjects/${subjectId}/years`} className="hover:text-[#0F2843] transition-colors uppercase">{subject?.title || subject?.name || "SUBJECT"}</Link>
             <ChevronRightIcon className="w-3 h-3" />
             <span className="text-[#0F2843] dark:text-white uppercase font-black">{year?.year || "YEAR"}</span>
           </div>
-          <button className="flex items-center gap-2 px-6 py-3 bg-[#0F2843] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#0F2843]/20 hover:scale-105 transition-all">
-            <PencilSquareIcon className="w-4 h-4" />
-            Edit
-          </button>
+          {canManage && (
+            <button className="flex items-center gap-2 px-6 py-3 bg-[#0F2843] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#0F2843]/20 hover:scale-105 transition-all">
+              <PencilSquareIcon className="w-4 h-4" />
+              Edit
+            </button>
+          )}
         </div>
 
         {/* Header Banner Card */}
@@ -184,13 +190,15 @@ export default function ExamQuestionList() {
                     <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest opacity-80">
                       Answer: <span className="font-black text-[#0F2843] dark:text-white">{q.options?.find(o => o.is_correct)?.label || "N/A"}</span>
                     </span>
-                    <button 
-                      onClick={() => { setSelectedQuestion(q); setIsEditModalOpen(true); }}
-                      className="flex items-center gap-2 px-6 py-3 bg-[#0F2843] text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#0F2843]/20"
-                    >
-                      <PencilSquareIcon className="w-4 h-4" />
-                      Edit
-                    </button>
+                    {canManage && (
+                      <button 
+                        onClick={() => { setSelectedQuestion(q); setIsEditModalOpen(true); }}
+                        className="flex items-center gap-2 px-6 py-3 bg-[#0F2843] text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#0F2843]/20"
+                      >
+                        <PencilSquareIcon className="w-4 h-4" />
+                        Edit
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -289,12 +297,14 @@ export default function ExamQuestionList() {
                 </div>
                 <h3 className="text-xl font-black text-[#0F2843] dark:text-white uppercase">No Questions Found</h3>
                 <p className="text-gray-400 text-xs font-bold mt-2 uppercase tracking-widest">Start by adding a question to this year</p>
-                <button 
-                  onClick={() => navigate("/staffs/manage-exams/question")}
-                  className="mt-8 px-8 py-4 bg-[#0F2843] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl"
-                >
-                  Create New Question
-                </button>
+                {canManage && (
+                  <button 
+                    onClick={() => navigate(`${examBasePath}/question`)}
+                    className="mt-8 px-8 py-4 bg-[#0F2843] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl"
+                  >
+                    Create New Question
+                  </button>
+                )}
               </div>
             )}
 
@@ -303,7 +313,7 @@ export default function ExamQuestionList() {
         )}
       </div>
 
-      {isEditModalOpen && selectedQuestion && (
+      {canManage && isEditModalOpen && selectedQuestion && (
         <QuestionEditModal 
           isOpen={isEditModalOpen}
           onClose={() => {

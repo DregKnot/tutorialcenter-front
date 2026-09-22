@@ -363,7 +363,7 @@ export default function StudentDashboard({ blogs = [] }) {
     type: "liveclass",
     text: "Live Class: Master Mathematics begins in 190 minutes!",
     actionLabel: "Join",
-    actionUrl: "/student/classes"
+    actionUrl: "/student/class-schedule"
   });
 
   highlights.push({
@@ -397,7 +397,7 @@ export default function StudentDashboard({ blogs = [] }) {
   }
 
   return (
-    <DashboardLayout hideRightPanel={true} hideHeader={true}>
+    <DashboardLayout hideRightPanel={true} hideHeader={true} pagetitle="Overview">
       {/* ── No Course Popup ─────────────────────────────────────────────── */}
       {showNoCoursePopup && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">

@@ -189,7 +189,7 @@ export default function TutorDashboard() {
 
   return (
     <>
-    <StaffDashboardLayout pagetitle="Tutor Overview">
+    <StaffDashboardLayout pagetitle="Overview">
       <div className="p-6 max-w-6xl mx-auto w-full min-h-screen pb-20">
 
         {/* Announcement Bar */}
