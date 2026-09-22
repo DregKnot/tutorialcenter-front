@@ -138,7 +138,7 @@ export default function GuardianAuditLogs() {
               className="flex items-center gap-2 px-3.5 py-2 bg-[#09314F] text-white dark:bg-[#C5A97A] dark:text-[#09314F] font-black text-xs rounded-xl shadow-sm transition-all"
             >
               <Icon icon="lucide:arrow-left" className="w-4 h-4" />
-              <span>Dashboard</span>
+              <span>Overview</span>
             </Link>
           </div>
         </div>

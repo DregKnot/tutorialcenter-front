@@ -126,7 +126,7 @@ export default function StaffDashboardLayout({
 
               <div className="flex justify-between items-center">
                 <h1 className="text-[36px] font-black text-[#09314F] dark:text-white tracking-tighter leading-none uppercase">
-                  {pagetitle || "Dashboard"}
+                  {pagetitle || "Overview"}
                 </h1>
                 <div className="relative z-50">
                   <div

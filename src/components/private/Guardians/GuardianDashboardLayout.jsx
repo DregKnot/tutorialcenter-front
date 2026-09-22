@@ -7,7 +7,7 @@ import TC_logo from "../../../assets/images/tutorial_logo.webp";
 
 export default function GuardianDashboardLayout({
   children,
-  pageTitle = "Dashboard",
+  pageTitle = "Overview",
   guardianData = null,
 }) {
   const navigate = useNavigate();

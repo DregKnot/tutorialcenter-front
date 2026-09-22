@@ -46,7 +46,7 @@ export default function StaffMobileHeader({
 
         {!hideTitle && (
           <h1 className="text-sm font-semibold tracking-wide">
-            {pagetitle || "STAFF DASHBOARD"}
+            {pagetitle || "OVERVIEW"}
           </h1>
         )}
 
