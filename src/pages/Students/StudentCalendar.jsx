@@ -98,20 +98,20 @@ export default function StudentCalendar() {
 
   const handleJoinClass = useCallback((s) => {
     if (!s) return;
-    const link = s.class_link || s.recording_link;
-    if (link && typeof link === "string" && (link.startsWith("http://") || link.startsWith("https://"))) {
-      window.open(link, "_blank", "noopener,noreferrer");
-      if (s.id && token) {
+    if (s.id) {
+      if (token) {
         axios.post(
           `${API_BASE_URL}/api/students/classes/attendance/join`,
           { class_session_id: s.id },
           { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
         ).catch(() => {});
       }
+      navigate(`/zoom/masterclass/class/${s.id}`);
       return;
     }
-    if (s.id) {
-      navigate(`/zoom/masterclass/class/${s.id}`);
+    const link = s.class_link || s.recording_link;
+    if (link && typeof link === "string" && (link.startsWith("http://") || link.startsWith("https://"))) {
+      window.open(link, "_blank", "noopener,noreferrer");
     }
   }, [API_BASE_URL, navigate, token]);
 
@@ -891,7 +891,7 @@ export default function StudentCalendar() {
                             </a>
                           )
                         ) : (
-                          s.class_link ? (
+                          (s.class_link || s.id) ? (
                             <button
                               onClick={() => {
                                 setSelectedDateModal(null);
@@ -1004,7 +1004,7 @@ export default function StudentCalendar() {
                   </a>
                 )
               ) : (
-                selectedSession.class_link && (
+                (selectedSession.class_link || selectedSession.id) && (
                   <button
                     onClick={() => {
                       const sessionToJoin = selectedSession;

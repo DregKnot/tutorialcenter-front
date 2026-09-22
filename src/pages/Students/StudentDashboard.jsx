@@ -363,7 +363,7 @@ export default function StudentDashboard({ blogs = [] }) {
     type: "liveclass",
     text: "Live Class: Master Mathematics begins in 190 minutes!",
     actionLabel: "Join",
-    actionUrl: "/student/classes"
+    actionUrl: "/student/class-schedule"
   });
 
   highlights.push({

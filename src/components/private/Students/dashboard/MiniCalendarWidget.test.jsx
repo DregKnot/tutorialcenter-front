@@ -1,12 +1,30 @@
 /* eslint-disable testing-library/no-node-access */
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import MiniCalendarWidget from "./MiniCalendarWidget";
-import axios from "axios";
-import { BrowserRouter } from "react-router-dom";
 
-// Mock axios
-jest.mock("axios");
+const mockNavigate = jest.fn();
+
+jest.mock("react-router-dom", () => ({
+  useNavigate: () => mockNavigate,
+}), { virtual: true });
+
+jest.mock("axios", () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+  },
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn(),
+}));
+
+jest.mock("@iconify/react", () => ({
+  Icon: ({ icon, className }) => <span data-testid={`icon-${icon}`} className={className} />,
+}));
 
 // Mock AuthContext
 jest.mock("../../../../context/AuthContext", () => ({
@@ -16,6 +34,9 @@ jest.mock("../../../../context/AuthContext", () => ({
   }),
 }));
 
+import axios from "axios";
+import MiniCalendarWidget from "./MiniCalendarWidget";
+
 describe("MiniCalendarWidget Component", () => {
   const todayStr = new Date().toISOString().split("T")[0];
 
@@ -24,8 +45,8 @@ describe("MiniCalendarWidget Component", () => {
       id: 99,
       title: "Chemistry Masterclass",
       session_date: todayStr,
-      starts_at: "10:00:00",
-      ends_at: "11:30:00",
+      starts_at: "00:00:00",
+      ends_at: "23:59:59",
       class_link: "https://us05web.zoom.us/j/999888777?pwd=abc",
       // Crucial test case: subject is an Eloquent object from Laravel
       subject: {
@@ -51,11 +72,7 @@ describe("MiniCalendarWidget Component", () => {
   });
 
   test("renders session card with object subject without crashing", async () => {
-    render(
-      <BrowserRouter>
-        <MiniCalendarWidget />
-      </BrowserRouter>
-    );
+    render(<MiniCalendarWidget />);
 
     await waitFor(() => {
       expect(screen.getByText("Chemistry Masterclass")).toBeInTheDocument();
@@ -63,11 +80,7 @@ describe("MiniCalendarWidget Component", () => {
   });
 
   test("opens SessionModal on card click and safely renders subject name as string", async () => {
-    render(
-      <BrowserRouter>
-        <MiniCalendarWidget />
-      </BrowserRouter>
-    );
+    render(<MiniCalendarWidget />);
 
     await waitFor(() => {
       expect(screen.getByText("Chemistry Masterclass")).toBeInTheDocument();
@@ -86,15 +99,10 @@ describe("MiniCalendarWidget Component", () => {
     expect(screen.getByText("Join Live Classroom")).toBeInTheDocument();
   });
 
-  test("clicking Join Live Classroom in modal opens link and pings attendance without white screen", async () => {
-    const originalOpen = window.open;
-    window.open = jest.fn();
+  test("clicking Join Live Classroom in modal joins in web and pings attendance without white screen", async () => {
+    mockNavigate.mockClear();
 
-    render(
-      <BrowserRouter>
-        <MiniCalendarWidget />
-      </BrowserRouter>
-    );
+    render(<MiniCalendarWidget />);
 
     await waitFor(() => {
       expect(screen.getByText("Chemistry Masterclass")).toBeInTheDocument();
@@ -110,18 +118,12 @@ describe("MiniCalendarWidget Component", () => {
     const joinBtn = screen.getByText("Join Live Classroom");
     fireEvent.click(joinBtn);
 
-    expect(window.open).toHaveBeenCalledWith(
-      "https://us05web.zoom.us/j/999888777?pwd=abc",
-      "_blank",
-      "noopener,noreferrer"
-    );
+    expect(mockNavigate).toHaveBeenCalledWith("/zoom/masterclass/class/99");
 
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining("/api/students/classes/attendance/join"),
       { class_session_id: 99 },
       expect.any(Object)
     );
-
-    window.open = originalOpen;
   });
 });

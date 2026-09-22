@@ -1,12 +1,31 @@
 /* eslint-disable testing-library/no-node-access */
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import StudentCalendar from "./StudentCalendar";
-import axios from "axios";
-import { BrowserRouter } from "react-router-dom";
 
-// Mock axios
-jest.mock("axios");
+const mockNavigate = jest.fn();
+
+jest.mock("react-router-dom", () => ({
+  useNavigate: () => mockNavigate,
+}), { virtual: true });
+
+jest.mock("axios", () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+  },
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn(),
+}));
+
+// Mock Iconify Icon
+jest.mock("@iconify/react", () => ({
+  Icon: ({ icon, className }) => <span data-testid={`icon-${icon}`} className={className} />,
+}));
 
 // Mock AuthContext
 jest.mock("../../context/AuthContext", () => ({
@@ -23,10 +42,8 @@ jest.mock("../../components/private/Students/DashboardLayout.jsx", () => {
   };
 });
 
-// Mock Iconify Icon
-jest.mock("@iconify/react", () => ({
-  Icon: ({ icon, className }) => <span data-testid={`icon-${icon}`} className={className} />,
-}));
+import axios from "axios";
+import StudentCalendar from "./StudentCalendar";
 
 describe("StudentCalendar Component", () => {
   const today = new Date();
@@ -63,7 +80,7 @@ describe("StudentCalendar Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     axios.get.mockImplementation((url) => {
-      if (url.includes("/api/students/calendar/schedule")) {
+      if (url.includes("/api/students/class/schedule") || url.includes("/api/students/calendar/schedule")) {
         return Promise.resolve({
           data: {
             sessions: mockSessions,
@@ -76,11 +93,7 @@ describe("StudentCalendar Component", () => {
   });
 
   test("renders calendar and displays class titles safely with object subject", async () => {
-    render(
-      <BrowserRouter>
-        <StudentCalendar />
-      </BrowserRouter>
-    );
+    render(<StudentCalendar />);
 
     await waitFor(() => {
       expect(screen.getByText("Advanced Physics Seminar")).toBeInTheDocument();
@@ -88,11 +101,7 @@ describe("StudentCalendar Component", () => {
   });
 
   test("clicking a calendar cell opens selectedDateModal and safely renders object subject name without crashing", async () => {
-    render(
-      <BrowserRouter>
-        <StudentCalendar />
-      </BrowserRouter>
-    );
+    render(<StudentCalendar />);
 
     // Wait for the session to be visible in the month grid
     await waitFor(() => {
@@ -116,15 +125,10 @@ describe("StudentCalendar Component", () => {
     expect(screen.getByText("Join Class Now")).toBeInTheDocument();
   });
 
-  test("clicking Join Class Now in modal triggers attendance recording and opens meeting window", async () => {
-    const originalOpen = window.open;
-    window.open = jest.fn();
+  test("clicking Join Class Now in modal triggers attendance recording and navigates to in-web classroom", async () => {
+    mockNavigate.mockClear();
 
-    render(
-      <BrowserRouter>
-        <StudentCalendar />
-      </BrowserRouter>
-    );
+    render(<StudentCalendar />);
 
     await waitFor(() => {
       expect(screen.getByText("Advanced Physics Seminar")).toBeInTheDocument();
@@ -142,27 +146,17 @@ describe("StudentCalendar Component", () => {
     const joinBtn = screen.getByText("Join Class Now");
     fireEvent.click(joinBtn);
 
-    expect(window.open).toHaveBeenCalledWith(
-      "https://zoom.us/j/1234567890",
-      "_blank",
-      "noopener,noreferrer"
-    );
+    expect(mockNavigate).toHaveBeenCalledWith("/zoom/masterclass/class/101");
 
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining("/api/students/classes/attendance/join"),
       { class_session_id: 101 },
       expect.any(Object)
     );
-
-    window.open = originalOpen;
   });
 
   test("closing selectedDateModal dismisses popup cleanly", async () => {
-    render(
-      <BrowserRouter>
-        <StudentCalendar />
-      </BrowserRouter>
-    );
+    render(<StudentCalendar />);
 
     await waitFor(() => {
       expect(screen.getByText("Advanced Physics Seminar")).toBeInTheDocument();

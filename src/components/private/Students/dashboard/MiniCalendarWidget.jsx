@@ -81,21 +81,21 @@ function SessionModal({ session, onClose, token, API_BASE_URL }) {
       e.stopPropagation();
       e.preventDefault();
     }
-    const link = session.class_link || session.recording_link;
-    if (link && typeof link === "string" && (link.startsWith("http://") || link.startsWith("https://"))) {
-      window.open(link, "_blank", "noopener,noreferrer");
-      if (session.id && token) {
+    if (session?.id) {
+      if (token) {
         axios.post(
           `${API_BASE_URL}/api/students/classes/attendance/join`,
           { class_session_id: session.id },
           { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
         ).catch(() => {});
       }
+      navigate(`/zoom/masterclass/class/${session.id}`);
       onClose();
       return;
     }
-    if (session.id) {
-      navigate(`/zoom/masterclass/class/${session.id}`);
+    const link = session?.class_link || session?.recording_link;
+    if (link && typeof link === "string" && (link.startsWith("http://") || link.startsWith("https://"))) {
+      window.open(link, "_blank", "noopener,noreferrer");
       onClose();
     }
   };
@@ -195,20 +195,20 @@ function SessionCard({ session, onClick, token, API_BASE_URL }) {
   const handlePillClick = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    const link = session.class_link || session.recording_link;
-    if (link && typeof link === "string" && (link.startsWith("http://") || link.startsWith("https://"))) {
-      window.open(link, "_blank", "noopener,noreferrer");
-      if (session.id && token) {
+    if (session?.id) {
+      if (token) {
         axios.post(
           `${API_BASE_URL}/api/students/classes/attendance/join`,
           { class_session_id: session.id },
           { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
         ).catch(() => {});
       }
+      navigate(`/zoom/masterclass/class/${session.id}`);
       return;
     }
-    if (session.id) {
-      navigate(`/zoom/masterclass/class/${session.id}`);
+    const link = session?.class_link || session?.recording_link;
+    if (link && typeof link === "string" && (link.startsWith("http://") || link.startsWith("https://"))) {
+      window.open(link, "_blank", "noopener,noreferrer");
     }
   };
 

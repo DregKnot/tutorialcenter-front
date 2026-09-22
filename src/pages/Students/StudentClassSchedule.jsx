@@ -186,14 +186,22 @@ export default function StudentClassSchedule() {
   const handleJoinClass = (e, sessionObj) => {
     e.stopPropagation();
     e.preventDefault();
+    if (!sessionObj) return;
     const link = sessionObj?.recording_link || sessionObj?.class_link;
-    if (!link) return;
+    if (!link && !sessionObj?.id) return;
     
-    const isZoom = link.includes("zoom.us") || link.includes("zoom");
+    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
 
-    if (isZoom) {
+    if (isZoom && sessionObj?.id) {
+      if (authToken) {
+        axios.post(
+          `${API_BASE_URL}/api/students/classes/attendance/join`,
+          { class_session_id: sessionObj.id },
+          { headers: { Authorization: `Bearer ${authToken}`, Accept: "application/json" } }
+        ).catch(() => {});
+      }
       navigate(`/zoom/masterclass/class/${sessionObj.id}`);
-    } else {
+    } else if (link) {
       // Open the window DIRECTLY in the click handler to bypass popup blockers for Google Meet
       window.activeClassPopup = window.open(link, '_blank');
       navigate('/student/meet', {
