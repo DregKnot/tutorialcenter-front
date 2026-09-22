@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import StaffDashboardLayout from "../DashboardLayout.jsx";
+import { getExamApiBase, getExamBasePath } from "../../../../utils/examAccess";
 import { 
   // ArrowLeftIcon,
   // BookOpenIcon,
@@ -14,6 +15,8 @@ export default function ExamYearList() {
   const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
+  const examApiBase = getExamApiBase();
+  const examBasePath = getExamBasePath();
 
   const [years, setYears] = useState([]);
   const [examBody, setExamBody] = useState(null);
@@ -28,9 +31,9 @@ export default function ExamYearList() {
       console.log("[ExamYearList] Fetching Bodies, Subjects, and Years via new drilldown API");
       
       const [bodiesRes, subjectsRes, yearsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/admin/exam-data/bodies`, config),
-        axios.get(`${API_BASE_URL}/api/admin/exam-data/subjects?exam_body_id=${bodyId}`, config),
-        axios.get(`${API_BASE_URL}/api/admin/exam-data/years?exam_body_id=${bodyId}&subject_id=${subjectId}`, config)
+        axios.get(`${API_BASE_URL}${examApiBase}/exam-data/bodies`, config),
+        axios.get(`${API_BASE_URL}${examApiBase}/exam-data/subjects?exam_body_id=${bodyId}`, config),
+        axios.get(`${API_BASE_URL}${examApiBase}/exam-data/years?exam_body_id=${bodyId}&subject_id=${subjectId}`, config)
       ]);
 
       const bodies = Array.isArray(bodiesRes.data) ? bodiesRes.data : (bodiesRes.data?.exam_bodies || bodiesRes.data?.data || []);
@@ -58,7 +61,7 @@ export default function ExamYearList() {
           if (!totalCount) {
             try {
               const countRes = await axios.get(
-                `${API_BASE_URL}/api/admin/exam-data/questions?exam_year_id=${y.id}&page=1`,
+                `${API_BASE_URL}${examApiBase}/exam-data/questions?exam_year_id=${y.id}&page=1`,
                 config
               );
               totalCount = 
@@ -88,7 +91,7 @@ export default function ExamYearList() {
     } finally {
       setLoading(false);
     }
-  }, [bodyId, subjectId, API_BASE_URL, token]);
+  }, [bodyId, subjectId, API_BASE_URL, token, examApiBase]);
 
   useEffect(() => {
     fetchData();
@@ -118,9 +121,9 @@ export default function ExamYearList() {
         
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] mb-8">
-          <Link to="/staffs/manage-exams" className="hover:text-[#0F2843] transition-colors">BACK</Link>
+          <Link to={examBasePath} className="hover:text-[#0F2843] transition-colors">BACK</Link>
           <ChevronRightIcon className="w-3 h-3" />
-          <Link to={`/staffs/manage-exams/${bodyId}/subjects`} className="hover:text-[#0F2843] transition-colors">{examBody?.name || "BODY"}</Link>
+          <Link to={`${examBasePath}/${bodyId}/subjects`} className="hover:text-[#0F2843] transition-colors">{examBody?.name || "BODY"}</Link>
           <ChevronRightIcon className="w-3 h-3" />
           <span className="text-[#0F2843] dark:text-white uppercase">{subject?.title || subject?.name || "SUBJECT"}</span>
         </div>
@@ -152,7 +155,7 @@ export default function ExamYearList() {
             {years.map((year) => (
               <div 
                 key={year.id}
-                onClick={() => navigate(`/staffs/manage-exams/${bodyId}/subjects/${subjectId}/years/${year.id}/questions`)}
+                onClick={() => navigate(`${examBasePath}/${bodyId}/subjects/${subjectId}/years/${year.id}/questions`)}
                 className="bg-white dark:bg-gray-800 rounded-[32px] overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-all group cursor-pointer flex flex-col"
               >
                 {/* Image Container */}

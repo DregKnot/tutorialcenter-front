@@ -253,7 +253,10 @@ function App() {
               <Route path="/staffs/course-advisor/master-class" element={<CourseAdvisorMasterClass />} />
               <Route path="/staffs/course-advisor/student-schedule" element={<StaffStudentSchedule />} />
               <Route path="/staffs/course-advisor/calendar" element={<CourseAdvisorCalendar />} />
-              <Route path="/staffs/course-advisor/exams" element={<CourseAdvisorComingSoon title="Exams" />} />
+              <Route path="/staffs/course-advisor/exams" element={<ExamManagement />} />
+              <Route path="/staffs/course-advisor/exams/:bodyId/subjects" element={<ExamSubjectList />} />
+              <Route path="/staffs/course-advisor/exams/:bodyId/subjects/:subjectId/years" element={<ExamYearList />} />
+              <Route path="/staffs/course-advisor/exams/:bodyId/subjects/:subjectId/years/:yearId/questions" element={<ExamQuestionList />} />
               <Route path="/staffs/course-advisor/settings" element={<CourseAdvisorComingSoon title="Settings" />} />
               <Route path="/staffs/staff-registration" element={<StaffRegistration />} />
               <Route path="/staffs/manage-staffs" element={<StaffManagement />} />

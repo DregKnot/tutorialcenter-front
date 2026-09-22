@@ -362,39 +362,49 @@ export default function CourseAdvisorMasterClass() {
     navigate(`/classroom/${session.id}`);
   };
 
+  // Join through the in-app Zoom SDK instead of redirecting to the external
+  // Zoom web/app link, which asks the advisor to sign in.
   const handleLaunchZoomApp = (session) => {
-    if (!session?.class_link) return;
-    navigate('/staffs/meet/app', {
-      state: {
-        class_link: session.class_link,
-        class_schedule_id: session.id,
-        topic: session.class?.title || session.title || 'Master Class'
-      }
-    });
+    if (!session?.id) return;
+    navigate(`/classroom/${session.id}`);
   };
 
-  const handleOpenClassRoom = (cls) => {
-    // Locate upcoming or active session for this class
-    const targetSession = 
-      flattenedSessions.find(s => String(s.class_id || s.class?.id) === String(cls.id) && !isPast(s)) ||
-      flattenedSessions.find(s => String(s.class_id || s.class?.id) === String(cls.id)) ||
-      (scheduleData.next_class && String(scheduleData.next_class.class_id || scheduleData.next_class.class?.id) === String(cls.id) ? scheduleData.next_class : null);
+  // Resolve a session id for a class so the Room button can launch the in-app
+  // classroom. The Zoom signature endpoint falls back to the class-level room,
+  // so any session works; prefer the nearest upcoming one, else the latest.
+  const getClassSessionId = (cls) => {
+    const sessions = (Array.isArray(cls?.schedules) ? cls.schedules : [])
+      .flatMap((schedule) => (Array.isArray(schedule?.sessions) ? schedule.sessions : []));
 
-    if (targetSession) {
-      handleOpenLaunchModal(targetSession);
-    } else {
-      // Synthetic proxy session so advisor launches the in-app SDK wrapper without being booted externally
-      handleOpenLaunchModal({
-        id: cls.id,
-        class_id: cls.id,
-        class: cls,
-        title: cls.title,
-        class_link: cls.zoom_start_url || cls.zoom_join_url,
-        session_date: new Date().toISOString().split("T")[0],
-        starts_at: "Live",
-        ends_at: "Classroom",
-      });
+    if (sessions.length === 0) return null;
+
+    const toTime = (session) => {
+      const date = session.session_date ? String(session.session_date).slice(0, 10) : "";
+      const time = session.starts_at ? String(session.starts_at).slice(0, 8) : "00:00:00";
+      const parsed = new Date(`${date}T${time}`).getTime();
+      return Number.isNaN(parsed) ? 0 : parsed;
+    };
+
+    const now = Date.now();
+    const upcoming = sessions
+      .filter((session) => toTime(session) >= now)
+      .sort((a, b) => toTime(a) - toTime(b))[0];
+
+    if (upcoming) return upcoming.id;
+
+    const latest = [...sessions].sort((a, b) => toTime(b) - toTime(a))[0];
+    return latest?.id ?? null;
+  };
+
+  const handleLaunchClassRoom = (cls) => {
+    const sessionId = getClassSessionId(cls);
+    if (sessionId) {
+      navigate(`/classroom/${sessionId}`);
+      return;
     }
+    // Fallback: no sessions on this class, use the configured room link.
+    const link = cls?.zoom_start_url || cls?.zoom_join_url;
+    if (link) window.open(link, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -732,10 +742,10 @@ export default function CourseAdvisorMasterClass() {
                           <span>View Sessions</span>
                         </button>
 
-                        {(cls.zoom_start_url || cls.zoom_join_url || flattenedSessions.some(s => String(s.class_id || s.class?.id) === String(cls.id))) ? (
+                        {(cls.zoom_start_url || cls.zoom_join_url || flattenedSessions.some(s => String(s.class_id || s.class?.id) === String(cls.id)) || getClassSessionId(cls)) ? (
                           <button
                             type="button"
-                            onClick={() => handleOpenClassRoom(cls)}
+                            onClick={() => handleLaunchClassRoom(cls)}
                             className="px-4 py-2.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                             title="Join Classroom (In-App SDK Wrapper)"
                           >

@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import StaffDashboardLayout from "../DashboardLayout.jsx";
 import { stripHtmlAndDecode } from "../../../../utils/textUtils";
+import { getExamApiBase, getExamBasePath } from "../../../../utils/examAccess";
 import { 
   // ArrowLeftIcon,
   // BookOpenIcon,
@@ -15,13 +16,15 @@ export default function ExamSubjectList() {
   const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
+  const examApiBase = getExamApiBase();
+  const examBasePath = getExamBasePath();
 
   const [subjects, setSubjects] = useState([]);
   const [examBody, setExamBody] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const handleSelectSubject = (subjectId) => {
-    navigate(`/staffs/manage-exams/${bodyId}/subjects/${subjectId}/years`);
+    navigate(`${examBasePath}/${bodyId}/subjects/${subjectId}/years`);
   };
 
   // Fetch Exam Body Details
@@ -29,8 +32,8 @@ export default function ExamSubjectList() {
     setLoading(true);
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      console.log("[ExamSubjectList] Fetching Exam Bodies:", `${API_BASE_URL}/api/admin/exam-data/bodies`);
-      const res = await axios.get(`${API_BASE_URL}/api/admin/exam-data/bodies`, config);
+      console.log("[ExamSubjectList] Fetching Exam Bodies:", `${API_BASE_URL}${examApiBase}/exam-data/bodies`);
+      const res = await axios.get(`${API_BASE_URL}${examApiBase}/exam-data/bodies`, config);
       const bodies = Array.isArray(res.data) ? res.data : (res.data?.exam_bodies || res.data?.data || []);
       const currentBody = bodies.find(b => String(b.id) === String(bodyId));
       setExamBody(currentBody);
@@ -39,7 +42,7 @@ export default function ExamSubjectList() {
     } finally {
       setLoading(false);
     }
-  }, [bodyId, API_BASE_URL, token]);
+  }, [bodyId, API_BASE_URL, token, examApiBase]);
 
   useEffect(() => {
     fetchBody();
@@ -51,8 +54,8 @@ export default function ExamSubjectList() {
       setLoading(true);
       try {
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        console.log("[ExamSubjectList] Fetching Subjects via drilldown API:", `${API_BASE_URL}/api/admin/exam-data/subjects?exam_body_id=${bodyId}`);
-        const res = await axios.get(`${API_BASE_URL}/api/admin/exam-data/subjects?exam_body_id=${bodyId}`, config);
+        console.log("[ExamSubjectList] Fetching Subjects via drilldown API:", `${API_BASE_URL}${examApiBase}/exam-data/subjects?exam_body_id=${bodyId}`);
+        const res = await axios.get(`${API_BASE_URL}${examApiBase}/exam-data/subjects?exam_body_id=${bodyId}`, config);
         
         const subjectsData = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.subjects || []);
         
@@ -78,7 +81,7 @@ export default function ExamSubjectList() {
     };
 
     fetchSubjects();
-  }, [bodyId, API_BASE_URL, token]);
+  }, [bodyId, API_BASE_URL, token, examApiBase]);
 
   return (
     <StaffDashboardLayout pagetitle="Exam Subjects">
@@ -86,7 +89,7 @@ export default function ExamSubjectList() {
         
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] mb-8">
-          <Link to="/staffs/manage-exams" className="hover:text-[#0F2843] transition-colors">BACK</Link>
+          <Link to={examBasePath} className="hover:text-[#0F2843] transition-colors">BACK</Link>
           <ChevronRightIcon className="w-3 h-3" />
           <span className="text-[#0F2843] dark:text-white">{examBody?.name || "EXAM BODY"}</span>
         </div>
