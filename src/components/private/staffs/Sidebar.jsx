@@ -252,7 +252,10 @@ const courseAdvisorNavSections = [
 const moderatorNavSections = [
   {
     title: null,
-    items: [{ label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" }],
+    items: [
+      { label: "Exams", icon: ClipboardDocumentCheckIcon, destination: "/staffs/manage-exams" },
+      { label: "Payments", icon: CreditCardIcon, destination: "/staffs/payments" },
+    ],
   },
 ];
 

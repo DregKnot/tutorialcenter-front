@@ -53,7 +53,7 @@ const Paystack = ({
     const handler = window.PaystackPop.setup({
       key: paystackPublicKey,
       email: email,
-      amount: amount * 100,
+      amount: Math.round(Number(amount) * 100),
       currency: "NGN",
       ref: reference,
       metadata: metadata,

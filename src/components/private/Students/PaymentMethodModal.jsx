@@ -1,5 +1,6 @@
 import React from "react";
 import Paystack from "../../Paystack";
+import BankTransferPayment from "./BankTransferPayment";
 
 export default function PaymentMethodModal({ 
   isOpen, 
@@ -8,6 +9,9 @@ export default function PaymentMethodModal({
   amount, 
   email,
   metadata = {},
+  bankEnrollments = [],
+  studentId,
+  onBankSettled,
   selectedMethod, 
   setSelectedMethod, 
   onContinue, 
@@ -26,7 +30,7 @@ export default function PaymentMethodModal({
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-[40px] p-8 md:p-10 w-[90%] max-w-md shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative bg-white rounded-[40px] p-8 md:p-10 w-[90%] max-w-md max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200">
         <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors font-bold text-gray-400">✕</button>
         <h2 className="text-2xl font-black text-[#0F2843] mb-2 text-center uppercase tracking-tighter italic">Payment Method</h2>
         <p className="text-gray-400 text-[10px] font-bold text-center uppercase tracking-widest mb-8">Choose your preferred gateway</p>
@@ -43,7 +47,7 @@ export default function PaymentMethodModal({
         </div>
 
         <div className="flex flex-col space-y-4 mb-10">
-          {["Paystack"].map((item) => {
+          {["Paystack", "Bank Transfer"].map((item) => {
             const isSelected = selectedMethod === item;
             return (
               <button
@@ -78,6 +82,12 @@ export default function PaymentMethodModal({
             metadata={metadata}
             onSuccess={onContinue}
             onClose={() => {}}
+          />
+        ) : selectedMethod === "Bank Transfer" ? (
+          <BankTransferPayment
+            enrollments={bankEnrollments}
+            studentId={studentId}
+            onAllSettled={onBankSettled}
           />
         ) : (
           <button 
