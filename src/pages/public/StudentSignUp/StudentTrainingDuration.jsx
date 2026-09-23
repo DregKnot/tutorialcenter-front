@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import TC_logo from "../../../assets/images/tutorial_logo.webp";
@@ -23,7 +23,8 @@ export const StudentTrainingDuration = () => {
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [courses, setCourses] = useState([]);
   const [selectedDurations, setSelectedDurations] = useState({});
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
+  const submitting = useRef(false);
 
   /* ================= HELPERS ================= */
   const calculatePrice = useCallback((basePrice, months) => {
@@ -46,11 +47,16 @@ export const StudentTrainingDuration = () => {
 
         const res = await axios.get(`${API_BASE_URL}/api/courses`);
         const allCourses = res?.data?.courses || res?.data?.data || [];
-        const activeCourses = allCourses.filter((c) => selectedTraining.includes(c.id));
+        const selectedIds = new Set(selectedTraining.map(String));
+        const activeCourses = allCourses.filter((c) => selectedIds.has(String(c.id)));
 
         if (activeCourses.length === 0) {
           navigate("/register/student/training/selection");
           return;
+        }
+
+        if (activeCourses.length !== selectedIds.size) {
+          throw new Error("Some selected courses are unavailable. Go back and review your course selection.");
         }
 
         setCourses(activeCourses);
@@ -75,6 +81,7 @@ export const StudentTrainingDuration = () => {
         setSelectedDurations(initMap);
       } catch (err) {
         console.error("[StudentTrainingDuration] Failed to load courses:", err);
+        setError(err.response?.data?.message || err.message || "Unable to load courses. Please refresh and try again.");
       } finally {
         setLoadingCourses(false);
       }
@@ -85,6 +92,7 @@ export const StudentTrainingDuration = () => {
 
   /* ================= DURATION CHANGE ================= */
   const handleDurationChange = (course, durationKey) => {
+    if (submitting.current) return;
     const option = DURATION_OPTIONS.find((d) => d.key === durationKey);
     if (!option) return;
 
@@ -108,26 +116,80 @@ export const StudentTrainingDuration = () => {
   }, [selectedDurations]);
 
   /* ================= CONTINUE ================= */
-  const handleContinue = () => {
-    const valid = courses.every((course) => selectedDurations[course.id]);
+  const handleContinue = async () => {
+    if (submitting.current || loadingCourses) return;
+    const valid = courses.length > 0 && courses.every((course) =>
+      DURATION_OPTIONS.some(option => option.key === selectedDurations[course.id]?.duration)
+    );
 
     if (!valid) {
-      setError(true);
+      setError("Please choose a duration plan for all your selected examination courses.");
       return;
     }
 
-    setError(false);
+    const studentData = getStudentData();
+    if (!Number.isInteger(Number(studentData?.id)) || Number(studentData.id) <= 0) {
+      setError("Your student registration could not be found. Please return to registration before continuing.");
+      return;
+    }
+
+    submitting.current = true;
+    setError("");
     setLoading(true);
+    let currentCourseTitle = "";
 
     try {
-      updateStudentData({
-        selectedDurations,
-      });
+      const durations = Object.fromEntries(courses.map(course => [course.id, { ...selectedDurations[course.id] }]));
+      const enrollments = {};
+
+      // Save each confirmed result so a later course failure does not lose progress.
+      // Re-submit on retry: the backend reuses pending enrollments and refreshes prices.
+      for (const course of courses) {
+        currentCourseTitle = course.title || `Course #${course.id}`;
+        const duration = durations[course.id];
+        const response = await axios.post(`${API_BASE_URL}/api/course/enrollment`, {
+          student_id: Number(studentData.id),
+          course_id: Number(course.id),
+          billing_cycle: duration.duration,
+        }, {
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          timeout: 30000,
+        });
+
+        const enrollment = response.data?.enrollment;
+        const cost = Number(enrollment?.cost);
+        if (![200, 201].includes(response.status) || response.data?.success !== true ||
+            !Number.isInteger(Number(enrollment?.id)) || Number(enrollment.id) <= 0 ||
+            Number(enrollment.student_id) !== Number(studentData.id) ||
+            Number(enrollment.course_id) !== Number(course.id) ||
+            enrollment.billing_cycle !== duration.duration || enrollment.status !== "pending" ||
+            enrollment.cost == null || enrollment.cost === "" || !Number.isFinite(cost) || cost <= 0) {
+          throw new Error(response.data?.message && response.data?.success !== true
+            ? response.data.message : "The server did not return a valid pending enrollment and price. Please retry.");
+        }
+
+        enrollments[course.id] = {
+          course_enrollment_id: Number(enrollment.id),
+          student_id: Number(enrollment.student_id),
+          course_id: Number(enrollment.course_id),
+          billing_cycle: enrollment.billing_cycle,
+          cost,
+          status: enrollment.status,
+        };
+        durations[course.id] = { ...duration, price: cost, course_enrollment_id: Number(enrollment.id) };
+        if (!updateStudentData({ selectedDurations: durations, selectedEnrollments: enrollments })) {
+          throw new Error("Unable to save your enrollment details in this browser. Please allow site storage and retry.");
+        }
+        setSelectedDurations({ ...durations });
+      }
 
       navigate("/register/student/training/payment");
     } catch (err) {
-      console.error("[StudentTrainingDuration] Failed to save durations:", err);
+      const validationMessage = Object.values(err.response?.data?.errors || {}).flat().join(" ");
+      const message = validationMessage || err.response?.data?.message || err.message || "Unable to prepare your enrollment. Please retry.";
+      setError(`${currentCourseTitle ? `${currentCourseTitle}: ` : ""}${message}`);
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   };
@@ -167,6 +229,7 @@ export const StudentTrainingDuration = () => {
               type="button"
               onClick={() => navigate("/register/student/subject/selection")}
               aria-label="Go back to Subject Selection"
+              disabled={loading}
               className="absolute left-0 p-2.5 sm:p-3 bg-white hover:bg-gray-50 text-[#09314F] rounded-2xl shadow-sm border border-gray-200/80 transition-all active:scale-90"
             >
               <ChevronLeftIcon className="h-5 w-5 stroke-[2.5]" />
@@ -217,6 +280,7 @@ export const StudentTrainingDuration = () => {
                             key={opt.key}
                             type="button"
                             onClick={() => handleDurationChange(course, opt.key)}
+                            disabled={loading}
                             className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-between text-center min-h-[90px] active:scale-[0.98] ${
                               isSelected
                                 ? "border-[#09314F] bg-blue-50/50 shadow-md shadow-[#09314F]/10 ring-1 ring-[#09314F]"
@@ -250,9 +314,9 @@ export const StudentTrainingDuration = () => {
 
           {/* VALIDATION ERROR */}
           {error && (
-            <div className="p-3 mb-6 bg-red-50 border border-red-200 rounded-xl text-center">
+            <div role="alert" className="p-3 mb-6 bg-red-50 border border-red-200 rounded-xl text-center">
               <p className="text-red-600 text-xs sm:text-sm font-bold">
-                Please choose a duration plan for all your selected examination courses.
+                {error}
               </p>
             </div>
           )}
@@ -261,7 +325,7 @@ export const StudentTrainingDuration = () => {
           <div className="bg-white rounded-3xl p-5 shadow-[0_10px_35px_rgba(9,49,79,0.06)] border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-center sm:text-left">
               <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block">
-                Total Investment
+                Estimated Total
               </span>
               <span className="text-2xl sm:text-3xl font-black text-[#09314F] font-mono">
                 ₦{totalAmount.toLocaleString()}
@@ -278,7 +342,7 @@ export const StudentTrainingDuration = () => {
                   : "bg-gradient-to-r from-[#09314F] via-[#0c4066] to-[#E83831] hover:shadow-[#09314F]/25 hover:brightness-105"
               }`}
             >
-              {loading ? "Proceeding..." : "Proceed to Payment"}
+              {loading ? "Preparing Enrollment..." : "Proceed to Payment"}
             </button>
           </div>
         </div>

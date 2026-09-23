@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import TC_logo from "../../../assets/images/tutorial_logo.webp";
@@ -14,6 +14,9 @@ export default function GuardianTrainingPayment() {
   const [gateway, setGateway] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+  const [pendingPayment, setPendingPayment] = useState(null);
+  const verificationLock = useRef(false);
 
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -116,20 +119,35 @@ export default function GuardianTrainingPayment() {
 
   /* ================= PAYSTACK SUCCESS ================= */
   const handlePaystackSuccess = async (response) => {
+    if (processing || verificationLock.current) return;
+
+    const reference = response?.reference;
+    if (!reference) {
+      setPaymentError("No payment reference was returned. Contact support before making another payment.");
+      setShowModal(false);
+      return;
+    }
+
+    const payment = { reference, metadata: paystackMetadata };
+    setPendingPayment(payment);
+    setPaymentError("");
+    verificationLock.current = true;
     setProcessing(true);
 
     try {
-      const reference = response?.reference;
-      if (!reference) {
-        throw new Error("No payment reference returned from Paystack.");
-      }
-
       console.log("Verifying guardian payment with backend for reference:", reference);
 
-      await axios.post(`${API_BASE_URL}/api/payments/verify-paystack`, {
-        reference: reference,
-        fallback_metadata: paystackMetadata,
+      const result = await axios.post(`${API_BASE_URL}/api/payments/verify-paystack`, {
+        reference,
+        fallback_metadata: payment.metadata,
+      }, {
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        timeout: 30000,
       });
+
+      if (result.status !== 200 || result.data?.success !== true) {
+        throw new Error(result.data?.message || "Payment has not been confirmed.");
+      }
 
       // Cleanup guardian localStorage
       localStorage.removeItem("guardianTel");
@@ -139,12 +157,16 @@ export default function GuardianTrainingPayment() {
       localStorage.removeItem("guardianStudentsTraining");
       localStorage.removeItem("guardianStudentsSubjects");
       localStorage.removeItem("guardianStudentsDuration");
+      setPendingPayment(null);
       navigate("/guardian/login");
     } catch (err) {
       console.error("Guardian payment verification error:", err.response?.data || err);
-      alert(err.response?.data?.message || "Payment received! We are setting up your wards.");
-      navigate("/guardian/login");
+      setPaymentError(
+        `${err.response?.data?.message || err.message || "Unable to verify payment."} ` +
+        `If you were charged, do not pay again. Retry verification using the saved reference.`
+      );
     } finally {
+      verificationLock.current = false;
       setProcessing(false);
       closeModal();
     }
@@ -175,11 +197,28 @@ export default function GuardianTrainingPayment() {
           </div>
         </div>
 
+        {paymentError && (
+          <div role="alert" className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <p>{paymentError}</p>
+            {pendingPayment && (
+              <button
+                type="button"
+                onClick={() => handlePaystackSuccess(pendingPayment)}
+                disabled={processing}
+                className="mt-3 rounded-lg bg-[#09314F] px-4 py-2 font-bold text-white disabled:opacity-50"
+              >
+                Retry payment verification
+              </button>
+            )}
+          </div>
+        )}
+
         {["Paystack"].map((item) => (
           <button
             key={item}
             onClick={() => openGateway(item)}
-            className="w-full mb-4 bg-white border rounded-lg px-4 py-4 font-semibold flex justify-between hover:bg-gray-50 transition-colors"
+            disabled={processing || !!pendingPayment}
+            className="w-full mb-4 bg-white border rounded-lg px-4 py-4 font-semibold flex justify-between hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>{item}</span>
             <span>→</span>

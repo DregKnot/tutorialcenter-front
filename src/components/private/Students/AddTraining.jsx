@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import axios from "axios";
 import {  
   ChevronLeftIcon,
@@ -27,6 +27,10 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
   const [totalAmount, setTotalAmount] = useState(0);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [enrollments, setEnrollments] = useState({});
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollError, setEnrollError] = useState("");
+  const enrollLock = useRef(false);
   
   const token = localStorage.getItem("student_token");
 
@@ -81,95 +85,194 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
     });
   };
 
-  const handlePaymentSuccess = async (response) => {
-    if (!student || !selectedCourses.length) return;
-    setProcessing(true);
+  const subjectIdsFor = useCallback(
+    (courseId) =>
+      selectedSubjects[courseId] ||
+      selectedSubjects[String(courseId)] ||
+      selectedSubjects[Number(courseId)] ||
+      [],
+    [selectedSubjects]
+  );
+
+  // Step 1 (must happen before payment): create a pending enrollment per course
+  // and keep the server-computed price so the amount charged matches the enrollment.
+  const prepareEnrollments = async (durationsOverride) => {
+    if (!student || !selectedCourses.length || enrollLock.current) return;
+    const durations = durationsOverride || selectedDurations;
+    const studentId = Number(student.id);
+    if (!Number.isInteger(studentId) || studentId <= 0) {
+      setEnrollError("Your student profile could not be found. Please sign in again before continuing.");
+      return;
+    }
+
+    enrollLock.current = true;
+    setEnrolling(true);
+    setEnrollError("");
+    let currentTitle = "";
 
     try {
-      const studentId = student.id;
       const headers = {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json"
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`
       };
-      
-      // Sequential Enrollment/Payment Logic
+      const next = { ...enrollments };
+      let total = 0;
+
       for (const course of selectedCourses) {
-        const duration = selectedDurations[course.id];
-        
-        // 1. Course Enrollment
-        const enrollRes = await axios.post(`${API_BASE_URL}/api/course/enrollment`, {
+        currentTitle = course.title || `Course #${course.id}`;
+        const billingCycle = durations[course.id]?.duration || "monthly";
+
+        const response = await axios.post(`${API_BASE_URL}/api/course/enrollment`, {
           student_id: studentId,
-          course_id: course.id,
-          billing_cycle: duration?.duration || "monthly"
-        }, { headers });
-        
-        const enrollmentId = 
-          enrollRes.data?.enrollment?.id || 
-          enrollRes.data?.data?.id || 
-          enrollRes.data?.id;
+          course_id: Number(course.id),
+          billing_cycle: billingCycle
+        }, { headers, timeout: 30000 });
 
-        console.log(`[AddTraining] Course ${course.title} (ID: ${course.id}) enrolled with enrollment ID:`, enrollmentId);
-
-        // 2. Subject Enrollment
-        const subjectIds = 
-          selectedSubjects[course.id] || 
-          selectedSubjects[String(course.id)] || 
-          selectedSubjects[Number(course.id)] || 
-          [];
-
-        console.log(`[AddTraining] Enrolling ${subjectIds.length} subjects for course ${course.id}:`, subjectIds);
-
-        for (const subId of subjectIds) {
-          try {
-            await axios.post(`${API_BASE_URL}/api/subject/enrollment`, {
-              student_id: studentId,
-              course_enrollment_id: enrollmentId,
-              subject_id: subId
-            }, { headers });
-            console.log(`[AddTraining] Subject ID ${subId} successfully enrolled for enrollment #${enrollmentId}`);
-          } catch (subErr) {
-            console.error(`[AddTraining] Failed to enroll subject ID ${subId}:`, subErr.response?.data || subErr);
-          }
+        const enrollment = response.data?.enrollment;
+        const cost = Number(enrollment?.cost);
+        if (
+          ![200, 201].includes(response.status) ||
+          response.data?.success !== true ||
+          !Number.isInteger(Number(enrollment?.id)) || Number(enrollment.id) <= 0 ||
+          Number(enrollment.student_id) !== studentId ||
+          Number(enrollment.course_id) !== Number(course.id) ||
+          enrollment.billing_cycle !== billingCycle ||
+          enrollment.status !== "pending" ||
+          enrollment.cost == null || enrollment.cost === "" ||
+          !Number.isFinite(cost) || cost <= 0
+        ) {
+          throw new Error(
+            response.data?.success !== true && response.data?.message
+              ? response.data.message
+              : "The server did not return a valid pending enrollment and price. Please retry."
+          );
         }
 
-        // 3. Payment Record
-        await axios.post(`${API_BASE_URL}/api/payments`, {
-          student_id: studentId,
-          course_enrollment_id: enrollmentId,
-          amount: duration?.price || 0,
-          billing_cycle: duration?.duration || "monthly",
-          payment_method: "card",
-          gateway: selectedPaymentMethod,
-          status: "successful",
-          gateway_reference: response?.reference || `ADD-${Date.now()}-${course.id}`,
-          paid_at: new Date().toISOString(),
-          email: student?.email
-        }, { headers });
+        next[course.id] = {
+          course_enrollment_id: Number(enrollment.id),
+          billing_cycle: enrollment.billing_cycle,
+          cost
+        };
+        total += cost;
+        setEnrollments({ ...next });
       }
 
-      if (student?.id) {
-        clearDashboardCache(student.id);
-      }
-
-      if (onSuccess) {
-        onSuccess("Training and subjects registered successfully!");
-      } else {
-        onBack(); // Return to main view
-      }
+      setTotalAmount(total);
+      setCurrentStep("payment");
     } catch (err) {
-      console.error("Enrollment failed", err);
-      if (err.response?.status === 409) {
-        alert("You have previously registered for one of the selected courses. Please renew it directly instead of creating a new enrollment.");
-      } else {
-        alert(err.response?.data?.message || "Something went wrong during enrollment. Please try again.");
+      const validation = Object.values(err.response?.data?.errors || {}).flat().join(" ");
+      const message = validation || err.response?.data?.message || err.message ||
+        "Unable to prepare your enrollment. Please retry.";
+      setEnrollError(
+        err.response?.status === 409
+          ? `${currentTitle}: You have previously registered for this course. Please renew it directly instead of creating a new enrollment.`
+          : `${currentTitle ? `${currentTitle}: ` : ""}${message}`
+      );
+    } finally {
+      enrollLock.current = false;
+      setEnrolling(false);
+    }
+  };
+
+  // Metadata handed to Paystack so the backend can resolve the courses (registration parity).
+  const paystackMetadata = useMemo(() => ({
+    type: "student_enrollment",
+    student_id: student?.id,
+    courses: selectedCourses.map((course) => {
+      const enrollment = enrollments[course.id];
+      const duration = selectedDurations[course.id];
+      return {
+        course_id: Number(course.id),
+        billing_cycle: enrollment?.billing_cycle || duration?.duration || "monthly",
+        price: Number(enrollment?.cost ?? duration?.price ?? 0),
+        subjects: subjectIdsFor(course.id)
+      };
+    })
+  }), [student, selectedCourses, enrollments, selectedDurations, subjectIdsFor]);
+
+  // Lane A: the client only supplies the Paystack reference; the server decides "paid".
+  const finishSuccess = (message) => {
+    if (student?.id) {
+      clearDashboardCache(student.id);
+    }
+    if (onSuccess) {
+      onSuccess(message);
+    } else {
+      onBack(); // Return to main view
+    }
+  };
+
+  const bankEnrollments = useMemo(
+    () =>
+      selectedCourses
+        .map((course) => {
+          const enrollment = enrollments[course.id];
+          if (!enrollment?.course_enrollment_id) return null;
+          return {
+            enrollmentId: enrollment.course_enrollment_id,
+            courseName: course.title || `Course #${course.id}`,
+            amount: enrollment.cost,
+          };
+        })
+        .filter(Boolean),
+    [selectedCourses, enrollments]
+  );
+
+  const handlePaymentSuccess = async (response) => {
+    if (!student || !selectedCourses.length || processing) return;
+    const reference = response?.reference;
+    if (!reference) {
+      alert("No payment reference was returned. Contact support before making another payment.");
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const result = await axios.post(`${API_BASE_URL}/api/payments/verify-paystack`, {
+        reference,
+        fallback_metadata: paystackMetadata
+      }, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        timeout: 30000
+      });
+
+      if (result.status !== 200 || result.data?.success !== true) {
+        throw new Error(result.data?.message || "Payment has not been confirmed.");
       }
+
+      finishSuccess("Training and subjects registered successfully!");
+    } catch (err) {
+      console.error("Payment verification failed", err);
+      alert(
+        `${err.response?.data?.message || err.message || "Unable to verify payment."} ` +
+        `If you were charged, do not pay again. Contact support with reference ${reference}.`
+      );
     } finally {
       setProcessing(false);
     }
   };
 
+  // Lane B: bank transfer is confirmed by an admin; the enrollment becomes active on approval.
+  const handleBankSettled = () => {
+    finishSuccess("Bank transfer approved. Your training is now active!");
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden pt-4">
+
+      {enrollError && (
+        <div role="alert" className="fixed top-6 left-1/2 -translate-x-1/2 z-[300] w-[92%] max-w-md rounded-2xl bg-red-600 px-5 py-4 text-sm font-semibold text-white shadow-2xl">
+          <div className="flex items-start justify-between gap-4">
+            <span>{enrollError}</span>
+            <button type="button" onClick={() => setEnrollError("")} className="shrink-0 text-white/80 hover:text-white" aria-label="Dismiss error">✕</button>
+          </div>
+        </div>
+      )}
 
       <button
         onClick={onBack}
@@ -336,10 +439,11 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
         isOpen={currentStep === "duration"}
         onClose={() => setCurrentStep("selection")}
         selectedCourses={selectedCourses}
+        loading={enrolling}
         onContinue={(durs, total) => {
           setSelectedDurations(durs);
           setTotalAmount(total);
-          setCurrentStep("payment");
+          prepareEnrollments(durs);
         }}
       />
 
@@ -348,9 +452,13 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
         onClose={() => setCurrentStep("selection")}
         amount={totalAmount}
         email={student?.email}
+        metadata={paystackMetadata}
+        bankEnrollments={bankEnrollments}
+        studentId={student?.id}
+        onBankSettled={handleBankSettled}
         selectedMethod={selectedPaymentMethod}
         setSelectedMethod={setSelectedPaymentMethod}
-        loading={processing}
+        loading={processing || enrolling}
         onContinue={handlePaymentSuccess}
       />
     </div>

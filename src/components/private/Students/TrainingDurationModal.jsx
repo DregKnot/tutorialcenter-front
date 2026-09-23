@@ -5,7 +5,8 @@ export default function TrainingDurationModal({
   isOpen, 
   onClose, 
   selectedCourses, 
-  onContinue 
+  onContinue,
+  loading = false
 }) {
   const [selectedDurations, setSelectedDurations] = useState({});
 
@@ -102,11 +103,11 @@ export default function TrainingDurationModal({
 
         <div className="mt-8 shrink-0 flex flex-col gap-6">
           <button 
-            disabled={!valid}
+            disabled={!valid || loading}
             onClick={() => onContinue(selectedDurations, totalAmount)}
-            className={`w-full py-5 px-6 rounded-2xl font-black text-white shadow-xl transition-all duration-300 transform active:scale-[0.98] uppercase tracking-widest text-[11px] ${!valid ? "bg-gray-200 cursor-not-allowed shadow-none" : "bg-gradient-to-r from-[#09314F] to-[#E83831] hover:shadow-[#E8383144] hover:-translate-y-0.5"}`}
+            className={`w-full py-5 px-6 rounded-2xl font-black text-white shadow-xl transition-all duration-300 transform active:scale-[0.98] uppercase tracking-widest text-[11px] ${(!valid || loading) ? "bg-gray-200 cursor-not-allowed shadow-none" : "bg-gradient-to-r from-[#09314F] to-[#E83831] hover:shadow-[#E8383144] hover:-translate-y-0.5"}`}
           >
-            Continue = ₦{totalAmount.toLocaleString()}
+            {loading ? "Preparing enrollment..." : `Continue = ₦${totalAmount.toLocaleString()}`}
           </button>
           
           <button onClick={onClose} className="w-full py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-red-100 transition-all active:scale-[0.98]">
