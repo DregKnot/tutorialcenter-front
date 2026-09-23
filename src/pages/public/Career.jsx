@@ -142,7 +142,7 @@ const Career = () => {
                   </button>
 
                   <button
-                    onClick={() => alert("Administrator applications are currently closed. Please check back later!")}
+                    onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLScwoA5-EG3V7YWPeKzKVF2GO8yVWOZUswofkA3Lx19ScgpPcw/viewform", "_blank", "noopener,noreferrer")}
                     className="w-full bg-gradient-to-r from-[#09314F] to-[#C23A3A] text-white font-bold py-4 rounded-xl shadow-[1px_1px_4px_0px_rgba(0,0,0,0.25)] hover:brightness-110 transition-all"
                   >
                     Apply as Administrator
@@ -353,7 +353,7 @@ const Career = () => {
               </div>
 
               <button
-                onClick={() => alert("Administrator applications are currently closed. Please check back later!")}
+                onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLScwoA5-EG3V7YWPeKzKVF2GO8yVWOZUswofkA3Lx19ScgpPcw/viewform", "_blank", "noopener,noreferrer")}
                 className="px-14 py-4 text-white font-bold text-lg rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
                 style={{
                   background:

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import StaffDashboardLayout from "../../components/private/staffs/DashboardLayout.jsx";
@@ -76,6 +76,7 @@ const RecordedClasses = () => {
   const navigate = useNavigate();
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState("all");
   const [recordedClasses, setRecordedClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -224,10 +225,28 @@ const RecordedClasses = () => {
     }
   };
 
-  const filteredClasses = recordedClasses.filter(c => 
-    (c.title || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (c.subject || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Extract unique available courses from loaded recordings
+  const availableCourses = useMemo(() => {
+    const set = new Set();
+    recordedClasses.forEach((c) => {
+      const course = c.course_name || c.course?.title;
+      if (course) set.add(course);
+    });
+    return Array.from(set);
+  }, [recordedClasses]);
+
+  const filteredClasses = recordedClasses.filter(c => {
+    const matchesSearch = (c.title || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (c.subject || "").toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (selectedCourseFilter !== "all") {
+      const cName = (c.course_name || c.course?.title || "").toLowerCase();
+      if (cName !== selectedCourseFilter.toLowerCase()) return false;
+    }
+
+    return true;
+  });
 
   // Computed metrics and filtered viewers for Staff/Admin engagement modal
   const viewersList = sessionAnalyticsData?.viewers || activeAnalyticsSession?.viewers || [];
@@ -348,6 +367,41 @@ const RecordedClasses = () => {
           </div>
         </div>
 
+        {/* Program / Course Filter Tabs */}
+        {availableCourses.length > 1 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 custom-scrollbar">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-1">Program:</span>
+            <button
+              type="button"
+              onClick={() => setSelectedCourseFilter("all")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                selectedCourseFilter === "all"
+                  ? "bg-[#09314F] text-white shadow-sm"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              All Programs ({recordedClasses.length})
+            </button>
+            {availableCourses.map((cName) => {
+              const count = recordedClasses.filter(c => (c.course_name || c.course?.title || "").toLowerCase() === cName.toLowerCase()).length;
+              return (
+                <button
+                  key={cName}
+                  type="button"
+                  onClick={() => setSelectedCourseFilter(cName)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    selectedCourseFilter.toLowerCase() === cName.toLowerCase()
+                      ? "bg-[#09314F] text-white shadow-sm"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {cName} ({count})
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Classes Grid */}
         {loading ? (
           <div className="flex justify-center items-center py-20">
@@ -433,9 +487,16 @@ const RecordedClasses = () => {
                 {/* Content Area */}
                 <div className="p-5 flex flex-col flex-1">
                   <div className="flex justify-between items-start mb-3">
-                    <span className="inline-block px-2.5 py-1 bg-[#09314F]/10 dark:bg-gray-700 text-[#09314F] dark:text-blue-300 text-[10px] font-black uppercase tracking-wider rounded-md">
-                      {cls.subject}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {(cls.course_name || cls.course?.title) && (
+                        <span className="inline-block px-2.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider rounded-md">
+                          {cls.course_name || cls.course?.title}
+                        </span>
+                      )}
+                      <span className="inline-block px-2.5 py-1 bg-[#09314F]/10 dark:bg-gray-700 text-[#09314F] dark:text-blue-300 text-[10px] font-black uppercase tracking-wider rounded-md">
+                        {cls.subject}
+                      </span>
+                    </div>
                     <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 flex items-center gap-1">
                       <Icon icon="lucide:calendar" className="w-3.5 h-3.5" />
                       {formatRecordedDate(cls)}
@@ -473,11 +534,15 @@ const RecordedClasses = () => {
             })}
           </div>
         ) : (
-          <div className="w-full flex flex-col items-center justify-center p-20 bg-gray-50/50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 mt-8">
+          <div className="w-full flex flex-col items-center justify-center p-16 sm:p-20 bg-gray-50/50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 mt-8">
             <Icon icon="lucide:video-off" className="w-12 h-12 text-gray-300 mb-4" />
-            <h3 className="text-xl font-black text-gray-400 mb-2">No recorded classes yet</h3>
+            <h3 className="text-xl font-black text-gray-700 dark:text-gray-300 mb-2">No recorded classes yet</h3>
             <p className="text-sm text-gray-400 max-w-md text-center">
-              {searchQuery ? `We couldn't find any recordings matching "${searchQuery}". Try adjusting your search.` : "When your live sessions end, their recordings will appear here for you to re-watch anytime."}
+              {searchQuery
+                ? `We couldn't find any recordings matching "${searchQuery}". Try adjusting your search.`
+                : !isAdminOrStaff
+                  ? "Recordings for your registered courses will appear here once live sessions end. If you are registered for upcoming programs like JAMB, video recordings will become available once live masterclasses kick off next month!"
+                  : "No recordings found for the selected program or filters."}
             </p>
           </div>
         )}
