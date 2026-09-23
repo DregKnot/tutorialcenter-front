@@ -20,6 +20,7 @@ import {
   CreditCardIcon,
   TrophyIcon,
   DocumentTextIcon,
+  PlayCircleIcon,
 } from "@heroicons/react/24/outline";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "../../../context/ThemeContext";
@@ -53,6 +54,7 @@ const adminNavSections = [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
       { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
+      { label: "Video Vault", icon: PlayCircleIcon, destination: "/staffs/recorded-classes" },
     ],
   },
   {
@@ -103,6 +105,7 @@ const cooNavSections = [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
       { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
+      { label: "Video Vault", icon: PlayCircleIcon, destination: "/staffs/recorded-classes" },
     ],
   },
   {
@@ -153,6 +156,7 @@ const csaNavSections = [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
       { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
+      { label: "Video Vault", icon: PlayCircleIcon, destination: "/staffs/recorded-classes" },
     ],
   },
   {
@@ -192,6 +196,7 @@ const tutorNavSections = [
     items: [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/tutor/master-class" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/tutor/calendar" },
+      { label: "Video Vault", icon: PlayCircleIcon, destination: "/staffs/recorded-classes" },
     ],
   },
   {
@@ -229,6 +234,7 @@ const courseAdvisorNavSections = [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/course-advisor/master-class" },
       { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/student-schedule" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/course-advisor/calendar" },
+      { label: "Video Vault", icon: PlayCircleIcon, destination: "/staffs/recorded-classes" },
     ],
   },
   {
