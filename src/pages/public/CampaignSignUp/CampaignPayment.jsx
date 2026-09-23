@@ -13,7 +13,9 @@ export default function CampaignPayment() {
   const [selectedDuration, setSelectedDuration] = useState("monthly");
   const [gateway, setGateway] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState("idle"); // 'idle', 'processing', 'success'
+  const [paymentStatus, setPaymentStatus] = useState("idle"); // 'idle', 'processing', 'success', 'error'
+  const [paymentError, setPaymentError] = useState("");
+  const [pendingReference, setPendingReference] = useState(null);
 
   // Base URL for API, using environment variable with fallback
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -109,30 +111,83 @@ export default function CampaignPayment() {
 
   /* ================= PAYSTACK SUCCESS ================= */
   const handlePaystackSuccess = async (response) => {
+    if (paymentStatus === "processing") return;
+
+    const reference = response?.reference;
+    if (!reference) {
+      setPaymentError("No payment reference was returned. Contact support before making another payment.");
+      setPaymentStatus("error");
+      setShowModal(false);
+      return;
+    }
+
+    setPendingReference(reference);
     setPaymentStatus("processing");
+    setPaymentError("");
 
     try {
-      const reference = response?.reference;
-      if (!reference) {
-        throw new Error("No payment reference returned from Paystack.");
-      }
-
       console.log("Verifying campaign payment with backend for reference:", reference);
 
-      await axios.post(`${API_BASE_URL}/api/payments/verify-paystack`, {
-        reference: reference,
+      const result = await axios.post(`${API_BASE_URL}/api/payments/verify-paystack`, {
+        reference,
         fallback_metadata: paystackMetadata,
       });
 
+      if (result.status !== 200 || result.data?.success !== true) {
+        throw new Error(result.data?.message || "Payment has not been confirmed.");
+      }
+
       setPaymentStatus("success");
     } catch (err) {
-      console.error("Unexpected error during verification:", err.response?.data || err);
-      // Even if network blips on client, webhook handles it automatically
-      setPaymentStatus("success");
+      console.error("Payment verification failed:", err.response?.data || err);
+      setPaymentError(
+        `${err.response?.data?.message || err.message || "Unable to verify payment."} ` +
+        `If you were charged, do not pay again. Retry verification using the reference below.`
+      );
+      setPaymentStatus("error");
     } finally {
-      closeModal();
+      setShowModal(false);
     }
   };
+
+  if (paymentStatus === "error") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FA] p-6 text-center">
+        <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-10 flex flex-col items-center">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6">
+            <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-black text-[#09314F] mb-2">We could not confirm your payment</h2>
+          <p className="text-gray-500 font-medium mb-4">{paymentError}</p>
+          {pendingReference && (
+            <div className="w-full bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Saved reference</p>
+              <p className="font-mono font-bold text-gray-900 break-all">{pendingReference}</p>
+            </div>
+          )}
+          <div className="flex flex-col gap-3 w-full">
+            {pendingReference && (
+              <button
+                onClick={() => handlePaystackSuccess({ reference: pendingReference })}
+                className="w-full py-4 text-white font-black text-lg rounded-2xl shadow-xl hover:brightness-110 transition-all active:scale-95"
+                style={{ background: "linear-gradient(90deg, #09314F 0%, #1A5480 100%)" }}
+              >
+                Retry payment verification
+              </button>
+            )}
+            <button
+              onClick={() => { setPaymentError(""); setPaymentStatus("idle"); }}
+              className="w-full py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl transition-colors"
+            >
+              Back to payment
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (paymentStatus === "processing") {
     return (

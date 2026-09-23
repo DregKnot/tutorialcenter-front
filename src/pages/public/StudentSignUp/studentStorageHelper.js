@@ -39,6 +39,7 @@ export const getStudentData = () => {
       selectedTraining: parsed.selectedTraining || [],
       selectedSubjects: parsed.selectedSubjects || {},
       selectedDurations: parsed.selectedDurations || {},
+      selectedEnrollments: parsed.selectedEnrollments || {},
       availableTrainings: parsed.availableTrainings || [],
       referral_code: parsed.referral_code || "",
     };
@@ -89,7 +90,7 @@ export const updateStudentData = (updates = {}) => {
       ...base,
       ...updates,
       data: {
-        ...(base.data || {}),
+        ...(base.data || base.student || base),
         ...(updates.data || {}),
       },
     };
