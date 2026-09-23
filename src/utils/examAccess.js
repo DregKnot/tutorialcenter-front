@@ -9,7 +9,7 @@ export const isAdvisor = () => ADVISOR_ROLES.includes(getStaffRole());
 
 export const canManageExams = () => !isAdvisor() && !isReadOnlyStaff();
 
-export const getExamApiBase = () => (isAdvisor() ? "/api/advisor" : "/api/admin");
+export const getExamApiBase = () => "/api/admin";
 
 export const getExamBasePath = () =>
   isAdvisor() ? "/staffs/course-advisor/exams" : "/staffs/manage-exams";
