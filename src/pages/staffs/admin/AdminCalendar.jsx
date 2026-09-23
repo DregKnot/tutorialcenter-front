@@ -466,6 +466,17 @@ export default function AdminCalendar() {
 
           <div className="flex items-center gap-3">
             <button
+              onClick={() => navigate('/staffs/recorded-classes')}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-800/60 hover:border-amber-400 text-[#09314F] dark:text-white font-bold rounded-xl shadow-sm hover:shadow transition-all text-sm active:scale-95 group"
+              title="Click to view all recorded classes, views, and watch times"
+            >
+              <PlayCircleIcon className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" />
+              <span>Video Vault</span>
+              <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 text-xs font-black">
+                {totalRecordings}
+              </span>
+            </button>
+            <button
               onClick={() => setShowCreateModal(true)}
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:opacity-95 transition-all text-sm active:scale-95"
             >
@@ -507,13 +518,23 @@ export default function AdminCalendar() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm flex items-center gap-3.5">
-            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
-              <PlayCircleIcon className="w-5 h-5" />
+          <div 
+            onClick={() => navigate('/staffs/recorded-classes')}
+            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-amber-400 dark:hover:border-amber-500/60 rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3.5 cursor-pointer transition-all hover:shadow-md group"
+            title="Click to view all recorded classes, views, and watch time analytics"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
+                <PlayCircleIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-400">Video Recordings</p>
+                <p className="text-xl font-extrabold text-[#09314F] dark:text-white">{totalRecordings} Vault</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-400">Video Recordings</p>
-              <p className="text-xl font-extrabold text-[#09314F] dark:text-white">{totalRecordings} Vault</p>
+            <div className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
+              <span>View</span>
+              <ChevronRightIcon className="w-4 h-4" />
             </div>
           </div>
         </div>
@@ -1354,7 +1375,15 @@ export default function AdminCalendar() {
                       <h5 className="text-xs font-extrabold text-[#09314F] dark:text-white uppercase tracking-wider">
                         Recorded Videos Linked to {selectedSession.tutor.name}
                       </h5>
-                      <span className="text-xs font-bold text-gray-400">{tutorTrackRecord.recordings.length} Videos</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-gray-400">{tutorTrackRecord.recordings.length} Videos</span>
+                        <button
+                          onClick={() => navigate('/staffs/recorded-classes')}
+                          className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+                        >
+                          All Vault Classes &rarr;
+                        </button>
+                      </div>
                     </div>
 
                     <div className="space-y-3">

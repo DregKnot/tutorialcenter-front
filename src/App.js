@@ -266,6 +266,8 @@ function App() {
               <Route path="/staffs/master-class" element={<StaffMasterClassList />} />
               <Route path="/staffs/student-schedule" element={<StaffStudentSchedule />} />
               <Route path="/staffs/calendar" element={<AdminCalendar />} />
+              <Route path="/staffs/recorded-classes" element={<RecordedClasses />} />
+              <Route path="/staffs/video-vault" element={<RecordedClasses />} />
               <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
               <Route path="/staffs/manage-exams" element={<ExamManagement />} />
               <Route path="/staffs/school-tests" element={<SchoolCognitiveTests />} />
