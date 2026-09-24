@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 import QuestionEditModal from "./QuestionEditModal";
 import { getExamApiBase, getExamBasePath, canManageExams } from "../../../../utils/examAccess";
+import MathRenderer from "../../../common/MathRenderer";
 
 export default function ExamQuestionList() {
   const { bodyId, subjectId, yearId } = useParams();
@@ -271,7 +272,7 @@ export default function ExamQuestionList() {
                       >
                         <span className="font-black text-[12px] min-w-[20px]">{opt.label}.</span>
                         <span className="text-[12px] font-black tracking-tight">
-                          {opt.option_text}
+                          <MathRenderer text={opt.option_text} className="exam-option-renderer" />
                         </span>
                       </div>
                     ))}

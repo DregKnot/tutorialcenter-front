@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import { 
+  sanitizeExamHtml, 
+  extractOptionTextAndImage, 
+  combineOptionTextAndImage 
+} from "../../../../../utils/examImageUploader";
 
 export default function useExamForm() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -537,12 +542,14 @@ export default function useExamForm() {
 
     const start = input.selectionStart;
     const end = input.selectionEnd;
-    const text = questions[qIdx].options[optIdx].option_text;
+    const currentOpt = questions[qIdx].options[optIdx];
+    const { text, imageUrl } = extractOptionTextAndImage(currentOpt.option_text);
     const before = text.substring(0, start);
     const after = text.substring(end);
     const newText = before + symbol + after;
+    const updated = combineOptionTextAndImage(newText, imageUrl, currentOpt.label);
 
-    handleOptionChange(qIdx, optIdx, "option_text", newText);
+    handleOptionChange(qIdx, optIdx, "option_text", updated);
 
     // Reset cursor position after React re-render
     setTimeout(() => {
@@ -819,16 +826,16 @@ export default function useExamForm() {
           questionFormData.append("exam_year_id", examYearId);
           if (currentGroupId) questionFormData.append("past_question_group_id", currentGroupId);
           questionFormData.append("question_number", String(q.questionNumber || "").trim());
-          questionFormData.append("question", String(q.questionText || "").trim());
+          questionFormData.append("question", sanitizeExamHtml(String(q.questionText || "").trim()));
           questionFormData.append("question_type", q.questionType);
           questionFormData.append("marks", q.marks);
-          questionFormData.append("explanation", q.explanation);
+          questionFormData.append("explanation", sanitizeExamHtml(q.explanation || ""));
           questionFormData.append("status", q.status);
 
           // Options
           q.options.forEach((opt, index) => {
             questionFormData.append(`options[${index}][label]`, opt.label);
-            questionFormData.append(`options[${index}][option_text]`, String(opt.option_text || "").trim());
+            questionFormData.append(`options[${index}][option_text]`, sanitizeExamHtml(String(opt.option_text || "").trim()));
             questionFormData.append(`options[${index}][is_correct]`, opt.is_correct ? 1 : 0);
             questionFormData.append(`options[${index}][sort_order]`, opt.sort_order);
           });
@@ -906,15 +913,15 @@ export default function useExamForm() {
         questionFormData.append("exam_year_id", examYearId);
         if (currentGroupId) questionFormData.append("past_question_group_id", currentGroupId);
         questionFormData.append("question_number", String(q.questionNumber || "").trim());
-        questionFormData.append("question", String(q.questionText || "").trim());
+        questionFormData.append("question", sanitizeExamHtml(String(q.questionText || "").trim()));
         questionFormData.append("question_type", q.questionType);
         questionFormData.append("marks", q.marks);
-        questionFormData.append("explanation", q.explanation);
+        questionFormData.append("explanation", sanitizeExamHtml(q.explanation || ""));
         questionFormData.append("status", q.status);
 
         q.options.forEach((opt, index) => {
           questionFormData.append(`options[${index}][label]`, opt.label);
-          questionFormData.append(`options[${index}][option_text]`, String(opt.option_text || "").trim());
+          questionFormData.append(`options[${index}][option_text]`, sanitizeExamHtml(String(opt.option_text || "").trim()));
           questionFormData.append(`options[${index}][is_correct]`, opt.is_correct ? 1 : 0);
           questionFormData.append(`options[${index}][sort_order]`, opt.sort_order);
         });

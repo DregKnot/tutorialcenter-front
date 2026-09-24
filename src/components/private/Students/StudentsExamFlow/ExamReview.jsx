@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import { stripHtmlAndDecode } from "../../../../utils/textUtils";
+import MathRenderer from "../../../common/MathRenderer";
+import ExamImageLightbox from "../../../common/ExamImageLightbox";
 
 export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -11,6 +13,7 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
   const [attempt, setAttempt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reviewLightboxImg, setReviewLightboxImg] = useState(null);
 
   const fetchReviewData = useCallback(async () => {
     if (!attemptId) return;
@@ -217,6 +220,12 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
                     <div 
                       className="text-[14px] text-[#09314F] dark:text-gray-200 leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
                       dangerouslySetInnerHTML={{ __html: cleanHtmlContent(q.question) }}
+                      onClick={(e) => {
+                        if (e.target && e.target.tagName === "IMG") {
+                          e.stopPropagation();
+                          setReviewLightboxImg({ src: e.target.src, alt: e.target.alt || "Question diagram" });
+                        }
+                      }}
                     />
                   </div>
 
@@ -249,7 +258,7 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
                           <div className="flex items-center gap-4">
                             <span className="font-black text-[12px] min-w-[20px]">{opt.label || 'A'}.</span>
                             <span className="text-[12px] font-black tracking-tight">
-                              {opt.text || opt.option_text}
+                              <MathRenderer text={opt.text || opt.option_text} className="exam-option-renderer" />
                             </span>
                           </div>
 
@@ -285,6 +294,12 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
                       <div 
                         className="text-xs text-[#09314F] dark:text-gray-300 leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
                         dangerouslySetInnerHTML={{ __html: cleanHtmlContent(q.explanation) }}
+                        onClick={(e) => {
+                          if (e.target && e.target.tagName === "IMG") {
+                            e.stopPropagation();
+                            setReviewLightboxImg({ src: e.target.src, alt: e.target.alt || "Explanation diagram" });
+                          }
+                        }}
                       />
                     </div>
                   )}
@@ -309,6 +324,14 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
       >
         <Icon icon="lucide:arrow-up" className="w-5 h-5 group-hover:animate-bounce" />
       </button>
+
+      {reviewLightboxImg && (
+        <ExamImageLightbox
+          src={reviewLightboxImg.src}
+          alt={reviewLightboxImg.alt}
+          onClose={() => setReviewLightboxImg(null)}
+        />
+      )}
     </div>
   );
 }
