@@ -1328,16 +1328,77 @@ export default function AdminCreateStudent() {
     }
   }, [formData.course_id, fetchSubjectsForCourse]);
 
+  // Auto-fill amount_paid with standard course fee when standard fee becomes available or changes
+  useEffect(() => {
+    if (formData.payment_type === "paid" && standardCourseFee > 0) {
+      if (!formData.amount_paid || formData.amount_paid === "0") {
+        setFormData((prev) => ({ ...prev, amount_paid: standardCourseFee.toString() }));
+        if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+      }
+    }
+  }, [formData.payment_type, standardCourseFee]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Auto-update amount_paid when billing_cycle changes
+    if (name === "billing_cycle") {
+      let updatedAmount = formData.amount_paid;
+      if (formData.payment_type === "paid" && selectedCourse) {
+        const base = Number(selectedCourse.price || selectedCourse.cost || 0);
+        if (base > 0) {
+          const months =
+            value === "monthly"
+              ? 1
+              : value === "quarterly"
+              ? 3
+              : value === "semi_annual"
+              ? 6
+              : 12;
+          let fee = base * months;
+          if (months > 1) fee *= 0.95;
+          updatedAmount = Math.round(fee).toString();
+        }
+      }
+      setFormData((prev) => ({ ...prev, [name]: value, amount_paid: updatedAmount }));
+      if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
+      if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+      return;
+    }
+
+    // Auto-update amount_paid and reset subjects when course_id changes
+    if (name === "course_id") {
+      const course = courses.find((c) => String(c.id) === String(value));
+      const base = Number(course?.price || course?.cost || 0);
+      let updatedAmount = formData.amount_paid;
+      if (formData.payment_type === "paid" && base > 0) {
+        const cycle = formData.billing_cycle || "monthly";
+        const months =
+          cycle === "monthly"
+            ? 1
+            : cycle === "quarterly"
+            ? 3
+            : cycle === "semi_annual"
+            ? 6
+            : 12;
+        let fee = base * months;
+        if (months > 1) fee *= 0.95;
+        updatedAmount = Math.round(fee).toString();
+      }
+      setFormData((prev) => ({
+        ...prev,
+        course_id: value,
+        subject_ids: [],
+        amount_paid: updatedAmount,
+      }));
+      setSubjectSearch("");
+      if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
+      if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
-
-    // Clear subject selections when course changes
-    if (name === "course_id") {
-      setFormData((prev) => ({ ...prev, subject_ids: [] }));
-      setSubjectSearch("");
-    }
   };
 
   const handleSubjectToggle = (subjectId) => {
@@ -2573,12 +2634,14 @@ export default function AdminCreateStudent() {
                           <button
                             type="button"
                             onClick={() => {
+                              const autoFee = standardCourseFee > 0 ? standardCourseFee.toString() : (formData.amount_paid && formData.amount_paid !== "0" ? formData.amount_paid : "");
                               setFormData((prev) => ({
                                 ...prev,
                                 payment_type: "paid",
-                                amount_paid: prev.amount_paid || (standardCourseFee ? standardCourseFee.toString() : ""),
+                                amount_paid: autoFee,
                               }));
                               if (errors.payment_type) setErrors((prev) => ({ ...prev, payment_type: null }));
+                              if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
                             }}
                             className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                               formData.payment_type === "paid"
@@ -2711,20 +2774,7 @@ export default function AdminCreateStudent() {
                             </div>
                           </div>
                         </>
-                      ) : (
-                        /* When Free / Complimentary */
-                        <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/60 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <SparklesIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                            <span className="text-xs font-black uppercase text-blue-900 dark:text-blue-300 tracking-wider">
-                              Zero-Cost Tuition Granted
-                            </span>
-                          </div>
-                          <p className="text-xs text-blue-700 dark:text-blue-300/80 leading-relaxed font-medium">
-                            Tuition amount is recorded as <strong>₦0</strong>. The backend will automatically generate a secure audit reference (<code className="bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded text-[11px] font-mono">FREE-[UUID]</code>).
-                          </p>
-                        </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
 
