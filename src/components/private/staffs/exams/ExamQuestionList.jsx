@@ -11,6 +11,7 @@ import {
 import QuestionEditModal from "./QuestionEditModal";
 import { getExamApiBase, getExamBasePath, canManageExams } from "../../../../utils/examAccess";
 import MathRenderer from "../../../common/MathRenderer";
+import { extractExplanationTextAndImage } from "../../../../utils/examImageUploader";
 
 export default function ExamQuestionList() {
   const { bodyId, subjectId, yearId } = useParams();
@@ -278,15 +279,40 @@ export default function ExamQuestionList() {
                     ))}
                   </div>
 
-                  {q.explanation && (
-                    <div className="mt-6 p-5 bg-[#BB9E7F]/5 dark:bg-[#BB9E7F]/10 rounded-[20px] border border-[#BB9E7F]/20 space-y-2">
-                      <p className="text-[10px] font-black text-[#BB9E7F] uppercase tracking-widest">Explanation</p>
-                      <div 
-                        className="text-xs text-[#0F2843] dark:text-gray-300 leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
-                        dangerouslySetInnerHTML={{ __html: q.explanation }}
-                      />
-                    </div>
-                  )}
+                  {q.explanation && (() => {
+                    const { text: expText, imageUrl: expImageUrl } = extractExplanationTextAndImage(q.explanation);
+                    if (!expText && !expImageUrl) return null;
+
+                    const resolvedImgUrl = expImageUrl
+                      ? (expImageUrl.startsWith("http://") || expImageUrl.startsWith("https://") || expImageUrl.startsWith("//")
+                          ? expImageUrl
+                          : `${API_BASE_URL}${expImageUrl.startsWith("/") ? "" : "/"}${expImageUrl}`)
+                      : null;
+
+                    return (
+                      <div className="mt-6 p-5 bg-[#BB9E7F]/5 dark:bg-[#BB9E7F]/10 rounded-[20px] border border-[#BB9E7F]/20 space-y-3">
+                        <p className="text-[10px] font-black text-[#BB9E7F] uppercase tracking-widest">Explanation</p>
+                        {expText && (
+                          <div 
+                            className="text-xs text-[#0F2843] dark:text-gray-300 leading-relaxed quill-content break-words whitespace-normal w-full"
+                            dangerouslySetInnerHTML={{ __html: expText }}
+                          />
+                        )}
+                        {resolvedImgUrl && (
+                          <div className="pt-2 flex flex-col items-start gap-1.5">
+                            <span className="text-[9px] font-bold text-[#BB9E7F] uppercase tracking-wider">
+                              Explanation Diagram
+                            </span>
+                            <img 
+                              src={resolvedImgUrl} 
+                              alt="Explanation diagram" 
+                              className="max-h-80 max-w-full rounded-2xl border border-[#BB9E7F]/30 bg-white dark:bg-gray-800 p-2 shadow-sm object-contain"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             ))}

@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { stripHtmlAndDecode } from "../../../../utils/textUtils";
 import MathRenderer from "../../../common/MathRenderer";
 import ExamImageLightbox from "../../../common/ExamImageLightbox";
+import { extractExplanationTextAndImage } from "../../../../utils/examImageUploader";
 
 export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -285,24 +286,51 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
                   </div>
 
                   {/* Question Explanation if any */}
-                  {q.explanation && (
-                    <div className="mt-6 p-5 bg-[#C5A97A]/5 dark:bg-[#C5A97A]/10 rounded-[20px] border border-[#C5A97A]/20 space-y-2">
-                      <p className="text-[10px] font-black text-[#C5A97A] uppercase tracking-widest flex items-center gap-1.5">
-                        <Icon icon="lucide:info" className="w-3.5 h-3.5" />
-                        Explanation
-                      </p>
-                      <div 
-                        className="text-xs text-[#09314F] dark:text-gray-300 leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
-                        dangerouslySetInnerHTML={{ __html: cleanHtmlContent(q.explanation) }}
-                        onClick={(e) => {
-                          if (e.target && e.target.tagName === "IMG") {
-                            e.stopPropagation();
-                            setReviewLightboxImg({ src: e.target.src, alt: e.target.alt || "Explanation diagram" });
-                          }
-                        }}
-                      />
-                    </div>
-                  )}
+                  {q.explanation && (() => {
+                    const { text: expText, imageUrl: expImageUrl } = extractExplanationTextAndImage(q.explanation);
+                    if (!expText && !expImageUrl) return null;
+
+                    const resolvedImgUrl = expImageUrl
+                      ? (expImageUrl.startsWith("http://") || expImageUrl.startsWith("https://") || expImageUrl.startsWith("//")
+                          ? expImageUrl
+                          : `${API_BASE_URL}${expImageUrl.startsWith("/") ? "" : "/"}${expImageUrl}`)
+                      : null;
+
+                    return (
+                      <div className="mt-6 p-5 bg-[#C5A97A]/5 dark:bg-[#C5A97A]/10 rounded-[20px] border border-[#C5A97A]/20 space-y-3">
+                        <p className="text-[10px] font-black text-[#C5A97A] uppercase tracking-widest flex items-center gap-1.5">
+                          <Icon icon="lucide:info" className="w-3.5 h-3.5" />
+                          Explanation
+                        </p>
+
+                        {/* Top: Explanation Text */}
+                        {expText && (
+                          <div 
+                            className="text-xs text-[#09314F] dark:text-gray-300 leading-relaxed quill-content break-words whitespace-normal w-full"
+                            dangerouslySetInnerHTML={{ __html: cleanHtmlContent(expText) }}
+                          />
+                        )}
+
+                        {/* Below: Explanation Diagram / Picture */}
+                        {resolvedImgUrl && (
+                          <div className="pt-2 flex flex-col items-start gap-1.5">
+                            <span className="text-[9px] font-bold text-[#C5A97A] uppercase tracking-wider">
+                              Explanation Diagram
+                            </span>
+                            <img
+                              src={resolvedImgUrl}
+                              alt="Explanation diagram"
+                              className="max-h-80 max-w-full rounded-2xl border border-[#C5A97A]/30 bg-white dark:bg-gray-800 p-2 shadow-sm object-contain cursor-zoom-in hover:shadow-md transition-all"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setReviewLightboxImg({ src: resolvedImgUrl, alt: "Explanation diagram" });
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );

@@ -489,10 +489,13 @@ export default function useExamForm() {
   const updateQuestionField = (qIdx, field, value) => {
     const newQuestions = [...questions];
     let finalVal = value;
-    if ((field === 'questionText' || field === 'explanation') && typeof finalVal === 'string') {
+    if (field === 'questionText' && typeof finalVal === 'string') {
       if (/<img[^>]*>/i.test(finalVal) || /data:image\//i.test(finalVal)) {
         finalVal = finalVal.replace(/<img[^>]*>/gi, '').replace(/data:image\/[a-zA-Z0-9+/]+;base64,[^"'\s>]+/gi, '');
       }
+    } else if (field === 'explanation' && typeof finalVal === 'string') {
+      // Strip only un-uploaded raw base64 data URIs, preserving uploaded link storage images
+      finalVal = sanitizeExamHtml(finalVal);
     }
     newQuestions[qIdx][field] = finalVal;
     setQuestions(newQuestions);

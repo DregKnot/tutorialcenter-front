@@ -19,10 +19,22 @@ import {
   uploadExamImage,
   sanitizeExamHtml,
   extractOptionTextAndImage,
-  combineOptionTextAndImage
+  combineOptionTextAndImage,
+  extractExplanationTextAndImage,
+  combineExplanationTextAndImage
 } from "../../../../utils/examImageUploader";
 
 const stripImagesFromHtml = (html) => sanitizeExamHtml(html);
+
+const quillModulesExplanation = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'script': 'sub'}, { 'script': 'super' }],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['clean']
+  ]
+};
 
 // Quill configuration matching QuestionItem.jsx — includes image button
 const quillFormats = [
@@ -75,7 +87,10 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
   const [questionType, setQuestionType] = useState(() => question ? (question.question_type || "true_false") : "true_false");
   const [marks, setMarks] = useState(() => question ? (question.marks || 1) : 1);
   const [options, setOptions] = useState(() => question ? (question.options || []) : []);
-  const [explanation, setExplanation] = useState(() => question ? (question.explanation || question.explanation_text || "") : "");
+  const initialParsedExp = extractExplanationTextAndImage(question ? (question.explanation || question.explanation_text || "") : "");
+  const [explanationText, setExplanationText] = useState(initialParsedExp.text);
+  const [explanationImage, setExplanationImage] = useState(initialParsedExp.imageUrl);
+  const [isUploadingExpImg, setIsUploadingExpImg] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -149,7 +164,10 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       setQuestionType(question.question_type || "true_false");
       setMarks(question.marks || 1);
       setOptions(question.options || []);
-      setExplanation(question.explanation || question.explanation_text || "");
+      const rawExp = question.explanation || question.explanation_text || "";
+      const parsedExp = extractExplanationTextAndImage(rawExp);
+      setExplanationText(parsedExp.text);
+      setExplanationImage(parsedExp.imageUrl);
 
       // Populate existing files/images from the question data
       const questionFiles = question.files || question.images || question.attachments || [];
@@ -290,12 +308,48 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     setOptions(options.filter((_, i) => i !== index));
   };
 
+  const handleExplanationImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingExpImg(true);
+    try {
+      const res = await uploadExamImage(file);
+      setExplanationImage(res.url);
+    } catch (err) {
+      console.error("Explanation image upload error:", err);
+      alert(err.response?.data?.message || err.message || "Failed to upload explanation image.");
+    } finally {
+      setIsUploadingExpImg(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleExplanationPaste = async (e) => {
+    const clipboardData = e.clipboardData;
+    if (!clipboardData || !clipboardData.files || clipboardData.files.length === 0) return;
+    const file = Array.from(clipboardData.files).find(f => f.type.startsWith('image/'));
+    if (file) {
+      e.preventDefault();
+      setIsUploadingExpImg(true);
+      try {
+        const res = await uploadExamImage(file);
+        setExplanationImage(res.url);
+      } catch (err) {
+        console.error("Explanation paste error:", err);
+        alert(err.response?.data?.message || err.message || "Failed to upload pasted image.");
+      } finally {
+        setIsUploadingExpImg(false);
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     const plainQuestion = sanitizeExamHtml(questionText);
-    const plainExplanation = sanitizeExamHtml(explanation);
+    const combinedExp = combineExplanationTextAndImage(explanationText, explanationImage);
+    const plainExplanation = sanitizeExamHtml(combinedExp);
 
     // 1. Validation: Correct option check (for multiple_choice and true_false)
     const hasCorrectOption = options.some(o => o.is_correct || o.is_correct === 1);
@@ -1032,32 +1086,88 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
           </div>
 
           <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-gray-800">
-            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Explanation</label>
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Explanation</label>
+              
+              <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#BB9E7F]/10 hover:bg-[#BB9E7F]/20 text-[#BB9E7F] text-xs font-bold cursor-pointer transition-colors border border-[#BB9E7F]/30 shadow-sm">
+                <PhotoIcon className="w-4 h-4" />
+                <span>{explanationImage ? "Change Diagram" : "Attach Diagram"}</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg,image/webp,image/gif,image/svg+xml"
+                  className="hidden"
+                  onChange={handleExplanationImageUpload}
+                />
+              </label>
+            </div>
+
+            {/* Explanation Box */}
             <div 
-              className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-[#0F2843] dark:text-white"
-              onPaste={async (e) => {
-                const clipboardData = e.clipboardData;
-                if (!clipboardData || !clipboardData.files || clipboardData.files.length === 0) return;
-                const file = Array.from(clipboardData.files).find(f => f.type.startsWith('image/'));
-                if (file) {
-                  e.preventDefault();
-                  try {
-                    const res = await uploadExamImage(file);
-                    setExplanation((prev) => `${prev || ""}<p><img src="${res.url}" alt="Explanation Diagram" /></p>`);
-                  } catch (err) {
-                    alert(err.message || "Failed to upload pasted image.");
-                  }
-                }
-              }}
+              className="bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner p-4 space-y-4"
+              onPaste={handleExplanationPaste}
             >
-              <ReactQuill 
-                theme="snow" 
-                value={explanation} 
-                onChange={(val) => setExplanation(stripImagesFromHtml(val))}
-                modules={quillModules}
-                formats={quillFormats}
-                className="[&_.ql-editor]:min-h-[180px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" 
-              />
+              {/* TOP: Image preview inside the box */}
+              {explanationImage && (
+                <div className="flex flex-col sm:flex-row items-center gap-4 p-3 bg-white dark:bg-gray-900 border border-[#BB9E7F]/40 rounded-2xl animate-in fade-in zoom-in-95">
+                  <img 
+                    src={explanationImage} 
+                    alt="Explanation diagram" 
+                    className="max-h-48 max-w-full sm:max-w-xs object-contain rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-1"
+                  />
+                  <div className="flex-1 flex flex-col gap-1 text-center sm:text-left">
+                    <span className="text-[10px] font-black text-[#BB9E7F] uppercase tracking-wider flex items-center gap-1 justify-center sm:justify-start">
+                      <PhotoIcon className="w-3.5 h-3.5" />
+                      Explanation Diagram Attached
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      In exam review, this diagram will display directly below the explanation text.
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label 
+                      className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-gray-500 hover:text-[#BB9E7F] hover:bg-[#BB9E7F]/10 rounded-xl cursor-pointer transition-colors border border-gray-200 dark:border-gray-700" 
+                      title="Replace Diagram"
+                    >
+                      <PhotoIcon className="w-4 h-4" />
+                      <span>Replace</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg,image/webp,image/gif,image/svg+xml"
+                        className="hidden"
+                        onChange={handleExplanationImageUpload}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setExplanationImage(null)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors border border-gray-200 dark:border-gray-700"
+                      title="Remove Diagram"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Uploading Status */}
+              {isUploadingExpImg && (
+                <div className="flex items-center justify-center p-3 bg-[#BB9E7F]/5 border border-dashed border-[#BB9E7F]/40 rounded-2xl text-xs font-bold text-[#BB9E7F] animate-pulse">
+                  Uploading explanation diagram to storage...
+                </div>
+              )}
+
+              {/* BOTTOM: Text Editor inside the box */}
+              <div className="quill-wrapper rounded-2xl overflow-hidden text-[#0F2843] dark:text-white">
+                <ReactQuill 
+                  theme="snow" 
+                  value={explanationText} 
+                  onChange={(val) => setExplanationText(val)}
+                  modules={quillModulesExplanation}
+                  formats={quillFormats}
+                  placeholder="Explain why the answer is correct (text is displayed above the diagram)..."
+                  className="[&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" 
+                />
+              </div>
             </div>
           </div>
         </form>

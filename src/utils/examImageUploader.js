@@ -92,3 +92,43 @@ export function combineOptionTextAndImage(text, imageUrl, label = "") {
   const imgTag = `<img src="${imageUrl}" alt="Option ${label || ''}" class="exam-option-img" />`;
   return cleanText ? `${cleanText} ${imgTag}` : imgTag;
 }
+
+/**
+ * Extracts plain/rich text and the attached diagram image URL from an explanation string.
+ */
+export function extractExplanationTextAndImage(explanation) {
+  if (!explanation || typeof explanation !== "string") {
+    return { text: "", imageUrl: null };
+  }
+
+  const imgMatch = explanation.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
+  if (imgMatch) {
+    const imageUrl = imgMatch[1];
+    let text = explanation;
+    // Remove wrapper div if present
+    text = text.replace(/<div[^>]*class=["'][^"']*exam-explanation-img[^"']*["'][^>]*>[\s\S]*?<\/div>/gi, "");
+    // Remove wrapper p if it only contained the img
+    text = text.replace(/<p>\s*<img[^>]*>\s*<\/p>/gi, "");
+    // Remove any remaining img tag
+    text = text.replace(/<img[^>]*>/gi, "");
+    text = text.trim();
+    if (text === "<p><br></p>" || text === "<p></p>") {
+      text = "";
+    }
+    return { text, imageUrl };
+  }
+
+  return { text: explanation, imageUrl: null };
+}
+
+/**
+ * Combines explanation text and an optional diagram image URL.
+ * When rendered or stored, the text appears at the TOP, and the image appears BELOW it.
+ */
+export function combineExplanationTextAndImage(text, imageUrl) {
+  const cleanText = (text || "").trim();
+  if (!imageUrl) return cleanText;
+
+  const imgTag = `<div class="exam-explanation-img mt-4"><img src="${imageUrl}" alt="Explanation Diagram" class="max-h-80 rounded-xl object-contain mx-auto" /></div>`;
+  return cleanText ? `${cleanText}${imgTag}` : imgTag;
+}
