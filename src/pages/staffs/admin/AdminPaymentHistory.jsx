@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
+import { useStaffAuth } from "../../../context/StaffAuthContext";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import {
   CurrencyDollarIcon,
@@ -9,7 +10,9 @@ import {
   MagnifyingGlassIcon,
   CheckCircleIcon,
   ClockIcon,
-  // XCircleIcon,
+  XCircleIcon,
+  ShieldCheckIcon,
+  ExclamationTriangleIcon,
   DocumentDuplicateIcon,
   EyeIcon,
   // FunnelIcon,
@@ -24,10 +27,409 @@ import {
   // AcademicCapIcon,
   // UserCircleIcon,
   ArrowTrendingUpIcon,
-  PrinterIcon
 } from "@heroicons/react/24/outline";
 
+const BANK_REVIEW_STATES = [
+  ["awaiting_confirmation", "Awaiting confirmation"], ["initiated", "Initiated"],
+  ["approved", "Approved"], ["rejected", "Rejected"], ["cancelled", "Cancelled / refunded"],
+];
+
+function bankReviewState(payment) {
+  if (payment.status === "successful") return "Approved";
+  if (payment.status === "failed") return "Rejected";
+  if (payment.status === "cancelled") return "Cancelled";
+  if (payment.status === "refunded") return "Refunded";
+  return payment.meta?.bank_transfer?.claimed_paid_at ? "Awaiting confirmation" : "Initiated";
+}
+
+function canReviewBankPayment(payment) {
+  return payment?.payment_method === "bank_transfer" && payment.gateway === "bank" &&
+    ["pending", "failed"].includes(payment.status);
+}
+
+// Only approved manual bank transfers can have their student receipt re-queued.
+function canResendReceipt(payment) {
+  return payment?.payment_method === "bank_transfer" && payment.gateway === "bank" &&
+    payment.status === "successful";
+}
+
+// Return the view from a hook so the responsive layout's two copies share one
+// queue and one submission lock, rather than mounting two independent reviewers.
+function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
+  const apiBase = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+  const [query, setQuery] = useState({ search: "", state: "awaiting_confirmation", page: 1 });
+  const [search, setSearch] = useState("");
+  const [rows, setRows] = useState([]);
+  const [pagination, setPagination] = useState({ current: 1, last: 1, total: 0 });
+  const [queueLoading, setQueueLoading] = useState(true);
+  const [queueError, setQueueError] = useState("");
+  const [notice, setNotice] = useState(null);
+  const [revision, setRevision] = useState(0);
+  const [reviewPayment, setReviewPayment] = useState(null);
+  const [action, setAction] = useState("approve");
+  const [form, setForm] = useState({ confirmed_amount: "", bank_reference: "", reason: "", paid_at: "" });
+  const [saving, setSaving] = useState(false);
+  const [resending, setResending] = useState(false);
+  const submitLock = useRef(false);
+  const resendLock = useRef(false);
+  useEffect(() => {
+    if (reviewPayment && !queueLoading) {
+      const visiblePanel = Array.from(document.querySelectorAll("[data-bank-review-panel]"))
+        .find(panel => panel.getClientRects().length > 0);
+      visiblePanel?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [reviewPayment, queueLoading]);
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    if (!enabled) return;
+    setQueueLoading(true);
+    setQueueError("");
+    const load = async () => {
+      try {
+        if (!token) throw new Error("Please sign in with your staff account.");
+        const response = await axios.get(`${apiBase}/api/admin/payments/bank-transfers`, {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+          params: { page: query.page, ...(query.state ? { state: query.state } : {}), ...(query.search ? { search: query.search } : {}) },
+          signal: controller.signal, timeout: 20000,
+        });
+        const page = response.data?.payments;
+        if (response.status !== 200 || !Array.isArray(page?.data)) {
+          throw new Error("The server did not return a valid bank-transfer queue.");
+        }
+        if (!active) return;
+        const last = Math.max(1, Number(page.last_page) || Math.ceil(Number(page.total || 0) / Number(page.per_page || 20)));
+        if (query.page > last) {
+          setQuery(current => ({ ...current, page: last }));
+          return;
+        }
+        setRows(page.data);
+        setPagination({ current: Number(page.current_page) || query.page, last, total: Number(page.total) || 0 });
+        setReviewPayment(current => current ? page.data.find(row => row.id === current.id) || null : null);
+      } catch (err) {
+        if (!active) return;
+        setRows([]);
+        setReviewPayment(null);
+        setQueueError(err.response?.data?.message || err.message || "Unable to load bank transfers.");
+      } finally {
+        if (active) setQueueLoading(false);
+      }
+    };
+    load();
+    return () => { active = false; controller.abort(); };
+  }, [enabled, apiBase, token, query, revision]);
+
+  const openReview = (payment) => {
+    if (saving) return;
+    setReviewPayment(payment);
+    setAction("approve");
+    setForm({ confirmed_amount: "", bank_reference: "", reason: "", paid_at: "" });
+    setNotice(null);
+  };
+
+  const submitReview = async (event) => {
+    event.preventDefault();
+    if (submitLock.current || queueLoading) return;
+    if (!canReview || !token) {
+      setNotice({ type: "error", text: "Only an admin can approve or reject bank transfers." });
+      return;
+    }
+    if (!canReviewBankPayment(reviewPayment)) {
+      setNotice({ type: "error", text: "This transfer is already settled or cannot be reviewed. Refresh the queue." });
+      return;
+    }
+    const payload = {};
+    if (action === "approve") {
+      const amount = Number(form.confirmed_amount);
+      const expected = Number(reviewPayment.amount);
+      if (!/^\d+(\.\d{1,2})?$/.test(form.confirmed_amount.trim()) ||
+          !Number.isFinite(amount) || amount <= 0 || !Number.isFinite(expected) ||
+          !Number.isSafeInteger(Math.round(amount * 100)) ||
+          Math.abs(Math.round(amount * 100) - Math.round(expected * 100)) > 1) {
+        setNotice({ type: "error", text: "Enter the amount confirmed in the bank account. It must match the payment amount (within ₦0.01)." });
+        return;
+      }
+      payload.confirmed_amount = amount;
+      if (form.bank_reference.trim()) payload.bank_reference = form.bank_reference.trim();
+      if (form.reason.trim()) payload.reason = form.reason.trim();
+      if (form.paid_at) {
+        const paidAt = new Date(form.paid_at);
+        if (Number.isNaN(paidAt.getTime())) {
+          setNotice({ type: "error", text: "Enter a valid payment date." });
+          return;
+        }
+        payload.paid_at = paidAt.toISOString();
+      }
+    } else {
+      if (form.reason.trim().length < 5) {
+        setNotice({ type: "error", text: "Enter a rejection reason of at least 5 characters. The student will see it." });
+        return;
+      }
+      payload.reason = form.reason.trim();
+    }
+    submitLock.current = true;
+    setSaving(true);
+    setNotice(null);
+    try {
+      const response = await axios.post(`${apiBase}/api/admin/payments/${reviewPayment.id}/bank-transfer/${action}`, payload, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "Content-Type": "application/json" },
+        timeout: 30000,
+      });
+      if (response.status !== 200 || Number(response.data?.payment?.id) !== Number(reviewPayment.id) ||
+          response.data.payment.status !== (action === "approve" ? "successful" : "failed")) {
+        throw new Error("The server did not confirm the review outcome. Refresh and check this reference before retrying.");
+      }
+      setNotice({ type: "success", text: action === "approve"
+        ? "Payment approved and enrollment activated."
+        : "Payment rejected. The student can read the reason and submit a new claim." });
+      setReviewPayment(null);
+      setRevision(value => value + 1);
+      onReviewed?.();
+    } catch (err) {
+      const validation = Object.values(err.response?.data?.errors || {}).flat().join(" ");
+      setNotice({ type: "error", text: validation || err.response?.data?.message || err.message || "Unable to save the review." });
+      // Reconcile a stale row or a request whose response was lost; do not auto-resubmit.
+      setRevision(value => value + 1);
+    } finally {
+      submitLock.current = false;
+      setSaving(false);
+    }
+  };
+
+  const resendReceipt = async (payment) => {
+    if (resendLock.current) return;
+    if (!canReview || !token) {
+      setNotice({ type: "error", text: "Only an admin can resend receipts." });
+      return;
+    }
+    if (!canResendReceipt(payment)) {
+      setNotice({ type: "error", text: "Only approved bank transfers have a receipt to resend." });
+      return;
+    }
+    resendLock.current = true;
+    setResending(true);
+    setNotice(null);
+    try {
+      const response = await axios.post(`${apiBase}/api/admin/payments/${payment.id}/bank-transfer/resend-receipt`, {}, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "Content-Type": "application/json" },
+        timeout: 30000,
+      });
+      if (response.status !== 200) {
+        throw new Error("The server did not confirm the receipt was queued.");
+      }
+      setNotice({ type: "success", text: response.data?.message || "Receipt email queued." });
+    } catch (err) {
+      const validation = Object.values(err.response?.data?.errors || {}).flat().join(" ");
+      setNotice({ type: "error", text: validation || err.response?.data?.message || err.message || "Unable to queue the receipt email." });
+    } finally {
+      resendLock.current = false;
+      setResending(false);
+    }
+  };
+
+  const claim = reviewPayment?.meta?.bank_transfer || {};
+  return (
+    <section aria-label="Bank transfer reviews" className="rounded-3xl border border-gray-200 bg-white p-5 sm:p-7 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-black text-[#09314F] dark:text-white">Bank Transfer Reviews</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Find a student's transfer using the reference shared on WhatsApp.</p>
+          {!canReview && <p className="mt-2 text-sm text-gray-500 dark:text-gray-300">Read-only access. An admin must approve or reject payments.</p>}
+        </div>
+        <button type="button" disabled={saving || queueLoading} onClick={() => setRevision(value => value + 1)}
+          className="rounded-xl border px-4 py-2 text-sm font-bold disabled:opacity-50">Refresh transfers</button>
+      </div>
+
+      <form onSubmit={event => {
+        event.preventDefault();
+        if (saving) return;
+        setReviewPayment(null);
+        setQuery(current => ({ ...current, search: search.trim(), state: search.trim() ? "" : current.state, page: 1 }));
+      }} className="mt-5 flex flex-wrap items-end gap-3">
+        <label className="min-w-[200px] flex-1 text-sm font-semibold">Reference, name, email or phone
+          <input value={search} onChange={event => setSearch(event.target.value)} placeholder="TC-7K2M9Q"
+            disabled={saving} className="mt-1 w-full rounded-xl border border-gray-300 bg-transparent px-3 py-2 dark:border-gray-600" />
+        </label>
+        <button type="submit" disabled={saving} className="rounded-xl bg-[#09314F] px-4 py-2 font-bold text-white disabled:opacity-50">Search transfers</button>
+        <label className="text-sm font-semibold">Transfer state
+          <select value={query.state} disabled={saving} onChange={event => {
+            setReviewPayment(null);
+            setQuery(current => ({ ...current, state: event.target.value, page: 1 }));
+          }} className="mt-1 block rounded-xl border bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-800">
+            <option value="">All states</option>
+            {BANK_REVIEW_STATES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+      </form>
+      {notice && <p role={notice.type === "error" ? "alert" : "status"} className={`mt-4 rounded-xl p-3 text-sm ${notice.type === "error" ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"}`}>{notice.text}</p>}
+      {queueError && <p role="alert" className="mt-4 text-sm text-red-600">{queueError}</p>}
+      {queueLoading ? <p role="status" className="py-6 text-sm">Loading bank transfers...</p> : !queueError && (
+        <>
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <caption className="sr-only">Bank transfers for manual payment review</caption>
+              <thead><tr className="border-b text-gray-500 dark:text-gray-300">
+                {["Reference", "Student / Course", "Amount", "State", "Details"].map(title => <th key={title} scope="col" className="px-3 py-3">{title}</th>)}
+              </tr></thead>
+              <tbody>{rows.map(payment => (
+                <tr key={payment.id} className="border-b border-gray-100 dark:border-gray-700">
+                  <td className="px-3 py-3 font-mono">{payment.gateway_reference}</td>
+                  <td className="px-3 py-3">
+                    <p className="font-semibold">{[payment.student?.firstname, payment.student?.surname].filter(Boolean).join(" ") || "Unknown student"}</p>
+                    <p>{payment.student?.email || payment.student?.tel || "No contact provided"}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-300">{payment.enrollment?.course?.title || "Course unavailable"}</p>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">₦{Number(payment.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td className="px-3 py-3">{bankReviewState(payment)}</td>
+                  <td className="px-3 py-3"><button type="button" disabled={saving} onClick={() => openReview(payment)}
+                    aria-label={`View transfer ${payment.gateway_reference}`} className="font-bold text-blue-700 dark:text-blue-300 disabled:opacity-50">
+                    {canReview && canReviewBankPayment(payment) ? "Review" : "View details"}
+                  </button></td>
+                </tr>
+              ))}</tbody>
+            </table>
+            {!rows.length && <p className="py-6 text-center text-gray-500">No bank transfers match these filters.</p>}
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+            <p>{pagination.total} transfers · Page {pagination.current} of {pagination.last}</p>
+            <div className="flex gap-2">
+              <button type="button" disabled={saving || query.page <= 1} onClick={() => { setReviewPayment(null); setQuery(current => ({ ...current, page: current.page - 1 })); }}
+                className="rounded-lg border px-3 py-2 disabled:opacity-40">Previous transfers</button>
+              <button type="button" disabled={saving || query.page >= pagination.last} onClick={() => { setReviewPayment(null); setQuery(current => ({ ...current, page: current.page + 1 })); }}
+                className="rounded-lg border px-3 py-2 disabled:opacity-40">Next transfers</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {reviewPayment && !queueLoading && (
+        <div data-bank-review-panel className="mt-6 scroll-mt-20 rounded-2xl border border-blue-200 bg-blue-50/30 p-5 dark:border-blue-900">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-bold">Transfer {reviewPayment.gateway_reference}</h3>
+            <button type="button" disabled={saving} onClick={() => setReviewPayment(null)} className="text-sm underline">Close review</button>
+          </div>
+          <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <div><dt className="text-gray-500 dark:text-gray-300">Expected amount</dt><dd>₦{Number(reviewPayment.amount).toLocaleString()}</dd></div>
+            <div><dt className="text-gray-500 dark:text-gray-300">Claimed amount</dt><dd>{claim.amount_paid != null ? `₦${Number(claim.amount_paid).toLocaleString()}` : "Not provided"}</dd></div>
+            <div><dt className="text-gray-500 dark:text-gray-300">Sender's account name</dt><dd>{claim.paid_from_account_name || "Not provided"}</dd></div>
+            <div><dt className="text-gray-500 dark:text-gray-300">Claim time</dt><dd>{claim.claimed_paid_at ? new Date(claim.claimed_paid_at).toLocaleString() : "Not claimed yet"}</dd></div>
+            <div className="sm:col-span-2"><dt className="text-gray-500 dark:text-gray-300">Student's note</dt><dd className="whitespace-pre-wrap break-words">{claim.note || "No note"}</dd></div>
+            {claim.review && <div className="sm:col-span-2"><dt className="text-gray-500 dark:text-gray-300">Previous review</dt>
+              <dd>{claim.review.action} · Staff #{claim.review.by_staff_id || "—"} · {claim.review.reason || "No reason recorded"}</dd>
+            </div>}
+          </dl>
+          {canReview && canReviewBankPayment(reviewPayment) ? (
+            <form onSubmit={submitReview} className="mt-6 space-y-5 rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(9,49,79,0.45)] dark:border-gray-700 dark:bg-gray-800 sm:p-6">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#09314F] text-white shadow-md shadow-[#09314F]/25">
+                  <ShieldCheckIcon className="h-5 w-5" />
+                </span>
+                <div>
+                  <h4 className="text-sm font-black uppercase tracking-wider text-[#09314F] dark:text-white">Review action</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-300">Decide whether this transfer clears the payment.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button type="button" disabled={saving} aria-pressed={action === "approve"}
+                  onClick={() => { setAction("approve"); setForm(current => ({ ...current, reason: "" })); setNotice(null); }}
+                  className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-xs font-black uppercase tracking-wide transition-all duration-200 disabled:opacity-50 sm:text-sm ${
+                    action === "approve"
+                      ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-1 ring-emerald-500/40"
+                      : "border border-gray-200 bg-white text-gray-500 hover:border-emerald-300 hover:text-emerald-700 hover:shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
+                  }`}>
+                  <CheckCircleIcon className="h-5 w-5" />Approve
+                </button>
+                <button type="button" disabled={saving} aria-pressed={action === "reject"}
+                  onClick={() => { setAction("reject"); setForm(current => ({ ...current, reason: "" })); setNotice(null); }}
+                  className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-xs font-black uppercase tracking-wide transition-all duration-200 disabled:opacity-50 sm:text-sm ${
+                    action === "reject"
+                      ? "bg-red-600 text-white shadow-lg shadow-red-600/30 ring-1 ring-red-500/40"
+                      : "border border-gray-200 bg-white text-gray-500 hover:border-rose-300 hover:text-rose-700 hover:shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-rose-700 dark:hover:text-rose-300"
+                  }`}>
+                  <XCircleIcon className="h-5 w-5" />Reject
+                </button>
+              </div>
+
+              <div className="h-px w-full bg-gray-200 dark:bg-gray-700" />
+
+              {action === "approve" ? (
+                <div className="space-y-4">
+                  <p className="flex items-start gap-2.5 rounded-2xl border border-amber-100 bg-amber-50/80 p-3.5 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
+                    <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Check the actual credit in the bank account before approving. The student's claim alone is not confirmation.</span>
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300">Confirmed amount (NGN)
+                      <input type="number" required min="0.01" step="0.01" value={form.confirmed_amount} disabled={saving}
+                        onChange={event => setForm(current => ({ ...current, confirmed_amount: event.target.value }))}
+                        className="mt-1.5 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm outline-none transition focus:border-[#09314F] focus:ring-4 focus:ring-[#09314F]/10 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900/40 dark:text-white" />
+                    </label>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300">Bank transaction reference (optional)
+                      <input maxLength={255} value={form.bank_reference} disabled={saving}
+                        onChange={event => setForm(current => ({ ...current, bank_reference: event.target.value }))}
+                        className="mt-1.5 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm outline-none transition focus:border-[#09314F] focus:ring-4 focus:ring-[#09314F]/10 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900/40 dark:text-white" />
+                    </label>
+                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300 sm:col-span-2">Payment date (optional; defaults to claim time)
+                      <input type="datetime-local" value={form.paid_at} disabled={saving}
+                        onChange={event => setForm(current => ({ ...current, paid_at: event.target.value }))}
+                        className="mt-1.5 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm outline-none transition focus:border-[#09314F] focus:ring-4 focus:ring-[#09314F]/10 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900/40 dark:text-white" />
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Approving activates the enrollment and queues the student's receipt.</p>
+                </div>
+              ) : (
+                <p className="flex items-start gap-2.5 rounded-2xl border border-rose-100 bg-rose-50/80 p-3.5 text-sm text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-200">
+                  <XCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>Only reject when you cannot find the credit. The student sees your reason and can submit a new claim.</span>
+                </p>
+              )}
+
+              <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300">{action === "reject" ? "Rejection reason (shown to the student)" : "Internal note (optional)"}
+                <textarea required={action === "reject"} minLength={action === "reject" ? 5 : undefined} maxLength={1000}
+                  value={form.reason} disabled={saving} onChange={event => setForm(current => ({ ...current, reason: event.target.value }))}
+                  className="mt-1.5 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-[#09314F] focus:ring-4 focus:ring-[#09314F]/10 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900/40 dark:text-white" />
+              </label>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button type="submit" disabled={saving} className={`w-full rounded-2xl px-6 py-3.5 text-sm font-black uppercase tracking-wide text-white shadow-lg transition-all duration-200 disabled:opacity-50 sm:w-auto ${
+                  action === "approve"
+                    ? "bg-emerald-600 shadow-emerald-600/30 hover:shadow-emerald-600/50"
+                    : "bg-red-600 shadow-red-600/30 hover:shadow-red-600/50"
+                }`}>
+                  {saving ? "Saving review..." : action === "approve" ? "Approve payment" : "Reject payment"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="mt-4 space-y-3">
+              <p className="text-sm text-gray-500 dark:text-gray-300">
+                {canReview ? "This payment is settled; no review actions are available." : "Only admins can change payment decisions."}
+              </p>
+              {canReview && canResendReceipt(reviewPayment) && (
+                <div>
+                  <button type="button" disabled={resending || saving} onClick={() => resendReceipt(reviewPayment)}
+                    className="rounded-xl border border-[#09314F] px-5 py-3 text-sm font-bold text-[#09314F] disabled:opacity-50 dark:border-gray-500 dark:text-white">
+                    {resending ? "Queuing receipt..." : "Resend receipt"}
+                  </button>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-300">
+                    Queues the payment receipt email to the student again. Payment and enrollment status stay unchanged.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function AdminPaymentHistory() {
+  const { role, token } = useStaffAuth();
+  const staffRole = typeof role === "string" ? role.trim().toLowerCase() : "";
+  const canViewBankReviews = ["admin", "moderator", "coo"].includes(staffRole);
   const [payments, setPayments] = useState([]);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +488,10 @@ export default function AdminPaymentHistory() {
       setLoading(false);
     }
   }, [API_BASE_URL]);
+
+  const bankReviewPanel = useBankTransferReview({
+    enabled: canViewBankReviews, token, canReview: staffRole === "admin", onReviewed: fetchPayments,
+  });
 
   useEffect(() => {
     fetchPayments();
@@ -369,6 +775,7 @@ export default function AdminPaymentHistory() {
     <StaffDashboardLayout pagetitle="Payment Pipeline & Financial Audits">
       <div className="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-8 animate-in fade-in duration-300">
         
+        {canViewBankReviews && bankReviewPanel}
         {/* ==================================================================== */}
         {/* TOP SECTION: MODERN FINANCIAL PIPELINE & FUNNEL BAR CHART CARD       */}
         {/* ==================================================================== */}
@@ -1089,12 +1496,6 @@ export default function AdminPaymentHistory() {
                   className="px-5 py-2.5 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-xs"
                 >
                   Close
-                </button>
-                <button
-                  onClick={() => window.print()}
-                  className="px-5 py-2.5 rounded-xl bg-[#0F2843] hover:bg-[#09314F] text-white font-bold text-xs flex items-center gap-1.5 shadow-md"
-                >
-                  <PrinterIcon className="w-4 h-4" /> Print Receipt
                 </button>
               </div>
 

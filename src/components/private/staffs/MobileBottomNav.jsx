@@ -41,6 +41,7 @@ const courseAdvisorTabs = [
 
 const moderatorTabs = [
   { label: "Exams", icon: ClipboardDocumentCheckIcon, to: "/staffs/manage-exams" },
+  { label: "Payments", icon: CreditCardIcon, to: "/staffs/payments" },
   { label: "Leaderboard", icon: TrophyIcon, to: "/staffs/leaderboard" },
   { label: "Feedback", icon: ChartBarIcon, to: "/staffs/feedback" },
 ];
