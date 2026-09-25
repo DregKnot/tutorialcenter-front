@@ -26,6 +26,9 @@ import {
   SparklesIcon,
   ShieldCheckIcon,
   PencilSquareIcon,
+  ClockIcon,
+  CreditCardIcon,
+  BanknotesIcon,
 } from "@heroicons/react/24/outline";
 
 const API_BASE_URL =
@@ -372,6 +375,452 @@ function RecoveryModal({ payment, onClose, onConfirm, loading }) {
 }
 
 /* ======================================================
+   EXTEND ACCESS MODAL (For Active Courses)
+====================================================== */
+function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading }) {
+  const [extensionType, setExtensionType] = useState("preset"); // "preset" | "custom"
+  const [months, setMonths] = useState(1);
+  const [customEndDate, setCustomEndDate] = useState("");
+  const [reason, setReason] = useState("");
+
+  const currentEndDate = useMemo(() => {
+    return enrollment?.end_date ? new Date(enrollment.end_date) : null;
+  }, [enrollment?.end_date]);
+
+  const isFuture = useMemo(() => {
+    return Boolean(currentEndDate && currentEndDate > new Date());
+  }, [currentEndDate]);
+
+  const previewEndDate = useMemo(() => {
+    if (extensionType === "custom") {
+      if (!customEndDate) return "Select target date";
+      return new Date(customEndDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    }
+    const base = isFuture ? new Date(currentEndDate) : new Date();
+    base.setMonth(base.getMonth() + Number(months));
+    return base.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }, [extensionType, months, customEndDate, currentEndDate, isFuture]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!reason.trim()) return;
+    onConfirm({
+      enrollmentId: enrollment.id,
+      months: extensionType === "preset" ? months : undefined,
+      customEndDate: extensionType === "custom" ? customEndDate : undefined,
+      reason: reason.trim(),
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#09314F] to-[#0F4068]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white">
+                <ClockIcon className="w-5 h-5 text-[#C5A97A]" />
+              </div>
+              <div>
+                <h3 className="text-white font-black text-sm">
+                  Extend Course Registration Access
+                </h3>
+                <p className="text-white/70 text-xs font-medium mt-0.5">
+                  {student?.firstname} {student?.surname} • {enrollment?.course?.title || "Active Course"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white/60 hover:text-white transition-colors"
+            >
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Current Expiry Banner */}
+          <div className="bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl p-4 border border-blue-100 dark:border-blue-900/40 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest block">
+                Current Expiration Date
+              </span>
+              <span className="text-xs font-bold text-gray-800 dark:text-gray-200 mt-0.5 block">
+                {currentEndDate
+                  ? currentEndDate.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : "No Expiration Recorded"}
+              </span>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block">
+                New Preview Expiry
+              </span>
+              <span className="text-xs font-black text-emerald-700 dark:text-emerald-300 mt-0.5 block">
+                {previewEndDate}
+              </span>
+            </div>
+          </div>
+
+          {/* Extension Mode Toggle */}
+          <div>
+            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+              Extension Method
+            </label>
+            <div className="grid grid-cols-2 gap-2 bg-gray-100 dark:bg-[#06243A] p-1.5 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setExtensionType("preset")}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all ${
+                  extensionType === "preset"
+                    ? "bg-[#09314F] text-white shadow"
+                    : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                }`}
+              >
+                Standard Presets
+              </button>
+              <button
+                type="button"
+                onClick={() => setExtensionType("custom")}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all ${
+                  extensionType === "custom"
+                    ? "bg-[#09314F] text-white shadow"
+                    : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                }`}
+              >
+                Custom Date
+              </button>
+            </div>
+          </div>
+
+          {/* Presets or Custom Date Input */}
+          {extensionType === "preset" ? (
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+                Select Additional Duration
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { label: "+1 Month", value: 1 },
+                  { label: "+3 Months", value: 3 },
+                  { label: "+6 Months", value: 6 },
+                  { label: "+1 Year", value: 12 },
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setMonths(item.value)}
+                    className={`py-3 px-3 rounded-2xl border text-xs font-black transition-all ${
+                      months === item.value
+                        ? "border-[#C5A97A] bg-[#C5A97A]/10 text-[#C5A97A] dark:text-[#E8D4B0] shadow-sm"
+                        : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] text-gray-600 dark:text-gray-300 hover:border-gray-300"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+                Target Expiration Date <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+                className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all cursor-pointer"
+                required
+              />
+            </div>
+          )}
+
+          {/* Reason */}
+          <div>
+            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+              Extension Reason & Audit Note <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              placeholder="e.g. Granted 30-day exam preparation extension per academic advisor approval."
+              className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all resize-none"
+              required
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-black text-xs uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !reason.trim() || (extensionType === "custom" && !customEndDate)}
+              className={`flex-1 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                loading || !reason.trim() || (extensionType === "custom" && !customEndDate)
+                  ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-[#09314F] to-[#0F4068] text-white hover:opacity-90 active:scale-[0.98] shadow-lg shadow-[#09314F]/20"
+              }`}
+            >
+              {loading && (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
+              {loading ? "Extending..." : "Confirm Extension"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ======================================================
+   RENEW COURSE MODAL (For Expired Courses)
+====================================================== */
+function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) {
+  const [billingCycle, setBillingCycle] = useState("monthly");
+  const [amount, setAmount] = useState("");
+  const [referenceCode, setReferenceCode] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [reason, setReason] = useState("");
+
+  const course = enrollment?.course || {};
+  const baseCoursePrice = Number(course?.price || 0);
+
+  // Compute default price when billing cycle changes
+  const computedFee = useMemo(() => {
+    if (!baseCoursePrice) return 0;
+    const months =
+      billingCycle === "monthly"
+        ? 1
+        : billingCycle === "quarterly"
+        ? 3
+        : billingCycle === "semi_annual"
+        ? 6
+        : 12;
+    let fee = baseCoursePrice * months;
+    if (months > 1) fee *= 0.95; // 5% discount
+    return Math.round(fee);
+  }, [baseCoursePrice, billingCycle]);
+
+  // Sync amount when billingCycle changes
+  useEffect(() => {
+    if (computedFee > 0) {
+      setAmount(computedFee.toString());
+    }
+  }, [computedFee]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!referenceCode.trim() || !reason.trim() || isNaN(amount) || Number(amount) < 0) {
+      return;
+    }
+    onConfirm({
+      enrollmentId: enrollment.id,
+      billing_cycle: billingCycle,
+      amount: parseFloat(amount),
+      reference_code: referenceCode.trim(),
+      payment_method: paymentMethod,
+      reason: reason.trim(),
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#C5A97A] to-[#D4B98C]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white">
+                <ArrowPathIcon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-white font-black text-sm">
+                  Renew Expired Course Registration
+                </h3>
+                <p className="text-white/80 text-xs font-medium mt-0.5">
+                  {student?.firstname} {student?.surname} • {course?.title || "Expired Course"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white/70 hover:text-white transition-colors"
+            >
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+          {/* Notice */}
+          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-4 border border-amber-100 dark:border-amber-900/40 flex items-start gap-3">
+            <ExclamationTriangleIcon className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs font-bold text-amber-800 dark:text-amber-200 leading-relaxed">
+              This course is currently <strong>expired</strong>. Renewing will reset the registration start/end dates from today and <strong>record a new payment</strong> with the provided reference code.
+            </p>
+          </div>
+
+          {/* Billing Cycle */}
+          <div>
+            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+              Renewal Duration / Billing Cycle <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <select
+                value={billingCycle}
+                onChange={(e) => setBillingCycle(e.target.value)}
+                className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 pr-10 text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 appearance-none transition-all"
+              >
+                <option value="monthly">Monthly (1 Month)</option>
+                <option value="quarterly">Quarterly (3 Months)</option>
+                <option value="semi_annual">Semi-Annual (6 Months)</option>
+                <option value="annual">Annual (12 Months)</option>
+              </select>
+              <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Amount Paid */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                Renewal Fee Paid (₦) <span className="text-red-400">*</span>
+              </label>
+              {computedFee > 0 && Number(amount) !== computedFee && (
+                <button
+                  type="button"
+                  onClick={() => setAmount(computedFee.toString())}
+                  className="text-[10px] font-black text-[#C5A97A] hover:underline"
+                >
+                  Reset to Standard (₦{computedFee.toLocaleString()})
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#C5A97A]">
+                ₦
+              </div>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="e.g. 15000"
+                className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 pl-9 pr-4 text-sm font-bold text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Payment Reference Code */}
+          <div>
+            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+              Payment Reference Code <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={referenceCode}
+              onChange={(e) => setReferenceCode(e.target.value)}
+              placeholder="Paste Bank Session ID / Teller # / POS RRN / Paystack Ref"
+              className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all font-mono"
+              required
+            />
+            <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
+              Paste the bank transaction reference. Must be unique in the system.
+            </p>
+          </div>
+
+          {/* Payment Method */}
+          <div>
+            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+              Payment Channel
+            </label>
+            <div className="relative">
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 pr-10 text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 appearance-none transition-all"
+              >
+                <option value="bank_transfer">Direct Bank Transfer</option>
+                <option value="pos">POS / Terminal Card</option>
+                <option value="cash">Cash Deposit</option>
+                <option value="card">Online Card</option>
+                <option value="manual">Manual Admin Entry</option>
+              </select>
+              <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Reason */}
+          <div>
+            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+              Renewal Note & Audit Reason <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={2}
+              placeholder="e.g. Student renewed tuition for next quarter; payment confirmed on bank portal."
+              className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all resize-none"
+              required
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3 pt-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-black text-xs uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !referenceCode.trim() || !reason.trim() || !amount}
+              className={`flex-1 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                loading || !referenceCode.trim() || !reason.trim() || !amount
+                  ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-[#C5A97A] to-[#D4B98C] text-white hover:opacity-90 active:scale-[0.98] shadow-lg shadow-[#C5A97A]/20"
+              }`}
+            >
+              {loading && (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
+              {loading ? "Renewing..." : "Confirm Renewal & Record Payment"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ======================================================
    MAIN COMPONENT: AdminCreateStudent
 ====================================================== */
 export default function AdminCreateStudent() {
@@ -594,6 +1043,10 @@ export default function AdminCreateStudent() {
   const [formData, setFormData] = useState({
     student_id: null,
     payment_id: null,
+    payment_type: "paid", // "paid" | "free"
+    amount_paid: "",
+    reference_code: "",
+    payment_method: "bank_transfer",
     firstname: "",
     surname: "",
     email: "",
@@ -610,6 +1063,130 @@ export default function AdminCreateStudent() {
     billing_cycle: "",
     reason: "",
   });
+
+  /* =========================================
+     MODE 3: EXTEND & RENEW ACCESS STATE
+  ========================================= */
+  const [accessSearchQuery, setAccessSearchQuery] = useState("");
+  const [accessStudents, setAccessStudents] = useState([]);
+  const [loadingAccessStudents, setLoadingAccessStudents] = useState(false);
+  const [extendModal, setExtendModal] = useState(null); // { student, enrollment }
+  const [renewModal, setRenewModal] = useState(null); // { student, enrollment }
+  const [submittingExtension, setSubmittingExtension] = useState(false);
+  const [submittingRenewal, setSubmittingRenewal] = useState(false);
+
+  // Fetch students for Extend & Renew mode
+  const fetchAccessStudents = useCallback(
+    async (query = "") => {
+      setLoadingAccessStudents(true);
+      try {
+        const endpoint = `${API_BASE_URL}/api/admin/students/all`;
+        const res = await axios.get(endpoint, config);
+        const all = res.data?.students || res.data?.data || [];
+        const q = query.toLowerCase().trim();
+        if (!q) {
+          setAccessStudents(all.slice(0, 30));
+        } else {
+          const filtered = all.filter((s) => {
+            const nameMatch = `${s.firstname || ""} ${s.surname || ""}`.toLowerCase().includes(q);
+            const emailMatch = (s.email || "").toLowerCase().includes(q);
+            const telMatch = (s.tel || "").includes(q);
+            const idMatch = String(s.id) === q;
+            return nameMatch || emailMatch || telMatch || idMatch;
+          });
+          setAccessStudents(filtered);
+        }
+      } catch (err) {
+        console.error("[AdminCreateStudent] Fetch Access Students Error:", err.response?.data || err);
+        setToast({
+          type: "error",
+          message: err.response?.data?.message || "Failed to load students for access management.",
+        });
+      } finally {
+        setLoadingAccessStudents(false);
+      }
+    },
+    [config]
+  );
+
+  useEffect(() => {
+    if (mode === "extend") {
+      fetchAccessStudents(accessSearchQuery.trim());
+    }
+  }, [mode, fetchAccessStudents]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAccessSearch = (e) => {
+    if (e) e.preventDefault();
+    fetchAccessStudents(accessSearchQuery.trim());
+  };
+
+  const handleExtendSubmit = async ({ enrollmentId, months, days, customEndDate, reason }) => {
+    setSubmittingExtension(true);
+    try {
+      const endpoint = `${API_BASE_URL}/api/admin/enrollments/${enrollmentId}/extend`;
+      const payload = {
+        months: months || undefined,
+        days: days || undefined,
+        custom_end_date: customEndDate || undefined,
+        reason: reason.trim(),
+      };
+      const res = await axios.post(endpoint, payload, config);
+      setToast({
+        type: "success",
+        message: res.data?.message || "Course access extended successfully!",
+      });
+      setExtendModal(null);
+      fetchAccessStudents(accessSearchQuery.trim());
+      if (mode === "recover") {
+        loadRecoveryRecords(searchQuery.trim());
+      }
+    } catch (err) {
+      console.error("[AdminCreateStudent] Extend Access Error:", err.response?.data || err);
+      setToast({
+        type: "error",
+        message: err.response?.data?.message || "Failed to extend course access.",
+      });
+    } finally {
+      setSubmittingExtension(false);
+    }
+  };
+
+  const handleRenewSubmit = async ({ enrollmentId, billing_cycle, amount, reference_code, payment_method, reason }) => {
+    setSubmittingRenewal(true);
+    try {
+      const endpoint = `${API_BASE_URL}/api/admin/enrollments/${enrollmentId}/renew`;
+      const payload = {
+        billing_cycle,
+        amount: parseFloat(amount),
+        reference_code: reference_code.trim(),
+        payment_method: payment_method || "bank_transfer",
+        reason: reason.trim(),
+      };
+      const res = await axios.post(endpoint, payload, config);
+      setToast({
+        type: "success",
+        message: res.data?.message || "Course renewed and payment initialized successfully!",
+      });
+      setRenewModal(null);
+      fetchAccessStudents(accessSearchQuery.trim());
+      if (mode === "recover") {
+        loadRecoveryRecords(searchQuery.trim());
+      }
+    } catch (err) {
+      console.error("[AdminCreateStudent] Renew Course Error:", err.response?.data || err);
+      const backendErrors = err.response?.data?.errors;
+      let msg = err.response?.data?.message || "Failed to renew course.";
+      if (backendErrors && backendErrors.reference_code) {
+        msg = backendErrors.reference_code[0];
+      }
+      setToast({
+        type: "error",
+        message: msg,
+      });
+    } finally {
+      setSubmittingRenewal(false);
+    }
+  };
 
   // Fetch courses on mount / mode switch
   const fetchCourses = useCallback(async () => {
@@ -715,6 +1292,29 @@ export default function AdminCreateStudent() {
     return list;
   }, [subjects, formData.department, subjectSearch]);
 
+  const selectedCourse = useMemo(() => {
+    if (!formData.course_id) return null;
+    return courses.find((c) => String(c.id) === String(formData.course_id));
+  }, [courses, formData.course_id]);
+
+  const standardCourseFee = useMemo(() => {
+    if (!selectedCourse) return 0;
+    const base = Number(selectedCourse.price || selectedCourse.cost || 0);
+    if (!base) return 0;
+    const cycle = formData.billing_cycle || "monthly";
+    const months =
+      cycle === "monthly"
+        ? 1
+        : cycle === "quarterly"
+        ? 3
+        : cycle === "semi_annual"
+        ? 6
+        : 12;
+    let fee = base * months;
+    if (months > 1) fee *= 0.95;
+    return Math.round(fee);
+  }, [selectedCourse, formData.billing_cycle]);
+
   useEffect(() => {
     if (mode === "create") fetchCourses();
   }, [mode, fetchCourses]);
@@ -728,16 +1328,77 @@ export default function AdminCreateStudent() {
     }
   }, [formData.course_id, fetchSubjectsForCourse]);
 
+  // Auto-fill amount_paid with standard course fee when standard fee becomes available or changes
+  useEffect(() => {
+    if (formData.payment_type === "paid" && standardCourseFee > 0) {
+      if (!formData.amount_paid || formData.amount_paid === "0") {
+        setFormData((prev) => ({ ...prev, amount_paid: standardCourseFee.toString() }));
+        if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+      }
+    }
+  }, [formData.payment_type, standardCourseFee]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Auto-update amount_paid when billing_cycle changes
+    if (name === "billing_cycle") {
+      let updatedAmount = formData.amount_paid;
+      if (formData.payment_type === "paid" && selectedCourse) {
+        const base = Number(selectedCourse.price || selectedCourse.cost || 0);
+        if (base > 0) {
+          const months =
+            value === "monthly"
+              ? 1
+              : value === "quarterly"
+              ? 3
+              : value === "semi_annual"
+              ? 6
+              : 12;
+          let fee = base * months;
+          if (months > 1) fee *= 0.95;
+          updatedAmount = Math.round(fee).toString();
+        }
+      }
+      setFormData((prev) => ({ ...prev, [name]: value, amount_paid: updatedAmount }));
+      if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
+      if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+      return;
+    }
+
+    // Auto-update amount_paid and reset subjects when course_id changes
+    if (name === "course_id") {
+      const course = courses.find((c) => String(c.id) === String(value));
+      const base = Number(course?.price || course?.cost || 0);
+      let updatedAmount = formData.amount_paid;
+      if (formData.payment_type === "paid" && base > 0) {
+        const cycle = formData.billing_cycle || "monthly";
+        const months =
+          cycle === "monthly"
+            ? 1
+            : cycle === "quarterly"
+            ? 3
+            : cycle === "semi_annual"
+            ? 6
+            : 12;
+        let fee = base * months;
+        if (months > 1) fee *= 0.95;
+        updatedAmount = Math.round(fee).toString();
+      }
+      setFormData((prev) => ({
+        ...prev,
+        course_id: value,
+        subject_ids: [],
+        amount_paid: updatedAmount,
+      }));
+      setSubjectSearch("");
+      if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
+      if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
-
-    // Clear subject selections when course changes
-    if (name === "course_id") {
-      setFormData((prev) => ({ ...prev, subject_ids: [] }));
-      setSubjectSearch("");
-    }
   };
 
   const handleSubjectToggle = (subjectId) => {
@@ -839,6 +1500,10 @@ export default function AdminCreateStudent() {
     setFormData({
       student_id: null,
       payment_id: null,
+      payment_type: "paid",
+      amount_paid: "",
+      reference_code: "",
+      payment_method: "bank_transfer",
       firstname: "",
       surname: "",
       email: "",
@@ -876,6 +1541,21 @@ export default function AdminCreateStudent() {
     }
     if (formData.tel.trim() && !phoneRegex.test(formData.tel.trim())) {
       errs.tel = "Invalid Nigerian phone number format";
+    }
+
+    // Payment fields validation
+    if (formData.payment_type === "paid") {
+      if (
+        formData.amount_paid === "" ||
+        formData.amount_paid === null ||
+        isNaN(formData.amount_paid) ||
+        Number(formData.amount_paid) < 0
+      ) {
+        errs.amount_paid = "Please enter a valid amount paid";
+      }
+      if (!formData.reference_code || !formData.reference_code.trim()) {
+        errs.reference_code = "Payment reference code is required for paid registrations";
+      }
     }
 
     // Password validation: required for new accounts; optional if completing existing student
@@ -919,6 +1599,15 @@ export default function AdminCreateStudent() {
       const payload = {
         student_id: formData.student_id || undefined,
         payment_id: formData.payment_id || undefined,
+        payment_type: formData.payment_type || "paid",
+        amount_paid:
+          formData.payment_type === "paid" ? parseFloat(formData.amount_paid) : 0,
+        reference_code:
+          formData.payment_type === "paid" ? formData.reference_code.trim() : undefined,
+        payment_method:
+          formData.payment_type === "paid"
+            ? formData.payment_method || "bank_transfer"
+            : "manual",
         firstname: formData.firstname.trim(),
         surname: formData.surname.trim(),
         email: formData.email.trim() || undefined,
@@ -941,10 +1630,10 @@ export default function AdminCreateStudent() {
         (k) => payload[k] === undefined && delete payload[k]
       );
 
-      console.log(`[AdminCreateStudent] [POST] Submitting Complimentary / Complete Registration -> ${endpoint}`, payload);
+      console.log(`[AdminCreateStudent] [POST] Submitting Registration -> ${endpoint}`, payload);
 
       const res = await axios.post(endpoint, payload, config);
-      console.log("[AdminCreateStudent] Complimentary / Complete Registration Response:", res.data);
+      console.log("[AdminCreateStudent] Registration Response:", res.data);
 
       setToast({
         type: "success",
@@ -952,6 +1641,8 @@ export default function AdminCreateStudent() {
           res.data?.message ||
           (formData.student_id
             ? "Student registration completed successfully!"
+            : formData.payment_type === "paid"
+            ? "Paid student registration successful!"
             : "Complimentary student registration successful!"),
       });
 
@@ -968,6 +1659,10 @@ export default function AdminCreateStudent() {
       setFormData({
         student_id: null,
         payment_id: null,
+        payment_type: "paid",
+        amount_paid: "",
+        reference_code: "",
+        payment_method: "bank_transfer",
         firstname: "",
         surname: "",
         email: "",
@@ -989,7 +1684,7 @@ export default function AdminCreateStudent() {
       // Reload recovery list
       loadRecoveryRecords(searchQuery.trim());
     } catch (err) {
-      console.error("[AdminCreateStudent] Complimentary Registration Error:", err.response?.data || err);
+      console.error("[AdminCreateStudent] Registration Error:", err.response?.data || err);
       const backendErrors = err.response?.data?.errors;
       let msg =
         err.response?.data?.message ||
@@ -1008,6 +1703,22 @@ export default function AdminCreateStudent() {
       setToast({ type: "error", message: msg });
     } finally {
       setCreating(false);
+    }
+  };
+
+  const formatAccessDate = (dateStr) => {
+    if (!dateStr) return "N/A";
+    try {
+      const d = new Date(dateStr);
+      return isNaN(d.getTime())
+        ? "N/A"
+        : d.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+    } catch {
+      return "N/A";
     }
   };
 
@@ -1033,35 +1744,28 @@ export default function AdminCreateStudent() {
               <h2 className="text-lg font-black text-[#09314F] dark:text-white tracking-tight">
                 {mode === "recover"
                   ? "Student Recovery & Incomplete Registrations"
+                  : mode === "extend"
+                  ? "Course Access & Validity Management"
                   : autofillSource
                   ? "Complete Student Registration"
-                  : "Complimentary Registration"}
+                  : "Student Enrollment & Creation"}
               </h2>
               <p className="text-xs font-medium text-gray-400 mt-1 leading-relaxed max-w-md">
                 {mode === "recover"
                   ? "Search recoverable gateway payments or complete signups for students who registered without paying."
+                  : mode === "extend"
+                  ? "Search students, view enrolled courses, extend active validity, or renew expired registrations."
                   : autofillSource
                   ? "Review prefilled details and select course/subjects to complete this student's enrollment."
-                  : "Issue a zero-cost enrollment for students approved by management."}
+                  : "Register a student with verified payment reference or complimentary management approval."}
               </p>
             </div>
 
             {/* Toggle Pill */}
             <div className="flex bg-gray-100 dark:bg-[#06243A] rounded-2xl p-1.5 gap-1 flex-shrink-0 shadow-inner">
               <button
-                onClick={() => setMode("recover")}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
-                  mode === "recover"
-                    ? "bg-gradient-to-r from-[#09314F] to-[#0F4068] text-white shadow-lg shadow-[#09314F]/20"
-                    : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                }`}
-              >
-                <MagnifyingGlassIcon className="w-4 h-4" />
-                Recover
-              </button>
-              <button
                 onClick={() => setMode("create")}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
+                className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
                   mode === "create"
                     ? "bg-gradient-to-r from-[#C5A97A] to-[#D4B98C] text-white shadow-lg shadow-[#C5A97A]/20"
                     : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -1069,6 +1773,31 @@ export default function AdminCreateStudent() {
               >
                 <UserPlusIcon className="w-4 h-4" />
                 Create
+              </button>
+              <button
+                onClick={() => {
+                  setMode("extend");
+                  fetchAccessStudents();
+                }}
+                className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
+                  mode === "extend"
+                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20"
+                    : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                }`}
+              >
+                <ClockIcon className="w-4 h-4" />
+                Extend / Renew
+              </button>
+              <button
+                onClick={() => setMode("recover")}
+                className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
+                  mode === "recover"
+                    ? "bg-gradient-to-r from-[#09314F] to-[#0F4068] text-white shadow-lg shadow-[#09314F]/20"
+                    : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                }`}
+              >
+                <MagnifyingGlassIcon className="w-4 h-4" />
+                Recover
               </button>
             </div>
           </div>
@@ -1439,6 +2168,295 @@ export default function AdminCreateStudent() {
         )}
 
         {/* ========================================
+            MODE 3: EXTEND & RENEW COURSE ACCESS
+        ======================================== */}
+        {mode === "extend" && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-400">
+            {/* Search and Action Bar */}
+            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10 flex items-center justify-between flex-wrap gap-2">
+                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <ClockIcon className="w-4 h-4 text-emerald-500" />
+                  Student Course Validity & Access Management
+                </h3>
+                <span className="text-[10px] font-bold text-gray-400">
+                  {accessStudents.length} student{accessStudents.length === 1 ? "" : "s"} shown
+                </span>
+              </div>
+              <div className="p-6">
+                <form onSubmit={handleAccessSearch} className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={accessSearchQuery}
+                      onChange={(e) => setAccessSearchQuery(e.target.value)}
+                      placeholder="Search by student Name, Phone, Email, or Student ID..."
+                      className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-4 pl-12 pr-10 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                    />
+                    {accessSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAccessSearchQuery("");
+                          fetchAccessStudents("");
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 hover:text-gray-800 dark:hover:text-white flex items-center justify-center text-xs font-bold transition-all"
+                        title="Clear filter"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={loadingAccessStudents}
+                      className="px-7 py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2"
+                    >
+                      {loadingAccessStudents ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <MagnifyingGlassIcon className="w-4 h-4" />
+                      )}
+                      {loadingAccessStudents ? "Searching..." : "Search"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fetchAccessStudents(accessSearchQuery.trim())}
+                      className="p-4 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#06243A] transition-all flex items-center justify-center"
+                      title="Refresh student list"
+                    >
+                      <ArrowPathIcon className={`w-5 h-5 ${loadingAccessStudents ? "animate-spin text-emerald-500" : ""}`} />
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            {/* Students List */}
+            <div className="space-y-4">
+              {loadingAccessStudents ? (
+                <div className="flex flex-col items-center justify-center bg-white/40 dark:bg-gray-800/40 rounded-3xl border border-gray-100 dark:border-gray-800 p-12">
+                  <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4" />
+                  <p className="text-xs font-bold text-gray-400">Loading student records...</p>
+                </div>
+              ) : accessStudents.length > 0 ? (
+                accessStudents.map((student) => {
+                  const enrollments =
+                    student.course_enrollments ||
+                    student.courseEnrollments ||
+                    student.courses ||
+                    [];
+
+                  const displayName =
+                    student.firstname && student.surname
+                      ? `${student.firstname} ${student.surname}`.trim()
+                      : student.username || "Student";
+
+                  return (
+                    <div
+                      key={`access-student-${student.id}`}
+                      className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-sm hover:shadow-md transition-all overflow-hidden"
+                    >
+                      {/* Student Top Bar */}
+                      <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-gray-50/30 dark:bg-gray-900/10">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#09314F] to-[#0F4068] text-white flex items-center justify-center font-black text-sm shadow-md flex-shrink-0">
+                            {displayName?.[0]?.toUpperCase() || "S"}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-sm font-black text-[#09314F] dark:text-white">
+                                {displayName}
+                              </h4>
+                              <span className="px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-[#06243A] text-gray-600 dark:text-gray-300 text-[10px] font-bold">
+                                #{student.id}
+                              </span>
+                              {student.department && (
+                                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-200 dark:border-emerald-800">
+                                  {student.department}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-gray-400 font-medium">
+                              {student.email && (
+                                <span className="flex items-center gap-1">
+                                  <EnvelopeIcon className="w-3.5 h-3.5 text-gray-400" />
+                                  {student.email}
+                                </span>
+                              )}
+                              {student.tel && (
+                                <span className="flex items-center gap-1">
+                                  <PhoneIcon className="w-3.5 h-3.5 text-gray-400" />
+                                  {student.tel}
+                                </span>
+                              )}
+                              {student.location && (
+                                <span className="flex items-center gap-1">
+                                  <MapPinIcon className="w-3.5 h-3.5 text-gray-400" />
+                                  {student.location}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Quick action: Enroll if no enrollments */}
+                        {enrollments.length === 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleCompleteIncompleteRegistration(student)}
+                            className="px-4 py-2.5 bg-gradient-to-r from-[#09314F] to-[#C5A97A] text-white rounded-xl text-xs font-black uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all shadow-md flex items-center gap-1.5 flex-shrink-0"
+                          >
+                            <UserPlusIcon className="w-4 h-4" />
+                            Enroll Student
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Course Enrollments Section */}
+                      <div className="p-6">
+                        {enrollments.length > 0 ? (
+                          <div className="space-y-3">
+                            <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                              <AcademicCapIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                              Enrolled Courses & Expiry Status ({enrollments.length})
+                            </h5>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                              {enrollments.map((enr) => {
+                                const course = enr.course || {};
+                                const isExpired = !enr.end_date || new Date(enr.end_date) <= new Date();
+                                const now = new Date();
+                                const endDate = enr.end_date ? new Date(enr.end_date) : null;
+                                const diffDays = endDate ? Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)) : 0;
+
+                                return (
+                                  <div
+                                    key={`enr-card-${enr.id}`}
+                                    className={`p-4 rounded-2xl border transition-all ${
+                                      isExpired
+                                        ? "bg-rose-50/30 dark:bg-rose-950/10 border-rose-200 dark:border-rose-900/40"
+                                        : "bg-emerald-50/30 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-900/40"
+                                    }`}
+                                  >
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <h6 className="font-bold text-sm text-[#09314F] dark:text-white truncate">
+                                            {course.title || "Course Enrollment"}
+                                          </h6>
+                                          <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-[#06243A] text-gray-600 dark:text-gray-300">
+                                            {enr.billing_cycle || "Monthly"}
+                                          </span>
+                                        </div>
+
+                                        {/* Dates */}
+                                        <div className="mt-2 space-y-1 text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                          <div className="flex items-center gap-1.5">
+                                            <CalendarIcon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                            <span>
+                                              Validity: <strong>{formatAccessDate(enr.start_date)}</strong> → <strong>{formatAccessDate(enr.end_date)}</strong>
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        {/* Status Badge */}
+                                        <div className="mt-2.5">
+                                          {isExpired ? (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+                                              <ExclamationTriangleIcon className="w-3.5 h-3.5 text-rose-500" />
+                                              Expired • Renewal Required
+                                            </span>
+                                          ) : (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                                              <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-500" />
+                                              Active • {diffDays} day{diffDays === 1 ? "" : "s"} left
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Action Button */}
+                                      <div className="flex-shrink-0 self-center">
+                                        {isExpired ? (
+                                          <button
+                                            type="button"
+                                            onClick={() => setRenewModal({ student, enrollment: enr })}
+                                            className="px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 active:scale-95 text-white shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all"
+                                            title="Renew course with fresh payment reference"
+                                          >
+                                            <ArrowPathIcon className="w-4 h-4" />
+                                            Renew Course
+                                          </button>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            onClick={() => setExtendModal({ student, enrollment: enr })}
+                                            className="px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 active:scale-95 text-white shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all"
+                                            title="Extend course registration duration"
+                                          >
+                                            <ClockIcon className="w-4 h-4" />
+                                            Extend Time
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-4 rounded-2xl bg-gray-50 dark:bg-[#06243A]/40 border border-dashed border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                            <span className="text-xs text-gray-400 font-medium">
+                              No courses currently assigned to this student.
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCompleteIncompleteRegistration(student)}
+                              className="text-xs font-bold text-[#C5A97A] hover:underline"
+                            >
+                              Assign Course & Subjects →
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center bg-white/40 dark:bg-gray-800/40 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-12">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                    <MagnifyingGlassIcon className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <h3 className="text-lg font-black text-gray-600 dark:text-gray-300 mb-1">
+                    {accessSearchQuery.trim() ? "No Students Found" : "No Enrolled Students"}
+                  </h3>
+                  <p className="text-gray-400 text-xs font-medium text-center max-w-sm">
+                    {accessSearchQuery.trim()
+                      ? `No students matched "${accessSearchQuery.trim()}". Try searching with another name, phone number, or ID.`
+                      : "There are currently no student records available for access management."}
+                  </p>
+                  {accessSearchQuery.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccessSearchQuery("");
+                        fetchAccessStudents("");
+                      }}
+                      className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-[#09314F] dark:text-[#C5A97A] bg-gray-100 dark:bg-[#06243A] hover:opacity-80 transition-all"
+                    >
+                      Clear Search Filter
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================
             MODE 2: STUDENT CREATE (Complimentary)
         ======================================== */}
         {mode === "create" && (
@@ -1585,6 +2603,178 @@ export default function AdminCreateStudent() {
                           </p>
                         )}
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Payment & Tuition Status Card */}
+                  <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                      <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <CreditCardIcon className="w-4 h-4 text-[#C5A97A]" />
+                        Payment & Tuition Status
+                      </h3>
+                      <span
+                        className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-full ${
+                          formData.payment_type === "paid"
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                            : "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
+                        }`}
+                      >
+                        {formData.payment_type === "paid" ? "Paid Enrollment" : "Free / Scholarship"}
+                      </span>
+                    </div>
+
+                    <div className="p-6 space-y-5">
+                      {/* Payment Type Toggle */}
+                      <div>
+                        <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+                          Tuition Status <span className="text-red-400">*</span>
+                        </label>
+                        <div className="grid grid-cols-2 gap-2 bg-gray-100 dark:bg-[#06243A] p-1.5 rounded-2xl">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const autoFee = standardCourseFee > 0 ? standardCourseFee.toString() : (formData.amount_paid && formData.amount_paid !== "0" ? formData.amount_paid : "");
+                              setFormData((prev) => ({
+                                ...prev,
+                                payment_type: "paid",
+                                amount_paid: autoFee,
+                              }));
+                              if (errors.payment_type) setErrors((prev) => ({ ...prev, payment_type: null }));
+                              if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+                            }}
+                            className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                              formData.payment_type === "paid"
+                                ? "bg-white dark:bg-[#0B2740] text-[#09314F] dark:text-white shadow-md shadow-black/5"
+                                : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            }`}
+                          >
+                            <BanknotesIcon className="w-4 h-4 text-emerald-500" />
+                            Paid
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                payment_type: "free",
+                                amount_paid: "0",
+                                reference_code: "",
+                              }));
+                              if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+                              if (errors.reference_code) setErrors((prev) => ({ ...prev, reference_code: null }));
+                            }}
+                            className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                              formData.payment_type === "free"
+                                ? "bg-white dark:bg-[#0B2740] text-[#09314F] dark:text-white shadow-md shadow-black/5"
+                                : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            }`}
+                          >
+                            <SparklesIcon className="w-4 h-4 text-blue-500" />
+                            Free / Complimentary
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* When Paid */}
+                      {formData.payment_type === "paid" ? (
+                        <>
+                          {/* Amount Paid */}
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                                Amount Paid (₦) <span className="text-red-400">*</span>
+                              </label>
+                              {standardCourseFee > 0 && Number(formData.amount_paid) !== standardCourseFee && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData((prev) => ({ ...prev, amount_paid: standardCourseFee.toString() }));
+                                    if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+                                  }}
+                                  className="text-[10px] font-black text-[#C5A97A] hover:underline"
+                                >
+                                  Use Standard Fee (₦{standardCourseFee.toLocaleString()})
+                                </button>
+                              )}
+                            </div>
+                            <div className="relative">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#C5A97A]">
+                                ₦
+                              </div>
+                              <input
+                                type="number"
+                                name="amount_paid"
+                                min="0"
+                                step="any"
+                                value={formData.amount_paid}
+                                onChange={handleChange}
+                                placeholder={standardCourseFee > 0 ? standardCourseFee.toString() : "e.g. 15000"}
+                                className={`w-full rounded-2xl border bg-gray-50 dark:bg-[#06243A] py-3.5 pl-9 pr-4 text-sm font-bold text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all ${
+                                  errors.amount_paid
+                                    ? "border-red-500"
+                                    : "border-gray-200 dark:border-gray-700"
+                                }`}
+                              />
+                            </div>
+                            {errors.amount_paid && (
+                              <p className="text-[10px] text-red-500 mt-1.5 font-bold">
+                                {errors.amount_paid}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Reference Code */}
+                          <div>
+                            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+                              Payment Reference Code <span className="text-red-400">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              name="reference_code"
+                              value={formData.reference_code}
+                              onChange={handleChange}
+                              placeholder="e.g. TC-1790003177806-339281 / Bank Session ID / Teller #"
+                              className={`w-full rounded-2xl border bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 font-mono transition-all ${
+                                errors.reference_code
+                                  ? "border-red-500"
+                                  : "border-gray-200 dark:border-gray-700"
+                              }`}
+                            />
+                            {errors.reference_code ? (
+                              <p className="text-[10px] text-red-500 mt-1.5 font-bold">
+                                {errors.reference_code}
+                              </p>
+                            ) : (
+                              <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
+                                Paste the bank session ID, Paystack ref, POS RRN, or teller number. Must be unique.
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Payment Method / Channel */}
+                          <div>
+                            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+                              Payment Channel
+                            </label>
+                            <div className="relative">
+                              <select
+                                name="payment_method"
+                                value={formData.payment_method}
+                                onChange={handleChange}
+                                className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 pr-10 text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 appearance-none transition-all"
+                              >
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="pos">Point of Sale (POS)</option>
+                                <option value="cash">Cash Payment</option>
+                                <option value="direct_deposit">Direct Bank Deposit</option>
+                                <option value="manual">Manual Admin Entry</option>
+                              </select>
+                              <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            </div>
+                          </div>
+                        </>
+                      ) : null}
                     </div>
                   </div>
 
@@ -2118,7 +3308,7 @@ export default function AdminCreateStudent() {
                       )}
                       <p className="text-[10px] text-gray-400 mt-2 font-medium">
                         This note is saved to the audit log and is required for
-                        all complimentary registrations.
+                        registration verification.
                       </p>
                     </div>
                   </div>
@@ -2136,7 +3326,11 @@ export default function AdminCreateStudent() {
                     {creating ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        {formData.student_id ? "Completing Registration..." : "Creating Student..."}
+                        {formData.student_id
+                          ? "Completing Registration..."
+                          : formData.payment_type === "paid"
+                          ? "Registering Student & Verifying Payment..."
+                          : "Creating Complimentary Student..."}
                       </>
                     ) : (
                       <>
@@ -2144,6 +3338,11 @@ export default function AdminCreateStudent() {
                           <>
                             <CheckCircleIcon className="w-5 h-5" />
                             Complete Student Registration
+                          </>
+                        ) : formData.payment_type === "paid" ? (
+                          <>
+                            <CreditCardIcon className="w-5 h-5" />
+                            Register Paid Student & Record Payment
                           </>
                         ) : (
                           <>
@@ -2181,6 +3380,26 @@ export default function AdminCreateStudent() {
               message: "Student contact verified successfully!",
             })
           }
+        />
+      )}
+
+      {extendModal && (
+        <ExtendAccessModal
+          student={extendModal.student}
+          enrollment={extendModal.enrollment}
+          onClose={() => setExtendModal(null)}
+          onConfirm={handleExtendSubmit}
+          loading={submittingExtension}
+        />
+      )}
+
+      {renewModal && (
+        <RenewCourseModal
+          student={renewModal.student}
+          enrollment={renewModal.enrollment}
+          onClose={() => setRenewModal(null)}
+          onConfirm={handleRenewSubmit}
+          loading={submittingRenewal}
         />
       )}
     </StaffDashboardLayout>

@@ -4,6 +4,8 @@ import { Icon } from "@iconify/react";
 import { useTimer } from "react-timer-hook";
 import { stripHtmlAndDecode } from "../../../../utils/textUtils";
 import MobileMovableCalculator from "./MobileMovableCalculator";
+import MathRenderer from "../../../common/MathRenderer";
+import ExamImageLightbox from "../../../common/ExamImageLightbox";
 
 export default function ExamInterface({
   attemptId,
@@ -25,6 +27,7 @@ export default function ExamInterface({
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [questionLightboxImg, setQuestionLightboxImg] = useState(null);
 
   // Sync currentIndex to localStorage
   useEffect(() => {
@@ -643,6 +646,12 @@ export default function ExamInterface({
                     <div
                       className="text-[15px] font-normal text-[#09314F] dark:text-white leading-relaxed quill-content break-words whitespace-normal w-full overflow-hidden"
                       dangerouslySetInnerHTML={{ __html: cleanHtmlContent(currentQuestion.question) }}
+                      onClick={(e) => {
+                        if (e.target && e.target.tagName === "IMG") {
+                          e.stopPropagation();
+                          setQuestionLightboxImg({ src: e.target.src, alt: e.target.alt || "Question diagram" });
+                        }
+                      }}
                     />
 
                     {currentQuestion.image && (
@@ -694,7 +703,7 @@ export default function ExamInterface({
                                   : "text-gray-700 dark:text-gray-200"
                               }`}
                             >
-                              {opt.option || opt.text}
+                              <MathRenderer text={opt.option || opt.text} className="exam-option-renderer" />
                             </span>
                           </div>
 
@@ -1077,6 +1086,14 @@ export default function ExamInterface({
             )}
           </div>
         </div>
+      )}
+
+      {questionLightboxImg && (
+        <ExamImageLightbox
+          src={questionLightboxImg.src}
+          alt={questionLightboxImg.alt}
+          onClose={() => setQuestionLightboxImg(null)}
+        />
       )}
     </div>
   );

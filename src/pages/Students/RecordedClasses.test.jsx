@@ -180,4 +180,53 @@ describe("RecordedClasses & View Counter Suite", () => {
       expect(screen.queryByText(/@/i)).not.toBeInTheDocument();
     });
   });
+
+  describe("Course Badge & Program Filtering", () => {
+    test("displays course badge and filters recordings by program tab", async () => {
+      const mockMultiCourseClasses = [
+        {
+          id: 101,
+          title: "GCE - English Revision",
+          subject: "English",
+          course_name: "GCE",
+          views: 12,
+        },
+        {
+          id: 102,
+          title: "WAEC - Physics Mechanics",
+          subject: "Physics",
+          course_name: "WAEC",
+          views: 8,
+        },
+      ];
+
+      axios.get.mockResolvedValueOnce({
+        data: { success: true, data: mockMultiCourseClasses },
+      });
+
+      render(<RecordedClasses />);
+
+      // Verify badges are displayed
+      expect(await screen.findByText("GCE - English Revision")).toBeInTheDocument();
+      expect(screen.getByText("WAEC - Physics Mechanics")).toBeInTheDocument();
+      expect(screen.getByText("GCE")).toBeInTheDocument();
+      expect(screen.getByText("WAEC")).toBeInTheDocument();
+
+      // Program filter tabs should be present when multiple programs exist
+      const gceTab = screen.getByText(/GCE \(1\)/i);
+      expect(gceTab).toBeInTheDocument();
+
+      // Click GCE tab to filter out WAEC
+      fireEvent.click(gceTab);
+      expect(screen.getByText("GCE - English Revision")).toBeInTheDocument();
+      expect(screen.queryByText("WAEC - Physics Mechanics")).not.toBeInTheDocument();
+
+      // Click All Programs tab to restore
+      const allTab = screen.getByText(/All Programs \(2\)/i);
+      fireEvent.click(allTab);
+      expect(screen.getByText("GCE - English Revision")).toBeInTheDocument();
+      expect(screen.getByText("WAEC - Physics Mechanics")).toBeInTheDocument();
+    });
+  });
 });
+

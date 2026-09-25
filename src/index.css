@@ -124,6 +124,63 @@ body {
   margin: 1rem 0 !important;
   opacity: 0.95;
 }
+
+/* Standard Exam Image Rules for Questions, Explanations and Options */
+.quill-content img,
+.ql-editor img,
+.math-rendered-content img:not(.exam-option-img) {
+  max-width: 100% !important;
+  max-height: 340px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 0.75rem !important;
+  margin: 0.75rem auto !important;
+  display: block !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(229, 231, 235, 0.8) !important;
+  background-color: #ffffff !important;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.quill-content img:hover,
+.math-rendered-content img:not(.exam-option-img):hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Dark mode adjustment for questions & explanations */
+.dark .quill-content img,
+.dark .ql-editor img,
+.dark .math-rendered-content img:not(.exam-option-img) {
+  border-color: rgba(55, 65, 81, 0.8) !important;
+  background-color: rgba(30, 41, 59, 0.7) !important;
+}
+
+/* Option-specific image constraints */
+.exam-option-renderer img,
+.exam-option-img {
+  max-height: 110px !important;
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 0.5rem !important;
+  margin: 0.35rem 0 !important;
+  display: inline-block !important;
+  border: 1px solid rgba(229, 231, 235, 0.8) !important;
+  background-color: #ffffff !important;
+  padding: 3px !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  vertical-align: middle !important;
+}
+
+.dark .exam-option-renderer img,
+.dark .exam-option-img {
+  border-color: rgba(55, 65, 81, 0.8) !important;
+  background-color: rgba(30, 41, 59, 0.7) !important;
+}
+
 a {
   font-weight: 500;
   font-size: 16px;

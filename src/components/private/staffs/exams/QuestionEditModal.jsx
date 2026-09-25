@@ -15,40 +15,66 @@ import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import SymbolPicker from "../../../common/SymbolPicker";
 import { Icon } from "@iconify/react";
+import {
+  uploadExamImage,
+  sanitizeExamHtml,
+  extractOptionTextAndImage,
+  combineOptionTextAndImage,
+  extractExplanationTextAndImage,
+  combineExplanationTextAndImage
+} from "../../../../utils/examImageUploader";
 
-const stripImagesFromHtml = (html) => {
-  if (!html) return html;
-  let cleaned = html;
-  if (/<img[^>]*>/i.test(cleaned) || /data:image\//i.test(cleaned)) {
-    cleaned = cleaned.replace(/<img[^>]*>/gi, '').replace(/data:image\/[a-zA-Z0-9+/]+;base64,[^"'\s>]+/gi, '');
-  }
-  return cleaned;
-};
+const stripImagesFromHtml = (html) => sanitizeExamHtml(html);
 
-// Quill configuration matching QuestionItem.jsx — excludes image button and blocks image paste
-const quillFormats = [
-  'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
-  'list', 'indent', 'link', 'video', 'script'
-];
-
-const quillModules = {
+const quillModulesExplanation = {
   toolbar: [
     [{ 'header': [1, 2, 3, false] }],
     ['bold', 'italic', 'underline', 'strike'],
     [{ 'script': 'sub'}, { 'script': 'super' }],
     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    ['link', 'video'],
     ['clean']
-  ],
-  clipboard: {
-    matchVisual: false,
-    matchers: [
-      ['NODE_ELEMENT', (node) => {
-        if (node.tagName === 'IMG') {
-          return { ops: [] };
-        }
-      }]
-    ]
+  ]
+};
+
+// Quill configuration matching QuestionItem.jsx — includes image button
+const quillFormats = [
+  'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+  'list', 'indent', 'link', 'image', 'video', 'script'
+];
+
+const quillModules = {
+  toolbar: {
+    container: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'script': 'sub'}, { 'script': 'super' }],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['link', 'image', 'video'],
+      ['clean']
+    ],
+    handlers: {
+      image: function() {
+        const quill = this.quill;
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/jpeg,image/png,image/jpg,image/webp,image/gif,image/svg+xml');
+        input.click();
+
+        input.onchange = async () => {
+          const file = input.files?.[0];
+          if (!file) return;
+          try {
+            const res = await uploadExamImage(file);
+            const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
+            quill.insertEmbed(range.index, 'image', res.url);
+            quill.setSelection(range.index + 1);
+          } catch (err) {
+            console.error("Quill image upload error:", err);
+            alert(err.response?.data?.message || err.message || "Failed to upload image.");
+          }
+        };
+      }
+    }
   }
 };
 
@@ -61,7 +87,10 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
   const [questionType, setQuestionType] = useState(() => question ? (question.question_type || "true_false") : "true_false");
   const [marks, setMarks] = useState(() => question ? (question.marks || 1) : 1);
   const [options, setOptions] = useState(() => question ? (question.options || []) : []);
-  const [explanation, setExplanation] = useState(() => question ? (question.explanation || question.explanation_text || "") : "");
+  const initialParsedExp = extractExplanationTextAndImage(question ? (question.explanation || question.explanation_text || "") : "");
+  const [explanationText, setExplanationText] = useState(initialParsedExp.text);
+  const [explanationImage, setExplanationImage] = useState(initialParsedExp.imageUrl);
+  const [isUploadingExpImg, setIsUploadingExpImg] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -135,7 +164,10 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       setQuestionType(question.question_type || "true_false");
       setMarks(question.marks || 1);
       setOptions(question.options || []);
-      setExplanation(question.explanation || question.explanation_text || "");
+      const rawExp = question.explanation || question.explanation_text || "";
+      const parsedExp = extractExplanationTextAndImage(rawExp);
+      setExplanationText(parsedExp.text);
+      setExplanationImage(parsedExp.imageUrl);
 
       // Populate existing files/images from the question data
       const questionFiles = question.files || question.images || question.attachments || [];
@@ -237,12 +269,14 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
 
     const start = input.selectionStart;
     const end = input.selectionEnd;
-    const text = options[index].option_text;
+    const currentOpt = options[index];
+    const { text, imageUrl } = extractOptionTextAndImage(currentOpt.option_text);
     const before = text.substring(0, start);
     const after = text.substring(end);
     const newText = before + symbol + after;
+    const updated = combineOptionTextAndImage(newText, imageUrl, currentOpt.label);
 
-    handleOptionChange(index, "option_text", newText);
+    handleOptionChange(index, "option_text", updated);
 
     // Reset cursor position after React re-render
     setTimeout(() => {
@@ -274,12 +308,48 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
     setOptions(options.filter((_, i) => i !== index));
   };
 
+  const handleExplanationImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingExpImg(true);
+    try {
+      const res = await uploadExamImage(file);
+      setExplanationImage(res.url);
+    } catch (err) {
+      console.error("Explanation image upload error:", err);
+      alert(err.response?.data?.message || err.message || "Failed to upload explanation image.");
+    } finally {
+      setIsUploadingExpImg(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleExplanationPaste = async (e) => {
+    const clipboardData = e.clipboardData;
+    if (!clipboardData || !clipboardData.files || clipboardData.files.length === 0) return;
+    const file = Array.from(clipboardData.files).find(f => f.type.startsWith('image/'));
+    if (file) {
+      e.preventDefault();
+      setIsUploadingExpImg(true);
+      try {
+        const res = await uploadExamImage(file);
+        setExplanationImage(res.url);
+      } catch (err) {
+        console.error("Explanation paste error:", err);
+        alert(err.response?.data?.message || err.message || "Failed to upload pasted image.");
+      } finally {
+        setIsUploadingExpImg(false);
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    const plainQuestion = questionText;
-    const plainExplanation = explanation;
+    const plainQuestion = sanitizeExamHtml(questionText);
+    const combinedExp = combineExplanationTextAndImage(explanationText, explanationImage);
+    const plainExplanation = sanitizeExamHtml(combinedExp);
 
     // 1. Validation: Correct option check (for multiple_choice and true_false)
     const hasCorrectOption = options.some(o => o.is_correct || o.is_correct === 1);
@@ -382,7 +452,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       // Options
       options.forEach((o, index) => {
         questionFormData.append(`options[${index}][label]`, o.label);
-        questionFormData.append(`options[${index}][option_text]`, o.option_text);
+        questionFormData.append(`options[${index}][option_text]`, sanitizeExamHtml(o.option_text));
         questionFormData.append(`options[${index}][is_correct]`, o.is_correct ? 1 : 0);
         questionFormData.append(`options[${index}][sort_order]`, o.sort_order || index + 1);
       });
@@ -740,7 +810,23 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
 
           <div className="space-y-3">
             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Text</label>
-            <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-[#0F2843] dark:text-white">
+            <div 
+              className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-[#0F2843] dark:text-white"
+              onPaste={async (e) => {
+                const clipboardData = e.clipboardData;
+                if (!clipboardData || !clipboardData.files || clipboardData.files.length === 0) return;
+                const file = Array.from(clipboardData.files).find(f => f.type.startsWith('image/'));
+                if (file) {
+                  e.preventDefault();
+                  try {
+                    const res = await uploadExamImage(file);
+                    setQuestionText((prev) => `${prev || ""}<p><img src="${res.url}" alt="Question Diagram" /></p>`);
+                  } catch (err) {
+                    alert(err.message || "Failed to upload pasted image.");
+                  }
+                }
+              }}
+            >
               <ReactQuill 
                 theme="snow" 
                 value={questionText || ""} 
@@ -875,66 +961,213 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             </div>
 
             <div className="space-y-4">
-              {options.map((opt, idx) => (
-                <div key={idx} className="flex items-center gap-4">
-                  <input 
-                    type="text"
-                    value={opt.label}
-                    onChange={(e) => handleOptionChange(idx, "label", e.target.value)}
-                    className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center font-black text-[#0F2843] dark:text-white shrink-0 text-center outline-none focus:ring-2 focus:ring-[#BB9E7F]/30"
-                  />
-                  <div className="flex-1 relative group/input">
-                    <input 
-                      id={`option-input-${idx}`}
-                      type="text"
-                      value={opt.option_text}
-                      onChange={(e) => handleOptionChange(idx, "option_text", e.target.value)}
-                      className="w-full px-6 py-4 pr-12 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none"
-                    />
-                    {isScienceSubject() && (
-                      <SymbolPicker 
-                        onSelect={(sym) => insertSymbol(idx, sym)} 
-                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-focus-within/input:opacity-100 group-hover/input:opacity-100 transition-opacity" 
+              {options.map((opt, idx) => {
+                const { text: optionTextOnly, imageUrl: optionImageUrl } = extractOptionTextAndImage(opt.option_text);
+
+                return (
+                  <div key={idx} className="flex flex-col gap-2 p-3 bg-gray-50/50 dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-gray-700/60 animate-in fade-in duration-300">
+                    <div className="flex items-center gap-4">
+                      <input 
+                        type="text"
+                        value={opt.label}
+                        onChange={(e) => handleOptionChange(idx, "label", e.target.value)}
+                        className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center font-black text-[#0F2843] dark:text-white shrink-0 text-center outline-none focus:ring-2 focus:ring-[#BB9E7F]/30"
                       />
+                      <div className="flex-1 relative group/input">
+                        <input 
+                          id={`option-input-${idx}`}
+                          type="text"
+                          value={optionTextOnly}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const combined = combineOptionTextAndImage(val, optionImageUrl, opt.label);
+                            handleOptionChange(idx, "option_text", combined);
+                          }}
+                          placeholder={optionImageUrl ? `Option ${opt.label} text (diagram attached)...` : `Option ${opt.label} text...`}
+                          className="w-full px-6 py-4 pr-24 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none shadow-sm"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                          {/* Option Diagram Upload Button */}
+                          <label
+                            htmlFor={`modal-opt-file-${idx}`}
+                            className={`p-2 rounded-xl cursor-pointer transition-all ${
+                              optionImageUrl
+                                ? "text-[#BB9E7F] bg-[#BB9E7F]/10 hover:bg-[#BB9E7F]/20"
+                                : "text-gray-400 hover:text-[#BB9E7F] hover:bg-gray-100 dark:hover:bg-gray-800"
+                            }`}
+                            title={optionImageUrl ? "Replace Option Diagram" : "Add Image / Diagram to Option"}
+                          >
+                            <PhotoIcon className="w-5 h-5" />
+                            <input
+                              id={`modal-opt-file-${idx}`}
+                              type="file"
+                              accept="image/jpeg,image/png,image/jpg,image/webp,image/gif,image/svg+xml"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                  const res = await uploadExamImage(file);
+                                  const combined = combineOptionTextAndImage(optionTextOnly, res.url, opt.label);
+                                  handleOptionChange(idx, "option_text", combined);
+                                } catch (err) {
+                                  alert(err.response?.data?.message || err.message || "Failed to upload option image.");
+                                } finally {
+                                  e.target.value = "";
+                                }
+                              }}
+                            />
+                          </label>
+
+                          {isScienceSubject() && (
+                            <SymbolPicker 
+                              onSelect={(sym) => insertSymbol(idx, sym)} 
+                              className="opacity-0 group-focus-within/input:opacity-100 group-hover/input:opacity-100 transition-opacity" 
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleOptionChange(idx, "is_correct", !opt.is_correct)}
+                          className={`px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${
+                            opt.is_correct 
+                              ? "bg-green-500 text-white shadow-lg" 
+                              : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+                          }`}
+                        >
+                          <CheckCircleIcon className="w-4 h-4" />
+                          {opt.is_correct ? "Correct" : "Mark"}
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => removeOption(idx)}
+                          className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                        >
+                          <TrashIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Option Image Attached Preview Card */}
+                    {optionImageUrl && (
+                      <div className="ml-14 flex items-center gap-3 p-2 bg-[#BB9E7F]/10 border border-[#BB9E7F]/30 rounded-xl w-fit animate-in fade-in zoom-in-95">
+                        <img 
+                          src={optionImageUrl} 
+                          alt={`Option ${opt.label} diagram`} 
+                          className="h-12 max-w-[140px] object-contain rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-1"
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-[#BB9E7F] uppercase tracking-wider">
+                            Diagram Attached
+                          </span>
+                          <span className="text-[9px] text-gray-400 font-medium truncate max-w-[160px]">
+                            Option {opt.label} image
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const combined = combineOptionTextAndImage(optionTextOnly, null, opt.label);
+                            handleOptionChange(idx, "option_text", combined);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors ml-2"
+                          title="Remove Diagram"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => handleOptionChange(idx, "is_correct", !opt.is_correct)}
-                      className={`px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${
-                        opt.is_correct 
-                          ? "bg-green-500 text-white shadow-lg" 
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-400"
-                      }`}
-                    >
-                      <CheckCircleIcon className="w-4 h-4" />
-                      {opt.is_correct ? "Correct" : "Mark"}
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => removeOption(idx)}
-                      className="p-3 text-gray-300 hover:text-red-500 transition-colors"
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-gray-800">
-            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Explanation</label>
-            <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-[#0F2843] dark:text-white">
-              <ReactQuill 
-                theme="snow" 
-                value={explanation} 
-                onChange={(val) => setExplanation(stripImagesFromHtml(val))}
-                modules={quillModules}
-                formats={quillFormats}
-                className="[&_.ql-editor]:min-h-[180px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" 
-              />
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Explanation</label>
+              
+              <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#BB9E7F]/10 hover:bg-[#BB9E7F]/20 text-[#BB9E7F] text-xs font-bold cursor-pointer transition-colors border border-[#BB9E7F]/30 shadow-sm">
+                <PhotoIcon className="w-4 h-4" />
+                <span>{explanationImage ? "Change Diagram" : "Attach Diagram"}</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg,image/webp,image/gif,image/svg+xml"
+                  className="hidden"
+                  onChange={handleExplanationImageUpload}
+                />
+              </label>
+            </div>
+
+            {/* Explanation Box */}
+            <div 
+              className="bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner p-4 space-y-4"
+              onPaste={handleExplanationPaste}
+            >
+              {/* TOP: Image preview inside the box */}
+              {explanationImage && (
+                <div className="flex flex-col sm:flex-row items-center gap-4 p-3 bg-white dark:bg-gray-900 border border-[#BB9E7F]/40 rounded-2xl animate-in fade-in zoom-in-95">
+                  <img 
+                    src={explanationImage} 
+                    alt="Explanation diagram" 
+                    className="max-h-48 max-w-full sm:max-w-xs object-contain rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-1"
+                  />
+                  <div className="flex-1 flex flex-col gap-1 text-center sm:text-left">
+                    <span className="text-[10px] font-black text-[#BB9E7F] uppercase tracking-wider flex items-center gap-1 justify-center sm:justify-start">
+                      <PhotoIcon className="w-3.5 h-3.5" />
+                      Explanation Diagram Attached
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      In exam review, this diagram will display directly below the explanation text.
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label 
+                      className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-gray-500 hover:text-[#BB9E7F] hover:bg-[#BB9E7F]/10 rounded-xl cursor-pointer transition-colors border border-gray-200 dark:border-gray-700" 
+                      title="Replace Diagram"
+                    >
+                      <PhotoIcon className="w-4 h-4" />
+                      <span>Replace</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg,image/webp,image/gif,image/svg+xml"
+                        className="hidden"
+                        onChange={handleExplanationImageUpload}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setExplanationImage(null)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors border border-gray-200 dark:border-gray-700"
+                      title="Remove Diagram"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Uploading Status */}
+              {isUploadingExpImg && (
+                <div className="flex items-center justify-center p-3 bg-[#BB9E7F]/5 border border-dashed border-[#BB9E7F]/40 rounded-2xl text-xs font-bold text-[#BB9E7F] animate-pulse">
+                  Uploading explanation diagram to storage...
+                </div>
+              )}
+
+              {/* BOTTOM: Text Editor inside the box */}
+              <div className="quill-wrapper rounded-2xl overflow-hidden text-[#0F2843] dark:text-white">
+                <ReactQuill 
+                  theme="snow" 
+                  value={explanationText} 
+                  onChange={(val) => setExplanationText(val)}
+                  modules={quillModulesExplanation}
+                  formats={quillFormats}
+                  placeholder="Explain why the answer is correct (text is displayed above the diagram)..."
+                  className="[&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" 
+                />
+              </div>
             </div>
           </div>
         </form>

@@ -170,6 +170,14 @@ export default function CourseAdvisorStudentManagement() {
          const studentPayments = paymentsArray.filter(p => p.student_id === student.id || p.student?.id === student.id);
          return { ...student, payments: studentPayments };
       });
+
+      // Sort newest to oldest by registration date (created_at desc), falling back to id desc
+      studentsArray.sort((a, b) => {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (timeB !== timeA) return timeB - timeA;
+        return (Number(b.id) || 0) - (Number(a.id) || 0);
+      });
       
       setStudents(studentsArray);
       calculateStats(studentsArray);

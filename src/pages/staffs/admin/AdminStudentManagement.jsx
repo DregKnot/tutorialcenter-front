@@ -154,6 +154,14 @@ export default function AdminStudentManagement() {
          const studentPayments = paymentsArray.filter(p => p.student_id === student.id || p.student?.id === student.id);
          return { ...student, payments: studentPayments };
       });
+
+      // Sort newest to oldest by registration date (created_at desc), falling back to id desc
+      studentsArray.sort((a, b) => {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (timeB !== timeA) return timeB - timeA;
+        return (Number(b.id) || 0) - (Number(a.id) || 0);
+      });
       
       setStudents(studentsArray);
       calculateStats(studentsArray);
@@ -384,9 +392,16 @@ export default function AdminStudentManagement() {
                                   </span>
                                 )}
                              </div>
-                             <span className="font-bold text-[#0F2843] dark:text-white text-sm truncate" title={displayName}>
-                               {displayName}
-                             </span>
+                             <div className="flex flex-col truncate min-w-0">
+                               <span className="font-bold text-[#0F2843] dark:text-white text-sm truncate" title={displayName}>
+                                 {displayName}
+                               </span>
+                               {student.created_at && (
+                                 <span className="text-[10px] text-gray-400 font-medium">
+                                   Joined {new Date(student.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                 </span>
+                               )}
+                             </div>
                           </div>
                           
                           {/* Status Column */}
@@ -455,6 +470,11 @@ export default function AdminStudentManagement() {
                              </div>
                              <div className="min-w-0">
                                <p className="font-bold text-[#0F2843] dark:text-white text-sm truncate">{displayName}</p>
+                                {student.created_at && (
+                                  <p className="text-[10px] text-gray-400 font-medium">
+                                    Joined {new Date(student.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                  </p>
+                                )}
                                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase mt-0.5 ${
                                  isSuspended
                                    ? "bg-red-50 text-red-500"

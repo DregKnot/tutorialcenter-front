@@ -3,7 +3,7 @@ import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import SettingsSidebar from "../../components/private/Students/SettingsSidebar.jsx";
-import { ChevronLeftIcon, PencilSquareIcon, EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, PencilSquareIcon, EnvelopeIcon, PhoneIcon, KeyIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import { OTPModal, PasswordChangeModal, SuccessModal, ContactInputModal } from "../../components/private/Students/SettingsModals.jsx";
 
@@ -138,12 +138,13 @@ export default function StudentSettings() {
             ? `${API_BASE_URL}/api/students/forget-password`
             : `${API_BASE_URL}/api/students/contact/change/request`;
             
-        // Construct dynamic payload.
-        // For password endpoints, backend expects "email". For contact changes, backend expects "type": "phone".
-        const passwordKey = context === "phone" ? "tel" : context;
-        const payload = isPassword 
-            ? { [passwordKey]: target } 
-            : { type: context, value: target };
+        let payload;
+        if (isPassword) {
+            const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target);
+            payload = isEmail ? { email: target } : { tel: target };
+        } else {
+            payload = { type: context, value: target };
+        }
 
         await axios.post(endpoint, payload, {
             headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
@@ -155,7 +156,7 @@ export default function StudentSettings() {
         if (err.response?.status === 429) {
           alert("Too many requests. Please wait a moment before trying again.");
         } else {
-          alert("Failed to request verification code. Please try again later.");
+          alert(err.response?.data?.message || "Failed to request verification code. Please try again later.");
         }
         closeModals();
       } finally {
@@ -209,9 +210,15 @@ export default function StudentSettings() {
              password,
              confirmPassword
          };
-         // The backend looks for either email or tel from the request to locate the student
-         if (student?.email) payload.email = student.email;
-         else if (student?.tel) payload.tel = student.tel;
+         // Locate the student using flowTarget, email, or tel
+         const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(flowTarget);
+         if (flowTarget) {
+             payload[isEmail ? "email" : "tel"] = flowTarget;
+         } else if (student?.email) {
+             payload.email = student.email;
+         } else if (student?.tel) {
+             payload.tel = student.tel;
+         }
 
          await axios.post(`${API_BASE_URL}/api/students/change-password`, payload, {
              headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
@@ -308,6 +315,19 @@ function SettingsMenu({ initiateFlow, setActiveView }) {
                  <PhoneIcon className="w-5 h-5 md:w-6 md:h-6" />
               </div>
               <span className="font-bold text-gray-800 dark:text-white text-sm md:text-lg">Edit Phone Number</span>
+           </div>
+        </button>
+
+        {/* Password Card */}
+        <button 
+           onClick={() => initiateFlow("password")}
+           className="w-full flex items-center justify-between p-3 md:p-5 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group"
+        >
+           <div className="flex items-center gap-3 md:gap-4">
+              <div className="p-2 md:p-3 rounded-full bg-blue-50 text-[#09314F] dark:bg-gray-700 dark:text-blue-400 group-hover:bg-[#09314F] group-hover:text-white transition-colors">
+                 <KeyIcon className="w-5 h-5 md:w-6 md:h-6" />
+              </div>
+              <span className="font-bold text-gray-800 dark:text-white text-sm md:text-lg">Change Password</span>
            </div>
         </button>
     </div>
