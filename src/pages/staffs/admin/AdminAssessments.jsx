@@ -320,7 +320,7 @@ export default function AdminAssessments() {
               Drafts in Progress
             </span>
             <div className="text-2xl sm:text-3xl font-black text-amber-500 dark:text-amber-400">
-              {draftCount || draftAssessments}
+              {draftAssessments}
             </div>
             <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Pending tutor publication</p>
           </div>
@@ -432,18 +432,18 @@ export default function AdminAssessments() {
               return (
                 <div
                   key={item.id}
-                  className="bg-white dark:bg-[#09314F] rounded-[32px] p-6 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-6 group"
+                  className="bg-white dark:bg-[#09314F] rounded-2xl sm:rounded-[32px] p-4 sm:p-6 border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-4 sm:space-y-6 group overflow-hidden max-w-full"
                 >
                   {/* Top Meta */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-[#C5A97A]">
+                  <div className="space-y-3 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-[#C5A97A] truncate max-w-[65%]">
                         {subjectName}
                       </span>
 
                       {/* Status Pill */}
                       <span
-                        className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${
+                        className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-lg shrink-0 ${
                           isPublished
                             ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
                             : isDraft
@@ -455,22 +455,22 @@ export default function AdminAssessments() {
                       </span>
                     </div>
 
-                    <div>
-                      <h3 className="text-base font-black text-gray-900 dark:text-white group-hover:text-[#0F2843] dark:group-hover:text-[#C5A97A] transition line-clamp-1">
+                    <div className="min-w-0">
+                      <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white group-hover:text-[#0F2843] dark:group-hover:text-[#C5A97A] transition truncate">
                         {item.title}
                       </h3>
-                      <p className="text-xs text-gray-400 font-medium line-clamp-1">
+                      <p className="text-xs text-gray-400 font-medium truncate">
                         {classTitle}
                       </p>
                     </div>
 
                     {/* Tutor Creator Information */}
-                    <div className="flex items-center gap-2 p-2 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 text-xs">
-                      <UserCircleIcon className="w-4 h-4 text-[#C5A97A] flex-shrink-0" />
-                      <div className="truncate">
+                    <div className="flex items-center gap-2 p-2 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 text-xs min-w-0 overflow-hidden">
+                      <UserCircleIcon className="w-4 h-4 text-[#C5A97A] shrink-0" />
+                      <div className="truncate min-w-0">
                         <span className="font-bold text-gray-800 dark:text-white">{tutorName}</span>
                         {tutorEmail && (
-                          <span className="text-[10px] text-gray-400 ml-1.5 font-medium truncate">
+                          <span className="text-[10px] text-gray-400 ml-1 font-medium truncate">
                             ({tutorEmail})
                           </span>
                         )}
@@ -478,31 +478,31 @@ export default function AdminAssessments() {
                     </div>
 
                     {/* Badges: Total Marks, Timer, Pass Mark */}
-                    <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-bold text-gray-600 dark:text-gray-300">
-                      <div className="px-2.5 py-1 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 flex items-center gap-1">
-                        <SparklesIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px] sm:text-[11px] font-bold text-gray-600 dark:text-gray-300">
+                      <div className="px-2 py-0.5 rounded-lg sm:rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 flex items-center gap-1">
+                        <SparklesIcon className="w-3.5 h-3.5 text-[#C5A97A] shrink-0" />
                         <span>{item.total_marks || 0} Marks</span>
                       </div>
 
                       {item.timer_minutes && (
-                        <div className="px-2.5 py-1 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 flex items-center gap-1">
-                          <ClockIcon className="w-3.5 h-3.5 text-blue-500" />
+                        <div className="px-2 py-0.5 rounded-lg sm:rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 flex items-center gap-1">
+                          <ClockIcon className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                           <span>{item.timer_minutes} Mins</span>
                         </div>
                       )}
 
-                      <div className="px-2.5 py-1 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 flex items-center gap-1">
+                      <div className="px-2 py-0.5 rounded-lg sm:rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 flex items-center gap-1">
                         <span>Pass: {item.pass_mark || 50}%</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Submission Statistics Box */}
-                  <div className="p-4 rounded-2xl bg-gray-50/80 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 space-y-2 text-xs">
+                  <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gray-50/80 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 space-y-1.5 text-xs min-w-0">
                     {isDraft ? (
-                      <div className="flex items-start gap-2 text-amber-700 dark:text-amber-300 text-[11px] font-medium">
+                      <div className="flex items-start gap-1.5 text-amber-700 dark:text-amber-300 text-[11px] font-medium">
                         <ExclamationTriangleIcon className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>Draft status: Students cannot see this assessment until published.</span>
+                        <span>Draft: Hidden from students until published.</span>
                       </div>
                     ) : (
                       <>
@@ -527,61 +527,58 @@ export default function AdminAssessments() {
                           </div>
                         )}
                         {item.due_at && (
-                          <div className="text-[10px] text-gray-400 pt-1 border-t border-gray-200/50 dark:border-white/10 flex items-center gap-1">
-                            <CalendarDaysIcon className="w-3.5 h-3.5" />
-                            <span>Due: {new Date(item.due_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                          <div className="text-[10px] text-gray-400 pt-1 border-t border-gray-200/50 dark:border-white/10 flex items-center gap-1 truncate">
+                            <CalendarDaysIcon className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">Due: {new Date(item.due_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                           </div>
                         )}
                       </>
                     )}
                   </div>
 
-                  {/* Actions Footer */}
-                  <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex items-center justify-between gap-2">
+                  {/* Actions Footer - Ultra-scalable & Responsive */}
+                  <div className="pt-2 border-t border-gray-100 dark:border-white/10 grid grid-cols-1 min-[300px]:grid-cols-2 gap-2 w-full max-w-full">
                     <button
                       type="button"
                       onClick={() => handleOpenPreview(item)}
-                      className="px-3.5 py-2 rounded-xl bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 text-xs font-bold transition flex items-center gap-1.5"
+                      className="w-full px-2.5 py-2 rounded-xl bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 text-xs font-bold transition flex items-center justify-center gap-1.5 min-w-0"
                       title="Inspect Questions"
                     >
-                      <EyeIcon className="w-4 h-4 text-[#C5A97A]" />
-                      <span>Preview</span>
+                      <EyeIcon className="w-4 h-4 text-[#C5A97A] shrink-0" />
+                      <span className="truncate">Preview</span>
                     </button>
 
-                    <div className="flex items-center gap-2">
-                      {isDraft && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenPublish(item)}
-                            className="px-3.5 py-2 rounded-xl bg-[#0F2843] text-white dark:bg-[#C5A97A] dark:text-[#0F2843] text-xs font-black shadow-md hover:opacity-95 transition flex items-center gap-1.5"
-                            title="Publish for students"
-                          >
-                            <PaperAirplaneIcon className="w-3.5 h-3.5" />
-                            <span>Publish</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteAssessment(item)}
-                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition"
-                            title="Delete Draft"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-
-                      {!isDraft && (
+                    {isDraft ? (
+                      <div className="flex items-center gap-1.5 w-full min-w-0">
                         <button
                           type="button"
-                          onClick={() => handleOpenSubmissions(item)}
-                          className="px-4 py-2 rounded-xl bg-[#0F2843] text-white dark:bg-[#C5A97A] dark:text-[#0F2843] text-xs font-black shadow-md hover:opacity-95 transition flex items-center gap-1.5"
+                          onClick={() => handleOpenPublish(item)}
+                          className="flex-1 px-2.5 py-2 rounded-xl bg-[#0F2843] text-white dark:bg-[#C5A97A] dark:text-[#0F2843] text-xs font-black shadow-md hover:opacity-95 transition flex items-center justify-center gap-1 min-w-0"
+                          title="Publish for students"
                         >
-                          <DocumentMagnifyingGlassIcon className="w-4 h-4" />
-                          <span>Submissions ({stats.submitted_count || 0})</span>
+                          <PaperAirplaneIcon className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">Publish</span>
                         </button>
-                      )}
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAssessment(item)}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition shrink-0"
+                          title="Delete Draft"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenSubmissions(item)}
+                        className="w-full px-2.5 py-2 rounded-xl bg-[#C5A97A] text-[#0F2843] dark:bg-[#C5A97A] dark:text-[#0F2843] text-xs font-black shadow-md hover:opacity-95 transition flex items-center justify-center gap-1.5 min-w-0"
+                        title={`Submissions (${stats.submitted_count || 0})`}
+                      >
+                        <DocumentMagnifyingGlassIcon className="w-4 h-4 shrink-0" />
+                        <span className="truncate">Submissions ({stats.submitted_count || 0})</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               );
