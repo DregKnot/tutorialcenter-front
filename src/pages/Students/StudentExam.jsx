@@ -241,6 +241,7 @@ export default function StudentExam() {
                 course: courseObj,
                 course_name: courseObj.title || p.course_title || p.course_name,
                 title: courseObj.title || p.course_title || p.course_name,
+                banner: courseObj.banner || enrollmentObj.banner || p.banner || p.course_banner,
                 status: 'active',
                 billing_cycle: p.billing_cycle || enrollmentObj.billing_cycle,
                 subjects: enrollmentObj.subjects || p.subjects || courseObj.subjects || []
@@ -417,6 +418,20 @@ export default function StudentExam() {
     }
 
     return false;
+  };
+
+  // Helper to extract or fallback course banner
+  const getCourseBannerUrl = (item) => {
+    const raw = item?.course?.banner || item?.banner || item?.course?.image || item?.image;
+    if (raw) {
+      return raw.startsWith("http") ? raw : `${API_BASE_URL}/storage/${raw}`;
+    }
+    const title = String(item?.course?.title || item?.title || item?.course_name || "").toUpperCase();
+    if (title.includes("WAEC")) return `${API_BASE_URL}/storage/course_banners/2vF6pNJIXhEOGUwtCyvfltvJT5OZByvHF5orSnd6.jpg`;
+    if (title.includes("GCE")) return `${API_BASE_URL}/storage/course_banners/48EtGsYFhd5LHyVkkRQLOj5fYb6ouYW0CTCkcCoM.jpg`;
+    if (title.includes("JAMB")) return `${API_BASE_URL}/storage/course_banners/ssDPZ0uY893GLImR3SJjD3YaMPVOvJI1KRKYQgPN.jpg`;
+    if (title.includes("NECO")) return `${API_BASE_URL}/storage/course_banners/YC4rsnufZCP7FrIeUfhaAQ7cfGXAiDUtUcifCJQ7.jpg`;
+    return null;
   };
 
   // Reset sub-selections when course changes
@@ -1077,60 +1092,71 @@ export default function StudentExam() {
                       const isWAEC = title.toUpperCase().includes("WAEC");
                       const isGCE = title.toUpperCase().includes("GCE");
                       const itemKey = item.course_id || item.course?.id || item.id || item.enrollment_id || idx;
+                      const bannerUrl = getCourseBannerUrl(item);
 
                       return (
                         <div
                           key={itemKey}
                           onClick={() => handleCourseSelect(item)}
-                          className={`min-w-[260px] md:min-w-[300px] p-5 rounded-3xl border cursor-pointer transition-all duration-300 relative group flex flex-col justify-between gap-4 shadow-sm shrink-0 ${
+                          className={`min-w-[270px] md:min-w-[310px] p-4 rounded-3xl border cursor-pointer transition-all duration-300 relative group flex flex-col justify-between gap-3.5 shadow-sm shrink-0 select-none ${
                             isSelected
                               ? "bg-gradient-to-br from-[#0c2f4d] to-[#071c2d] dark:from-[#092f4e] dark:to-[#05192b] text-white border-2 border-[#C5A97A] shadow-xl shadow-[#C5A97A]/15 scale-[1.02]"
                               : "bg-white dark:bg-[#072238]/60 hover:bg-gray-50 dark:hover:bg-[#092b47]/80 border-gray-100 dark:border-gray-800 hover:border-[#C5A97A]/50 hover:scale-[1.01]"
                           }`}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div
-                              className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg transition-colors ${
-                                isSelected
-                                  ? "bg-gradient-to-tr from-[#C5A97A] to-amber-500 text-[#09314F] shadow-md"
-                                  : "bg-[#09314F]/5 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-300 group-hover:text-[#C5A97A] group-hover:border-[#C5A97A]/40"
-                              }`}
-                            >
-                              <Icon
-                                icon={isWAEC ? "lucide:award" : isGCE ? "lucide:graduation-cap" : "lucide:book-open"}
-                                className="w-6 h-6"
+                          {/* Banner Header Image with Gradient Scrim and Floating Badges */}
+                          <div className="w-full h-32 md:h-36 rounded-2xl overflow-hidden relative shrink-0">
+                            {bannerUrl ? (
+                              <img
+                                src={bannerUrl}
+                                alt={title}
+                                className="w-full h-full object-cover rounded-2xl transition-transform duration-700 ease-out group-hover:scale-105"
+                                onError={(e) => {
+                                  e.target.style.display = "none";
+                                }}
                               />
+                            ) : null}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10 pointer-events-none" />
+
+                            {/* Floating Top Controls */}
+                            <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+                              <div
+                                className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shadow-md backdrop-blur-md transition-colors ${
+                                  isSelected
+                                    ? "bg-gradient-to-tr from-[#C5A97A] to-amber-500 text-[#09314F]"
+                                    : "bg-black/50 border border-white/20 text-white group-hover:text-[#C5A97A] group-hover:border-[#C5A97A]/40"
+                                }`}
+                              >
+                                <Icon
+                                  icon={isWAEC ? "lucide:award" : isGCE ? "lucide:graduation-cap" : "lucide:book-open"}
+                                  className="w-5 h-5"
+                                />
+                              </div>
+
+                              {isSelected ? (
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#C5A97A] text-[#09314F] flex items-center gap-1 shadow-md animate-scale-in">
+                                  <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" />
+                                  Selected
+                                </span>
+                              ) : (
+                                <span className="w-5 h-5 rounded-full border-2 border-white/60 bg-black/40 group-hover:border-[#C5A97A] transition-colors shadow-sm"></span>
+                              )}
                             </div>
 
-                            {isSelected ? (
-                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#C5A97A] text-[#09314F] flex items-center gap-1 shadow-sm animate-scale-in">
-                                <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" />
-                                Selected
+                            {/* Course Title and Label inside Banner Overlay */}
+                            <div className="absolute bottom-2.5 left-3 right-3 pointer-events-none">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-[#C5A97A] bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm inline-block mb-1">
+                                Curriculum Body
                               </span>
-                            ) : (
-                              <span className="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600 group-hover:border-[#C5A97A] transition-colors"></span>
-                            )}
+                              <h4 className="text-lg font-black uppercase tracking-tight text-white drop-shadow-md leading-none truncate">
+                                {title}
+                              </h4>
+                            </div>
                           </div>
 
-                          <div>
-                            <span
-                              className={`text-[10px] font-black uppercase tracking-widest transition-colors ${
-                                isSelected ? "text-[#C5A97A]" : "text-gray-400 group-hover:text-[#C5A97A]"
-                              }`}
-                            >
-                              Curriculum Body
-                            </span>
-                            <h4
-                              className={`text-lg font-black uppercase tracking-tight mt-0.5 truncate transition-colors ${
-                                isSelected ? "text-white" : "text-[#09314F] dark:text-white"
-                              }`}
-                            >
-                              {title}
-                            </h4>
-                          </div>
-
+                          {/* Footer Stats Row */}
                           <div
-                            className={`pt-3 border-t flex items-center justify-between text-xs transition-colors ${
+                            className={`pt-2.5 border-t flex items-center justify-between text-xs transition-colors ${
                               isSelected
                                 ? "border-white/10 text-gray-200"
                                 : "border-gray-100 dark:border-white/10 text-gray-400"
