@@ -49,14 +49,49 @@ export default function StaffAppMeetWrapper() {
 
   const handleReturnToDashboard = () => {
       const sessionId = sessionDetails?.class_schedule_id;
+      const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+
       if (sessionId) {
           sessionStorage.setItem("just_completed_class_session_id", String(sessionId));
+
+          // Save to persistent tutor_unreported_sessions
+          try {
+            const stored = JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
+            if (!stored.some(s => String(s.id) === String(sessionId))) {
+              stored.unshift({
+                id: sessionId,
+                class_id: sessionDetails.class_id || sessionId,
+                class_title: sessionDetails.class_title || "Masterclass",
+                subject: sessionDetails.subject || "General Subject",
+                session_date: new Date().toISOString(),
+                starts_at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                leftAt: Date.now()
+              });
+              localStorage.setItem("tutor_unreported_sessions", JSON.stringify(stored.slice(0, 10)));
+            }
+          } catch (e) {}
+
+          // Notify backend that session is concluded
+          if (staffToken) {
+            import('axios').then(({ default: axios }) => {
+              axios.post(`${API_BASE_URL}/api/tutor/classes/sessions/${sessionId}/conclude`, {}, {
+                headers: { Authorization: `Bearer ${staffToken}`, Accept: "application/json" }
+              }).catch(() => {});
+            });
+          }
       }
+
       const staffRole = localStorage.getItem("staff_role") || "";
-      const redirectPath = staffRole.toLowerCase() === 'course_advisor' || staffRole.toLowerCase() === 'advisor'
-          ? `/staffs/course-advisor/master-class${sessionId ? `?feedback_session=${sessionId}` : ''}`
-          : `/staffs/tutor/master-class${sessionId ? `?feedback_session=${sessionId}` : ''}`;
-      navigate(redirectPath);
+      if (staffRole.toLowerCase() === 'course_advisor' || staffRole.toLowerCase() === 'advisor') {
+          navigate(`/staffs/course-advisor/master-class${sessionId ? `?feedback_session=${sessionId}` : ''}`);
+      } else {
+          navigate(`/staffs/tutor/dashboard${sessionId ? `?feedback_session=${sessionId}` : ''}`, {
+              state: {
+                  promptPostClassReport: true,
+                  completedSessionId: sessionId
+              }
+          });
+      }
   };
 
   if (!sessionDetails) {

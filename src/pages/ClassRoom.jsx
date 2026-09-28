@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import ZoomMeetingSession from "../components/private/Students/ZoomMeetingSession";
 import { useAuth } from "../context/AuthContext";
 import { useStaffAuth } from "../context/StaffAuthContext";
@@ -36,16 +37,41 @@ export default function ClassRoom() {
     }, [setStudentClassActive, setStaffClassActive]);
 
     const handleLeaveRedirect = () => {
-        const isStaff = !!localStorage.getItem("staff_token");
+        const staffToken = localStorage.getItem("staff_token");
+        const isStaff = !!staffToken;
+        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+
         if (isStaff) {
             const staffRole = localStorage.getItem("staff_role") || "";
             if (classSessionId) {
                 sessionStorage.setItem("just_completed_class_session_id", String(classSessionId));
+
+                // Save to persistent tutor_unreported_sessions
+                try {
+                  const stored = JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
+                  if (!stored.some(s => String(s.id) === String(classSessionId))) {
+                    stored.unshift({
+                      id: classSessionId,
+                      class_id: classSessionId,
+                      class_title: "Masterclass",
+                      subject: "General Subject",
+                      session_date: new Date().toISOString(),
+                      starts_at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                      leftAt: Date.now()
+                    });
+                    localStorage.setItem("tutor_unreported_sessions", JSON.stringify(stored.slice(0, 10)));
+                  }
+                } catch (e) {}
+
+                // Notify backend that session is concluded
+                axios.post(`${API_BASE_URL}/api/tutor/classes/sessions/${classSessionId}/conclude`, {}, {
+                  headers: { Authorization: `Bearer ${staffToken}`, Accept: "application/json" }
+                }).catch(() => {});
             }
             if (staffRole.toLowerCase() === 'course_advisor' || staffRole.toLowerCase() === 'advisor') {
                 navigate(`/staffs/course-advisor/master-class?feedback_session=${classSessionId}`);
             } else {
-                navigate(`/staffs/tutor/master-class?feedback_session=${classSessionId}`, {
+                navigate(`/staffs/tutor/dashboard?feedback_session=${classSessionId}`, {
                     state: {
                         promptPostClassReport: true,
                         completedSessionId: classSessionId

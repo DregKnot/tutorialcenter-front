@@ -6,6 +6,8 @@ import { useAuth } from "../../context/AuthContext";
 import { Icon } from "@iconify/react";
 import ExamInterface from "../../components/private/Students/StudentsExamFlow/ExamInterface.jsx";
 import ExamHistory from "../../components/private/Students/StudentsExamFlow/ExamHistory.jsx";
+import { StreakFire, getStreakFlameStyles, calculatePracticeStreak } from "../../components/private/Students/StudentsExamFlow/StreakFire.jsx";
+import { StreakLightning, getStreakLightningStyles } from "../../components/private/Students/StudentsExamFlow/StreakLightning.jsx";
 
 export default function StudentExam() {
   const { token: authToken } = useAuth();
@@ -33,6 +35,28 @@ export default function StudentExam() {
   const [activeAttemptId, setActiveAttemptId] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [historyAttemptIdToOpen, setHistoryAttemptIdToOpen] = useState(null);
+  const [practiceStreak, setPracticeStreak] = useState(0);
+  const [isStreakHovered, setIsStreakHovered] = useState(false);
+  const [activeExamSession, setActiveExamSession] = useState(null);
+
+  const hasActiveSession = Boolean(activeExamSession && activeExamSession.remaining_seconds > 0);
+
+  // Live ticker for active in-progress exam session countdown
+  useEffect(() => {
+    if (!hasActiveSession) return;
+    const interval = setInterval(() => {
+      setActiveExamSession((prev) => {
+        if (!prev) return null;
+        const currentSec = Math.max(0, Math.floor(Number(prev.remaining_seconds) || 0));
+        const nextSec = currentSec - 1;
+        if (nextSec <= 0) {
+          return null; // Expired! Cannot rejoin anymore
+        }
+        return { ...prev, remaining_seconds: nextSec };
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [hasActiveSession]);
 
   // Clock picker modal state
   const [isClockModalOpen, setIsClockModalOpen] = useState(false);
@@ -109,11 +133,52 @@ export default function StudentExam() {
         Accept: "application/json",
       };
 
-      const [coursesRes, availableRes, paymentsRes] = await Promise.all([
+      const [coursesRes, availableRes, paymentsRes, historyRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/students/courses`, { headers }),
         axios.get(`${API_BASE_URL}/api/students/exams/available`, { headers }),
         axios.get(`${API_BASE_URL}/api/students/payments`, { headers }).catch(() => ({ data: { payments: [] } })),
+        axios.get(`${API_BASE_URL}/api/students/exams/results/history?page=1`, { headers }).catch(() => ({ data: null })),
       ]);
+
+      if (historyRes?.data) {
+        if (historyRes.data.streak !== undefined && historyRes.data.streak !== null) {
+          setPracticeStreak(Number(historyRes.data.streak));
+        } else {
+          const attempts = Array.isArray(historyRes.data)
+            ? historyRes.data
+            : (Array.isArray(historyRes.data.data) ? historyRes.data.data : (historyRes.data.data?.data || []));
+          setPracticeStreak(calculatePracticeStreak(attempts));
+        }
+
+        // Detect active in-progress attempt with valid remaining time
+        if (historyRes.data.active_attempt) {
+          const act = { ...historyRes.data.active_attempt };
+          act.remaining_seconds = Math.max(0, Math.floor(Number(act.remaining_seconds) || 0));
+          if (act.remaining_seconds > 0) {
+            setActiveExamSession(act);
+          } else {
+            setActiveExamSession(null);
+          }
+        } else {
+          const attemptsList = Array.isArray(historyRes.data)
+            ? historyRes.data
+            : (Array.isArray(historyRes.data.data) ? historyRes.data.data : (historyRes.data.data?.data || []));
+          const inProg = attemptsList.find((a) => a.status === "in_progress");
+          if (inProg) {
+            const dur = Number(inProg.timer) || 50;
+            const startMs = new Date(inProg.started_at || inProg.created_at).getTime();
+            const remSec = Math.max(0, Math.floor((startMs + dur * 60 * 1000 - Date.now()) / 1000));
+            if (remSec > 0) {
+              inProg.remaining_seconds = remSec;
+              setActiveExamSession(inProg);
+            } else {
+              setActiveExamSession(null);
+            }
+          } else {
+            setActiveExamSession(null);
+          }
+        }
+      }
 
       console.log("Students Courses Response:", coursesRes.data);
       console.log("Available Exams Response:", availableRes.data);
@@ -320,6 +385,40 @@ export default function StudentExam() {
     });
   };
 
+  // Check if a course matches selectedCourse safely without falsy/undefined false positives
+  const isCourseSelected = (item, selected) => {
+    if (!item || !selected) return false;
+    if (item === selected) return true;
+
+    // Check course_id or course.id if both exist
+    const itemCourseId = item.course_id || item.course?.id;
+    const selCourseId = selected.course_id || selected.course?.id;
+    if (itemCourseId && selCourseId && String(itemCourseId) === String(selCourseId)) {
+      return true;
+    }
+
+    // Check enrollment_id if both explicitly exist
+    const itemEnrollId = item.enrollment_id || item.course_enrollment_id;
+    const selEnrollId = selected.enrollment_id || selected.course_enrollment_id;
+    if (itemEnrollId && selEnrollId && String(itemEnrollId) === String(selEnrollId)) {
+      return true;
+    }
+
+    // Check id property if both exist
+    if (item.id && selected.id && String(item.id) === String(selected.id)) {
+      return true;
+    }
+
+    // Fallback: compare title if both exist
+    const itemTitle = (item.course?.title || item.title || item.course_name || "").trim().toLowerCase();
+    const selTitle = (selected.course?.title || selected.title || selected.course_name || "").trim().toLowerCase();
+    if (itemTitle && selTitle && itemTitle === selTitle) {
+      return true;
+    }
+
+    return false;
+  };
+
   // Reset sub-selections when course changes
   const handleCourseSelect = (course) => {
     setSelectedCourse(course);
@@ -430,6 +529,63 @@ export default function StudentExam() {
     }
   };
 
+  const handleRejoinAttempt = (attempt) => {
+    if (!attempt) return;
+    const dur = Number(attempt.timer) || 50;
+    const startMs = new Date(attempt.started_at || attempt.created_at).getTime();
+    const remSec = attempt.remaining_seconds !== undefined
+      ? attempt.remaining_seconds
+      : Math.floor((startMs + dur * 60 * 1000 - Date.now()) / 1000);
+
+    if (remSec <= 0) {
+      setToast({
+        type: "error",
+        message: "This exam time has expired and the session cannot be rejoined.",
+      });
+      fetchInitialData();
+      return;
+    }
+
+    setActiveAttemptId(attempt.id);
+    setTimer(String(Math.max(1, Math.ceil(remSec / 60))));
+
+    if (attempt.exam_year?.subject) {
+      setSelectedSubject(attempt.exam_year.subject);
+    }
+    if (attempt.exam_year?.subject?.course_id && courses.length > 0) {
+      const matched = courses.find((c) => c.id === attempt.exam_year.subject.course_id);
+      if (matched) setSelectedCourse(matched);
+    }
+
+    setShowExamInterface(true);
+    try {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch (e) {}
+  };
+
+  const handleAbandonAttempt = async (attemptId) => {
+    if (!attemptId) return;
+    try {
+      const headers = {
+        Authorization: `Bearer ${authToken}`,
+        Accept: "application/json",
+      };
+      await axios.post(`${API_BASE_URL}/api/students/exams/${attemptId}/abandon`, {}, { headers });
+      setActiveExamSession(null);
+      setToast({
+        type: "success",
+        message: "Exam session has been marked as abandoned.",
+      });
+      fetchInitialData();
+    } catch (err) {
+      console.error("Failed to abandon attempt:", err);
+      setActiveExamSession(null);
+      fetchInitialData();
+    }
+  };
+
   // Dynamic values
   const displayTimer = (() => {
     const mins = parseInt(timer, 10) || 50;
@@ -491,14 +647,22 @@ export default function StudentExam() {
             selectedSubject={selectedSubject}
             timer={timer}
             onBack={() => {
+              if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+              }
               setShowExamInterface(false);
               setActiveAttemptId(null);
+              fetchInitialData();
             }}
             onReviewExam={(attemptId) => {
+              if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+              }
               setShowExamInterface(false);
               setActiveAttemptId(null);
               setHistoryAttemptIdToOpen(attemptId);
               setShowHistory(true);
+              fetchInitialData();
             }}
           />
         ) : showHistory ? (
@@ -508,7 +672,9 @@ export default function StudentExam() {
             onBack={() => {
               setShowHistory(false);
               setHistoryAttemptIdToOpen(null);
+              fetchInitialData();
             }}
+            onRejoinExam={handleRejoinAttempt}
           />
         ) : loading ? (
           <div className="py-24 flex flex-col items-center justify-center gap-4">
@@ -531,130 +697,457 @@ export default function StudentExam() {
           </div>
         ) : (
           <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Top Action Row */}
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                {/* Practice Center title removed - header handles this */}
+            {/* Top Action Row (History comes first on mobile as requested, and streak comes second; on desktop streak is on left and history is on right) */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {/* Practice History Button: order-1 on mobile, order-2 on sm+ */}
+              <div className="order-1 sm:order-2 flex items-center justify-start sm:justify-end w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHistoryAttemptIdToOpen(null);
+                    setShowHistory(true);
+                  }}
+                  className="w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-white dark:bg-[#072238]/90 hover:bg-gray-50 dark:hover:bg-[#0a2f4c] border border-[#C5A97A]/40 hover:border-[#C5A97A] text-[#09314F] dark:text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all shadow-sm group"
+                >
+                  <Icon icon="lucide:history" className="w-4 h-4 text-[#C5A97A] group-hover:rotate-[-20deg] transition-transform" />
+                  <span>Practice History</span>
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setHistoryAttemptIdToOpen(null);
-                  setShowHistory(true);
-                }}
-                className="px-5 py-2.5 bg-[#09314F]/5 dark:bg-white/5 hover:bg-[#09314F]/10 border border-[#C5A97A]/30 hover:border-[#C5A97A] text-[#09314F] dark:text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all"
-              >
-                <Icon icon="lucide:history" className="w-4 h-4 text-[#C5A97A]" />
-                <span>Practice History</span>
-              </button>
+
+              {/* Main Evolving Streak Widget: order-2 on mobile, order-1 on sm+ */}
+              <div className="order-2 sm:order-1 flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                {(() => {
+                  const isLightning = practiceStreak >= 30;
+                  const streakStyles = isLightning
+                    ? getStreakLightningStyles(practiceStreak)
+                    : getStreakFlameStyles(practiceStreak);
+
+                  return (
+                    <div
+                      onClick={() => {
+                        setHistoryAttemptIdToOpen(null);
+                        setShowHistory(true);
+                      }}
+                      onMouseEnter={() => setIsStreakHovered(true)}
+                      onMouseLeave={() => setIsStreakHovered(false)}
+                      className={`group relative flex items-center gap-4 px-4 py-3 bg-white dark:bg-[#072238]/90 backdrop-blur-md rounded-2xl border shadow-sm hover:shadow-md cursor-pointer transition-all duration-300 w-full sm:w-auto ${
+                        isLightning ? "border-amber-500/30 dark:border-amber-500/40" : "border-gray-100 dark:border-[#0f3d61]"
+                      }`}
+                      style={{
+                        boxShadow: isStreakHovered || practiceStreak > 0
+                          ? `0 0 24px ${streakStyles.glow}`
+                          : undefined
+                      }}
+                      title="Click to view full practice history"
+                    >
+                      {/* Icon Box: Fire (Days 1-29) -> Lightning (Days 30-60+ with Black Background) */}
+                      <div
+                        className={`rounded-2xl shrink-0 w-16 h-16 flex items-center justify-center relative overflow-hidden transition-all group-hover:scale-105 duration-200 ${
+                          isLightning
+                            ? "bg-black shadow-[0_0_20px_rgba(0,0,0,0.6)] border border-white/10"
+                            : streakStyles.bgClass
+                        }`}
+                      >
+                        {isLightning ? (
+                          <StreakLightning streak={practiceStreak} size={54} />
+                        ) : (
+                          <StreakFire streak={practiceStreak} size={54} />
+                        )}
+                      </div>
+
+                      {/* Text Details */}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl md:text-2xl font-black text-[#09314F] dark:text-white leading-none tracking-tight block">
+                            {practiceStreak} {practiceStreak === 1 ? "Day" : "Days"}
+                          </span>
+                          {isLightning && (
+                            <span
+                              className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border shadow-sm"
+                              style={{
+                                backgroundColor: "#000000",
+                                borderColor: streakStyles.sparkColor,
+                                color: streakStyles.sparkColor,
+                                boxShadow: `0 0 10px ${streakStyles.glow}`,
+                              }}
+                            >
+                              ⚡ {streakStyles.title}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-400 mt-1.5 flex items-center gap-1">
+                          <span>{isLightning ? "Black Lightning Streak" : "Practice Streak"}</span>
+                          <Icon icon="lucide:arrow-right" className="w-3 h-3 text-[#C5A97A] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
 
-            {/* 1. Welcoming Instructions Box */}
-            <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 md:p-8 border border-[#C5A97A]/30 shadow-[0_8px_30px_rgb(0,0,0,0.03)] relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#C5A97A]/10 to-transparent rounded-bl-full pointer-events-none"></div>
-              <div className="flex gap-4 items-start">
-                <div className="p-3 bg-[#09314F]/5 dark:bg-white/5 rounded-2xl shrink-0">
-                  <Icon icon="lucide:info" className="w-6 h-6 text-[#C5A97A]" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-[#09314F] dark:text-white uppercase tracking-tight mb-2">
-                    Exam Practice Center
-                  </h3>
-                  <div className="text-sm font-medium text-gray-600 dark:text-gray-300 space-y-3 leading-relaxed">
-                    <p>Welcome to your customized practice portal. Here is how to get started:</p>
-                    <ul className="space-y-2 mt-2">
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
-                        <span>Choose your enrolled course and preferred subject from the lists below.</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
-                        <span>Click 'Start Practice Session' when you are ready to begin.</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
-                        <span><strong>Note:</strong> Your browser will be locked during the exam. Tab switching, copying, and exiting fullscreen are disabled to ensure exam integrity.</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
-                        <span>
-                          Configure your timer between{" "}
-                          <span className="font-bold text-[#09314F] dark:text-white">10 and 120 minutes</span> to fit your preferred schedule.
+            {/* Active Ongoing Exam Session Card (Properly Aligned & Perfectly Portrayed) */}
+            {activeExamSession && activeExamSession.remaining_seconds > 0 && (() => {
+              const totalSec = Math.max(0, Math.floor(Number(activeExamSession.remaining_seconds) || 0));
+              const remMins = Math.floor(totalSec / 60);
+              const remSecs = totalSec % 60;
+              const subjectName = activeExamSession.exam_year?.subject?.name ||
+                                  activeExamSession.exam_year?.subject?.title ||
+                                  "Practice Exam";
+              const yearValue = activeExamSession.exam_year?.year || "";
+
+              return (
+                <div className="bg-[#0b253a] dark:bg-[#071c2d] border-2 border-amber-500/50 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden animate-in fade-in duration-300">
+                  {/* Decorative ambient glows */}
+                  <div className="absolute -top-16 -right-16 w-52 h-52 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+                  <div className="absolute -bottom-16 -left-16 w-52 h-52 bg-orange-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+                  <div className="relative z-10 flex flex-col gap-5">
+                    {/* 1. Header Strip: Status Indicator on Left, Live Monospace Countdown on Right */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/10">
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                         </span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] shrink-0 mt-2"></span>
-                        <span>
-                          Click the <span className="font-bold text-[#09314F] dark:text-white">Practice History</span> button above to review your past performances and explanations.
+                        <span className="text-[11px] font-black uppercase tracking-widest text-amber-400">
+                          Active In-Progress Session
                         </span>
-                      </li>
-                    </ul>
+                      </div>
+
+                      {/* High-Contrast Monospace Countdown Pill */}
+                      <div className="flex items-center gap-2 px-3.5 py-1.5 bg-black/60 border border-amber-500/40 rounded-xl shadow-inner">
+                        <Icon icon="lucide:clock-4" className="w-4 h-4 text-amber-400 animate-pulse" />
+                        <span className="font-mono text-sm sm:text-base font-black text-amber-300 tracking-wider">
+                          {remMins}m {String(remSecs).padStart(2, "0")}s
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                          left
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 2. Main Content Body: Icon + Subject Title + Year Tag + Explanation */}
+                    <div className="flex items-start sm:items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/25">
+                        <Icon icon="lucide:file-text" className="w-7 h-7" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">
+                            {subjectName}
+                          </h3>
+                          {yearValue && (
+                            <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              Year {yearValue}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-300 mt-1 leading-relaxed">
+                          Your exam practice is in progress and your answers are safely saved. You can rejoin and finish your test before the time runs out.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 3. Balanced Action Buttons */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleAbandonAttempt(activeExamSession.id)}
+                        className="order-2 sm:order-1 px-5 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/30 rounded-xl font-bold text-xs uppercase tracking-wider transition-all text-center flex items-center justify-center gap-2"
+                      >
+                        <Icon icon="lucide:trash-2" className="w-4 h-4" />
+                        <span>Abandon Exam</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRejoinAttempt(activeExamSession)}
+                        className="order-1 sm:order-2 px-7 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-600 hover:via-orange-600 hover:to-amber-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all"
+                      >
+                        <Icon icon="lucide:play-circle" className="w-4 h-4" />
+                        <span>Resume Exam Now</span>
+                        <Icon icon="lucide:arrow-right" className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
+              );
+            })()}
+
+            {/* 1. Modern Exam Practice Center Hero / Guidance Hub */}
+            <div className="bg-gradient-to-br from-[#0b2840]/90 via-[#071c2d]/95 to-[#04121d]/95 dark:from-[#071f33] dark:via-[#051829] dark:to-[#030d17] backdrop-blur-xl rounded-[32px] p-6 sm:p-8 border border-[#C5A97A]/30 shadow-2xl relative overflow-hidden text-white">
+              {/* Subtle Ambient Flares */}
+              <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#C5A97A]/15 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+              <div className="relative z-10 space-y-6">
+                {/* Header Row: Title & Badges */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#C5A97A] to-amber-500 text-[#09314F] flex items-center justify-center shrink-0 shadow-lg shadow-[#C5A97A]/25">
+                      <Icon icon="lucide:sparkles" className="w-6 h-6 stroke-[2.5]" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-[#C5A97A]/20 text-[#C5A97A] border border-[#C5A97A]/30">
+                          Official CBT Simulation
+                        </span>
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight mt-0.5">
+                        Exam Practice Center
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-start sm:self-center">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-gray-300">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      Distraction-Free Lockdown Active
+                    </span>
+                  </div>
+                </div>
+
+                {/* 5-Step Practice Journey Pathway Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+                  {/* Step 1: Choose Course */}
+                  <div className="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-[#C5A97A]/40 rounded-2xl p-4 transition-all duration-300 group flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-[#C5A97A]/15 text-[#C5A97A] flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Icon icon="lucide:graduation-cap" className="w-4 h-4" />
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+                          Step 01
+                        </span>
+                      </div>
+                      <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-tight mb-1">
+                        Choose Course
+                      </h4>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">
+                        Pick from your enrolled exam bodies (WAEC, JAMB, GCE).
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Choose Subject */}
+                  <div className="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-sky-400/40 rounded-2xl p-4 transition-all duration-300 group flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Icon icon="lucide:book-open" className="w-4 h-4" />
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+                          Step 02
+                        </span>
+                      </div>
+                      <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-tight mb-1">
+                        Select Subject
+                      </h4>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">
+                        Choose your target subject of choice from the syllabus.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Choose Year */}
+                  <div className="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-indigo-400/40 rounded-2xl p-4 transition-all duration-300 group flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Icon icon="lucide:calendar" className="w-4 h-4" />
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+                          Step 03
+                        </span>
+                      </div>
+                      <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-tight mb-1">
+                        Choose Year
+                      </h4>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">
+                        Select past questions by your preferred exam year.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 4: Configure Timer */}
+                  <div className="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-amber-400/40 rounded-2xl p-4 transition-all duration-300 group flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Icon icon="lucide:clock-4" className="w-4 h-4" />
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+                          Step 04
+                        </span>
+                      </div>
+                      <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-tight mb-1">
+                        Configure Time
+                      </h4>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">
+                        Set custom countdown from 10 to 120 minutes.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 5: Locked Screen Mode */}
+                  <div className="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-emerald-400/40 rounded-2xl p-4 transition-all duration-300 group flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Icon icon="lucide:shield-check" className="w-4 h-4" />
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+                          Step 05
+                        </span>
+                      </div>
+                      <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-tight mb-1">
+                        Locked Screen
+                      </h4>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">
+                        Fullscreen lockdown CBT mode with active focus protection.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pro-Tip / Policy Ribbon */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-black/40 border border-white/10 text-xs">
+                  <div className="flex items-center gap-2.5 text-gray-300">
+                    <Icon icon="lucide:info" className="w-4 h-4 text-[#C5A97A] shrink-0" />
+                    <span>
+                      <strong className="text-white">Preserved Progress:</strong> If you step away while time is counting, you can resume anytime from this page or Practice History.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHistoryAttemptIdToOpen(null);
+                      setShowHistory(true);
+                    }}
+                    className="text-[11px] font-black text-[#C5A97A] uppercase tracking-wider shrink-0 flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    <span>Practice History</span>
+                    <Icon icon="lucide:chevron-right" className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* 2. Course Selection */}
+            {/* 2. Redesigned Course Selection */}
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="w-2 h-2 rounded-full bg-[#C5A97A]"></span>
-                <h4 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                  1. Choose Course
-                </h4>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="w-7 h-7 rounded-xl bg-[#C5A97A]/20 border border-[#C5A97A]/40 text-[#C5A97A] font-black text-xs flex items-center justify-center shadow-sm">
+                    01
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-black text-[#09314F] dark:text-white uppercase tracking-wider">
+                      Choose Enrolled Exam Body
+                    </h4>
+                    <p className="text-[11px] text-gray-400 font-medium">
+                      Select the curriculum syllabus you wish to practice today
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-black text-[#C5A97A] uppercase tracking-widest bg-[#C5A97A]/10 px-3 py-1 rounded-full border border-[#C5A97A]/20">
+                  {courses.length} Available
+                </span>
               </div>
 
               {courses.length === 0 ? (
-                <div className="p-6 text-center bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-400 font-bold">No ongoing courses found.</p>
+                <div className="p-8 text-center bg-gray-50 dark:bg-gray-800/30 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                  <Icon icon="lucide:book-x" className="w-10 h-10 text-gray-400 mx-auto mb-2 opacity-60" />
+                  <p className="text-sm text-gray-400 font-bold">No active enrolled courses found.</p>
                 </div>
               ) : (
                 <div className="relative">
                   {/* Left and right fade overlays */}
-                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#E6E9EC] dark:from-gray-900 to-transparent pointer-events-none z-10 opacity-30"></div>
-                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#E6E9EC] dark:from-gray-900 to-transparent pointer-events-none z-10 opacity-30"></div>
+                  <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#E6E9EC] dark:from-[#04121d] to-transparent pointer-events-none z-10 opacity-40"></div>
+                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#E6E9EC] dark:from-[#04121d] to-transparent pointer-events-none z-10 opacity-40"></div>
 
                   <div
-                    className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800 select-none"
+                    className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800 select-none py-1"
                     style={{ WebkitOverflowScrolling: "touch" }}
                   >
                     {courses.map((item, idx) => {
                       const title = item.course?.title || item.title || "Course";
-                      const isSelected = selectedCourse && (item.enrollment_id === selectedCourse.enrollment_id || item.id === selectedCourse.id);
+                      const isSelected = isCourseSelected(item, selectedCourse);
+                      const isWAEC = title.toUpperCase().includes("WAEC");
+                      const isGCE = title.toUpperCase().includes("GCE");
+                      const itemKey = item.course_id || item.course?.id || item.id || item.enrollment_id || idx;
+
                       return (
                         <div
-                          key={item.enrollment_id || item.id || idx}
+                          key={itemKey}
                           onClick={() => handleCourseSelect(item)}
-                          className={`min-w-[240px] md:min-w-[280px] p-5 rounded-2xl border cursor-pointer transition-all duration-300 relative group flex items-start gap-4 shadow-sm shrink-0 ${
+                          className={`min-w-[260px] md:min-w-[300px] p-5 rounded-3xl border cursor-pointer transition-all duration-300 relative group flex flex-col justify-between gap-4 shadow-sm shrink-0 ${
                             isSelected
-                              ? "bg-[#09314F]/10 dark:bg-[#09314F]/60 border-[#C5A97A] ring-2 ring-[#C5A97A]/20"
-                              : "bg-white dark:bg-[#09314F]/30 border-gray-100 dark:border-[#09314F] hover:border-gray-200 dark:hover:border-blue-800"
+                              ? "bg-gradient-to-br from-[#0c2f4d] to-[#071c2d] dark:from-[#092f4e] dark:to-[#05192b] text-white border-2 border-[#C5A97A] shadow-xl shadow-[#C5A97A]/15 scale-[1.02]"
+                              : "bg-white dark:bg-[#072238]/60 hover:bg-gray-50 dark:hover:bg-[#092b47]/80 border-gray-100 dark:border-gray-800 hover:border-[#C5A97A]/50 hover:scale-[1.01]"
                           }`}
                         >
-                          <div
-                            className={`p-3 rounded-xl shrink-0 transition-colors ${
-                              isSelected
-                                ? "bg-[#09314F] text-white dark:bg-blue-600"
-                                : "bg-gray-50 dark:bg-[#06243A] text-gray-400 group-hover:text-gray-600"
-                            }`}
-                          >
-                            <Icon icon="mdi:book-open-page-variant" className="w-6 h-6" />
+                          <div className="flex items-start justify-between gap-3">
+                            <div
+                              className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg transition-colors ${
+                                isSelected
+                                  ? "bg-gradient-to-tr from-[#C5A97A] to-amber-500 text-[#09314F] shadow-md"
+                                  : "bg-[#09314F]/5 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-300 group-hover:text-[#C5A97A] group-hover:border-[#C5A97A]/40"
+                              }`}
+                            >
+                              <Icon
+                                icon={isWAEC ? "lucide:award" : isGCE ? "lucide:graduation-cap" : "lucide:book-open"}
+                                className="w-6 h-6"
+                              />
+                            </div>
+
+                            {isSelected ? (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#C5A97A] text-[#09314F] flex items-center gap-1 shadow-sm animate-scale-in">
+                                <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" />
+                                Selected
+                              </span>
+                            ) : (
+                              <span className="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600 group-hover:border-[#C5A97A] transition-colors"></span>
+                            )}
                           </div>
-                          <div className="min-w-0">
+
+                          <div>
+                            <span
+                              className={`text-[10px] font-black uppercase tracking-widest transition-colors ${
+                                isSelected ? "text-[#C5A97A]" : "text-gray-400 group-hover:text-[#C5A97A]"
+                              }`}
+                            >
+                              Curriculum Body
+                            </span>
                             <h4
-                              className={`font-black uppercase tracking-tight text-sm truncate transition-colors ${
-                                isSelected ? "text-[#09314F] dark:text-[#C5A97A]" : "text-gray-800 dark:text-white"
+                              className={`text-lg font-black uppercase tracking-tight mt-0.5 truncate transition-colors ${
+                                isSelected ? "text-white" : "text-[#09314F] dark:text-white"
                               }`}
                             >
                               {title}
                             </h4>
-                            <p className="text-[11px] text-gray-400 font-bold uppercase mt-1">
-                              {item.subjects?.length || 0} subjects enrolled
-                            </p>
                           </div>
-                          {isSelected && (
-                            <div className="absolute top-3 right-3 text-[#C5A97A]">
-                              <Icon icon="lucide:check-circle" className="w-5 h-5 animate-scale-in" />
-                            </div>
-                          )}
+
+                          <div
+                            className={`pt-3 border-t flex items-center justify-between text-xs transition-colors ${
+                              isSelected
+                                ? "border-white/10 text-gray-200"
+                                : "border-gray-100 dark:border-white/10 text-gray-400"
+                            }`}
+                          >
+                            <span className="inline-flex items-center gap-1.5 font-bold">
+                              <Icon icon="lucide:layers" className="w-3.5 h-3.5 text-[#C5A97A]" />
+                              <span>{item.subjects?.length || 0} Subjects Enrolled</span>
+                            </span>
+                            <span
+                              className={`text-[11px] font-bold ${
+                                isSelected ? "text-[#C5A97A]" : "text-gray-400 dark:text-gray-500"
+                              }`}
+                            >
+                              {isSelected ? "Active • Selected" : "Ready to Practice"}
+                            </span>
+                          </div>
                         </div>
                       );
                     })}
@@ -663,15 +1156,22 @@ export default function StudentExam() {
               )}
             </div>
 
-            {/* 3. Subject Horizontally Scrollable Row */}
+            {/* 2. Select Subject */}
             {selectedCourse && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center justify-between w-full gap-2 mb-4 max-md:flex-wrap">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-2 h-2 rounded-full bg-[#C5A97A] shrink-0"></span>
-                    <h4 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                      2. Select Subject
-                    </h4>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-7 h-7 rounded-xl bg-sky-500/20 border border-sky-400/40 text-sky-400 font-black text-xs flex items-center justify-center shadow-sm">
+                      02
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-black text-[#09314F] dark:text-white uppercase tracking-wider">
+                        Select Subject of Choice
+                      </h4>
+                      <p className="text-[11px] text-gray-400 font-medium">
+                        Choose the specific subject syllabus you want to focus on
+                      </p>
+                    </div>
                   </div>
                   {/* Dynamic Device Hint Text */}
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider animate-pulse text-right shrink-0 max-md:basis-full">
@@ -762,16 +1262,18 @@ export default function StudentExam() {
               </div>
             )}
 
-            {/* 4. Sub-Configuration (Year & Timer) */}
+            {/* 3 & 4. Sub-Configuration (Year & Timer) */}
             {selectedSubject && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
                 {/* Year Selection Card */}
                 <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A]"></span>
-                      <h4 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                        3. Exam Year
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/40 text-indigo-400 font-black text-xs flex items-center justify-center shadow-sm">
+                        03
+                      </span>
+                      <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-wider">
+                        Choose Exam Year
                       </h4>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
@@ -804,10 +1306,12 @@ export default function StudentExam() {
                 {/* Practice Timer Card */}
                 <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A]"></span>
-                      <h4 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                        4. Practice Timer
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-400 font-black text-xs flex items-center justify-center shadow-sm">
+                        04
+                      </span>
+                      <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-wider">
+                        Configure Time of Choice
                       </h4>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
@@ -837,10 +1341,12 @@ export default function StudentExam() {
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                   {/* Summary Details */}
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Icon icon="lucide:sliders-horizontal" className="w-5 h-5 text-[#C5A97A]" />
+                    <div className="flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 font-black text-xs flex items-center justify-center shadow-sm">
+                        05
+                      </span>
                       <h4 className="text-[15px] font-black uppercase tracking-tight text-[#09314F] dark:text-white">
-                        Practice Session Summary
+                        Practice Session Summary &amp; Locked Launch
                       </h4>
                     </div>
 

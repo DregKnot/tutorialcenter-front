@@ -75,12 +75,24 @@ export default function ExamInterface({
     autoStart: false
   });
 
-  // Pause timer when exam finishes
+  // Pause timer and remove locked fullscreen when exam finishes
   useEffect(() => {
     if (examFinished) {
       pause();
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
     }
   }, [examFinished, pause]);
+
+  // Clean up locked screen on component unmount
+  useEffect(() => {
+    return () => {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    };
+  }, []);
 
   // Suppress dev-mode ResizeObserver loop limit exceeded error overlays
   useEffect(() => {
@@ -131,9 +143,17 @@ export default function ExamInterface({
       const questionList = response.data?.questions || response.data?.data || [];
       setQuestions(questionList);
 
-      // Pre-populate already answered questions from the questions payload if available
+      // Pre-populate already answered questions from the questions payload or server answers map
       const initialSelected = {};
       const initialSubmitted = {};
+
+      if (response.data?.answers && typeof response.data.answers === "object") {
+        Object.entries(response.data.answers).forEach(([qId, optId]) => {
+          initialSelected[qId] = optId;
+          initialSubmitted[qId] = optId;
+        });
+      }
+
       questionList.forEach((q) => {
         // If question already has student's saved answer in relation
         if (q.student_answer?.option_id || q.user_answer?.option_id) {
@@ -157,15 +177,23 @@ export default function ExamInterface({
       setSelectedOptions(initialSelected);
       setSubmittedAnswers(initialSubmitted);
 
-      // Set countdown timer using react-timer-hook
-      const minutesVal = parseInt(timer, 10) || 50;
-      const expiry = new Date();
-      expiry.setSeconds(expiry.getSeconds() + minutesVal * 60);
-      restart(expiry);
+      // Set countdown timer using server remaining_seconds if rejoining, or configured timer
+      if (response.data?.remaining_seconds !== undefined && response.data.remaining_seconds !== null) {
+        const remSec = Number(response.data.remaining_seconds);
+        const expiry = new Date();
+        expiry.setSeconds(expiry.getSeconds() + remSec);
+        restart(expiry);
+      } else {
+        const minutesVal = parseInt(timer, 10) || 50;
+        const expiry = new Date();
+        expiry.setSeconds(expiry.getSeconds() + minutesVal * 60);
+        restart(expiry);
+      }
 
     } catch (err) {
       console.error("Failed to load attempt questions:", err);
-      setError("Failed to load exam questions. Please try again or return to config.");
+      const serverMsg = err.response?.data?.message;
+      setError(serverMsg || "Failed to load exam questions. Please try again or return to config.");
     } finally {
       setLoading(false);
     }
@@ -831,25 +859,46 @@ export default function ExamInterface({
       {showExitConfirm && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={() => setShowExitConfirm(false)} />
-          <div className="relative bg-white rounded-3xl p-8 w-[90%] max-w-md shadow-2xl z-10 animate-scale-in">
-            <h3 className="text-xl font-black text-[#09314F] mb-3 uppercase tracking-tight">
-              Abandon Practice Session?
+          <div className="relative bg-white dark:bg-[#09314F] rounded-3xl p-6 sm:p-8 w-[92%] max-w-md shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white border border-gray-100 dark:border-gray-800">
+            <div className="w-12 h-12 bg-amber-100 dark:bg-amber-950/40 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-200 dark:border-amber-800/40">
+              <Icon icon="lucide:pause-circle" className="w-6 h-6 text-amber-500" />
+            </div>
+            <h3 className="text-xl font-black text-center mb-2 uppercase tracking-tight">
+              Leave Exam Session?
             </h3>
-            <p className="text-sm text-gray-500 leading-relaxed mb-8">
-              Are you sure you want to exit? Your currently synced progress will be saved as incomplete, and you will return to the Configuration screen.
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 text-center leading-relaxed mb-6">
+              You can step away and return to the main dashboard. As long as your time hasn't expired, you can rejoin and finish your exam from the configuration page or history.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-2.5">
               <button
-                onClick={() => setShowExitConfirm(false)}
-                className="flex-1 py-3.5 border border-gray-200 hover:bg-gray-50 rounded-xl text-xs font-bold text-gray-600 uppercase tracking-widest transition-all"
+                onClick={() => {
+                  setShowExitConfirm(false);
+                  onBack();
+                }}
+                className="w-full py-3.5 bg-[#09314F] hover:bg-[#0a3d63] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2"
               >
-                No, Stay
+                <Icon icon="lucide:log-out" className="w-4 h-4 text-[#C5A97A]" />
+                <span>Exit &amp; Keep Timer Running (Rejoin Later)</span>
               </button>
               <button
-                onClick={onBack}
-                className="flex-1 py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md shadow-red-200"
+                onClick={async () => {
+                  try {
+                    await axios.post(`${API_BASE_URL}/api/students/exams/${attemptId}/abandon`, {}, {
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                  } catch (e) {}
+                  setShowExitConfirm(false);
+                  onBack();
+                }}
+                className="w-full py-2.5 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
               >
-                Yes, Exit
+                Abandon &amp; End Session Permanently
+              </button>
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                className="w-full py-2 text-xs font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-all text-center"
+              >
+                No, Stay in Exam
               </button>
             </div>
           </div>

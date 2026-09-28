@@ -199,7 +199,6 @@ const tutorNavSections = [
     items: [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/tutor/master-class" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/tutor/calendar" },
-      { label: "Video Vault", icon: PlayCircleIcon, destination: "/staffs/recorded-classes" },
     ],
   },
   {
