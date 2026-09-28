@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Student Exam Practice Flow - Redesigned</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #041321;
+    }
+  </style>
+</head>
+<body class="p-4 sm:p-8 max-w-6xl mx-auto min-h-screen text-slate-100 space-y-8">
+
+  <!-- Top Action Row (History & Streak) -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- Practice History Button: order-1 on mobile, order-2 on sm+ -->
+    <div class="order-1 sm:order-2 flex items-center justify-start sm:justify-end w-full sm:w-auto">
+      <button
+        type="button"
+        class="w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-[#072238]/90 hover:bg-[#0a2f4c] border border-[#C5A97A]/40 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all shadow-sm group"
+      >
+        <span class="iconify text-[#C5A97A] text-base group-hover:rotate-[-20deg] transition-transform" data-icon="lucide:history"></span>
+        <span>Practice History</span>
+      </button>
+    </div>
+
+    <!-- Main Evolving Streak Widget: order-2 on mobile, order-1 on sm+ -->
+    <div class="order-2 sm:order-1 flex flex-wrap items-center gap-3 w-full sm:w-auto">
+      <div
+        class="group relative flex items-center gap-4 px-4 py-3 bg-[#072238]/90 backdrop-blur-md rounded-2xl border border-gray-800 shadow-sm w-full sm:w-auto cursor-pointer"
+        style="box-shadow: 0 0 24px rgba(251, 191, 36, 0.25);"
+      >
+        <div class="rounded-2xl shrink-0 w-16 h-16 flex items-center justify-center relative overflow-hidden bg-gradient-to-t from-amber-500/20 to-orange-500/10 border border-amber-500/30">
+          <span class="iconify text-amber-400 text-3xl" data-icon="lucide:flame"></span>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="text-xl md:text-2xl font-black text-white leading-none tracking-tight block">
+              1 Day
+            </span>
+          </div>
+          <p class="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1.5 flex items-center gap-1">
+            <span>Practice Streak</span>
+            <span class="iconify text-[#C5A97A] text-xs" data-icon="lucide:arrow-right"></span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Ongoing Exam Session Card -->
+  <div class="bg-[#0b253a] border-2 border-amber-500/50 rounded-3xl p-5 sm:p-7 shadow-2xl relative overflow-hidden">
+    <div class="absolute -top-16 -right-16 w-52 h-52 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-16 -left-16 w-52 h-52 bg-orange-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 flex flex-col gap-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/10">
+        <div class="flex items-center gap-2">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <span class="text-[11px] font-black uppercase tracking-widest text-amber-400">
+            Active In-Progress Session
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 px-3.5 py-1.5 bg-black/60 border border-amber-500/40 rounded-xl shadow-inner">
+          <span class="iconify text-amber-400 text-sm animate-pulse" data-icon="lucide:clock-4"></span>
+          <span class="font-mono text-sm sm:text-base font-black text-amber-300 tracking-wider">
+            42m 18s
+          </span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+            left
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-start sm:items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/25">
+          <span class="iconify text-white text-2xl" data-icon="lucide:file-text"></span>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <h3 class="text-lg sm:text-xl font-black text-white uppercase tracking-tight">
+              English Language
+            </h3>
+            <span class="px-2.5 py-0.5 rounded-lg text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              Year 2005
+            </span>
+          </div>
+          <p class="text-xs text-gray-300 mt-1 leading-relaxed">
+            Your exam practice is in progress and your answers are safely saved. You can rejoin and finish your test before the time runs out.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-1">
+        <button
+          type="button"
+          class="order-2 sm:order-1 px-5 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-xl font-bold text-xs uppercase tracking-wider transition-all text-center flex items-center justify-center gap-2"
+        >
+          <span class="iconify text-sm" data-icon="lucide:trash-2"></span>
+          <span>Abandon Exam</span>
+        </button>
+
+        <button
+          type="button"
+          class="order-1 sm:order-2 px-7 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2 transition-all"
+        >
+          <span class="iconify text-base" data-icon="lucide:play-circle"></span>
+          <span>Resume Exam Now</span>
+          <span class="iconify text-sm" data-icon="lucide:arrow-right"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Redesigned Exam Practice Center Orientation Hub -->
+  <div class="bg-gradient-to-br from-[#0b2840]/90 via-[#071c2d]/95 to-[#04121d]/95 backdrop-blur-xl rounded-[32px] p-6 sm:p-8 border border-[#C5A97A]/30 shadow-2xl relative overflow-hidden text-white">
+    <div class="absolute -top-20 -right-20 w-64 h-64 bg-[#C5A97A]/15 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#C5A97A] to-amber-500 text-[#09314F] flex items-center justify-center shrink-0 shadow-lg shadow-[#C5A97A]/25">
+            <span class="iconify text-2xl font-black" data-icon="lucide:sparkles"></span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-[#C5A97A]/20 text-[#C5A97A] border border-[#C5A97A]/30">
+                Official CBT Simulation
+              </span>
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black text-white uppercase tracking-tight mt-0.5">
+              Exam Practice Center
+            </h3>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 self-start sm:self-center">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-gray-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Distraction-Free Lockdown Active
+          </span>
+        </div>
+      </div>
+
+      <!-- 5-Step Interactive Practice Pathway Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <!-- Step 1 Card -->
+        <div class="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-[#C5A97A]/40 rounded-2xl p-4 transition-all duration-300 group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <div class="w-9 h-9 rounded-xl bg-[#C5A97A]/15 text-[#C5A97A] flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span class="iconify text-base" data-icon="lucide:graduation-cap"></span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+                Step 01
+              </span>
+            </div>
+            <h4 class="text-xs sm:text-sm font-black text-white uppercase tracking-tight mb-1">
+              Choose Course
+            </h4>
+            <p class="text-[11px] text-gray-400 leading-relaxed">
+              Pick from your enrolled exam bodies (WAEC, JAMB, GCE).
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 2 Card -->
+        <div class="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-sky-400/40 rounded-2xl p-4 transition-all duration-300 group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <div class="w-9 h-9 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span class="iconify text-base" data-icon="lucide:book-open"></span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+                Step 02
+              </span>
+            </div>
+            <h4 class="text-xs sm:text-sm font-black text-white uppercase tracking-tight mb-1">
+              Select Subject
+            </h4>
+            <p class="text-[11px] text-gray-400 leading-relaxed">
+              Choose your target subject of choice from the syllabus.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 3 Card -->
+        <div class="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-indigo-400/40 rounded-2xl p-4 transition-all duration-300 group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <div class="w-9 h-9 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span class="iconify text-base" data-icon="lucide:calendar"></span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+                Step 03
+              </span>
+            </div>
+            <h4 class="text-xs sm:text-sm font-black text-white uppercase tracking-tight mb-1">
+              Choose Year
+            </h4>
+            <p class="text-[11px] text-gray-400 leading-relaxed">
+              Select past questions by your preferred exam year.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 4 Card -->
+        <div class="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-amber-400/40 rounded-2xl p-4 transition-all duration-300 group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <div class="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span class="iconify text-base" data-icon="lucide:clock-4"></span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+                Step 04
+              </span>
+            </div>
+            <h4 class="text-xs sm:text-sm font-black text-white uppercase tracking-tight mb-1">
+              Configure Time
+            </h4>
+            <p class="text-[11px] text-gray-400 leading-relaxed">
+              Set custom countdown from 10 to 120 minutes.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 5 Card -->
+        <div class="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-emerald-400/40 rounded-2xl p-4 transition-all duration-300 group flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span class="iconify text-base" data-icon="lucide:shield-check"></span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+                Step 05
+              </span>
+            </div>
+            <h4 class="text-xs sm:text-sm font-black text-white uppercase tracking-tight mb-1">
+              Locked Screen
+            </h4>
+            <p class="text-[11px] text-gray-400 leading-relaxed">
+              Fullscreen lockdown CBT mode with active focus protection.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pro-Tip / Policy Ribbon -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-black/40 border border-white/10 text-xs">
+        <div class="flex items-center gap-2.5 text-gray-300">
+          <span class="iconify text-[#C5A97A] text-base shrink-0" data-icon="lucide:info"></span>
+          <span>
+            <strong class="text-white">Preserved Progress:</strong> If you step away while time is counting, you can resume anytime from this page or Practice History.
+          </span>
+        </div>
+        <span class="text-[11px] font-black text-[#C5A97A] uppercase tracking-wider shrink-0 flex items-center gap-1 cursor-pointer hover:underline">
+          <span>Practice Guidelines</span>
+          <span class="iconify text-xs" data-icon="lucide:chevron-right"></span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Redesigned Choose Course Section -->
+  <div class="space-y-4">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="w-7 h-7 rounded-xl bg-[#C5A97A]/20 border border-[#C5A97A]/40 text-[#C5A97A] font-black text-xs flex items-center justify-center shadow-sm">
+          01
+        </span>
+        <div>
+          <h4 class="text-sm font-black text-white uppercase tracking-wider">
+            Choose Enrolled Exam Body
+          </h4>
+          <p class="text-[11px] text-gray-400 font-medium">
+            Select the curriculum syllabus you wish to practice today
+          </p>
+        </div>
+      </div>
+      <span class="text-[10px] font-black text-[#C5A97A] uppercase tracking-widest bg-[#C5A97A]/10 px-3 py-1 rounded-full border border-[#C5A97A]/20">
+        2 Available
+      </span>
+    </div>
+
+    <div id="course-cards-container" class="flex gap-4 overflow-x-auto pb-4 select-none">
+      <!-- Card 1: GCE (Initially Selected) -->
+      <div id="card-gce" onclick="selectCourse('gce')" class="min-w-[260px] md:min-w-[300px] p-5 rounded-3xl border-2 border-[#C5A97A] bg-gradient-to-br from-[#0c2f4d] to-[#071c2d] shadow-xl shadow-[#C5A97A]/10 relative cursor-pointer transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between gap-4">
+        <div class="flex items-start justify-between gap-3">
+          <div id="icon-gce" class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#C5A97A] to-amber-500 text-[#09314F] flex items-center justify-center font-black text-lg shadow-md transition-colors">
+            <span class="iconify text-2xl" data-icon="lucide:graduation-cap"></span>
+          </div>
+          <span id="badge-gce" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#C5A97A] text-[#09314F] flex items-center gap-1 shadow-sm">
+            <span class="iconify text-xs" data-icon="lucide:check"></span>
+            Selected
+          </span>
+        </div>
+
+        <div>
+          <span id="eyebrow-gce" class="text-[10px] font-black uppercase tracking-widest text-[#C5A97A]">
+            Curriculum Body
+          </span>
+          <h4 class="text-lg font-black text-white uppercase tracking-tight mt-0.5">
+            GCE
+          </h4>
+        </div>
+
+        <div class="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+          <span class="inline-flex items-center gap-1.5 text-gray-300 font-bold">
+            <span class="iconify text-[#C5A97A] text-sm" data-icon="lucide:layers"></span>
+            <span>6 Subjects Enrolled</span>
+          </span>
+          <span id="status-gce" class="text-[11px] font-bold text-[#C5A97A]">Active &bull; Selected</span>
+        </div>
+      </div>
+
+      <!-- Card 2: WAEC (Initially Unselected) -->
+      <div id="card-waec" onclick="selectCourse('waec')" class="min-w-[260px] md:min-w-[300px] p-5 rounded-3xl border border-gray-800 bg-[#072238]/60 hover:bg-[#092b47]/80 hover:border-[#C5A97A]/50 shadow-sm relative cursor-pointer transition-all duration-300 hover:scale-[1.01] flex flex-col justify-between gap-4 group">
+        <div class="flex items-start justify-between gap-3">
+          <div id="icon-waec" class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-gray-300 group-hover:text-[#C5A97A] group-hover:border-[#C5A97A]/40 flex items-center justify-center font-black text-lg transition-colors">
+            <span class="iconify text-2xl" data-icon="lucide:award"></span>
+          </div>
+          <span id="badge-waec" class="w-5 h-5 rounded-full border border-gray-600 group-hover:border-[#C5A97A] transition-colors"></span>
+        </div>
+
+        <div>
+          <span id="eyebrow-waec" class="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-[#C5A97A] transition-colors">
+            Curriculum Body
+          </span>
+          <h4 class="text-lg font-black text-white uppercase tracking-tight mt-0.5">
+            WAEC
+          </h4>
+        </div>
+
+        <div class="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+          <span class="inline-flex items-center gap-1.5 text-gray-400 font-bold group-hover:text-gray-300 transition-colors">
+            <span class="iconify text-[#C5A97A] text-sm" data-icon="lucide:layers"></span>
+            <span>4 Subjects Enrolled</span>
+          </span>
+          <span id="status-waec" class="text-[11px] font-bold text-gray-500">Ready to Practice</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02. Select Subject of Choice Section -->
+  <div class="space-y-4">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="w-7 h-7 rounded-xl bg-sky-500/20 border border-sky-400/40 text-sky-400 font-black text-xs flex items-center justify-center shadow-sm">
+          02
+        </span>
+        <div>
+          <h4 class="text-sm font-black text-white uppercase tracking-wider">
+            Select Subject of Choice
+          </h4>
+          <p class="text-[11px] text-gray-400 font-medium">
+            Choose the specific subject syllabus you want to focus on
+          </p>
+        </div>
+      </div>
+      <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider animate-pulse">
+        Scroll to select subjects
+      </span>
+    </div>
+
+    <div class="flex gap-4 overflow-x-auto pb-4 select-none">
+      <!-- Subject 1: Mathematics (Selected) -->
+      <div class="w-[190px] md:w-[210px] shrink-0 p-4 rounded-3xl bg-[#09314F] text-white border-transparent ring-4 ring-[#C5A97A]/30 scale-[1.02] shadow-md flex flex-col justify-between transition-all duration-300 cursor-pointer">
+        <div class="w-full h-24 rounded-2xl overflow-hidden mb-3 relative shrink-0">
+          <img src="https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover rounded-2xl" alt="Math" />
+          <div class="absolute top-2.5 right-2.5 bg-[#C5A97A] text-white p-1 rounded-full shadow-md flex items-center justify-center">
+            <span class="iconify text-xs" data-icon="lucide:check"></span>
+          </div>
+        </div>
+        <div>
+          <span class="text-[9px] font-black uppercase tracking-widest text-[#C5A97A] block">Subject</span>
+          <h4 class="text-sm font-black uppercase tracking-tight text-white mt-0.5">Mathematics</h4>
+        </div>
+      </div>
+
+      <!-- Subject 2: English Language -->
+      <div class="w-[190px] md:w-[210px] shrink-0 p-4 rounded-3xl bg-[#072238]/60 hover:bg-[#092b47]/80 border border-gray-800 hover:border-gray-700 shadow-sm flex flex-col justify-between transition-all duration-300 cursor-pointer group">
+        <div class="w-full h-24 rounded-2xl overflow-hidden mb-3 relative shrink-0">
+          <img src="https://images.unsplash.com/photo-1457369804613-52c61a468e7d?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform" alt="English" />
+        </div>
+        <div>
+          <span class="text-[9px] font-black uppercase tracking-widest text-gray-400 block">Subject</span>
+          <h4 class="text-sm font-black uppercase tracking-tight text-white mt-0.5 group-hover:text-[#C5A97A] transition-colors">English Language</h4>
+        </div>
+      </div>
+
+      <!-- Subject 3: Physics -->
+      <div class="w-[190px] md:w-[210px] shrink-0 p-4 rounded-3xl bg-[#072238]/60 hover:bg-[#092b47]/80 border border-gray-800 hover:border-gray-700 shadow-sm flex flex-col justify-between transition-all duration-300 cursor-pointer group">
+        <div class="w-full h-24 rounded-2xl overflow-hidden mb-3 relative shrink-0">
+          <img src="https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform" alt="Physics" />
+        </div>
+        <div>
+          <span class="text-[9px] font-black uppercase tracking-widest text-gray-400 block">Subject</span>
+          <h4 class="text-sm font-black uppercase tracking-tight text-white mt-0.5 group-hover:text-[#C5A97A] transition-colors">Physics</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectCourse(course) {
+      const gceCard = document.getElementById('card-gce');
+      const waecCard = document.getElementById('card-waec');
+      const gceIcon = document.getElementById('icon-gce');
+      const waecIcon = document.getElementById('icon-waec');
+      const gceBadge = document.getElementById('badge-gce');
+      const waecBadge = document.getElementById('badge-waec');
+      const gceEyebrow = document.getElementById('eyebrow-gce');
+      const waecEyebrow = document.getElementById('eyebrow-waec');
+      const gceStatus = document.getElementById('status-gce');
+      const waecStatus = document.getElementById('status-waec');
+
+      if (course === 'waec') {
+        // Unselect GCE
+        gceCard.className = "min-w-[260px] md:min-w-[300px] p-5 rounded-3xl border border-gray-800 bg-[#072238]/60 hover:bg-[#092b47]/80 hover:border-[#C5A97A]/50 shadow-sm relative cursor-pointer transition-all duration-300 hover:scale-[1.01] flex flex-col justify-between gap-4 group";
+        gceIcon.className = "w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-gray-300 group-hover:text-[#C5A97A] group-hover:border-[#C5A97A]/40 flex items-center justify-center font-black text-lg transition-colors";
+        gceBadge.outerHTML = '<span id="badge-gce" class="w-5 h-5 rounded-full border border-gray-600 group-hover:border-[#C5A97A] transition-colors"></span>';
+        gceEyebrow.className = "text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-[#C5A97A] transition-colors";
+        gceStatus.className = "text-[11px] font-bold text-gray-500";
+        gceStatus.textContent = "Ready to Practice";
+
+        // Select WAEC
+        waecCard.className = "min-w-[260px] md:min-w-[300px] p-5 rounded-3xl border-2 border-[#C5A97A] bg-gradient-to-br from-[#0c2f4d] to-[#071c2d] shadow-xl shadow-[#C5A97A]/10 relative cursor-pointer transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between gap-4";
+        waecIcon.className = "w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#C5A97A] to-amber-500 text-[#09314F] flex items-center justify-center font-black text-lg shadow-md transition-colors";
+        waecBadge.outerHTML = '<span id="badge-waec" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#C5A97A] text-[#09314F] flex items-center gap-1 shadow-sm"><span class="iconify text-xs" data-icon="lucide:check"></span>Selected</span>';
+        waecEyebrow.className = "text-[10px] font-black uppercase tracking-widest text-[#C5A97A]";
+        waecStatus.className = "text-[11px] font-bold text-[#C5A97A]";
+        waecStatus.textContent = "Active • Selected";
+      } else {
+        // Select GCE
+        gceCard.className = "min-w-[260px] md:min-w-[300px] p-5 rounded-3xl border-2 border-[#C5A97A] bg-gradient-to-br from-[#0c2f4d] to-[#071c2d] shadow-xl shadow-[#C5A97A]/10 relative cursor-pointer transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between gap-4";
+        gceIcon.className = "w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#C5A97A] to-amber-500 text-[#09314F] flex items-center justify-center font-black text-lg shadow-md transition-colors";
+        gceBadge.outerHTML = '<span id="badge-gce" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#C5A97A] text-[#09314F] flex items-center gap-1 shadow-sm"><span class="iconify text-xs" data-icon="lucide:check"></span>Selected</span>';
+        gceEyebrow.className = "text-[10px] font-black uppercase tracking-widest text-[#C5A97A]";
+        gceStatus.className = "text-[11px] font-bold text-[#C5A97A]";
+        gceStatus.textContent = "Active • Selected";
+
+        // Unselect WAEC
+        waecCard.className = "min-w-[260px] md:min-w-[300px] p-5 rounded-3xl border border-gray-800 bg-[#072238]/60 hover:bg-[#092b47]/80 hover:border-[#C5A97A]/50 shadow-sm relative cursor-pointer transition-all duration-300 hover:scale-[1.01] flex flex-col justify-between gap-4 group";
+        waecIcon.className = "w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-gray-300 group-hover:text-[#C5A97A] group-hover:border-[#C5A97A]/40 flex items-center justify-center font-black text-lg transition-colors";
+        waecBadge.outerHTML = '<span id="badge-waec" class="w-5 h-5 rounded-full border border-gray-600 group-hover:border-[#C5A97A] transition-colors"></span>';
+        waecEyebrow.className = "text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-[#C5A97A] transition-colors";
+        waecStatus.className = "text-[11px] font-bold text-gray-500";
+        waecStatus.textContent = "Ready to Practice";
+      }
+    }
+  </script>
+</body>
+</html>

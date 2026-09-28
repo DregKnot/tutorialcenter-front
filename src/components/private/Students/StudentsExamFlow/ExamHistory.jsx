@@ -3,7 +3,8 @@ import axios from "axios";
 import { Icon } from "@iconify/react";
 import ExamReview from "./ExamReview.jsx";
 import ExamMerits from "./ExamMerits.jsx";
-import { StreakFire, getStreakFlameStyles } from "./StreakFire.jsx";
+import { StreakFire, getStreakFlameStyles, calculatePracticeStreak } from "./StreakFire.jsx";
+import { StreakLightning, getStreakLightningStyles } from "./StreakLightning.jsx";
 
 const calculateTimeDiff = (start, end) => {
   if (!start || !end) return null;
@@ -20,7 +21,7 @@ const calculateTimeDiff = (start, end) => {
   return `${secs}s`;
 };
 
-export default function ExamHistory({ availableExams = [], initialExpandedAttemptId = null, onBack }) {
+export default function ExamHistory({ availableExams = [], initialExpandedAttemptId = null, onBack, onRejoinExam }) {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("student_token") || "";
@@ -32,6 +33,16 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
   const [expandedAttemptId, setExpandedAttemptId] = useState(initialExpandedAttemptId);
   const [meritsAttempt, setMeritsAttempt] = useState(null);
   const [isStreakHovered, setIsStreakHovered] = useState(false);
+  const [serverStreak, setServerStreak] = useState(null);
+  const [, setTick] = useState(0);
+
+  // Live timer tick for in-progress attempt cards
+  useEffect(() => {
+    const hasInProgress = attempts.some((a) => a.status === "in_progress");
+    if (!hasInProgress) return;
+    const interval = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [attempts]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -84,7 +95,10 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
       } else if (responseData.data && Array.isArray(responseData.data.data)) {
         attemptsArray = responseData.data.data;
         totalPagesVal = responseData.data.last_page || 1;
-        currentPageVal = responseData.data.current_page || 1;
+      }
+
+      if (responseData.streak !== undefined && responseData.streak !== null) {
+        setServerStreak(Number(responseData.streak));
       }
 
       setAttempts(attemptsArray);
@@ -214,57 +228,6 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
     };
   };
 
-  // Calculate Streak
-  const getStreak = (allAttempts) => {
-    if (!allAttempts || allAttempts.length === 0) return 0;
-    const dates = allAttempts
-      .map((a) => {
-        const dateStr = a.started_at || a.created_at;
-        return dateStr ? new Date(dateStr).toDateString() : null;
-      })
-      .filter((value, index, self) => value && self.indexOf(value) === index)
-      .map((d) => new Date(d));
-
-    if (dates.length === 0) return 0;
-
-    // Sort dates descending (newest first)
-    dates.sort((a, b) => b - a);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    let currentStreak = 0;
-    let expectedDate = new Date(today);
-
-    const firstDate = new Date(dates[0]);
-    firstDate.setHours(0, 0, 0, 0);
-
-    if (firstDate.getTime() === today.getTime()) {
-      currentStreak = 1;
-      expectedDate = yesterday;
-    } else if (firstDate.getTime() === yesterday.getTime()) {
-      currentStreak = 1;
-      expectedDate = new Date(yesterday);
-      expectedDate.setDate(expectedDate.getDate() - 1);
-    } else {
-      return 0; // No active daily streak
-    }
-
-    for (let i = 1; i < dates.length; i++) {
-      const d = new Date(dates[i]);
-      d.setHours(0, 0, 0, 0);
-      if (d.getTime() === expectedDate.getTime()) {
-        currentStreak++;
-        expectedDate.setDate(expectedDate.getDate() - 1);
-      } else if (d.getTime() < expectedDate.getTime()) {
-        break;
-      }
-    }
-    return currentStreak;
-  };
-
   // Process overall metrics
   const completedAttempts = attempts.filter((a) => a.status === "completed" || !a.status);
   const averageScore = completedAttempts.length
@@ -282,7 +245,8 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
       }, completedAttempts[0])
     : null;
 
-  const activeStreak = getStreak(attempts);
+  const calculatedStreak = calculatePracticeStreak(attempts);
+  const activeStreak = serverStreak !== null ? serverStreak : calculatedStreak;
 
   const sortedCompleted = [...completedAttempts].sort((a, b) => {
     const dateA = new Date(a.started_at || a.created_at).getTime();
@@ -454,27 +418,39 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
           </div>
         </div>
 
-        {/* Metric Card 3: Daily Streak */}
-        <div 
-          className="bg-white dark:bg-[radial-gradient(circle_at_center,_#000000_20%,_#09314F_150%)] rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] flex items-center text-left gap-4 transition-shadow duration-300 cursor-pointer z-20"
-          style={{
-            boxShadow: isStreakHovered ? `0 0 25px ${getStreakFlameStyles(activeStreak).glow}` : undefined
-          }}
-          onMouseEnter={() => setIsStreakHovered(true)}
-          onMouseLeave={() => setIsStreakHovered(false)}
-        >
-          <div className={`${getStreakFlameStyles(activeStreak).bgClass} rounded-2xl shrink-0 relative w-16 h-16 flex items-center justify-center`}>
-            <StreakFire streak={activeStreak} />
-          </div>
-          <div className="min-w-0">
-            <h4 className="text-[28px] font-black text-[#09314F] dark:text-white leading-none">
-              {activeStreak} {activeStreak === 1 ? "Day" : "Days"}
-            </h4>
-            <p className="text-[11px] font-black uppercase tracking-wider text-gray-400 mt-2">
-              Practice Streak
-            </p>
-          </div>
-        </div>
+        {/* Metric Card 3: Daily Streak (Evolves from Fire to Lightning at Day 30) */}
+        {(() => {
+          const isLightning = activeStreak >= 30;
+          const streakStyles = isLightning
+            ? getStreakLightningStyles(activeStreak)
+            : getStreakFlameStyles(activeStreak);
+          return (
+            <div 
+              className="bg-white dark:bg-[radial-gradient(circle_at_center,_#000000_20%,_#09314F_150%)] rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] flex items-center text-left gap-4 transition-shadow duration-300 cursor-pointer z-20"
+              style={{
+                boxShadow: isStreakHovered ? `0 0 25px ${streakStyles.glow}` : undefined
+              }}
+              onMouseEnter={() => setIsStreakHovered(true)}
+              onMouseLeave={() => setIsStreakHovered(false)}
+            >
+              <div className={`${isLightning ? "bg-black border border-white/10 shadow-[0_0_15px_rgba(0,0,0,0.5)]" : streakStyles.bgClass} rounded-2xl shrink-0 relative w-16 h-16 flex items-center justify-center`}>
+                {isLightning ? (
+                  <StreakLightning streak={activeStreak} size={54} />
+                ) : (
+                  <StreakFire streak={activeStreak} size={54} />
+                )}
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-[28px] font-black text-[#09314F] dark:text-white leading-none">
+                  {activeStreak} {activeStreak === 1 ? "Day" : "Days"}
+                </h4>
+                <p className="text-[11px] font-black uppercase tracking-wider text-gray-400 mt-2">
+                  {isLightning ? "Lightning Streak" : "Practice Streak"}
+                </p>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Recent Exam Insights Banner */}
@@ -629,6 +605,17 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
             const endStamp = formatDate(attempt.submitted_at || attempt.updated_at || attempt.ended_at);
             const status = attempt.status || "completed";
 
+            // Calculate live remaining seconds for in_progress attempts
+            const durMinutes = Number(attempt.timer) || 50;
+            const startMs = new Date(attempt.started_at || attempt.created_at).getTime();
+            const remainingSec = attempt.remaining_seconds !== undefined
+              ? Math.max(0, Math.floor(Number(attempt.remaining_seconds) || 0))
+              : Math.max(0, Math.floor((startMs + durMinutes * 60 * 1000 - Date.now()) / 1000));
+            const isInProgressActive = status === "in_progress" && remainingSec > 0;
+            const isInProgressExpired = status === "in_progress" && remainingSec <= 0;
+            const remMins = Math.floor(remainingSec / 60);
+            const remSecs = remainingSec % 60;
+
             // Circle dash configs
             const scorePercentage = stats.percentage;
             let strokeColor = "#E83831"; // red
@@ -685,24 +672,30 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
                       <h3 className="text-base font-black text-[#09314F] dark:text-white uppercase tracking-tight mt-1 truncate">
                         {stats.subjectName} - {stats.yearValue}
                       </h3>
-                      <div className="mt-2.5 flex items-center gap-2">
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2">
                         {/* Status Badges */}
                         {status === "completed" && (
-                          <span className="px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5">
+                          <span className="px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5 border border-green-500/20">
                             <Icon icon="lucide:check-circle" className="w-3.5 h-3.5" />
                             Completed
                           </span>
                         )}
                         {status === "abandoned" && (
-                          <span className="px-2.5 py-1 bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5">
+                          <span className="px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5 border border-red-500/20">
                             <Icon icon="lucide:alert-triangle" className="w-3.5 h-3.5" />
                             Abandoned
                           </span>
                         )}
-                        {status === "in_progress" && (
-                          <span className="px-2.5 py-1 bg-gray-500/10 text-gray-500 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-gray-400 animate-ping"></span>
-                            In Progress
+                        {isInProgressActive && (
+                          <span className="px-2.5 py-1 bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5 border border-amber-500/30">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                            In Progress • {remMins}m {String(remSecs).padStart(2, "0")}s left
+                          </span>
+                        )}
+                        {isInProgressExpired && (
+                          <span className="px-2.5 py-1 bg-gray-500/15 text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5 border border-gray-500/20">
+                            <Icon icon="lucide:clock" className="w-3.5 h-3.5 text-red-500" />
+                            Expired (Time Out)
                           </span>
                         )}
                         <span className="text-xs text-gray-400 font-bold">
@@ -741,9 +734,17 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
                         <Icon icon="lucide:check-circle-2" className="w-3 h-3 text-green-500" />
                         Submitted
                       </span>
-                      {status === "in_progress" ? (
-                        <p className="text-xs font-bold text-orange-500 dark:text-orange-400 mt-1 animate-pulse">
-                          Ticking...
+                      {isInProgressActive ? (
+                        <p className="text-xs font-bold text-amber-500 dark:text-amber-400 mt-1 animate-pulse">
+                          ⏱️ {remMins}m {String(remSecs).padStart(2, "0")}s left
+                        </p>
+                      ) : isInProgressExpired ? (
+                        <p className="text-xs font-bold text-gray-400 mt-1">
+                          Time Expired
+                        </p>
+                      ) : status === "abandoned" ? (
+                        <p className="text-xs font-bold text-red-400 mt-1">
+                          Abandoned
                         </p>
                       ) : endStamp ? (
                         <>
@@ -787,18 +788,62 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
                   </div>
                 </div>
 
-                {/* Check Merits Action Row */}
-                <div className="w-full pt-4 mt-2 border-t border-gray-100 dark:border-gray-800 flex justify-end">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMeritsAttempt(attempt);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800/50 hover:bg-[#C5A97A]/10 text-gray-500 dark:text-gray-400 hover:text-[#C5A97A] border border-gray-200 dark:border-gray-700 hover:border-[#C5A97A] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
-                  >
-                    <Icon icon="lucide:bar-chart-2" className="w-3.5 h-3.5" />
-                    Check Merits
-                  </button>
+                {/* Check Merits / Resume Exam Action Row */}
+                <div className="w-full pt-4 mt-2 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4">
+                  <div className="text-[11px] text-gray-400">
+                    {isInProgressActive && (
+                      <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1.5">
+                        <Icon icon="lucide:info" className="w-4 h-4 shrink-0 text-amber-500" />
+                        Timer is active. You can resume and finish your answers before time runs out.
+                      </span>
+                    )}
+                    {isInProgressExpired && (
+                      <span className="text-gray-400 font-medium">
+                        Allocated exam duration has elapsed. Session is closed and cannot be rejoined.
+                      </span>
+                    )}
+                    {status === "abandoned" && (
+                      <span className="text-red-400/90 font-medium">
+                        Exam was marked as abandoned and cannot be rejoined.
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 ml-auto">
+                    {isInProgressActive ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onRejoinExam) {
+                            onRejoinExam({ ...attempt, remaining_seconds: remainingSec });
+                          }
+                        }}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-amber-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      >
+                        <Icon icon="lucide:play-circle" className="w-4 h-4" />
+                        <span>Resume Exam</span>
+                      </button>
+                    ) : (isInProgressExpired || status === "abandoned") ? (
+                      <button
+                        disabled
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-not-allowed border border-gray-200 dark:border-gray-700/60"
+                      >
+                        <Icon icon="lucide:ban" className="w-3.5 h-3.5" />
+                        <span>{status === "abandoned" ? "Abandoned" : "Time Expired"}</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMeritsAttempt(attempt);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800/50 hover:bg-[#C5A97A]/10 text-gray-500 dark:text-gray-400 hover:text-[#C5A97A] border border-gray-200 dark:border-gray-700 hover:border-[#C5A97A] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                      >
+                        <Icon icon="lucide:bar-chart-2" className="w-3.5 h-3.5" />
+                        Check Merits
+                      </button>
+                    )}
+                  </div>
                 </div>
                 
               </div>

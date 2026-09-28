@@ -234,45 +234,103 @@ export default function StudentLeaderboard() {
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '8s' }} />
         <div className="absolute top-40 right-10 w-[450px] h-[450px] bg-amber-500/10 rounded-full blur-[150px] pointer-events-none animate-pulse" style={{ animationDuration: '6s' }} />
 
-        {/* ── Header Section ───────────────────────────────────────────────────── */}
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-gradient-to-r from-[#09314F]/90 via-[#0c263d]/80 to-[#191635]/90 p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl backdrop-blur-xl">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl shadow-lg shadow-amber-500/20 text-black">
-                <Icon icon="lucide:trophy" className="w-6 h-6" />
-              </div>
-              <span className="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-xs font-black uppercase tracking-widest border border-amber-500/30">
-                Hall of Fame
-              </span>
-            </div>
-            <h1 className="text-2xl md:text-4xl font-black italic uppercase tracking-tight text-white">
-              Student Leadership <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">Board</span>
-            </h1>
-            <p className="text-gray-400 text-xs md:text-sm mt-1 max-w-xl font-medium">
-              Compete with fellow students, solve practice exams, keep your streak alive, and climb to the top of the leaderboard!
-            </p>
-          </div>
+        {/* ── Redesigned Header Section ────────────────────────────────────────── */}
+        <div className="relative z-10 overflow-hidden bg-gradient-to-br from-[#0c2f4d] via-[#082035] to-[#051524] p-6 sm:p-8 rounded-3xl border border-[#C5A97A]/30 shadow-2xl shadow-black/60 backdrop-blur-2xl">
+          
+          {/* Ambient Radial Glows */}
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#C5A97A]/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Timeframe Filter Pills */}
-          <div className="flex items-center p-1.5 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md self-stretch md:self-auto">
-            {[
-              { id: "all", label: "All Time", icon: "lucide:globe" },
-              { id: "month", label: "This Month", icon: "lucide:calendar" },
-              { id: "week", label: "This Week", icon: "lucide:flame" },
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTimeframe(t.id)}
-                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${
-                  timeframe === t.id
-                    ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-lg shadow-amber-500/25 scale-[1.02]"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <Icon icon={t.icon} className="w-4 h-4" />
-                {t.label}
-              </button>
-            ))}
+          <div className="relative z-10 space-y-6">
+            {/* Top Row: Info & Controls */}
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              
+              {/* Left Column: Emblems, Title & Description */}
+              <div className="space-y-3 max-w-2xl">
+                {/* Eyebrow Badges Row */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#C5A97A] via-amber-400 to-yellow-500 text-[#09314F] flex items-center justify-center shadow-lg shadow-[#C5A97A]/25 shrink-0">
+                    <Icon icon="lucide:trophy" className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  
+                  <span className="px-3 py-1 bg-[#C5A97A]/15 text-[#C5A97A] rounded-full text-[11px] font-black uppercase tracking-widest border border-[#C5A97A]/30 shadow-sm flex items-center gap-1.5">
+                    <Icon icon="lucide:sparkles" className="w-3 h-3 text-[#C5A97A]" />
+                    Hall of Fame
+                  </span>
+
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Live Standings
+                  </span>
+
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-400 bg-white/5 border border-white/10">
+                    <Icon icon="lucide:award" className="w-3 h-3 text-amber-400" />
+                    CBT League 2026
+                  </span>
+                </div>
+
+                {/* Main Title */}
+                <div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight text-white">
+                    Student <span className="bg-gradient-to-r from-[#C5A97A] via-amber-300 to-yellow-400 bg-clip-text text-transparent">Leaderboard</span>
+                  </h1>
+                  <p className="text-gray-300 dark:text-gray-400 text-xs sm:text-sm mt-1.5 font-medium leading-relaxed">
+                    Compete with fellow scholars, conquer practice tests, maintain your streak, and climb to the top of the honor roll!
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column: Timeframe Filter Switcher (No Overflow, Perfectly Contained) */}
+              <div className="w-full lg:w-auto shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="flex items-center p-1.5 bg-black/50 dark:bg-[#04121d]/90 rounded-2xl border border-white/10 backdrop-blur-md shadow-inner gap-1 w-full sm:w-auto overflow-x-auto">
+                  {[
+                    { id: "all", label: "All Time", icon: "lucide:globe" },
+                    { id: "month", label: "This Month", icon: "lucide:calendar" },
+                    { id: "week", label: "This Week", icon: "lucide:flame" },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setTimeframe(t.id)}
+                      className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${
+                        timeframe === t.id
+                          ? "bg-gradient-to-r from-[#C5A97A] via-amber-400 to-yellow-500 text-[#09314F] shadow-lg shadow-amber-500/20 scale-[1.02]"
+                          : "text-gray-400 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      <Icon icon={t.icon} className="w-4 h-4" />
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Bottom Micro-Stats & Position Ribbon */}
+            <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-medium">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-gray-300">
+                <div className="flex items-center gap-2">
+                  <Icon icon="lucide:users" className="w-4 h-4 text-[#C5A97A]" />
+                  <span><strong className="text-white font-bold">{leaderboardData.length > 0 ? `${leaderboardData.length}+` : "100+"}</strong> Active Scholars</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Icon icon="lucide:target" className="w-4 h-4 text-emerald-400" />
+                  <span><strong className="text-white font-bold">85%</strong> Target Accuracy</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Icon icon="lucide:zap" className="w-4 h-4 text-amber-400" />
+                  <span><strong className="text-white font-bold">Streak</strong> Multipliers Active</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 self-stretch sm:self-auto justify-between sm:justify-start">
+                <span className="text-gray-400 text-[11px] font-bold uppercase tracking-wider">Your Standing:</span>
+                <span className="px-2.5 py-0.5 rounded-md bg-[#C5A97A] text-[#09314F] font-black text-xs shadow-sm">
+                  Rank #{myStats.rank}
+                </span>
+              </div>
+            </div>
+
           </div>
         </div>
 

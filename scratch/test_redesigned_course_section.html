@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redesigned Exam Practice Center & Course Selection</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #041321;
+    }
+  </style>
+</head>
+<body class="p-4 sm:p-8 max-w-5xl mx-auto min-h-screen text-slate-100 space-y-8">
+
+  <!-- 1. Redesigned Exam Practice Center Hero / Guidance Hub -->
+  <div class="bg-gradient-to-br from-[#0b2840]/90 via-[#071c2d]/95 to-[#04121d]/95 backdrop-blur-xl rounded-[32px] p-6 sm:p-8 border border-[#C5A97A]/30 shadow-2xl relative overflow-hidden">
+    <!-- Subtle Ambient Flares -->
+    <div class="absolute -top-20 -right-20 w-64 h-64 bg-[#C5A97A]/15 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 space-y-6">
+      <!-- Header Row: Title & Badges -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#C5A97A] to-amber-500 text-[#09314F] flex items-center justify-center shrink-0 shadow-lg shadow-[#C5A97A]/25">
+            <span class="iconify text-2xl font-black" data-icon="lucide:sparkles"></span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-[#C5A97A]/20 text-[#C5A97A] border border-[#C5A97A]/30">
+                Official CBT Simulation
+              </span>
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black text-white uppercase tracking-tight mt-0.5">
+              Exam Practice Center
+            </h3>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 self-start sm:self-center">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-gray-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Distraction-Free Lockdown Active
+          </span>
+        </div>
+      </div>
+
+      <!-- 3-Step Interactive Practice Pathway Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Step 1 Card -->
+        <div class="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-[#C5A97A]/40 rounded-2xl p-4 sm:p-5 transition-all duration-300 group">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-[#C5A97A]/15 text-[#C5A97A] flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span class="iconify text-lg" data-icon="lucide:book-open"></span>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+              Step 01
+            </span>
+          </div>
+          <h4 class="text-sm font-black text-white uppercase tracking-tight mb-1">
+            Choose Course & Subject
+          </h4>
+          <p class="text-xs text-gray-400 leading-relaxed">
+            Pick from your enrolled exam bodies (WAEC, JAMB, GCE) and select your target subject.
+          </p>
+        </div>
+
+        <!-- Step 2 Card -->
+        <div class="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-[#C5A97A]/40 rounded-2xl p-4 sm:p-5 transition-all duration-300 group">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span class="iconify text-lg" data-icon="lucide:clock-4"></span>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+              Step 02
+            </span>
+          </div>
+          <h4 class="text-sm font-black text-white uppercase tracking-tight mb-1">
+            Calibrate Practice Timer
+          </h4>
+          <p class="text-xs text-gray-400 leading-relaxed">
+            Adjust the countdown from 10 to 120 minutes to simulate real exam pressure and timing.
+          </p>
+        </div>
+
+        <!-- Step 3 Card -->
+        <div class="bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-[#C5A97A]/40 rounded-2xl p-4 sm:p-5 transition-all duration-300 group">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span class="iconify text-lg" data-icon="lucide:shield-check"></span>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-white/10 text-gray-400">
+              Step 03
+            </span>
+          </div>
+          <h4 class="text-sm font-black text-white uppercase tracking-tight mb-1">
+            Locked Screen Mode
+          </h4>
+          <p class="text-xs text-gray-400 leading-relaxed">
+            Fullscreen lockdown, copy protection, and tab-monitoring maintain true exam integrity.
+          </p>
+        </div>
+      </div>
+
+      <!-- Pro-Tip / Policy Ribbon -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-black/40 border border-white/10 text-xs">
+        <div class="flex items-center gap-2.5 text-gray-300">
+          <span class="iconify text-[#C5A97A] text-base shrink-0" data-icon="lucide:info"></span>
+          <span>
+            <strong class="text-white">Preserved Progress:</strong> If you step away while time is counting, you can resume anytime from this page or Practice History.
+          </span>
+        </div>
+        <span class="text-[11px] font-black text-[#C5A97A] uppercase tracking-wider shrink-0 flex items-center gap-1 cursor-pointer hover:underline">
+          <span>Practice Guidelines</span>
+          <span class="iconify text-xs" data-icon="lucide:chevron-right"></span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Redesigned Choose Course Section -->
+  <div class="space-y-4">
+    <!-- Section Header -->
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="w-7 h-7 rounded-xl bg-[#C5A97A]/20 border border-[#C5A97A]/40 text-[#C5A97A] font-black text-xs flex items-center justify-center shadow-sm">
+          01
+        </span>
+        <div>
+          <h4 class="text-sm font-black text-white uppercase tracking-wider">
+            Choose Enrolled Exam Body
+          </h4>
+          <p class="text-[11px] text-gray-400 font-medium">
+            Select the curriculum syllabus you wish to practice today
+          </p>
+        </div>
+      </div>
+      <span class="text-[10px] font-black text-[#C5A97A] uppercase tracking-widest bg-[#C5A97A]/10 px-3 py-1 rounded-full border border-[#C5A97A]/20">
+        2 Available
+      </span>
+    </div>
+
+    <!-- Course Cards Horizontal Scroll -->
+    <div class="flex gap-4 overflow-x-auto pb-4 select-none">
+      <!-- Card 1: GCE (Selected State Example) -->
+      <div class="min-w-[260px] md:min-w-[300px] p-5 rounded-3xl border-2 border-[#C5A97A] bg-gradient-to-br from-[#0c2f4d] to-[#071c2d] shadow-xl shadow-[#C5A97A]/10 relative cursor-pointer transition-all duration-300 hover:scale-[1.02] flex flex-col justify-between gap-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#C5A97A] to-amber-500 text-[#09314F] flex items-center justify-center font-black text-lg shadow-md">
+            <span class="iconify text-2xl" data-icon="lucide:graduation-cap"></span>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#C5A97A] text-[#09314F] flex items-center gap-1 shadow-sm">
+            <span class="iconify text-xs" data-icon="lucide:check"></span>
+            Selected
+          </span>
+        </div>
+
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-widest text-[#C5A97A]">
+            Curriculum Body
+          </span>
+          <h4 class="text-lg font-black text-white uppercase tracking-tight mt-0.5">
+            GCE
+          </h4>
+          <p class="text-xs text-gray-300 mt-1">
+            General Certificate of Education
+          </p>
+        </div>
+
+        <div class="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+          <span class="inline-flex items-center gap-1.5 text-gray-300 font-bold">
+            <span class="iconify text-[#C5A97A] text-sm" data-icon="lucide:layers"></span>
+            <span>6 Subjects Enrolled</span>
+          </span>
+          <span class="text-[11px] font-bold text-[#C5A97A]">Active &bull; Verified</span>
+        </div>
+      </div>
+
+      <!-- Card 2: WAEC (Unselected State Example) -->
+      <div class="min-w-[260px] md:min-w-[300px] p-5 rounded-3xl border border-gray-800 bg-[#072238]/60 hover:bg-[#092b47]/80 hover:border-[#C5A97A]/50 shadow-sm relative cursor-pointer transition-all duration-300 hover:scale-[1.01] flex flex-col justify-between gap-4 group">
+        <div class="flex items-start justify-between gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-gray-300 group-hover:text-[#C5A97A] group-hover:border-[#C5A97A]/40 flex items-center justify-center font-black text-lg transition-colors">
+            <span class="iconify text-2xl" data-icon="lucide:award"></span>
+          </div>
+          <span class="w-5 h-5 rounded-full border border-gray-600 group-hover:border-[#C5A97A] transition-colors"></span>
+        </div>
+
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-[#C5A97A] transition-colors">
+            Curriculum Body
+          </span>
+          <h4 class="text-lg font-black text-white uppercase tracking-tight mt-0.5">
+            WAEC
+          </h4>
+          <p class="text-xs text-gray-400 mt-1">
+            West African Senior School Certificate
+          </p>
+        </div>
+
+        <div class="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+          <span class="inline-flex items-center gap-1.5 text-gray-400 font-bold group-hover:text-gray-300 transition-colors">
+            <span class="iconify text-[#C5A97A] text-sm" data-icon="lucide:layers"></span>
+            <span>4 Subjects Enrolled</span>
+          </span>
+          <span class="text-[11px] font-bold text-gray-500">Ready to Practice</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

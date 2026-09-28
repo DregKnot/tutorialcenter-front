@@ -37,6 +37,46 @@ export default function TutorMasterClass() {
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackSession, setFeedbackSession] = useState(null);
 
+  const [unreportedSessions, setUnreportedSessions] = useState(() => {
+    try {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const list = JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
+      return list.filter(s => {
+        const sDate = s.session_date ? String(s.session_date).slice(0, 10) : todayStr;
+        return sDate <= todayStr;
+      }).slice(0, 4);
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const refreshUnreported = useCallback(() => {
+    try {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const raw = JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
+      const valid = raw.filter(s => {
+        const sDate = s.session_date ? String(s.session_date).slice(0, 10) : todayStr;
+        return sDate <= todayStr;
+      });
+      if (valid.length !== raw.length) {
+        localStorage.setItem("tutor_unreported_sessions", JSON.stringify(valid));
+      }
+      setUnreportedSessions(valid.slice(0, 4));
+    } catch (e) {
+      setUnreportedSessions([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshUnreported();
+    window.addEventListener("tutor-unreported-updated", refreshUnreported);
+    window.addEventListener("storage", refreshUnreported);
+    return () => {
+      window.removeEventListener("tutor-unreported-updated", refreshUnreported);
+      window.removeEventListener("storage", refreshUnreported);
+    };
+  }, [refreshUnreported]);
+
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const staffName = localStorage.getItem("staff_name") || "Tutor";
   const token = localStorage.getItem("staff_token");
@@ -332,6 +372,50 @@ export default function TutorMasterClass() {
               </button>
             </div>
           </div>
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* URGENT: PENDING POST-CLASS REPORTS QUEUE                           */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {unreportedSessions.length > 0 && (
+            <div className="bg-blue-500/10 dark:bg-blue-950/30 border border-blue-500/30 rounded-2xl p-4 sm:p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#09314F] text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <Icon icon="lucide:clipboard-list" className="w-5 h-5 text-[#C5A97A]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-[#09314F] dark:text-blue-200">
+                      Post-Class Tutor Feedback Reports Pending ({unreportedSessions.length})
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      You left a class session without submitting a report. Please submit it now to finalize class records.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {unreportedSessions.map((s) => (
+                  <div key={s.id} className="bg-white dark:bg-[#09314F] border border-blue-100 dark:border-white/10 rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-sm">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-[#09314F] dark:text-white truncate">
+                        {s.class_title || s.class?.title || "Masterclass"}
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-semibold truncate">
+                        {s.subject || "General"} • {s.starts_at || "Concluded"}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleOpenReportModal(s)}
+                      className="px-3.5 py-1.5 bg-[#09314F] hover:bg-[#E83831] text-white text-[11px] font-black rounded-lg transition-colors tracking-wider uppercase flex-shrink-0"
+                    >
+                      Submit
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* 2. SUBTLE NEXT UP SPOTLIGHT CARD                                   */}
@@ -834,8 +918,21 @@ export default function TutorMasterClass() {
         isOpen={feedbackModalOpen}
         onClose={() => setFeedbackModalOpen(false)}
         sessionDetails={feedbackSession}
+        onSkip={() => {
+          setToast({ type: "info", message: "Report deferred. This session is waiting in your Pending Post-Class Reports queue above." });
+          refreshUnreported();
+        }}
         onSubmitSuccess={() => {
-          setToast({ type: "success", message: "Post-Class Tutor Report submitted successfully!" });
+          if (feedbackSession?.id) {
+            try {
+              const stored = JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
+              const updated = stored.filter(s => String(s.id) !== String(feedbackSession.id));
+              localStorage.setItem("tutor_unreported_sessions", JSON.stringify(updated));
+              setUnreportedSessions(updated);
+            } catch (e) {}
+          }
+          refreshUnreported();
+          setToast({ type: "success", message: "Post-Class Tutor Report submitted successfully to management!" });
         }}
       />
     </>

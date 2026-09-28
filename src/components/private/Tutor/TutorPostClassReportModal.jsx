@@ -49,6 +49,7 @@ export default function TutorPostClassReportModal({
   onClose,
   sessionDetails = null,
   onSubmitSuccess = () => {},
+  onSkip = () => {},
 }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -202,6 +203,15 @@ export default function TutorPostClassReportModal({
       setLoading(false);
       setSuccessMessage("Post-Class Tutor Report submitted successfully to management.");
       setTimeout(() => {
+        // Clear from local unreported tracker
+        if (sessionDetails?.id) {
+          try {
+            const stored = JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
+            const updated = stored.filter(s => String(s.id) !== String(sessionDetails.id));
+            localStorage.setItem("tutor_unreported_sessions", JSON.stringify(updated));
+          } catch (e) {}
+        }
+
         onSubmitSuccess(response.data?.data);
         onClose();
         // Clear the submitted report so the next one starts blank.
@@ -215,6 +225,33 @@ export default function TutorPostClassReportModal({
           "Failed to submit post-class report. Please verify all required fields."
       );
     }
+  };
+
+  const handleCloseOrSkip = () => {
+    if (sessionDetails?.id) {
+      try {
+        const stored = JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
+        if (!stored.some(s => String(s.id) === String(sessionDetails.id))) {
+          stored.unshift({
+            id: sessionDetails.id,
+            class_id: sessionDetails.class_id || sessionDetails.id,
+            class_title: sessionDetails.class_title || sessionDetails.topic || "Masterclass",
+            subject: sessionDetails.subject || "General Subject",
+            session_date: sessionDetails.date || new Date().toISOString(),
+            starts_at: sessionDetails.time || "Scheduled Time",
+            leftAt: Date.now()
+          });
+          localStorage.setItem("tutor_unreported_sessions", JSON.stringify(stored.slice(0, 10)));
+        }
+      } catch (e) {}
+      try {
+        window.dispatchEvent(new Event("tutor-unreported-updated"));
+      } catch (e) {}
+    }
+    if (typeof onSkip === 'function') {
+      onSkip(sessionDetails);
+    }
+    onClose();
   };
 
   const challengeOptions = [
@@ -248,7 +285,8 @@ export default function TutorPostClassReportModal({
             </div>
 
             <button
-              onClick={onClose}
+              onClick={handleCloseOrSkip}
+              title="Skip for now (Session will remain in your Dashboard Pending Reports queue)"
               className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
             >
               <Icon icon="lucide:x" className="w-4 h-4" />
@@ -855,10 +893,10 @@ export default function TutorPostClassReportModal({
           ) : (
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-gray-500 font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+              onClick={handleCloseOrSkip}
+              className="px-4 py-2.5 rounded-xl text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
             >
-              Cancel
+              Remind Me Later / Skip
             </button>
           )}
 

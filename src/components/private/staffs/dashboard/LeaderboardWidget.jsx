@@ -17,19 +17,29 @@ export default function LeaderboardWidget() {
       setLoading(true);
       const token = localStorage.getItem("staff_token");
 
-      const response = await axios.get(
-        `${API_BASE_URL}/api/admin/dashboard/leaderboard`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      let response = null;
+      try {
+        response = await axios.get(
+          `${API_BASE_URL}/api/staffs/leaderboard`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      } catch (staffErr) {
+        response = await axios.get(
+          `${API_BASE_URL}/api/admin/dashboard/leaderboard`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      }
 
-      console.log("Leaderboard Widget API Response:", response.data);
+      console.log("Leaderboard Widget API Response:", response?.data);
 
-      if (response.data && response.data.success) {
+      if (response?.data && response.data.success) {
         setStudents(response.data.data || []);
       } else {
-        setStudents(response.data?.data || []);
+        setStudents(response?.data?.data || []);
       }
       setError("");
     } catch (err) {

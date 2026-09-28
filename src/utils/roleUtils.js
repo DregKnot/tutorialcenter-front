@@ -34,3 +34,38 @@ export const isCsa = (role) => {
     .trim();
   return ["csa", "customer support", "customer_support", "customer-support"].includes(targetRole);
 };
+
+/**
+ * Checks if a given staff role (or the currently stored staff role) can access the Video Vault.
+ * Allowed roles: admin, superadmin, coo, csa, advisor (academic / course advisor), moderator.
+ * Tutors are strictly forbidden.
+ *
+ * @param {string} [role] - Optional role string. If omitted, reads from localStorage.
+ * @returns {boolean}
+ */
+export const canAccessVideoVault = (role) => {
+  const targetRole = (role !== undefined && role !== null ? role : localStorage.getItem("staff_role") || "")
+    .toLowerCase()
+    .trim();
+  if (!targetRole) return false;
+  if (targetRole === "tutor") return false;
+
+  const allowedRoles = [
+    "admin",
+    "super_admin",
+    "superadmin",
+    "coo",
+    "csa",
+    "customer support",
+    "customer_support",
+    "customer-support",
+    "advisor",
+    "academic_advisor",
+    "academic advisor",
+    "course_advisor",
+    "course advisor",
+    "moderator",
+  ];
+  return allowedRoles.includes(targetRole);
+};
+

@@ -5,6 +5,7 @@ import StaffDashboardLayout from "../../components/private/staffs/DashboardLayou
 import { Icon } from "@iconify/react";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
+import { canAccessVideoVault } from "../../utils/roleUtils";
 // Extract YouTube video ID from URL
 const getYoutubeVideoId = (url) => {
   if (!url) return null;
@@ -89,10 +90,19 @@ const RecordedClasses = () => {
 
   // Detect staff/admin vs student role
   const staffToken = localStorage.getItem("staff_token");
+  const staffRole = localStorage.getItem("staff_role") || "";
   const isAdminOrStaff = Boolean(staffToken);
+  const isAuthorized = !isAdminOrStaff || canAccessVideoVault(staffRole);
   const activeToken = staffToken || token || localStorage.getItem("student_token");
   
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
+
+  // Restrict unauthorized staff (e.g., Tutors) from accessing Video Vault
+  useEffect(() => {
+    if (isAdminOrStaff && !canAccessVideoVault(staffRole)) {
+      navigate("/staffs/tutor/dashboard", { replace: true });
+    }
+  }, [isAdminOrStaff, staffRole, navigate]);
 
   // Prevent autologout while watching a recorded class
   useEffect(() => {
@@ -109,6 +119,9 @@ const RecordedClasses = () => {
 
   // Fetch recorded classes from backend
   useEffect(() => {
+    if (isAdminOrStaff && !canAccessVideoVault(staffRole)) {
+      return;
+    }
     const fetchClasses = async () => {
       try {
         setLoading(true);
@@ -130,7 +143,7 @@ const RecordedClasses = () => {
     };
     
     if (activeToken) fetchClasses();
-  }, [activeToken, API_BASE_URL]);
+  }, [activeToken, API_BASE_URL, isAdminOrStaff, staffRole]);
 
   // Fetch detailed viewers analytics for staff/admin when modal opens
   useEffect(() => {
@@ -263,6 +276,10 @@ const RecordedClasses = () => {
     }
     return true;
   });
+
+  if (isAdminOrStaff && !isAuthorized) {
+    return null;
+  }
 
   const Layout = isAdminOrStaff ? StaffDashboardLayout : DashboardLayout;
 

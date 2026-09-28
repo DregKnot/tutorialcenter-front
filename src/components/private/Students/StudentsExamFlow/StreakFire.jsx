@@ -11,23 +11,14 @@ import React, { useEffect, useRef, useMemo, useState } from "react";
 // truthy/falsy — `styles.sparks > 0` instead of `styles.sparks`.
 // ---------------------------------------------------------------------------
 export const getStreakFlameStyles = (actualStreak) => {
-  const benchmarks = [0, 1, 3, 7, 10, 14, 17, 21, 25, 28];
-  let streak = 0;
-  for (let i = benchmarks.length - 1; i >= 0; i--) {
-    if (actualStreak >= benchmarks[i]) {
-      streak = benchmarks[i];
-      break;
-    }
-  }
-
-  if (streak === 0) {
+  if (actualStreak <= 0) {
     return {
       outer: ["#4A5568", "#718096"],
       middle: ["#718096", "#A0AEC0"],
       inner: ["#CBD5E0", "#F1F5F9"],
       glow: "rgba(113, 128, 150, 0.15)",
       badge: ["#1D2027", "#111318"],
-      scale: 0.8,
+      scale: 0.78,
       speed: "3s",
       level: 0,
       sparks: 0,
@@ -38,65 +29,89 @@ export const getStreakFlameStyles = (actualStreak) => {
   }
 
   let level = 1;
-  let progress = 1;
+  let progress = 1; // 1 to 7/8 within tier
+  let t = 0;
 
-  if (streak <= 7) {
+  // Exact 4-color progression:
+  // Days 1-7: Yellow, grows everyday
+  // Days 8-14: Orange, turns on day 8 and grows until day 14
+  // Days 15-21: Red, turns on day 15 and increases until day 21
+  // Days 22-29: Blue, turns on day 22 and increases with more sparks
+  if (actualStreak <= 7) {
     level = 1;
-    progress = streak;
-  } else if (streak <= 14) {
+    progress = actualStreak; // 1 to 7
+    t = (progress - 1) / 6; // 0 to 1
+  } else if (actualStreak <= 14) {
     level = 2;
-    progress = streak - 7;
-  } else if (streak <= 21) {
+    progress = actualStreak - 7; // 1 to 7
+    t = (progress - 1) / 6; // 0 to 1
+  } else if (actualStreak <= 21) {
     level = 3;
-    progress = streak - 14;
+    progress = actualStreak - 14; // 1 to 7
+    t = (progress - 1) / 6; // 0 to 1
   } else {
     level = 4;
-    progress = Math.min(7, streak - 21);
+    progress = Math.min(8, actualStreak - 21); // 1 to 8 (Days 22 to 29)
+    t = (progress - 1) / 7; // 0 to 1
   }
 
-  const t = progress / 7;
-  const scale = 0.85 + t * 0.4;
-  const speed = `${1.6 - t * 0.9}s`;
+  // Smooth everyday growth in scale & speed
+  const scale = 0.82 + (level - 1) * 0.05 + t * 0.12;
+  const speed = `${Math.max(0.65, 1.6 - (level - 1) * 0.2 - t * 0.2)}s`;
 
   let outer, middle, inner, glow, title, sparkColor, bgClass, badge;
 
   if (level === 1) {
-    outer = ["#E8431C", "#FF8A1E"];
-    middle = ["#FF8A1E", "#FFC048"];
-    inner = ["#FFE9A8", "#FFFDF5"];
-    glow = `rgba(255, 138, 30, ${0.35 + t * 0.3})`;
-    sparkColor = "#FF8A1E";
-    badge = ["#241C1A", "#17120F"];
-    title = "Bronze Spark";
+    // 1. Yellow / Gold Fire (Days 1–7)
+    outer = ["#D97706", "#F59E0B"];
+    middle = ["#FBBF24", "#FEF08A"];
+    inner = ["#FEF9C3", "#FFFFFF"];
+    glow = `rgba(245, 158, 11, ${0.35 + t * 0.3})`;
+    sparkColor = "#FACC15";
+    badge = ["#241E10", "#141006"];
+    title = "Golden Spark";
     bgClass = "bg-amber-50 dark:bg-amber-950/20";
   } else if (level === 2) {
+    // 2. Orange Fire (Days 8–14)
     outer = ["#D6350F", "#F0501A"];
     middle = ["#F0501A", "#FF8A1E"];
     inner = ["#FFD199", "#FFF4E2"];
-    glow = `rgba(214, 53, 15, ${0.4 + t * 0.35})`;
-    sparkColor = "#F0501A";
+    glow = `rgba(240, 80, 26, ${0.4 + t * 0.35})`;
+    sparkColor = "#FF8A1E";
     badge = ["#261510", "#170E0A"];
-    title = "Silver Ember";
+    title = "Orange Ember";
     bgClass = "bg-orange-50 dark:bg-orange-950/20";
   } else if (level === 3) {
-    outer = ["#A6120F", "#D6291B"];
-    middle = ["#D6291B", "#F04B2E"];
-    inner = ["#FF9C85", "#FFEDE8"];
-    glow = `rgba(214, 41, 27, ${0.45 + t * 0.4})`;
-    sparkColor = "#F04B2E";
-    badge = ["#231212", "#150909"];
-    title = "Golden Blaze";
+    // 3. Red Fire (Days 15–21)
+    outer = ["#A6120F", "#DC2626"];
+    middle = ["#DC2626", "#EF4444"];
+    inner = ["#FCA5A5", "#FFF1F2"];
+    glow = `rgba(220, 38, 38, ${0.45 + t * 0.4})`;
+    sparkColor = "#EF4444";
+    badge = ["#241010", "#150808"];
+    title = "Crimson Blaze";
     bgClass = "bg-red-50 dark:bg-red-950/20";
   } else {
+    // 4. Blue Fire (Days 22–29)
     outer = ["#0B3D91", "#1668C7"];
     middle = ["#1668C7", "#22B8D8"];
     inner = ["#9CEEF5", "#EAFDFF"];
     glow = `rgba(22, 104, 199, ${0.5 + t * 0.4})`;
     sparkColor = "#22B8D8";
     badge = ["#0E1A24", "#0A1219"];
-    title = "Icy Singularity";
+    title = "Cyan Singularity";
     bgClass = "bg-cyan-50 dark:bg-cyan-950/20";
   }
+
+  // Sparks count grows each mode and everyday!
+  // Level 1: 2 to 3 sparks
+  // Level 2: 4 to 5 sparks
+  // Level 3: 6 to 7 sparks
+  // Level 4: 8 to 10 sparks
+  const sparks = level === 1 ? (2 + Math.floor(t * 2))
+               : level === 2 ? (4 + Math.floor(t * 2))
+               : level === 3 ? (6 + Math.floor(t * 2))
+               : (8 + Math.floor(t * 3));
 
   return {
     outer,
@@ -107,11 +122,62 @@ export const getStreakFlameStyles = (actualStreak) => {
     scale,
     speed,
     level,
-    sparks: Math.min(2 + level, 6),
+    sparks,
     sparkColor,
     title,
     bgClass,
   };
+};
+
+// Calculate continuous daily practice streak from an array of exam attempts
+export const calculatePracticeStreak = (allAttempts) => {
+  if (!allAttempts || allAttempts.length === 0) return 0;
+  const dates = allAttempts
+    .map((a) => {
+      const dateStr = a.started_at || a.created_at;
+      return dateStr ? new Date(dateStr).toDateString() : null;
+    })
+    .filter((value, index, self) => value && self.indexOf(value) === index)
+    .map((d) => new Date(d));
+
+  if (dates.length === 0) return 0;
+
+  // Sort dates descending (newest first)
+  dates.sort((a, b) => b - a);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  let currentStreak = 0;
+  let expectedDate = new Date(today);
+
+  const firstDate = new Date(dates[0]);
+  firstDate.setHours(0, 0, 0, 0);
+
+  if (firstDate.getTime() === today.getTime()) {
+    currentStreak = 1;
+    expectedDate = yesterday;
+  } else if (firstDate.getTime() === yesterday.getTime()) {
+    currentStreak = 1;
+    expectedDate = new Date(yesterday);
+    expectedDate.setDate(expectedDate.getDate() - 1);
+  } else {
+    return 0; // No active daily streak
+  }
+
+  for (let i = 1; i < dates.length; i++) {
+    const d = new Date(dates[i]);
+    d.setHours(0, 0, 0, 0);
+    if (d.getTime() === expectedDate.getTime()) {
+      currentStreak++;
+      expectedDate.setDate(expectedDate.getDate() - 1);
+    } else if (d.getTime() < expectedDate.getTime()) {
+      break;
+    }
+  }
+  return currentStreak;
 };
 
 // All the bezier magic numbers below are tuned for this coordinate space.

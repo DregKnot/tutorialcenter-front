@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Leaderboard Header Redesign</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #041321;
+    }
+  </style>
+</head>
+<body class="p-4 sm:p-8 max-w-6xl mx-auto min-h-screen text-slate-100 space-y-8">
+
+  <!-- ── Redesigned Leaderboard Header ────────────────────────────────────────── -->
+  <div class="relative z-10 overflow-hidden bg-gradient-to-br from-[#0c2f4d] via-[#082035] to-[#051524] p-6 sm:p-8 rounded-3xl border border-[#C5A97A]/30 shadow-2xl shadow-black/60 backdrop-blur-2xl">
+    
+    <!-- Ambient Radial Glows -->
+    <div class="absolute -top-24 -right-24 w-80 h-80 bg-[#C5A97A]/15 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 space-y-6">
+      <!-- Top Row: Info & Controls -->
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        
+        <!-- Left Column: Emblems, Title & Description -->
+        <div class="space-y-3 max-w-2xl">
+          <!-- Eyebrow Badges Row -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#C5A97A] via-amber-400 to-yellow-500 text-[#09314F] flex items-center justify-center shadow-lg shadow-[#C5A97A]/25 shrink-0">
+              <span class="iconify text-xl font-black" data-icon="lucide:trophy"></span>
+            </div>
+            
+            <span class="px-3 py-1 bg-[#C5A97A]/15 text-[#C5A97A] rounded-full text-[11px] font-black uppercase tracking-widest border border-[#C5A97A]/30 shadow-sm flex items-center gap-1.5">
+              <span class="iconify text-xs" data-icon="lucide:sparkles"></span>
+              Hall of Fame
+            </span>
+
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live Standings
+            </span>
+
+            <span class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-400 bg-white/5 border border-white/10">
+              <span class="iconify text-xs text-amber-400" data-icon="lucide:award"></span>
+              CBT League 2026
+            </span>
+          </div>
+
+          <!-- Main Title -->
+          <div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight text-white">
+              Student <span class="bg-gradient-to-r from-[#C5A97A] via-amber-300 to-yellow-400 bg-clip-text text-transparent">Leaderboard</span>
+            </h1>
+            <p class="text-gray-300 dark:text-gray-400 text-xs sm:text-sm mt-1.5 font-medium leading-relaxed">
+              Compete with fellow scholars, conquer practice tests, maintain your streak, and climb to the top of the honor roll!
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Column: Timeframe Filter Switcher -->
+        <div class="w-full lg:w-auto shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div class="flex items-center p-1.5 bg-black/50 rounded-2xl border border-white/10 backdrop-blur-md shadow-inner gap-1 w-full sm:w-auto overflow-x-auto">
+            <button
+              id="tab-all"
+              onclick="selectTab('all')"
+              class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 bg-gradient-to-r from-[#C5A97A] via-amber-400 to-yellow-500 text-[#09314F] shadow-lg shadow-amber-500/20 scale-[1.02] whitespace-nowrap"
+            >
+              <span class="iconify text-sm" data-icon="lucide:globe"></span>
+              All Time
+            </button>
+            <button
+              id="tab-month"
+              onclick="selectTab('month')"
+              class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 text-gray-400 hover:text-white hover:bg-white/5 whitespace-nowrap"
+            >
+              <span class="iconify text-sm" data-icon="lucide:calendar"></span>
+              This Month
+            </button>
+            <button
+              id="tab-week"
+              onclick="selectTab('week')"
+              class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 text-gray-400 hover:text-white hover:bg-white/5 whitespace-nowrap"
+            >
+              <span class="iconify text-sm text-orange-400" data-icon="lucide:flame"></span>
+              This Week
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Micro-Stats & Standing Ribbon -->
+      <div class="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-medium">
+        <div class="flex flex-wrap items-center gap-4 sm:gap-6 text-gray-300">
+          <div class="flex items-center gap-2">
+            <span class="iconify text-[#C5A97A] text-base" data-icon="lucide:users"></span>
+            <span><strong class="text-white font-bold">100+</strong> Active Scholars</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="iconify text-emerald-400 text-base" data-icon="lucide:target"></span>
+            <span><strong class="text-white font-bold">85%</strong> Target Accuracy</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="iconify text-amber-400 text-base" data-icon="lucide:zap"></span>
+            <span><strong class="text-white font-bold">Streak</strong> Multiplier Active</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 self-stretch sm:self-auto justify-between sm:justify-start">
+          <span class="text-gray-400 text-[11px] font-bold uppercase tracking-wider">Your Position:</span>
+          <span class="px-2.5 py-0.5 rounded-md bg-[#C5A97A] text-[#09314F] font-black text-xs shadow-sm">
+            Rank #12
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function selectTab(id) {
+      const tabs = ['all', 'month', 'week'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        if (t === id) {
+          btn.className = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 bg-gradient-to-r from-[#C5A97A] via-amber-400 to-yellow-500 text-[#09314F] shadow-lg shadow-amber-500/20 scale-[1.02] whitespace-nowrap";
+        } else {
+          btn.className = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 text-gray-400 hover:text-white hover:bg-white/5 whitespace-nowrap";
+        }
+      });
+    }
+  </script>
+</body>
+</html>

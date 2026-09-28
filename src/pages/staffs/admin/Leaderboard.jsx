@@ -115,7 +115,7 @@ export default function Leaderboard() {
       let rawData = [];
       try {
         const response = await axios.get(
-          `${API_BASE_URL}/api/admin/dashboard/leaderboard`,
+          `${API_BASE_URL}/api/staffs/leaderboard`,
           {
             headers: { 
               Authorization: `Bearer ${token}`,
@@ -130,10 +130,10 @@ export default function Leaderboard() {
         } else if (Array.isArray(response.data)) {
           rawData = response.data;
         }
-      } catch (adminErr) {
+      } catch (staffErr) {
         try {
-          const studentRes = await axios.get(
-            `${API_BASE_URL}/api/students/leaderboard`,
+          const adminRes = await axios.get(
+            `${API_BASE_URL}/api/admin/dashboard/leaderboard`,
             {
               headers: { 
                 Authorization: `Bearer ${token}`,
@@ -141,13 +141,32 @@ export default function Leaderboard() {
               },
             }
           );
-          if (Array.isArray(studentRes.data)) {
-            rawData = studentRes.data;
-          } else if (studentRes.data?.data && Array.isArray(studentRes.data.data)) {
-            rawData = studentRes.data.data;
+          if (adminRes.data && adminRes.data.success) {
+            rawData = adminRes.data.data || [];
+          } else if (adminRes.data?.data) {
+            rawData = adminRes.data.data;
+          } else if (Array.isArray(adminRes.data)) {
+            rawData = adminRes.data;
           }
-        } catch (studentErr) {
-          console.warn("Leaderboard endpoint notice:", studentErr?.message);
+        } catch (adminErr) {
+          try {
+            const studentRes = await axios.get(
+              `${API_BASE_URL}/api/students/leaderboard`,
+              {
+                headers: { 
+                  Authorization: `Bearer ${token}`,
+                  Accept: "application/json"
+                },
+              }
+            );
+            if (Array.isArray(studentRes.data)) {
+              rawData = studentRes.data;
+            } else if (studentRes.data?.data && Array.isArray(studentRes.data.data)) {
+              rawData = studentRes.data.data;
+            }
+          } catch (studentErr) {
+            console.warn("Leaderboard endpoint notice:", studentErr?.message);
+          }
         }
       }
 
@@ -225,20 +244,27 @@ export default function Leaderboard() {
       let detailRes = null;
       try {
         detailRes = await axios.get(
-          `${API_BASE_URL}/api/admin/dashboard/leaderboard/students/${studentId}`,
+          `${API_BASE_URL}/api/staffs/leaderboard/students/${studentId}`,
           { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
         );
-      } catch (e1) {
+      } catch (eStaff) {
         try {
           detailRes = await axios.get(
-            `${API_BASE_URL}/api/admin/leaderboard/students/${studentId}`,
+            `${API_BASE_URL}/api/admin/dashboard/leaderboard/students/${studentId}`,
             { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
           );
-        } catch (e2) {
-          detailRes = await axios.get(
-            `${API_BASE_URL}/api/students/exams/results/history?student_id=${studentId}`,
-            { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
-          );
+        } catch (e1) {
+          try {
+            detailRes = await axios.get(
+              `${API_BASE_URL}/api/admin/leaderboard/students/${studentId}`,
+              { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+            );
+          } catch (e2) {
+            detailRes = await axios.get(
+              `${API_BASE_URL}/api/students/exams/results/history?student_id=${studentId}`,
+              { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+            );
+          }
         }
       }
 
