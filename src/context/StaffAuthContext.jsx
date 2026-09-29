@@ -44,7 +44,7 @@ export function StaffAuthProvider({ children }) {
   }, []);
 
   const login = useCallback((token, staffData, staffRole, customTargetRoute) => {
-    const target = customTargetRoute || getStaffDashboardRoute(staffRole);
+    const target = (typeof customTargetRoute === "string" && customTargetRoute) || getStaffDashboardRoute(staffRole);
     setIsSplashing(true);
     splashStartTimeRef.current = Date.now();
     splashTargetRouteRef.current = target;
@@ -65,9 +65,10 @@ export function StaffAuthProvider({ children }) {
   }, [navigate]);
 
   const logout = useCallback(async (targetRoute = "/staff/login") => {
+    const destination = typeof targetRoute === "string" ? targetRoute : "/staff/login";
     setIsSplashing(true);
     splashStartTimeRef.current = Date.now();
-    splashTargetRouteRef.current = targetRoute;
+    splashTargetRouteRef.current = destination;
 
     try {
       const currentToken = localStorage.getItem("staff_token");
@@ -92,8 +93,8 @@ export function StaffAuthProvider({ children }) {
       setRole(null);
       setIsInactiveModalOpen(false);
 
-      if (targetRoute) {
-        navigate(targetRoute, { replace: true });
+      if (destination) {
+        navigate(destination, { replace: true });
       }
     }
   }, [navigate]);
@@ -104,7 +105,7 @@ export function StaffAuthProvider({ children }) {
     if (!isSplashing) return;
 
     const targetRoute = splashTargetRouteRef.current;
-    if (!targetRoute) return;
+    if (!targetRoute || typeof targetRoute !== "string") return;
 
     const currentPath = (location?.pathname || "").toLowerCase();
     const targetPath = targetRoute.toLowerCase();

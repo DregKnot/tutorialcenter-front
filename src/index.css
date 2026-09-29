@@ -181,6 +181,81 @@ body {
   background-color: rgba(30, 41, 59, 0.7) !important;
 }
 
+/* Exam Question Form & Modals Scoped Dark Mode */
+.dark .exam-scope {
+  color-scheme: dark;
+}
+
+.dark .exam-scope select option {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+/* ReactQuill Dark Mode Support Scoped to Exam Form & Modals */
+.dark .exam-scope .ql-toolbar.ql-snow {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.dark .exam-scope .ql-container.ql-snow {
+  background-color: #111827 !important;
+  border-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+.dark .exam-scope .ql-snow .ql-stroke {
+  stroke: #d1d5db !important;
+}
+
+.dark .exam-scope .ql-snow .ql-fill {
+  fill: #d1d5db !important;
+}
+
+.dark .exam-scope .ql-snow .ql-picker {
+  color: #d1d5db !important;
+}
+
+.dark .exam-scope .ql-snow .ql-picker-label {
+  stroke: #d1d5db !important;
+}
+
+.dark .exam-scope .ql-snow .ql-picker-options {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+.dark .exam-scope .ql-snow .ql-picker-item:hover,
+.dark .exam-scope .ql-snow .ql-picker-item.ql-selected {
+  color: #60a5fa !important;
+}
+
+.dark .exam-scope .ql-snow.ql-toolbar button:hover,
+.dark .exam-scope .ql-snow.ql-toolbar button:focus,
+.dark .exam-scope .ql-snow.ql-toolbar button.ql-active {
+  background-color: #374151 !important;
+}
+
+.dark .exam-scope .ql-snow.ql-toolbar button:hover .ql-stroke,
+.dark .exam-scope .ql-snow.ql-toolbar button:focus .ql-stroke,
+.dark .exam-scope .ql-snow.ql-toolbar button.ql-active .ql-stroke {
+  stroke: #60a5fa !important;
+}
+
+.dark .exam-scope .ql-snow.ql-toolbar button:hover .ql-fill,
+.dark .exam-scope .ql-snow.ql-toolbar button:focus .ql-fill,
+.dark .exam-scope .ql-snow.ql-toolbar button.ql-active .ql-fill {
+  fill: #60a5fa !important;
+}
+
+.dark .exam-scope .ql-editor {
+  color: #f9fafb !important;
+}
+
+.dark .exam-scope .ql-editor.ql-blank::before {
+  color: #9ca3af !important;
+}
+
 a {
   font-weight: 500;
   font-size: 16px;

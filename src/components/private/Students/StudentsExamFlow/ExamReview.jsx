@@ -94,9 +94,15 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
             </div>
             {/* Score & Percentage badge */}
             <div className="flex gap-4 items-center">
-              <div className="bg-[#09314F] text-white px-5 py-3 rounded-xl font-black text-xs shadow-xl">
-                Score: {attempt.score !== undefined ? attempt.score : attempt.correct_answers}
-              </div>
+              {attempt.is_jamb ? (
+                <div className="bg-[#09314F] text-white px-5 py-3 rounded-xl font-black text-xs shadow-xl">
+                  UTME Score: {attempt.jamb_score ?? attempt.score}
+                </div>
+              ) : (
+                <div className="bg-[#09314F] text-white px-5 py-3 rounded-xl font-black text-xs shadow-xl">
+                  Score: {attempt.score !== undefined ? attempt.score : attempt.correct_answers}
+                </div>
+              )}
               <div className="bg-[#C5A97A] text-white px-5 py-3 rounded-xl font-black text-xs shadow-xl">
                 {attempt.percentage !== undefined ? Math.round(Number(attempt.percentage)) : 0}%
               </div>
@@ -135,6 +141,37 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
               </span>
             </div>
           </div>
+
+          {/* JAMB 4-Subject Breakdown in Review */}
+          {attempt.is_jamb && attempt.subject_scores && (
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+              <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-3">
+                Subject Scores (Scaled out of 100)
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {Object.values(attempt.subject_scores).map((sub, sIdx) => (
+                  <div key={sIdx} className="bg-gray-50 dark:bg-[#06243A] rounded-2xl p-3 border border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                    <div className="min-w-0 pr-2">
+                      <span className="text-xs font-black text-[#09314F] dark:text-white uppercase truncate block">
+                        {sub.subject_name}
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-medium">
+                        {sub.correct}/{sub.total_questions} correct
+                      </span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-base font-black text-[#C5A97A]">
+                        {sub.score}
+                      </span>
+                      <span className="text-[9px] text-gray-400 font-bold block">
+                        / 100
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -168,9 +205,16 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
               >
                 {/* Question Header Card */}
                 <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-200 dark:border-gray-800">
-                  <h3 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-[0.2em]">
-                    Question {q.question_number || idx + 1}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-[0.2em]">
+                      Question {q.question_number || idx + 1}
+                    </h3>
+                    {q.subject_name && (
+                      <span className="px-2.5 py-0.5 bg-[#C5A97A]/15 text-[#C5A97A] border border-[#C5A97A]/30 text-[10px] font-black uppercase rounded-lg">
+                        {q.subject_name}
+                      </span>
+                    )}
+                  </div>
                   <div>
                     {isCorrect ? (
                       <span className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5">

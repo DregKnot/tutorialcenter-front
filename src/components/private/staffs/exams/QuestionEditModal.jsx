@@ -545,7 +545,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 w-full max-w-5xl max-h-[92vh] rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+      <div className="exam-scope bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full max-w-5xl max-h-[92vh] rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
         
         {/* Header */}
         <div className="px-10 py-8 bg-[#0F2843] text-white flex items-center justify-between">
@@ -623,7 +623,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                         setGroupSortOrder(1);
                         setGroupType("comprehension");
                       }}
-                      className="text-[9px] font-black text-[#BB9E7F] hover:text-[#0F2843] flex items-center gap-1 transition-colors uppercase"
+                      className="text-[9px] font-black text-[#BB9E7F] hover:text-[#0F2843] dark:hover:text-white flex items-center gap-1 transition-colors uppercase"
                     >
                       <PlusIcon className="w-3 h-3" /> Create New
                     </button>
@@ -646,7 +646,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                             setGroupType("comprehension");
                           }
                         }}
-                        className={`w-full px-6 py-4 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-inner transition-all ${
+                        className={`w-full px-6 py-4 rounded-2xl font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-inner transition-all ${
                           selectedGroupId 
                             ? "bg-[#76D287]/10 border-2 border-[#76D287]/40 dark:bg-[#76D287]/20" 
                             : "bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30"
@@ -697,7 +697,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                         value={groupTitle}
                         onChange={(e) => setGroupTitle(e.target.value)}
                         placeholder="Enter new group title..."
-                        className="w-full px-6 py-4 bg-white dark:bg-gray-800 border-2 border-[#BB9E7F] rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-md"
+                        className="w-full px-6 py-4 bg-white dark:bg-gray-800 border-2 border-[#BB9E7F] rounded-2xl font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-md"
                       />
                       <button 
                         type="button"
@@ -717,10 +717,10 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                     onChange={(e) => setGroupType(e.target.value)}
                     className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none appearance-none"
                   >
-                    <option value="comprehension">Comprehension</option>
-                    <option value="instruction">Instruction</option>
-                    <option value="diagram">Diagram</option>
-                    <option value="case_study">Case Study</option>
+                    <option value="comprehension" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Comprehension</option>
+                    <option value="instruction" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Instruction</option>
+                    <option value="diagram" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Diagram</option>
+                    <option value="case_study" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Case Study</option>
                   </select>
                 </div>
                 <div className="space-y-3 md:col-span-2">
@@ -743,7 +743,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                     onChange={setGroupContent}
                     modules={quillModules}
                     formats={quillFormats}
-                    className="[&_.ql-editor]:min-h-[220px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
+                    className="[&_.ql-editor]:min-h-[220px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white" 
                   />
                 </div>
               </div>
@@ -783,7 +783,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 required
                 value={questionNumber}
                 onChange={(e) => setQuestionNumber(e.target.value)}
-                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
+                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-inner"
               />
             </div>
             <div className="space-y-3">
@@ -793,8 +793,8 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 onChange={(e) => setQuestionType(e.target.value)}
                 className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none appearance-none"
               >
-                <option value="multiple_choice">Multiple Choice</option>
-                <option value="true_false">True / False</option>
+                <option value="multiple_choice" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Multiple Choice</option>
+                <option value="true_false" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">True / False</option>
               </select>
             </div>
             <div className="space-y-3">
@@ -833,7 +833,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 onChange={(val) => setQuestionText(stripImagesFromHtml(val))}
                 modules={quillModules}
                 formats={quillFormats}
-                className="[&_.ql-editor]:min-h-[300px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!" 
+                className="[&_.ql-editor]:min-h-[300px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white" 
               />
             </div>
           </div>
@@ -884,7 +884,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                     value={ef.caption}
                     onChange={(e) => updateExistingCaption(ef.id, e.target.value)}
                     placeholder="Update caption for this attachment..."
-                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-xl text-[11px] font-bold outline-none"
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-xl text-[11px] font-bold text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none"
                   />
                 </div>
               ))}
@@ -927,7 +927,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                     value={newCaptions[fIdx]}
                     onChange={(e) => updateNewCaption(fIdx, e.target.value)}
                     placeholder="Add a caption for this file..."
-                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-xl text-[11px] font-bold outline-none"
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-xl text-[11px] font-bold text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none"
                   />
                 </div>
               ))}
@@ -954,7 +954,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
               <button 
                 type="button" 
                 onClick={addOption}
-                className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] flex items-center gap-1 transition-colors uppercase"
+                className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] dark:hover:text-white flex items-center gap-1 transition-colors uppercase"
               >
                 <PlusIcon className="w-3 h-3" /> Add Option
               </button>
@@ -984,7 +984,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                             handleOptionChange(idx, "option_text", combined);
                           }}
                           placeholder={optionImageUrl ? `Option ${opt.label} text (diagram attached)...` : `Option ${opt.label} text...`}
-                          className="w-full px-6 py-4 pr-24 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none shadow-sm"
+                          className="w-full px-6 py-4 pr-24 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-sm"
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                           {/* Option Diagram Upload Button */}
@@ -1034,7 +1034,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                           className={`px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${
                             opt.is_correct 
                               ? "bg-green-500 text-white shadow-lg" 
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+                              : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-300 dark:hover:bg-gray-700"
                           }`}
                         >
                           <CheckCircleIcon className="w-4 h-4" />
@@ -1043,7 +1043,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                         <button 
                           type="button" 
                           onClick={() => removeOption(idx)}
-                          className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                          className="p-3 text-gray-300 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                         >
                           <TrashIcon className="w-5 h-5" />
                         </button>
@@ -1125,7 +1125,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                   </div>
                   <div className="flex items-center gap-2">
                     <label 
-                      className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-gray-500 hover:text-[#BB9E7F] hover:bg-[#BB9E7F]/10 rounded-xl cursor-pointer transition-colors border border-gray-200 dark:border-gray-700" 
+                      className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-300 hover:text-[#BB9E7F] hover:bg-[#BB9E7F]/10 dark:hover:bg-gray-800 rounded-xl cursor-pointer transition-colors border border-gray-200 dark:border-gray-700" 
                       title="Replace Diagram"
                     >
                       <PhotoIcon className="w-4 h-4" />
@@ -1140,7 +1140,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                     <button
                       type="button"
                       onClick={() => setExplanationImage(null)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors border border-gray-200 dark:border-gray-700"
+                      className="p-2 text-gray-400 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors border border-gray-200 dark:border-gray-700"
                       title="Remove Diagram"
                     >
                       <TrashIcon className="w-4 h-4" />
@@ -1165,7 +1165,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                   modules={quillModulesExplanation}
                   formats={quillFormats}
                   placeholder="Explain why the answer is correct (text is displayed above the diagram)..."
-                  className="[&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843] dark:[&_.ql-editor]:text-white" 
+                  className="[&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white" 
                 />
               </div>
             </div>
@@ -1189,14 +1189,14 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             <button 
               type="button"
               onClick={onClose}
-              className="px-8 py-4 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:text-gray-600 transition-colors"
+              className="px-8 py-4 text-gray-400 dark:text-gray-400 font-black text-[10px] uppercase tracking-widest hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
             >
               Discard
             </button>
             <button 
               onClick={handleSubmit}
               disabled={loading}
-              className="px-10 py-4 bg-[#0F2843] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#0F2843]/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+              className="px-10 py-4 bg-[#0F2843] dark:bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#0F2843]/20 dark:shadow-blue-600/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
             >
               {loading ? "Saving..." : "Save Changes"}
             </button>

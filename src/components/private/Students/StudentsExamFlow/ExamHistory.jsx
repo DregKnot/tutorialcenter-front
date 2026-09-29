@@ -161,12 +161,17 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
 
   // Helper to extract stats
   const getAttemptStats = (attempt) => {
-    const scoreVal = attempt.score !== undefined ? Number(attempt.score) : (attempt.correct_answers !== undefined ? Number(attempt.correct_answers) : 0);
+    const isJamb = Boolean(attempt.is_jamb || (attempt.subject_scores && Object.keys(attempt.subject_scores).length > 0));
+    const jambScore = attempt.jamb_score !== undefined && attempt.jamb_score !== null
+      ? Number(attempt.jamb_score)
+      : (isJamb && attempt.score !== undefined ? Number(attempt.score) : null);
+
+    const scoreVal = isJamb && jambScore !== null ? jambScore : (attempt.score !== undefined ? Number(attempt.score) : (attempt.correct_answers !== undefined ? Number(attempt.correct_answers) : 0));
     const totalQ = attempt.total_questions !== undefined ? Number(attempt.total_questions) : (attempt.questions_count !== undefined ? Number(attempt.questions_count) : 0);
     
     const percentage = attempt.percentage !== undefined
       ? Math.round(Number(attempt.percentage))
-      : (totalQ ? Math.round((scoreVal / totalQ) * 100) : 0);
+      : (isJamb && jambScore !== null ? Math.round((jambScore / 400) * 100) : (totalQ ? Math.round((scoreVal / totalQ) * 100) : 0));
 
     const correct = attempt.correct_answers !== undefined
       ? Number(attempt.correct_answers)
@@ -192,16 +197,17 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
       matchingExam?.subject?.course?.title ||
       matchingExam?.course?.title ||
       attempt.course_title || 
-      "General Course";
+      "JAMB";
 
-    const subjectName = 
-      attempt.subject?.name || 
-      attempt.exam_year?.subject?.name || 
-      attempt.examYear?.subject?.name ||
-      matchingExam?.subject?.name ||
-      matchingExam?.subject?.title ||
-      attempt.subject_name || 
-      "General Subject";
+    const subjectName = isJamb
+      ? "JAMB UTME"
+      : (attempt.subject?.name || 
+        attempt.exam_year?.subject?.name || 
+        attempt.examYear?.subject?.name ||
+        matchingExam?.subject?.name ||
+        matchingExam?.subject?.title ||
+        attempt.subject_name || 
+        "General Subject");
 
     console.log("Exam History Debug - Raw Attempt Data:", attempt);
     console.log("Exam History Debug - Resolved Subject Name:", subjectName);
@@ -213,10 +219,13 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
       matchingExam?.exam_year?.year ||
       matchingExam?.year ||
       attempt.exam_year_name || 
-      "N/A";
+      (isJamb ? "Mock Exam" : "N/A");
 
     return {
       score: scoreVal,
+      jambScore,
+      isJamb,
+      subjectScores: attempt.subject_scores || null,
       totalQuestions: totalQ,
       percentage,
       correct,
@@ -698,9 +707,15 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
                             Expired (Time Out)
                           </span>
                         )}
-                        <span className="text-xs text-gray-400 font-bold">
-                          Score: {stats.score}/{stats.totalQuestions}
-                        </span>
+                        {stats.isJamb ? (
+                          <span className="text-xs text-[#C5A97A] font-bold">
+                            UTME Score: {stats.score}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400 font-bold">
+                            Score: {stats.score}/{stats.totalQuestions}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -922,9 +937,15 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
                         <h3 className="text-base font-black text-[#09314F] dark:text-white uppercase tracking-tight mt-1 truncate">
                           {stats.subjectName} - {stats.yearValue}
                         </h3>
-                        <span className="text-xs text-gray-400 font-bold mt-1 block">
-                          Score: {stats.score}/{stats.totalQuestions}
-                        </span>
+                        {stats.isJamb ? (
+                          <span className="text-xs text-[#C5A97A] font-bold mt-1 block">
+                            UTME Score: {stats.score}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400 font-bold mt-1 block">
+                            Score: {stats.score}/{stats.totalQuestions}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -944,6 +965,37 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
                       </div>
                     </div>
                   </div>
+
+                  {/* JAMB 4-Subject Breakdown in Expanded History */}
+                  {stats.isJamb && stats.subjectScores && (
+                    <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+                      <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-3">
+                        Subject Scores (Scaled out of 100)
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {Object.values(stats.subjectScores).map((sub, sIdx) => (
+                          <div key={sIdx} className="bg-gray-50 dark:bg-[#06243A] rounded-2xl p-3 border border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                            <div className="min-w-0 pr-2">
+                              <span className="text-xs font-black text-[#09314F] dark:text-white uppercase truncate block">
+                                {sub.subject_name}
+                              </span>
+                              <span className="text-[10px] text-gray-400 font-medium">
+                                {sub.correct}/{sub.total_questions} correct
+                              </span>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-base font-black text-[#C5A97A]">
+                                {sub.score}
+                              </span>
+                              <span className="text-[9px] text-gray-400 font-bold block">
+                                / 100
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Full ExamReview content */}
