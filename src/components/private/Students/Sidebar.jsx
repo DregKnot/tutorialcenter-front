@@ -245,7 +245,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose, isEx
                 </button>
                 {!collapsed && <span className="text-xs text-gray-500">Dark</span>}
               </div>
-              <button onClick={logout} className="flex items-center justify-center gap-2 text-red-500 hover:text-red-600">
+              <button onClick={() => logout()} className="flex items-center justify-center gap-2 text-red-500 hover:text-red-600">
                 <ArrowRightOnRectangleIcon className="w-5 h-5" />
                 {!collapsed && <span className="text-sm font-medium">Logout</span>}
               </button>
@@ -265,7 +265,7 @@ export default function Sidebar({ collapsed, setCollapsed, isOpen, onClose, isEx
                 </button>
                 {!collapsed && <span className="text-xs text-gray-500">Dark</span>}
               </div>
-              <button onClick={logout} className="flex items-center justify-center gap-2 text-red-500 hover:text-red-600">
+              <button onClick={() => logout()} className="flex items-center justify-center gap-2 text-red-500 hover:text-red-600">
                 <ArrowRightOnRectangleIcon className="w-5 h-5" />
                 {!collapsed && <span className="text-sm font-medium">Logout</span>}
               </button>

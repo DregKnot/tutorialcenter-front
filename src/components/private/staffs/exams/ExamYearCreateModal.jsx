@@ -118,7 +118,7 @@ export default function ExamYearCreateModal({
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+      <div className="exam-scope bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
         
         <div className="p-6 bg-[#0F2843] text-white flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -131,7 +131,7 @@ export default function ExamYearCreateModal({
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all">
-            <XMarkIcon className="w-5 h-5 text-gray-400" />
+            <XMarkIcon className="w-5 h-5 text-gray-400 hover:text-white" />
           </button>
         </div>
 
@@ -143,11 +143,11 @@ export default function ExamYearCreateModal({
                 value={examBodyId}
                 onChange={(e) => setExamBodyId(e.target.value)}
                 required
-                className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm outline-none transition-all appearance-none"
+                className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
               >
-                <option value="">Select Exam Body</option>
+                <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select Exam Body</option>
                 {examBodies.map(body => (
-                  <option key={body.id} value={body.id}>{body.name}</option>
+                  <option key={body.id} value={body.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{body.name}</option>
                 ))}
               </select>
             </div>
@@ -163,11 +163,11 @@ export default function ExamYearCreateModal({
                   onChange={(e) => setSubjectId(e.target.value)}
                   required
                   disabled={fetchingSubjects}
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm outline-none transition-all appearance-none disabled:opacity-50"
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none disabled:opacity-50"
                 >
-                  <option value="">{fetchingSubjects ? "Fetching subjects..." : "Select a subject"}</option>
+                  <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{fetchingSubjects ? "Fetching subjects..." : "Select a subject"}</option>
                   {subjects.map(subject => (
-                    <option key={subject.id} value={subject.id}>{subject.name}</option>
+                    <option key={subject.id} value={subject.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{subject.name}</option>
                   ))}
                 </select>
               </div>
@@ -184,10 +184,10 @@ export default function ExamYearCreateModal({
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
                     required
-                    className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm outline-none transition-all appearance-none"
+                    className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
                   >
                     {years.map(y => (
-                      <option key={y} value={y}>{y}</option>
+                      <option key={y} value={y} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{y}</option>
                     ))}
                   </select>
                 </div>
@@ -198,10 +198,10 @@ export default function ExamYearCreateModal({
                 <select 
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm outline-none transition-all appearance-none"
+                  className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="active" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Active</option>
+                  <option value="inactive" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Inactive</option>
                 </select>
               </div>
             </div>
@@ -210,14 +210,14 @@ export default function ExamYearCreateModal({
               <button 
                 type="button" 
                 onClick={onClose}
-                className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-gray-400 font-bold rounded-2xl hover:bg-gray-100 transition-all text-xs uppercase tracking-widest"
+                className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all text-xs uppercase tracking-widest border border-transparent dark:border-gray-700"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
                 disabled={loading}
-                className="flex-[2] py-4 bg-[#0F2843] text-white font-bold rounded-2xl shadow-xl shadow-[#0F2843]/20 hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-50 text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                className="flex-[2] py-4 bg-[#0F2843] dark:bg-blue-600 hover:bg-[#1a3d60] dark:hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-[#0F2843]/20 dark:shadow-blue-900/30 hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-50 text-xs uppercase tracking-widest flex items-center justify-center gap-2"
               >
                 {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <CheckIcon className="w-4 h-4" />}
                 {loading ? "Creating..." : "Save Exam Year"}

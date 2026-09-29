@@ -97,7 +97,7 @@ export default function ExamQuestion() {
         </div>
       )}
 
-      <div className="p-4 md:p-8 max-w-5xl mx-auto w-full">
+      <div className="exam-scope p-4 md:p-8 max-w-5xl mx-auto w-full">
         
         {/* Back Navigation */}
         <button 
@@ -133,7 +133,7 @@ export default function ExamQuestion() {
         {/* Unified Form Container */}
         <form 
           onSubmit={handleSubmit} 
-          className="bg-white dark:bg-gray-800 rounded-[48px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-gray-50 dark:border-gray-700 overflow-hidden relative"
+          className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-[48px] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-gray-50 dark:border-gray-700 overflow-hidden relative"
         >
           {/* 1. Primary Config - Blurred during group creation */}
           <div className={`p-8 md:p-12 space-y-16 transition-all duration-500 ${isGroupCreationMode ? "blur-[8px] pointer-events-none opacity-30 select-none scale-[0.98]" : ""}`}>
@@ -147,7 +147,7 @@ export default function ExamQuestion() {
                   <button 
                     type="button" 
                     onClick={() => setIsExamBodyModalOpen(true)}
-                    className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] flex items-center gap-1 transition-colors uppercase"
+                    className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] dark:hover:text-white flex items-center gap-1 transition-colors uppercase"
                   >
                     <PlusIcon className="w-3 h-3" /> New Body
                   </button>
@@ -159,9 +159,9 @@ export default function ExamQuestion() {
                     required
                     className="w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-inner"
                   >
-                    <option value="">Select Exam Body</option>
+                    <option value="" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Select Exam Body</option>
                     {examBodies.map(body => (
-                      <option key={body.id} value={body.id}>{body.name}</option>
+                      <option key={body.id} value={body.id} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">{body.name}</option>
                     ))}
                   </select>
                 </div>
@@ -178,9 +178,9 @@ export default function ExamQuestion() {
                     disabled={!courseId}
                     className="w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-inner disabled:opacity-50"
                   >
-                    <option value="">{courseId ? "Select Subject" : "Select a course first"}</option>
+                    <option value="" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">{courseId ? "Select Subject" : "Select a course first"}</option>
                     {subjects.map(subject => (
-                      <option key={subject.id} value={subject.id}>{subject.name}</option>
+                      <option key={subject.id} value={subject.id} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">{subject.name}</option>
                     ))}
                   </select>
                 </div>
@@ -194,7 +194,7 @@ export default function ExamQuestion() {
                     type="button" 
                     onClick={() => setIsExamYearModalOpen(true)}
                     disabled={!examBodyId || !subjectId}
-                    className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] flex items-center gap-1 transition-colors uppercase disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] dark:hover:text-white flex items-center gap-1 transition-colors uppercase disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="w-3 h-3" /> New Year
                   </button>
@@ -206,9 +206,9 @@ export default function ExamQuestion() {
                     required
                     className="w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-inner"
                   >
-                    <option value="">Select Exam Year</option>
+                    <option value="" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Select Exam Year</option>
                     {filteredYears.map(year => (
-                      <option key={year.id} value={year.id}>{year.year} - {year.exam_body?.name || "Exam Body"}</option>
+                      <option key={year.id} value={year.id} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">{year.year} - {year.exam_body?.name || "Exam Body"}</option>
                     ))}
                   </select>
                 </div>
@@ -224,11 +224,11 @@ export default function ExamQuestion() {
                     required
                     className="w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-inner"
                   >
-                    <option value="none">None (Single Question)</option>
-                    <option value="comprehension">Comprehension</option>
-                    <option value="instruction">Instruction</option>
-                    <option value="diagram">Diagram</option>
-                    <option value="case_study">Case Study</option>
+                    <option value="none" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">None (Single Question)</option>
+                    <option value="comprehension" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Comprehension</option>
+                    <option value="instruction" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Instruction</option>
+                    <option value="diagram" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Diagram</option>
+                    <option value="case_study" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Case Study</option>
                   </select>
                 </div>
               </div>
@@ -379,18 +379,18 @@ export default function ExamQuestion() {
             </div>
 
             {/* Batch Actions Footer */}
-            <div className="flex flex-col md:flex-row items-center gap-6 p-12 bg-gray-50/50 dark:bg-gray-900/20 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex flex-col md:flex-row items-center gap-6 p-12 bg-gray-50/50 dark:bg-gray-900/60 border-t border-gray-100 dark:border-gray-700">
               <button 
                 type="button" 
                 onClick={() => navigate("/staffs/manage-exams")}
-                className="w-full md:flex-1 py-6 bg-white dark:bg-gray-700 text-gray-400 font-black rounded-[28px] hover:text-gray-600 transition-all uppercase tracking-[0.2em] text-xs border border-gray-100 dark:border-gray-600 shadow-sm"
+                className="w-full md:flex-1 py-6 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300 font-black rounded-[28px] hover:text-gray-700 dark:hover:text-white transition-all uppercase tracking-[0.2em] text-xs border border-gray-200 dark:border-gray-700 shadow-sm"
               >
                 Back to Dashboard
               </button>
               <button 
                 type="submit"
                 disabled={loading || fetchingData || questions.some((q, i) => isDuplicateNumber(i, q.questionNumber))}
-                className="w-full md:flex-[2] py-6 bg-[#0F2843] text-white font-black rounded-[28px] shadow-2xl shadow-[#0F2843]/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.3em] text-sm flex items-center justify-center gap-3"
+                className="w-full md:flex-[2] py-6 bg-[#0F2843] dark:bg-blue-600 hover:bg-[#1a3d60] dark:hover:bg-blue-500 text-white font-black rounded-[28px] shadow-2xl shadow-[#0F2843]/30 dark:shadow-blue-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.3em] text-sm flex items-center justify-center gap-3"
               >
                 {loading ? "Processing Batch..." : (
                   isGroupCreationMode ? "Submit Group & Questions" : (isEditMode ? "Update Changes" : `Create ${questions.length} Question${questions.length > 1 ? 's' : ''}`)

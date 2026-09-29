@@ -42,9 +42,10 @@ export function AuthProvider({ children }) {
   const splashTargetRouteRef = useRef(null);
 
   const login = useCallback((token, studentData, targetRoute = "/student/dashboard") => {
+    const destination = typeof targetRoute === "string" ? targetRoute : "/student/dashboard";
     setIsSplashing(true);
     splashStartTimeRef.current = Date.now();
-    splashTargetRouteRef.current = targetRoute;
+    splashTargetRouteRef.current = destination;
 
     localStorage.setItem("student_token", token);
     localStorage.setItem("student_info", JSON.stringify(studentData));
@@ -55,15 +56,16 @@ export function AuthProvider({ children }) {
     setToken(token);
     setStudent(studentData);
 
-    if (targetRoute) {
-      navigate(targetRoute, { replace: true });
+    if (destination) {
+      navigate(destination, { replace: true });
     }
   }, [navigate]);
 
   const logout = useCallback(async (targetRoute = "/student/login") => {
+    const destination = typeof targetRoute === "string" ? targetRoute : "/student/login";
     setIsSplashing(true);
     splashStartTimeRef.current = Date.now();
-    splashTargetRouteRef.current = targetRoute;
+    splashTargetRouteRef.current = destination;
 
     try {
       const currentToken = localStorage.getItem("student_token");
@@ -93,8 +95,8 @@ export function AuthProvider({ children }) {
       setIsInactiveModalOpen(false);
       setIsClassActive(false);
 
-      if (targetRoute) {
-        navigate(targetRoute, { replace: true });
+      if (destination) {
+        navigate(destination, { replace: true });
       }
     }
   }, [navigate, student?.id]);
@@ -105,7 +107,7 @@ export function AuthProvider({ children }) {
     if (!isSplashing) return;
 
     const targetRoute = splashTargetRouteRef.current;
-    if (!targetRoute) return;
+    if (!targetRoute || typeof targetRoute !== "string") return;
 
     const currentPath = (location?.pathname || "").toLowerCase();
     const targetPath = targetRoute.toLowerCase();

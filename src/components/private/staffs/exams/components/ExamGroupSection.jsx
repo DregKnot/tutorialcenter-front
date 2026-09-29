@@ -112,7 +112,7 @@ export default function ExamGroupSection({
                   setGroupImagePreview(null);
                   setSortOrder(1);
                 }}
-                className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] flex items-center gap-1 transition-colors uppercase"
+                className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] dark:hover:text-white flex items-center gap-1 transition-colors uppercase"
               >
                 <PlusIcon className="w-3 h-3" /> Create New Title
               </button>
@@ -136,7 +136,7 @@ export default function ExamGroupSection({
                       setGroupImagePreview(null);
                     }
                   }}
-                  className={`w-full pl-16 pr-14 py-5 rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none shadow-inner transition-all ${
+                  className={`w-full pl-16 pr-14 py-5 rounded-[28px] font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-inner transition-all ${
                     selectedGroupId 
                       ? "bg-[#76D287]/10 border-2 border-[#76D287]/40 dark:bg-[#76D287]/20" 
                       : "bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30"
@@ -212,7 +212,7 @@ export default function ExamGroupSection({
                     onChange={(e) => setGroupTitle(e.target.value)}
                     placeholder="Enter new group title..."
                     autoFocus
-                    className="w-full px-8 py-5 bg-white dark:bg-gray-800 border-2 border-[#BB9E7F] rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none shadow-xl animate-pulse focus:animate-none"
+                    className="w-full px-8 py-5 bg-white dark:bg-gray-800 border-2 border-[#BB9E7F] rounded-[28px] font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-xl animate-pulse focus:animate-none"
                   />
                   <button 
                     type="button"
@@ -250,7 +250,7 @@ export default function ExamGroupSection({
                 value={groupContent || ""}
                 onChange={setGroupContent}
                 placeholder="Enter the comprehension text, instructions, or scenario details here..."
-                className="[&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!"
+                className="[&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white"
                 modules={{
                   toolbar: [
                     [{ header: [1, 2, 3, false] }],
@@ -316,7 +316,7 @@ export default function ExamGroupSection({
                 setGroupContent("");
                 setGroupImagePreview(null);
               }}
-              className="w-full sm:w-auto px-8 py-5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-400 font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all border border-gray-200 dark:border-gray-700 shadow-sm"
+              className="w-full sm:w-auto px-8 py-5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300 font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all border border-gray-200 dark:border-gray-700 shadow-sm"
             >
               Cancel
             </button>

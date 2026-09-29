@@ -240,7 +240,7 @@ export default function ExamQuestionList() {
                      {q.files && q.files.length > 0 && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                            {q.files.map((file, fIdx) => (
-                              <div key={fIdx} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                              <div key={fIdx} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
                                  <img 
                                     src={file.file_path.startsWith('http') ? file.file_path : `${API_BASE_URL}/storage/${file.file_path}`} 
                                     alt={`Attachment ${fIdx}`} 
@@ -268,7 +268,7 @@ export default function ExamQuestionList() {
                         className={`flex items-center gap-4 px-6 py-4 rounded-2xl border-2 transition-all ${
                           opt.is_correct 
                             ? "bg-[#76D287] border-[#76D287] text-white shadow-xl shadow-[#76D287]/20" 
-                            : "bg-white dark:bg-gray-900 border-transparent text-[#0F2843] dark:text-gray-400"
+                            : "bg-white dark:bg-gray-900 border-transparent text-[#0F2843] dark:text-gray-200"
                         }`}
                       >
                         <span className="font-black text-[12px] min-w-[20px]">{opt.label}.</span>

@@ -103,7 +103,7 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+      <div className="exam-scope bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
         
         <div className="p-6 bg-[#0F2843] text-white flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -116,7 +116,7 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all">
-            <XMarkIcon className="w-5 h-5 text-gray-400" />
+            <XMarkIcon className="w-5 h-5 text-gray-400 hover:text-white" />
           </button>
         </div>
 
@@ -134,7 +134,7 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. JAMB, WAEC, NECO"
                   required
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm outline-none transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none transition-all"
                 />
               </div>
             </div>
@@ -149,11 +149,11 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
                   value={courseId}
                   onChange={(e) => setCourseId(e.target.value)}
                   required
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm outline-none transition-all appearance-none"
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
                 >
-                  <option value="">Select a course</option>
+                  <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select a course</option>
                   {courses.map(course => (
-                    <option key={course.id} value={course.id}>{course.title}</option>
+                    <option key={course.id} value={course.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{course.title}</option>
                   ))}
                 </select>
               </div>
@@ -169,8 +169,8 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
                     onClick={() => setStatus(s)}
                     className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all border-2 ${
                       status === s 
-                        ? "bg-[#0F2843] text-white border-[#0F2843]" 
-                        : "bg-gray-50 dark:bg-gray-800 text-gray-400 border-transparent hover:border-gray-200"
+                        ? "bg-[#0F2843] dark:bg-blue-600 text-white border-[#0F2843] dark:border-blue-600 shadow-md" 
+                        : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
                     }`}
                   >
                     {s}
@@ -183,14 +183,14 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
               <button 
                 type="button" 
                 onClick={onClose}
-                className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-gray-400 font-bold rounded-2xl hover:bg-gray-100 transition-all text-xs uppercase tracking-widest"
+                className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all text-xs uppercase tracking-widest border border-transparent dark:border-gray-700"
               >
                 Cancel
               </button>
               <button 
                 type="submit"
                 disabled={loading}
-                className="flex-[2] py-4 bg-[#0F2843] text-white font-bold rounded-2xl shadow-xl shadow-[#0F2843]/20 hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-50 text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                className="flex-[2] py-4 bg-[#0F2843] dark:bg-blue-600 hover:bg-[#1a3d60] dark:hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-[#0F2843]/20 dark:shadow-blue-900/30 hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-50 text-xs uppercase tracking-widest flex items-center justify-center gap-2"
               >
                 {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <CheckIcon className="w-4 h-4" />}
                 {loading ? "Creating..." : "Save Exam Body"}

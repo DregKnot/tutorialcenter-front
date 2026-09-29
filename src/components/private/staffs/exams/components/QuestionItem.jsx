@@ -259,7 +259,7 @@ export default function QuestionItem({
               </h3>
             ) : (
               <div 
-                className="text-sm md:text-base text-[#0F2843] dark:text-white truncate quill-content [&_*]:!inline [&>p]:!inline"
+                className="text-sm md:text-base text-[#0F2843] dark:text-white truncate quill-content dark:[&_*]:!text-white [&_*]:!inline [&>p]:!inline"
                 dangerouslySetInnerHTML={{ __html: q.questionText || '<span class="italic text-gray-400">Blank Question</span>' }}
               />
             )}
@@ -279,7 +279,7 @@ export default function QuestionItem({
             <button 
               type="button" 
               onClick={(e) => { e.stopPropagation(); removeQuestion(qIdx); }}
-              className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+              className="p-3 text-gray-300 dark:text-gray-500 hover:text-red-500 transition-colors"
             >
               <TrashIcon className="w-5 h-5" />
             </button>
@@ -292,7 +292,7 @@ export default function QuestionItem({
 
       {/* Question Form Content */}
       {q.isExpanded && (
-        <div className="p-8 md:p-12 space-y-10 animate-in slide-in-from-top-4 duration-300 bg-white dark:bg-gray-800">
+        <div className="p-8 md:p-12 space-y-10 animate-in slide-in-from-top-4 duration-300 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
           {/* Validation Errors Banner */}
           {validationErrors.length > 0 && (
             <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500/20 rounded-2xl p-5 space-y-2 animate-in shake-x duration-300">
@@ -315,7 +315,7 @@ export default function QuestionItem({
                   value={q.questionNumber}
                   onChange={(e) => updateQuestionField(qIdx, "questionNumber", e.target.value)}
                   placeholder="e.g. 01"
-                  className={`w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 rounded-[24px] font-black text-[#0F2843] dark:text-white outline-none shadow-inner ${
+                  className={`w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 rounded-[24px] font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-inner ${
                     isDuplicateNumber(qIdx, q.questionNumber) ? "border-red-500/50 focus:border-red-500" : "border-transparent focus:border-blue-500/30"
                   }`}
                 />
@@ -331,10 +331,10 @@ export default function QuestionItem({
                 onChange={(e) => updateQuestionField(qIdx, "questionType", e.target.value)}
                 className="w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-blue-500/30 rounded-[24px] font-black text-[#0F2843] dark:text-white outline-none shadow-inner appearance-none"
               >
-                <option value="multiple_choice">Multiple Choice</option>
-                <option value="true_false">True / False</option>
-                <option value="short_answer">Short Answer</option>
-                <option value="essay">Essay / Theory</option>
+                <option value="multiple_choice" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Multiple Choice</option>
+                <option value="true_false" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">True / False</option>
+                <option value="short_answer" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Short Answer</option>
+                <option value="essay" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Essay / Theory</option>
               </select>
             </div>
             <div className="space-y-3">
@@ -343,7 +343,7 @@ export default function QuestionItem({
                 type="number"
                 value={q.marks}
                 onChange={(e) => updateQuestionField(qIdx, "marks", e.target.value)}
-                className="w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-blue-500/30 rounded-[24px] font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
+                className="w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-blue-500/30 rounded-[24px] font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-inner"
               />
             </div>
           </div>
@@ -381,7 +381,7 @@ export default function QuestionItem({
                     value={q.captions[fIdx]}
                     onChange={(e) => handleCaptionChange(qIdx, fIdx, e.target.value)}
                     placeholder="Add a caption for this file..."
-                    className="w-full px-4 py-3 bg-white dark:bg-gray-800 border-2 border-transparent focus:border-blue-500/30 rounded-xl text-[11px] font-bold outline-none"
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-800 border-2 border-transparent focus:border-blue-500/30 rounded-xl text-[11px] font-bold text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none"
                   />
                 </div>
               ))}
@@ -400,7 +400,7 @@ export default function QuestionItem({
           <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-gray-700">
             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Text</label>
             <div 
-              className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[280px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!"
+              className="quill-wrapper bg-gray-50 dark:bg-gray-900 rounded-[32px] border-2 border-transparent focus-within:border-blue-500/30 overflow-hidden shadow-inner [&_.ql-editor]:min-h-[280px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white"
               onPaste={async (e) => {
                 const clipboardData = e.clipboardData;
                 if (!clipboardData || !clipboardData.files || clipboardData.files.length === 0) return;
@@ -489,7 +489,7 @@ export default function QuestionItem({
                               handleOptionChange(qIdx, optIdx, "option_text", combined);
                             }}
                             placeholder={optionImageUrl ? `Option ${opt.label} text (diagram attached)...` : `Option ${opt.label} text...`}
-                            className="w-full px-6 py-4 pr-24 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-blue-500/30 rounded-2xl font-bold text-[#0F2843] dark:text-white outline-none shadow-sm"
+                            className="w-full px-6 py-4 pr-24 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-blue-500/30 rounded-2xl font-bold text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-sm"
                           />
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                             {/* Option Diagram Upload Button */}
@@ -497,7 +497,7 @@ export default function QuestionItem({
                               htmlFor={`opt-file-${qIdx}-${optIdx}`}
                               className={`p-2 rounded-xl cursor-pointer transition-all ${
                                 optionImageUrl
-                                  ? "text-blue-600 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100"
+                                  ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100"
                                   : "text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800"
                               }`}
                               title={optionImageUrl ? "Replace Option Diagram" : "Add Image / Diagram to Option"}
@@ -539,7 +539,7 @@ export default function QuestionItem({
                             className={`px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 border-2 ${
                               opt.is_correct 
                                 ? "bg-green-500 text-white border-green-500 shadow-lg shadow-green-200 dark:shadow-none" 
-                                : "bg-gray-100 dark:bg-gray-700 text-gray-400 border-transparent hover:border-gray-200"
+                                : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 border-transparent hover:border-gray-200 dark:hover:border-gray-600"
                             }`}
                           >
                             <CheckCircleIcon className="w-4 h-4" />
@@ -549,7 +549,7 @@ export default function QuestionItem({
                             <button 
                               type="button" 
                               onClick={() => removeOption(qIdx, optIdx)}
-                              className="p-3 text-gray-300 hover:text-red-500 transition-colors"
+                              className="p-3 text-gray-300 dark:text-gray-500 hover:text-red-500 transition-colors"
                             >
                               <TrashIcon className="w-5 h-5" />
                             </button>
@@ -559,7 +559,7 @@ export default function QuestionItem({
 
                       {/* Option Image Attached Preview Card */}
                       {optionImageUrl && (
-                        <div className="ml-0 sm:ml-14 flex items-center gap-3 p-2 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-800/40 rounded-xl w-fit animate-in fade-in zoom-in-95">
+                        <div className="ml-0 sm:ml-14 flex items-center gap-3 p-2 bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60 rounded-xl w-fit animate-in fade-in zoom-in-95">
                           <img 
                             src={optionImageUrl} 
                             alt={`Option ${opt.label} diagram`} 
@@ -687,7 +687,7 @@ export default function QuestionItem({
                       </div>
                       <div className="flex items-center gap-2">
                         <label 
-                          className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-gray-500 hover:text-[#BB9E7F] hover:bg-[#BB9E7F]/10 rounded-xl cursor-pointer transition-colors border border-gray-200 dark:border-gray-700" 
+                          className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-300 hover:text-[#BB9E7F] hover:bg-[#BB9E7F]/10 rounded-xl cursor-pointer transition-colors border border-gray-200 dark:border-gray-700" 
                           title="Replace Diagram"
                         >
                           <PhotoIcon className="w-4 h-4" />
@@ -712,7 +712,7 @@ export default function QuestionItem({
                   )}
 
                   {/* BOTTOM: Text Editor inside the explanation box */}
-                  <div className="quill-wrapper rounded-2xl overflow-hidden [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:text-[#0F2843]! dark:[&_.ql-editor]:text-white!">
+                  <div className="quill-wrapper rounded-2xl overflow-hidden [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white">
                     <ReactQuill 
                       theme="snow" 
                       value={expText} 

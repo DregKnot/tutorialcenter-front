@@ -298,7 +298,7 @@ export default function EditExamHeader() {
         </div>
       )}
 
-      <div className="p-4 md:p-8 max-w-4xl mx-auto w-full">
+      <div className="exam-scope p-4 md:p-8 max-w-4xl mx-auto w-full">
         {/* Back Navigation */}
         <button 
           onClick={() => navigate("/staffs/manage-exams")}
@@ -382,9 +382,9 @@ export default function EditExamHeader() {
                     required
                     className="w-full px-8 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-[28px] font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-inner"
                   >
-                    <option value="">Select Course</option>
+                    <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select Course</option>
                     {courses.map(course => (
-                      <option key={course.id} value={course.id}>{course.title}</option>
+                      <option key={course.id} value={course.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{course.title}</option>
                     ))}
                   </select>
                 </div>
@@ -401,8 +401,8 @@ export default function EditExamHeader() {
                       onClick={() => setStatus(s)}
                       className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-2 ${
                         status === s 
-                          ? "bg-[#0F2843] text-white border-[#0F2843]" 
-                          : "bg-gray-50 dark:bg-gray-900 text-gray-400 border-transparent hover:border-gray-200"
+                          ? "bg-[#0F2843] dark:bg-blue-600 text-white border-[#0F2843] dark:border-blue-600" 
+                          : "bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-400 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
                       }`}
                     >
                       {s}
@@ -416,14 +416,14 @@ export default function EditExamHeader() {
                 <button 
                   type="button" 
                   onClick={() => navigate("/staffs/manage-exams")}
-                  className="w-full md:flex-1 py-6 bg-gray-50 dark:bg-gray-700 text-gray-400 font-black rounded-[28px] hover:text-gray-600 transition-all uppercase tracking-[0.2em] text-xs"
+                  className="w-full md:flex-1 py-6 bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-300 font-black rounded-[28px] hover:text-gray-600 dark:hover:text-white transition-all uppercase tracking-[0.2em] text-xs"
                 >
                   Cancel Edit
                 </button>
                 <button 
                   type="submit"
                   disabled={loading}
-                  className="w-full md:flex-[2] py-6 bg-[#0F2843] text-white font-black rounded-[28px] shadow-2xl shadow-[#0F2843]/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.3em] text-sm flex items-center justify-center gap-3"
+                  className="w-full md:flex-[2] py-6 bg-[#0F2843] dark:bg-blue-600 text-white font-black rounded-[28px] shadow-2xl shadow-[#0F2843]/30 dark:shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.3em] text-sm flex items-center justify-center gap-3"
                 >
                   {loading ? "Saving Changes..." : "Save Exam Details"}
                   {!loading && <CheckCircleIcon className="w-5 h-5 text-[#BB9E7F]" />}
@@ -551,7 +551,7 @@ export default function EditExamHeader() {
       {/* Edit Year Overlay Modal */}
       {editingYear && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-md bg-black/40 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+          <div className="exam-scope bg-white dark:bg-gray-900 w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
             <div className="p-6 bg-[#0F2843] text-white flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
@@ -580,10 +580,10 @@ export default function EditExamHeader() {
                       value={editYearVal}
                       onChange={(e) => setEditYearVal(e.target.value)}
                       required
-                      className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm outline-none transition-all appearance-none"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
                     >
                       {yearOptions.map(y => (
-                        <option key={y} value={y}>{y}</option>
+                        <option key={y} value={y} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{y}</option>
                       ))}
                     </select>
                   </div>
@@ -600,11 +600,11 @@ export default function EditExamHeader() {
                       value={editSubjectId}
                       onChange={(e) => setEditSubjectId(e.target.value)}
                       required
-                      className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm outline-none transition-all appearance-none"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
                     >
-                      <option value="">Select a subject</option>
+                      <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select a subject</option>
                       {subjects.map(subject => (
-                        <option key={subject.id} value={subject.id}>{subject.name}</option>
+                        <option key={subject.id} value={subject.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{subject.name}</option>
                       ))}
                     </select>
                   </div>
@@ -616,10 +616,10 @@ export default function EditExamHeader() {
                   <select 
                     value={editStatus}
                     onChange={(e) => setEditStatus(e.target.value)}
-                    className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm outline-none transition-all appearance-none"
+                    className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="active" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Active</option>
+                    <option value="inactive" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Inactive</option>
                   </select>
                 </div>
 
@@ -628,14 +628,14 @@ export default function EditExamHeader() {
                   <button 
                     type="button" 
                     onClick={() => setEditingYear(null)}
-                    className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-gray-400 font-bold rounded-2xl hover:bg-gray-100 transition-all text-xs uppercase tracking-widest"
+                    className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all text-xs uppercase tracking-widest"
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit"
                     disabled={savingYear}
-                    className="flex-[2] py-4 bg-[#0F2843] text-white font-bold rounded-2xl shadow-xl shadow-[#0F2843]/20 hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-50 text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                    className="flex-[2] py-4 bg-[#0F2843] dark:bg-blue-600 text-white font-bold rounded-2xl shadow-xl shadow-[#0F2843]/20 dark:shadow-blue-600/20 hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-50 text-xs uppercase tracking-widest flex items-center justify-center gap-2"
                   >
                     {savingYear ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <CheckCircleIcon className="w-4 h-4" />}
                     {savingYear ? "Saving..." : "Save Changes"}

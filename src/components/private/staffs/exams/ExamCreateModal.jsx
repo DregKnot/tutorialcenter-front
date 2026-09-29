@@ -176,7 +176,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 backdrop-blur-xl bg-[#0F2843]/60 animate-in fade-in duration-300">
       
-      <div className="bg-white dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] rounded-[48px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-500">
+      <div className="exam-scope bg-white dark:bg-gray-900 border border-transparent dark:border-gray-800 w-full max-w-4xl max-h-[90vh] rounded-[48px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-500">
         
         {/* Header */}
         <div className="p-8 bg-[#0F2843] text-white flex justify-between items-center">
@@ -206,7 +206,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                   <button 
                     type="button" 
                     onClick={() => setIsExamBodyModalOpen(true)}
-                    className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] flex items-center gap-1 transition-colors uppercase"
+                    className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] dark:hover:text-white flex items-center gap-1 transition-colors uppercase"
                   >
                     <PlusIcon className="w-3 h-3" /> New Body
                   </button>
@@ -218,9 +218,9 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                     required
                     className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-sm"
                   >
-                    <option value="">Select Exam Body</option>
+                    <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select Exam Body</option>
                     {examBodies.map(body => (
-                      <option key={body.id} value={body.id}>{body.name}</option>
+                      <option key={body.id} value={body.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{body.name}</option>
                     ))}
                   </select>
                 </div>
@@ -237,9 +237,9 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                     disabled={!courseId}
                     className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-sm disabled:opacity-50"
                   >
-                    <option value="">{courseId ? "Select Subject" : "Select a course first"}</option>
+                    <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{courseId ? "Select Subject" : "Select a course first"}</option>
                     {subjects.map(subject => (
-                      <option key={subject.id} value={subject.id}>{subject.name}</option>
+                      <option key={subject.id} value={subject.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{subject.name}</option>
                     ))}
                   </select>
                 </div>
@@ -253,7 +253,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                     type="button" 
                     onClick={() => setIsExamYearModalOpen(true)}
                     disabled={!examBodyId || !subjectId}
-                    className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] flex items-center gap-1 transition-colors uppercase disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] dark:hover:text-white flex items-center gap-1 transition-colors uppercase disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <PlusIcon className="w-3 h-3" /> New Year
                   </button>
@@ -265,7 +265,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                     required
                     className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-sm"
                   >
-                    <option value="">Select Exam Year</option>
+                    <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select Exam Year</option>
                     {(() => {
                       const filtered = examYears.filter(y => {
                         const matchBody = !examBodyId || String(y.exam_body_id) === String(examBodyId);
@@ -274,7 +274,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                       });
                       console.log("Filtering exam years for body:", examBodyId, "subject:", subjectId, "Result length:", filtered.length, "Original length:", examYears.length);
                       return filtered.map(year => (
-                        <option key={year.id} value={year.id}>{year.year} - {year.exam_body?.name || "Exam Body"}</option>
+                        <option key={year.id} value={year.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{year.year} - {year.exam_body?.name || "Exam Body"}</option>
                       ));
                     })()}
                   </select>
@@ -291,11 +291,11 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                     required
                     className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-sm"
                   >
-                    <option value="none">None (Single Question)</option>
-                    <option value="comprehension">Comprehension</option>
-                    <option value="instruction">Instruction</option>
-                    <option value="diagram">Diagram</option>
-                    <option value="case_study">Case Study</option>
+                    <option value="none" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">None (Single Question)</option>
+                    <option value="comprehension" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Comprehension</option>
+                    <option value="instruction" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Instruction</option>
+                    <option value="diagram" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Diagram</option>
+                    <option value="case_study" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Case Study</option>
                   </select>
                 </div>
               </div>
@@ -325,7 +325,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                       value={groupTitle}
                       onChange={(e) => setGroupTitle(e.target.value)}
                       placeholder="e.g. Passage A: The Industrial Revolution"
-                      className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none shadow-sm"
+                      className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-sm"
                     />
                   </div>
 
@@ -344,7 +344,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                 {/* Group Content (WYSIWYG) */}
                 <div className="space-y-3">
                   <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Content / Narrative</label>
-                  <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-[32px] border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-sm [&_.ql-editor]:min-h-[200px]">
+                  <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-[32px] border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-sm [&_.ql-editor]:min-h-[200px] [&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white">
                     <ReactQuill
                       theme="snow"
                       value={groupContent}
@@ -367,7 +367,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                 <div className="space-y-3">
                   <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Visual Aid (Optional)</label>
                   <div className={`relative group border-2 border-dashed rounded-[32px] overflow-hidden bg-gray-50 dark:bg-gray-800/50 transition-all ${
-                    groupImagePreview ? "border-[#76D287]/30" : "border-gray-200 hover:border-[#BB9E7F]/40"
+                    groupImagePreview ? "border-[#76D287]/30" : "border-gray-200 dark:border-gray-700 hover:border-[#BB9E7F]/40"
                   }`}>
                     {groupImagePreview ? (
                       <div className="relative aspect-video sm:aspect-[21/9]">
@@ -399,14 +399,14 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                <button 
                  type="button" 
                  onClick={onClose}
-                 className="flex-1 py-5 bg-gray-50 dark:bg-gray-800 text-gray-400 font-black rounded-3xl hover:bg-gray-100 transition-all uppercase tracking-widest text-xs"
+                 className="flex-1 py-5 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-300 font-black rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all uppercase tracking-widest text-xs"
                >
                  Cancel
                </button>
                <button 
                  type="submit"
                  disabled={loading || fetchingData}
-                 className="flex-[2] py-5 bg-[#0F2843] text-white font-black rounded-3xl shadow-2xl shadow-[#0F2843]/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.2em] text-sm flex items-center justify-center gap-3"
+                 className="flex-[2] py-5 bg-[#0F2843] dark:bg-blue-600 text-white font-black rounded-3xl shadow-2xl shadow-[#0F2843]/30 dark:shadow-blue-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase tracking-[0.2em] text-sm flex items-center justify-center gap-3"
                >
                  {loading ? "Processing..." : "Continue to Group Setup"}
                </button>

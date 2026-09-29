@@ -48,6 +48,8 @@ export default function ExamInterface({
   const [toast, setToast] = useState(null);
   const [examFinished, setExamFinished] = useState(false);
   const [resultSummary, setResultSummary] = useState(null);
+  const [isJambAttempt, setIsJambAttempt] = useState(false);
+  const [jambSubjects, setJambSubjects] = useState([]);
 
   // Feedback States (Shown before congratulations)
   const [showFeedback, setShowFeedback] = useState(true);
@@ -142,6 +144,12 @@ export default function ExamInterface({
       console.log("Exam Workspace Questions loaded:", response.data);
       const questionList = response.data?.questions || response.data?.data || [];
       setQuestions(questionList);
+
+      const isJamb = Boolean(response.data?.is_jamb || response.data?.attempt?.is_jamb);
+      setIsJambAttempt(isJamb);
+      if (response.data?.subjects && Array.isArray(response.data.subjects)) {
+        setJambSubjects(response.data.subjects);
+      }
 
       // Pre-populate already answered questions from the questions payload or server answers map
       const initialSelected = {};
@@ -389,7 +397,11 @@ export default function ExamInterface({
       );
 
       console.log("Exam submitted successfully:", response.data);
-      setResultSummary(response.data?.result || response.data?.data || null);
+      const resData = response.data?.result || response.data?.data || null;
+      setResultSummary(resData);
+      if (resData?.is_jamb !== undefined) {
+        setIsJambAttempt(Boolean(resData.is_jamb));
+      }
       setExamFinished(true);
       setShowFeedback(true); // Reset to show feedback first when exam finishes
       setToast({
@@ -427,6 +439,18 @@ export default function ExamInterface({
     if (!htmlStr) return "";
     return stripHtmlAndDecode(htmlStr);
   };
+
+  // Derive active JAMB subject & relative question indexing if this is a 4-subject exam
+  const currentJambSubject = isJambAttempt && jambSubjects.length > 0
+    ? (jambSubjects.find((s) => currentIndex >= s.start_index && currentIndex <= s.end_index) || jambSubjects[0])
+    : null;
+
+  const currentSubjectQNum = currentJambSubject
+    ? (currentIndex - currentJambSubject.start_index + 1)
+    : (currentIndex + 1);
+  const currentSubjectTotalQ = currentJambSubject
+    ? currentJambSubject.total_questions
+    : totalQuestions;
 
   // Active element
   const currentQuestion = questions[currentIndex];
@@ -585,16 +609,64 @@ export default function ExamInterface({
             SUBJECT
           </span>
           <span className="text-xs md:text-sm font-black uppercase text-[#09314F] dark:text-white block truncate">
-            {selectedSubject?.name || selectedSubject?.title}
+            {isJambAttempt ? "JAMB UTME" : (selectedSubject?.name || selectedSubject?.title)}
           </span>
         </div>
       </div>
+
+      {/* Subject Switcher Tabs for JAMB 4-Subject Exam */}
+      {isJambAttempt && jambSubjects.length > 0 && (
+        <div className="mb-6 flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none select-none">
+          {jambSubjects.map((sub, sIdx) => {
+            const isSubActive = currentIndex >= sub.start_index && currentIndex <= sub.end_index;
+            const subQuestions = questions.slice(sub.start_index, sub.end_index + 1);
+            const subAnsweredCount = subQuestions.filter(
+              (q) => selectedOptions[q.id] !== undefined
+            ).length;
+
+            return (
+              <button
+                key={sub.exam_year_id || sIdx}
+                type="button"
+                onClick={() => handleNavigate(sub.start_index)}
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all whitespace-nowrap shadow-sm border ${
+                  isSubActive
+                    ? "bg-[#09314F] text-white border-[#09314F] shadow-md shadow-blue-900/20"
+                    : "bg-white dark:bg-[#09314F]/40 text-gray-600 dark:text-gray-300 border-gray-100 dark:border-[#09314F] hover:border-[#C5A97A]/50"
+                }`}
+              >
+                <div
+                  className={`w-6 h-6 rounded-lg text-[10px] flex items-center justify-center font-black ${
+                    isSubActive
+                      ? "bg-[#C5A97A] text-white"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                  }`}
+                >
+                  {sIdx + 1}
+                </div>
+                <span>{sub.name}</span>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold ml-1 ${
+                    subAnsweredCount === sub.total_questions && sub.total_questions > 0
+                      ? "bg-green-500/20 text-green-500"
+                      : isSubActive
+                      ? "bg-white/20 text-white"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+                  }`}
+                >
+                  {subAnsweredCount}/{sub.total_questions}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Main Question Card Area */}
       {questions.length > 0 && currentQuestion ? (
         (() => {
           // Check if subject is science/calculation based
-          const subName = (selectedSubject?.name || selectedSubject?.title || "").toLowerCase();
+          const subName = (currentJambSubject?.name || selectedSubject?.name || selectedSubject?.title || "").toLowerCase();
           const isScience = [
             "math",
             "mathematics",
@@ -614,9 +686,20 @@ export default function ExamInterface({
               <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-[32px] border border-gray-100 dark:border-[#09314F] shadow-sm relative overflow-hidden">
                 {/* Header info */}
                 <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/10">
-                  <span className="px-4 py-1.5 bg-[#09314F] dark:bg-blue-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">
-                    Question {currentIndex + 1}
-                  </span>
+                  {isJambAttempt && currentJambSubject ? (
+                    <div className="flex items-center gap-2">
+                      <span className="px-3.5 py-1.5 bg-[#09314F] dark:bg-blue-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">
+                        Question {currentSubjectQNum} of {currentSubjectTotalQ}
+                      </span>
+                      <span className="px-3 py-1 bg-[#C5A97A]/15 text-[#C5A97A] border border-[#C5A97A]/30 text-xs font-black uppercase tracking-wider rounded-xl">
+                        {currentJambSubject.name}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="px-4 py-1.5 bg-[#09314F] dark:bg-blue-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">
+                      Question {currentIndex + 1}
+                    </span>
+                  )}
 
                   <div className="flex gap-4 text-xs font-black uppercase tracking-wider text-gray-400">
                     <p>
@@ -764,27 +847,35 @@ export default function ExamInterface({
                     ref={paginationRef}
                     className="flex-1 flex gap-2 overflow-x-auto pb-1 scrollbar-none"
                   >
-                    {questions.map((q, idx) => {
-                      const isCurrent = idx === currentIndex;
-                      const isAnswered = submittedAnswers[q.id] !== undefined;
+                    {(() => {
+                      const visibleQuestions = currentJambSubject
+                        ? questions.slice(currentJambSubject.start_index, currentJambSubject.end_index + 1)
+                        : questions;
+                      const baseOffset = currentJambSubject ? currentJambSubject.start_index : 0;
 
-                      return (
-                        <button
-                          key={q.id}
-                          id={`pag-btn-${idx}`}
-                          onClick={() => handleNavigate(idx)}
-                          className={`w-10 h-10 rounded-xl font-bold text-xs shrink-0 transition-all ${
-                            isCurrent
-                              ? "bg-[#09314F] text-white border-transparent"
-                              : isAnswered
-                              ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30"
-                              : "bg-gray-50 dark:bg-[#06243A] border border-transparent text-gray-400 hover:bg-gray-100"
-                          }`}
-                        >
-                          {idx + 1}
-                        </button>
-                      );
-                    })}
+                      return visibleQuestions.map((q, idx) => {
+                        const globalIdx = baseOffset + idx;
+                        const isCurrent = globalIdx === currentIndex;
+                        const isAnswered = submittedAnswers[q.id] !== undefined;
+
+                        return (
+                          <button
+                            key={q.id}
+                            id={`pag-btn-${globalIdx}`}
+                            onClick={() => handleNavigate(globalIdx)}
+                            className={`w-10 h-10 rounded-xl font-bold text-xs shrink-0 transition-all ${
+                              isCurrent
+                                ? "bg-[#09314F] text-white border-transparent"
+                                : isAnswered
+                                ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30"
+                                : "bg-gray-50 dark:bg-[#06243A] border border-transparent text-gray-400 hover:bg-gray-100"
+                            }`}
+                          >
+                            {idx + 1}
+                          </button>
+                        );
+                      });
+                    })()}
                   </div>
 
                   <button
@@ -1056,35 +1147,83 @@ export default function ExamInterface({
                 </p>
 
             {/* Prominent Circular Progress Score Chart */}
-            <div className="relative w-40 h-40 mx-auto mb-8 flex items-center justify-center">
+            <div className="relative w-44 h-44 mx-auto mb-8 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90">
                 <circle
-                  cx="80"
-                  cy="80"
-                  r="68"
+                  cx="88"
+                  cy="88"
+                  r="74"
                   className="stroke-gray-100 dark:stroke-[#09314F] fill-transparent"
                   strokeWidth="10"
                 />
                 <circle
-                  cx="80"
-                  cy="80"
-                  r="68"
+                  cx="88"
+                  cy="88"
+                  r="74"
                   className="stroke-[#C5A97A] fill-transparent transition-all duration-1000 ease-out"
                   strokeWidth="10"
-                  strokeDasharray={427}
-                  strokeDashoffset={427 - (427 * percentage) / 100}
+                  strokeDasharray={465}
+                  strokeDashoffset={465 - (465 * percentage) / 100}
                   strokeLinecap="round"
                 />
               </svg>
-              <div className="absolute flex flex-col items-center">
-                <span className="text-3xl font-black text-[#09314F] dark:text-white">
-                  {percentage}%
-                </span>
-                <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mt-1">
-                  SCORE OBTAINED
-                </span>
-              </div>
+              {isJambAttempt ? (
+                <div className="absolute flex flex-col items-center">
+                  <span className="text-4xl font-black text-[#09314F] dark:text-white tracking-tight">
+                    {resultSummary?.jamb_score ?? resultSummary?.score}
+                  </span>
+                  <span className="text-[9px] font-black uppercase text-[#C5A97A] tracking-widest mt-1">
+                    JAMB UTME AGGREGATE
+                  </span>
+                  <span className="text-[9px] font-bold text-gray-400 mt-0.5">
+                    ({percentage}%)
+                  </span>
+                </div>
+              ) : (
+                <div className="absolute flex flex-col items-center">
+                  <span className="text-3xl font-black text-[#09314F] dark:text-white">
+                    {percentage}%
+                  </span>
+                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mt-1">
+                    SCORE OBTAINED
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* JAMB 4-Subject Scaled Scores Breakdown Cards */}
+            {isJambAttempt && resultSummary?.subject_scores && (
+              <div className="mb-8 text-left">
+                <h4 className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest mb-3 text-center sm:text-left">
+                  Subject Breakdown (Scaled out of 100)
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {Object.values(resultSummary.subject_scores).map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-gray-50 dark:bg-[#06243A] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 flex items-center justify-between"
+                    >
+                      <div className="min-w-0 pr-3">
+                        <span className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-wider block truncate">
+                          {item.subject_name}
+                        </span>
+                        <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">
+                          {item.correct} of {item.total_questions} correct
+                        </span>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-lg font-black text-[#C5A97A]">
+                          {item.score}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-bold block">
+                          / 100
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Details Section */}
             <div className="grid grid-cols-3 gap-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-5 mb-8 border border-gray-100 dark:border-gray-800">

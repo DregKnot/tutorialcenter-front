@@ -61,7 +61,7 @@ export default function SymbolPicker({ onSelect, className = "" }) {
           {/* Header */}
           <div className="px-5 py-4 border-b border-gray-50 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
             <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Symbol Palette</span>
-            <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-red-50 hover:text-red-500 rounded-lg transition-all">
+            <button onClick={() => setIsOpen(false)} className="p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/40 rounded-lg transition-all">
               <XMarkIcon className="w-4 h-4" />
             </button>
           </div>
@@ -75,8 +75,8 @@ export default function SymbolPicker({ onSelect, className = "" }) {
                 onClick={() => setActiveCategory(cat.name)}
                 className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all whitespace-nowrap ${
                   activeCategory === cat.name
-                    ? "bg-[#0F2843] text-white shadow-lg"
-                    : "text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    ? "bg-[#0F2843] dark:bg-blue-600 text-white shadow-lg"
+                    : "text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-white"
                 }`}
               >
                 {cat.name}
@@ -92,7 +92,7 @@ export default function SymbolPicker({ onSelect, className = "" }) {
                   key={idx}
                   type="button"
                   onClick={() => handleSymbolClick(sym)}
-                  className="w-10 h-10 flex items-center justify-center bg-gray-50 dark:bg-gray-800 hover:bg-[#BB9E7F] hover:text-white rounded-xl text-lg font-bold transition-all active:scale-90"
+                  className="w-10 h-10 flex items-center justify-center bg-gray-50 dark:bg-gray-800 text-[#0F2843] dark:text-white hover:bg-[#BB9E7F] hover:text-white rounded-xl text-lg font-bold transition-all active:scale-90"
                 >
                   {sym}
                 </button>

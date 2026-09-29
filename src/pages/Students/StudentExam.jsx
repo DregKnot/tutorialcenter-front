@@ -27,6 +27,20 @@ export default function StudentExam() {
   const [selectedYear, setSelectedYear] = useState(null);
   const [timer, setTimer] = useState("50"); // default value
 
+  // JAMB 4-Subject State
+  const [jambElectives, setJambElectives] = useState([]);
+  const [jambSubjectYears, setJambSubjectYears] = useState({}); // { [subjectId]: exam_year_id }
+  const [activeJambSubjectId, setActiveJambSubjectId] = useState(null);
+
+  const isJambSelected = Boolean(
+    selectedCourse &&
+    (
+      String(selectedCourse.title || selectedCourse.name || "").toUpperCase().includes("JAMB") ||
+      String(selectedCourse.course?.title || "").toUpperCase().includes("JAMB")
+    )
+  );
+
+
   // UI States
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 1080);
   const [toast, setToast] = useState(null);
@@ -439,6 +453,92 @@ export default function StudentExam() {
     setSelectedCourse(course);
     setSelectedSubject(null);
     setSelectedYear(null);
+    setJambElectives([]);
+    setJambSubjectYears({});
+    setActiveJambSubjectId(null);
+    const isJamb = String(course?.title || course?.name || course?.course?.title || "").toUpperCase().includes("JAMB");
+    if (isJamb) {
+      setTimer("120");
+    } else {
+      setTimer("50");
+    }
+  };
+
+  // Helper to extract compulsory Use of English for JAMB
+  const getCourseEnglishSubject = (course) => {
+    if (!course) return null;
+    const subs = getAvailableSubjectsForCourse(course);
+    return (
+      subs.find((s) => {
+        const name = String(s.name || s.title || "").toLowerCase();
+        return name.includes("english") || name.includes("use of english");
+      }) || subs[0] || null
+    );
+  };
+
+  // Helper to extract available electives for JAMB
+  const getCourseElectiveSubjects = (course) => {
+    if (!course) return [];
+    const subs = getAvailableSubjectsForCourse(course);
+    const eng = getCourseEnglishSubject(course);
+    return subs.filter((s) => String(s.id) !== String(eng?.id));
+  };
+
+  // Toggle elective selection (up to 3)
+  const handleToggleJambElective = (subject) => {
+    setJambElectives((prev) => {
+      const exists = prev.some((s) => String(s.id) === String(subject.id));
+      if (exists) {
+        return prev.filter((s) => String(s.id) !== String(subject.id));
+      }
+      if (prev.length >= 3) {
+        setToast({
+          type: "warning",
+          message: "You can select up to 3 elective subjects in addition to compulsory English.",
+        });
+        return prev;
+      }
+      return [...prev, subject];
+    });
+  };
+
+  // Auto-initialize each JAMB subject with its latest available year and active subject
+  useEffect(() => {
+    if (!isJambSelected || !selectedCourse) return;
+    const engSub = getCourseEnglishSubject(selectedCourse);
+    const allSubjects = [engSub, ...jambElectives].filter(Boolean);
+
+    setJambSubjectYears((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      allSubjects.forEach((sub) => {
+        if (!next[sub.id]) {
+          const years = getAvailableYearsForSubject(sub.id);
+          if (years && years.length > 0) {
+            next[sub.id] = years[0].exam_year_id;
+            changed = true;
+          }
+        }
+      });
+      return changed ? next : prev;
+    });
+
+    if (engSub) {
+      setActiveJambSubjectId((prevActive) => {
+        if (!prevActive || !allSubjects.some((s) => String(s.id) === String(prevActive))) {
+          return engSub.id;
+        }
+        return prevActive;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isJambSelected, selectedCourse, jambElectives, availableExams]);
+
+  const handleSelectJambSubjectYear = (subjectId, examYearId) => {
+    setJambSubjectYears((prev) => ({
+      ...prev,
+      [subjectId]: examYearId,
+    }));
   };
 
   // Handle subject select and fetch years
@@ -471,6 +571,93 @@ export default function StudentExam() {
 
   // Start Practice Action Integration
   const handleStartPractice = async () => {
+    // 1. JAMB 4-Subject Launch Flow
+    if (isJambSelected) {
+      const engSub = getCourseEnglishSubject(selectedCourse);
+      if (!engSub) {
+        setToast({
+          type: "error",
+          message: "Could not find compulsory English subject for this JAMB package.",
+        });
+        return;
+      }
+      if (jambElectives.length !== 3) {
+        setToast({
+          type: "warning",
+          message: `Please select 3 electives for your JAMB combination (currently selected: ${jambElectives.length} of 3).`,
+        });
+        return;
+      }
+
+      const allFour = [engSub, ...jambElectives];
+      const examYearIds = [];
+
+      for (const sub of allFour) {
+        const subYears = getAvailableYearsForSubject(sub.id);
+
+        if (!subYears || subYears.length === 0) {
+          setToast({
+            type: "error",
+            message: `Practice questions for ${sub.name || sub.title} are currently unavailable.`,
+          });
+          return;
+        }
+
+        const selectedExamYearId = jambSubjectYears[sub.id];
+        const chosenYear = subYears.find((y) => String(y.exam_year_id) === String(selectedExamYearId)) || subYears[0];
+        const yId = chosenYear.exam_year_id;
+        examYearIds.push(Number(yId));
+      }
+
+      setStartingExam(true);
+      try {
+        const headers = {
+          Authorization: `Bearer ${authToken}`,
+          Accept: "application/json",
+        };
+
+        const response = await axios.post(
+          `${API_BASE_URL}/api/students/exams/start-jamb`,
+          {
+            exam_year_ids: examYearIds,
+            timer: parseInt(timer, 10) || 120,
+          },
+          { headers }
+        );
+
+        console.log("Start JAMB Exam API Response:", response.data);
+        const attemptId = response.data?.attempt?.id || response.data?.attempt_id || response.data?.id;
+
+        if (!attemptId) {
+          throw new Error("Attempt ID not returned from start-jamb API.");
+        }
+
+        setActiveAttemptId(attemptId);
+        setShowExamInterface(true);
+
+        try {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          }
+        } catch (e) {}
+
+        setToast({
+          type: "success",
+          message: "JAMB simulation started!",
+        });
+      } catch (err) {
+        console.error("Failed to start JAMB practice:", err);
+        setToast({
+          type: "error",
+          message: err.response?.data?.message || "Failed to start JAMB simulation.",
+        });
+      } finally {
+        setStartingExam(false);
+      }
+      return;
+    }
+
+    // 2. Standard Single-Subject Flow
     if (!selectedCourse || !selectedSubject || !selectedYear) {
       setToast({
         type: "warning",
@@ -1182,8 +1369,349 @@ export default function StudentExam() {
               )}
             </div>
 
-            {/* 2. Select Subject */}
-            {selectedCourse && (
+            {/* 2. JAMB 4-Subject Combination Hub */}
+            {selectedCourse && isJambSelected && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {/* Header Strip */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 h-7 rounded-xl bg-[#C5A97A]/20 border border-[#C5A97A]/40 text-[#C5A97A] font-black text-xs flex items-center justify-center shadow-sm">
+                      02
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-black text-[#09314F] dark:text-white uppercase tracking-wider">
+                        Configure JAMB UTME Combination
+                      </h4>
+                      <p className="text-[11px] text-gray-400 font-medium">
+                        Standard JAMB format: Use of English is compulsory + pick 3 electives for your course
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border shrink-0 ${
+                    jambElectives.length === 3
+                      ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
+                      : "bg-amber-500/10 text-amber-500 border-amber-500/30"
+                  }`}>
+                    {jambElectives.length === 3 ? "3 of 3 Electives Selected" : `${jambElectives.length} of 3 Electives Selected`}
+                  </span>
+                </div>
+
+                {/* Slot 1: Compulsory Use of English */}
+                {(() => {
+                  const engSub = getCourseEnglishSubject(selectedCourse);
+                  return (
+                    <div className="bg-gradient-to-r from-[#09314F] to-[#0c3f66] text-white rounded-3xl p-5 md:p-6 border-2 border-[#C5A97A]/50 shadow-lg relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-[#C5A97A]/20 border border-[#C5A97A]/50 flex items-center justify-center text-[#C5A97A] shrink-0">
+                          <Icon icon="lucide:lock" className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-[#C5A97A] text-[#09314F]">
+                              Slot 1 • Compulsory
+                            </span>
+                            <span className="text-[10px] text-gray-300 font-bold uppercase">
+                              Required for all UTME Candidates
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-black text-white uppercase tracking-tight mt-1">
+                            {engSub?.name || "Use of English"}
+                          </h3>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start sm:self-center px-3 py-1.5 rounded-xl bg-black/30 border border-white/10 text-xs font-bold text-gray-300">
+                        <Icon icon="lucide:shield-check" className="w-4 h-4 text-emerald-400" />
+                        <span>Locked &amp; Auto-Included</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Slots 2-4: Elective Selection Grid */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-white flex items-center gap-2">
+                      <span>Select Your 3 Elective Subjects</span>
+                      <span className="text-gray-400 font-normal">
+                        ({3 - jambElectives.length} more needed)
+                      </span>
+                    </h5>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {getCourseElectiveSubjects(selectedCourse).map((sub) => {
+                      const isSelected = jambElectives.some((s) => String(s.id) === String(sub.id));
+                      const electiveIdx = jambElectives.findIndex((s) => String(s.id) === String(sub.id));
+                      const subName = sub.name || sub.title || "Elective";
+
+                      return (
+                        <div
+                          key={sub.id}
+                          onClick={() => handleToggleJambElective(sub)}
+                          className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer select-none flex flex-col justify-between relative group ${
+                            isSelected
+                              ? "bg-[#09314F] text-white border-[#C5A97A] ring-2 ring-[#C5A97A]/30 shadow-md scale-[1.01]"
+                              : "bg-white dark:bg-[#09314F]/40 border-gray-100 dark:border-[#09314F] hover:border-gray-300 text-gray-700 dark:text-gray-200 hover:scale-[1.01]"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className={`text-[9px] font-black uppercase tracking-widest ${
+                              isSelected ? "text-[#C5A97A]" : "text-gray-400"
+                            }`}>
+                              {isSelected ? `Elective ${electiveIdx + 1}` : "Elective"}
+                            </span>
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center border text-[10px] font-bold ${
+                              isSelected
+                                ? "bg-[#C5A97A] border-[#C5A97A] text-[#09314F]"
+                                : "border-gray-300 dark:border-gray-600 group-hover:border-[#C5A97A]"
+                            }`}>
+                              {isSelected ? <Icon icon="lucide:check" className="w-3 h-3 stroke-[3]" /> : null}
+                            </div>
+                          </div>
+
+                          <h4 className={`text-sm font-black uppercase tracking-tight truncate ${
+                            isSelected ? "text-white" : "text-[#09314F] dark:text-white"
+                          }`}>
+                            {subName}
+                          </h4>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Sub-Configuration (Year & Timer) for JAMB */}
+                {jambElectives.length === 3 && (() => {
+                  const engSub = getCourseEnglishSubject(selectedCourse);
+                  const allFour = [engSub, ...jambElectives].filter(Boolean);
+                  const activeSub = allFour.find((s) => String(s.id) === String(activeJambSubjectId)) || allFour[0];
+                  const activeYears = activeSub ? getAvailableYearsForSubject(activeSub.id) : [];
+                  const activeChosenYearId = activeSub ? jambSubjectYears[activeSub.id] : null;
+
+                  return (
+                    <div className="space-y-6 pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      {/* Step 03: Per-Subject Year Selection Card */}
+                      <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 md:p-7 border border-gray-100 dark:border-[#09314F] shadow-sm space-y-5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-white/5 pb-4">
+                          <div>
+                            <div className="flex items-center gap-3 mb-1">
+                              <span className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-400/40 text-indigo-400 font-black text-xs flex items-center justify-center shadow-sm">
+                                03
+                              </span>
+                              <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-wider">
+                                Choose Question Year (Per Subject)
+                              </h4>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Click any subject below to select its past question year.
+                            </p>
+                          </div>
+                          <div className="text-[10px] font-bold text-[#C5A97A] bg-[#C5A97A]/10 border border-[#C5A97A]/20 px-3 py-1 rounded-full uppercase tracking-wider self-start sm:self-center">
+                            Independent Years
+                          </div>
+                        </div>
+
+                        {/* 4 Subject Cards Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                          {allFour.map((sub, idx) => {
+                            const isEnglish = idx === 0;
+                            const isActive = String(sub.id) === String(activeSub?.id);
+                            const subYears = getAvailableYearsForSubject(sub.id);
+                            const chosenId = jambSubjectYears[sub.id];
+                            const chosenObj = subYears.find((y) => String(y.exam_year_id) === String(chosenId)) || subYears[0];
+                            const yearLabel = chosenObj ? `Year ${chosenObj.year}` : "No Years";
+
+                            return (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                onClick={() => setActiveJambSubjectId(sub.id)}
+                                className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer select-none flex flex-col justify-between relative group ${
+                                  isActive
+                                    ? "bg-[#09314F] text-white border-[#C5A97A] ring-2 ring-[#C5A97A]/40 shadow-lg scale-[1.02]"
+                                    : "bg-gray-50/70 dark:bg-[#06243A]/60 border-gray-200 dark:border-[#1a4a75] hover:border-[#C5A97A]/50 text-gray-700 dark:text-gray-200 hover:scale-[1.01]"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-1 w-full mb-2">
+                                  <span className={`text-[9px] font-black uppercase tracking-widest ${
+                                    isActive ? "text-[#C5A97A]" : "text-gray-400"
+                                  }`}>
+                                    {isEnglish ? "Slot 1 • Compulsory" : `Elective ${idx}`}
+                                  </span>
+                                  {isActive ? (
+                                    <span className="flex items-center gap-1 text-[9px] font-bold text-[#C5A97A] uppercase bg-[#C5A97A]/20 px-1.5 py-0.5 rounded-md">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#C5A97A] animate-ping" />
+                                      Active
+                                    </span>
+                                  ) : null}
+                                </div>
+
+                                <h4 className={`text-sm font-black uppercase tracking-tight truncate mb-3 ${
+                                  isActive ? "text-white" : "text-[#09314F] dark:text-white"
+                                }`}>
+                                  {sub.name || sub.title || "Subject"}
+                                </h4>
+
+                                <div className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded-xl border ${
+                                  isActive
+                                    ? "bg-[#C5A97A]/20 border-[#C5A97A]/40 text-[#C5A97A]"
+                                    : "bg-white dark:bg-[#09314F]/60 border-gray-200 dark:border-[#1a4a75] text-gray-600 dark:text-gray-300"
+                                }`}>
+                                  <span className="flex items-center gap-1.5 font-bold">
+                                    <Icon icon="lucide:calendar" className="w-3.5 h-3.5 shrink-0" />
+                                    <span>{yearLabel}</span>
+                                  </span>
+                                  <span className="text-[10px] font-black uppercase tracking-wider underline opacity-80">
+                                    {isActive ? "Selecting" : "Select"}
+                                  </span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Active Subject Year Selector Panel */}
+                        {activeSub && (
+                          <div className="p-4 sm:p-5 rounded-2xl bg-gray-50/90 dark:bg-[#06243A]/90 border border-gray-200 dark:border-[#1a4a75] space-y-3 animate-in fade-in duration-200">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                              <div className="flex items-center gap-2">
+                                <Icon icon="lucide:layers" className="w-4 h-4 text-[#C5A97A]" />
+                                <span className="text-xs font-bold text-gray-700 dark:text-gray-200">
+                                  Available Past Question Years for{" "}
+                                  <span className="text-[#09314F] dark:text-[#C5A97A] font-black uppercase">
+                                    {activeSub.name || activeSub.title}
+                                  </span>:
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-gray-400 font-medium">
+                                Click a year button below to select it
+                              </span>
+                            </div>
+
+                            {activeYears.length > 0 ? (
+                              <div className="flex flex-wrap gap-2.5 pt-1">
+                                {activeYears.map((yr) => {
+                                  const isSelected = String(activeChosenYearId) === String(yr.exam_year_id);
+                                  return (
+                                    <button
+                                      key={yr.exam_year_id}
+                                      type="button"
+                                      onClick={() => handleSelectJambSubjectYear(activeSub.id, yr.exam_year_id)}
+                                      className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 flex items-center gap-2 cursor-pointer ${
+                                        isSelected
+                                          ? "bg-gradient-to-r from-[#C5A97A] to-[#E83831] text-white shadow-md shadow-red-500/20 scale-[1.03] ring-2 ring-[#C5A97A]/40"
+                                          : "bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] text-gray-700 dark:text-gray-300 hover:border-[#C5A97A] hover:text-[#C5A97A]"
+                                      }`}
+                                    >
+                                      <Icon icon={isSelected ? "lucide:check-circle-2" : "lucide:calendar"} className="w-3.5 h-3.5 stroke-[2.5]" />
+                                      <span>Year {yr.year}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-500 flex items-center gap-2">
+                                <Icon icon="lucide:alert-circle" className="w-4 h-4 shrink-0" />
+                                <span>No question years configured yet for this subject.</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Step 04: Duration Configuration */}
+                      <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-400 font-black text-xs flex items-center justify-center shadow-sm">
+                              04
+                            </span>
+                            <h4 className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-wider">
+                              Configure JAMB Duration
+                            </h4>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Standard official JAMB UTME exam duration is 2 hours (120 minutes).
+                          </p>
+                        </div>
+
+                        <div
+                          onClick={() => setIsClockModalOpen(true)}
+                          className="px-5 py-3.5 bg-gray-50 dark:bg-[#06243A] border border-gray-200 dark:border-[#1a4a75] rounded-xl text-sm font-bold text-[#09314F] dark:text-white outline-none hover:border-[#BB9E7F] transition-all cursor-pointer flex items-center justify-between gap-6 group/time shrink-0"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Icon icon="lucide:clock" className="w-5 h-5 text-[#C5A97A]" />
+                            <span>{displayTimer}</span>
+                          </div>
+                          <span className="text-[10px] font-black uppercase text-[#C5A97A] tracking-wider group-hover/time:underline">
+                            Adjust Duration
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Step 05: JAMB Launch Summary Card */}
+                      <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 md:p-8 border border-gray-100 dark:border-[#09314F] shadow-sm animate-in fade-in duration-300">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                              <span className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 font-black text-xs flex items-center justify-center shadow-sm">
+                                05
+                              </span>
+                              <h4 className="text-[15px] font-black uppercase tracking-tight text-[#09314F] dark:text-white">
+                                JAMB UTME Simulation Summary
+                              </h4>
+                            </div>
+
+                            <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs font-bold text-gray-500 dark:text-gray-400">
+                              <p>
+                                Curriculum:{" "}
+                                <span className="text-[#09314F] dark:text-white font-black uppercase ml-1">
+                                  {selectedCourse.course?.title || selectedCourse.title}
+                                </span>
+                              </p>
+                              <p>
+                                Subjects:{" "}
+                                <span className="text-[#09314F] dark:text-white font-black ml-1">
+                                  {allFour.map((s) => {
+                                    const sName = s.name || s.title || "Subject";
+                                    const yId = jambSubjectYears[s.id];
+                                    const yObj = getAvailableYearsForSubject(s.id).find((y) => String(y.exam_year_id) === String(yId));
+                                    const yr = yObj?.year ? ` (${yObj.year})` : "";
+                                    return `${sName}${yr}`;
+                                  }).join(" • ")}
+                                </span>
+                              </p>
+                              <p>
+                                Timer:{" "}
+                                <span className="text-[#09314F] dark:text-white font-black ml-1">
+                                  {displayTimer}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="w-full md:w-auto">
+                            <button
+                              onClick={() => setIsWarningModalOpen(true)}
+                              disabled={startingExam}
+                              className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all shrink-0 cursor-pointer"
+                            >
+                              <span>Start JAMB Practice</span>
+                              <Icon icon="lucide:arrow-right" className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* 2. Select Single Subject (Non-JAMB Courses) */}
+            {selectedCourse && !isJambSelected && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center justify-between w-full gap-2 mb-4 max-md:flex-wrap">
                   <div className="flex items-center gap-3 min-w-0">
@@ -1288,8 +1816,8 @@ export default function StudentExam() {
               </div>
             )}
 
-            {/* 3 & 4. Sub-Configuration (Year & Timer) */}
-            {selectedSubject && (
+            {/* 3 & 4. Sub-Configuration (Year & Timer for Non-JAMB) */}
+            {!isJambSelected && selectedSubject && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
                 {/* Year Selection Card */}
                 <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 border border-gray-100 dark:border-[#09314F] shadow-sm flex flex-col justify-between">
@@ -1361,8 +1889,8 @@ export default function StudentExam() {
               </div>
             )}
 
-            {/* 5. Summary & Action Area */}
-            {selectedYear && (
+            {/* 5. Summary & Action Area (Non-JAMB) */}
+            {!isJambSelected && selectedYear && (
               <div className="bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-md rounded-3xl p-6 md:p-8 border border-gray-100 dark:border-[#09314F] shadow-sm animate-in fade-in duration-300">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                   {/* Summary Details */}
