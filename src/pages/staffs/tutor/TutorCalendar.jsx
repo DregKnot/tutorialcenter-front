@@ -117,20 +117,13 @@ export default function TutorCalendar() {
     return "Peer Faculty";
   }, []);
 
-  const [joiningSessionId, setJoiningSessionId] = useState(null);
-
   const handleJoinClass = useCallback((s) => {
     if (!s || !isAssignedToMe(s)) return;
-    const link = s.class_link || s.recording_link;
-    if (!link && !s.id) return;
-
-    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
-    if (isZoom && s.id) {
-      setJoiningSessionId(s.id);
-    } else if (link) {
-      window.open(link, '_blank');
+    if (s.id) {
+      navigate(`/classroom/${s.id}`);
+      return;
     }
-  }, [isAssignedToMe]);
+  }, [isAssignedToMe, navigate]);
 
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1008,42 +1001,37 @@ export default function TutorCalendar() {
                             <span>Assigned to {getSessionTutorName(s)}</span>
                           </div>
                         ) : (
-                          s.class_link ? (
-                            joiningSessionId === s.id ? (
-                              <div className="flex flex-col gap-2 w-full">
-                                <button 
-                                  onClick={() => {
-                                    if (s.id) navigate(`/classroom/${s.id}`);
-                                  }}
-                                  className="w-full py-2.5 bg-[#09314F] hover:bg-[#1a4a75] text-white font-bold text-xs rounded-xl shadow-sm transition-all"
-                                >
-                                  Join on Web
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    navigate('/staffs/meet/app', {
-                                      state: {
-                                        class_link: s.class_link,
-                                        class_schedule_id: s.id
-                                      }
-                                    });
-                                  }}
-                                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
-                                >
-                                  Join via Zoom App
-                                </button>
-                              </div>
-                            ) : (
+                          (s.class_link || s.id) ? (
+                            <div className="grid grid-cols-2 gap-2 w-full">
                               <button
                                 onClick={() => {
+                                  setSelectedDateModal(null);
                                   handleJoinClass(s);
                                 }}
-                                className="w-full py-2.5 px-4 bg-[#09314F] hover:bg-[#E83831] text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
+                                className="py-2.5 px-3 bg-[#09314F] hover:bg-[#1a4a75] active:scale-95 text-white font-black text-[11px] rounded-xl shadow-sm flex items-center justify-center gap-1.5 uppercase tracking-wider transition-all"
+                                title="Join In-App Classroom"
                               >
-                                <Icon icon="logos:zoom" className="w-4 h-4" />
-                                Join Class Now
+                                <Icon icon="lucide:monitor" className="w-3.5 h-3.5 text-[#C5A97A]" />
+                                <span>Join in App</span>
                               </button>
-                            )
+                              <button
+                                onClick={() => {
+                                  setSelectedDateModal(null);
+                                  navigate('/staffs/meet/app', {
+                                    state: {
+                                      class_link: s.class_link,
+                                      class_schedule_id: s.id,
+                                      topic: s.class?.title || s.title
+                                    }
+                                  });
+                                }}
+                                className="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-[11px] rounded-xl shadow-sm flex items-center justify-center gap-1.5 uppercase tracking-wider transition-all"
+                                title="Launch via Zoom Desktop App"
+                              >
+                                <Icon icon="logos:zoom" className="w-3.5 h-3.5" />
+                                <span>In Zoom App</span>
+                              </button>
+                            </div>
                           ) : (
                             <div className="text-center py-2 text-xs font-bold text-gray-400 dark:text-gray-500 italic">
                               Class Link Pending
@@ -1117,15 +1105,11 @@ export default function TutorCalendar() {
               {/* Class Join Link */}
               <div className="flex items-center gap-4 text-slate-650 dark:text-slate-350 pb-2 border-b border-slate-100 dark:border-white/5">
                 <Icon icon="mdi:link" className="w-5 h-5 shrink-0 text-[#C5A97A]" />
-                {selectedSession.class_link ? (
-                  <a
-                    href={selectedSession.class_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[14px] font-bold text-blue-500 hover:text-blue-600 underline truncate max-w-[280px]"
-                  >
-                    {selectedSession.class_link.replace(/^https?:\/\//, '')}
-                  </a>
+                {selectedSession.class_link || selectedSession.id ? (
+                  <span className="text-[13px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                    <Icon icon="solar:shield-check-bold" className="w-4 h-4 text-emerald-500" />
+                    In-App Secure Classroom · Protected
+                  </span>
                 ) : (
                   <span className="text-[14px] font-bold text-slate-300 dark:text-slate-600 italic">No link assigned</span>
                 )}
@@ -1172,41 +1156,40 @@ export default function TutorCalendar() {
                     <span>Assigned Faculty: <strong className="text-slate-700 dark:text-slate-200">{getSessionTutorName(selectedSession)}</strong></span>
                   </div>
                 ) : (
-                  selectedSession.class_link ? (
-                    joiningSessionId === selectedSession.id ? (
-                      <div className="flex flex-col gap-3 w-full">
-                        <button 
+                  (selectedSession.class_link || selectedSession.id) ? (
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Choose Launch Method</p>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <button
                           onClick={() => {
-                            if (selectedSession.id) navigate(`/classroom/${selectedSession.id}`);
+                            setSelectedSession(null);
+                            handleJoinClass(selectedSession);
                           }}
-                          className="w-full bg-[#09314F] hover:bg-[#1a4a75] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center shadow-lg transition-all"
+                          className="py-3 px-3 bg-[#0F2843] hover:bg-[#1a4a75] active:scale-95 text-white rounded-2xl font-black text-xs uppercase tracking-wider text-center flex items-center justify-center gap-1.5 shadow-md transition-all"
                         >
-                          Join on Web
+                          <Icon icon="lucide:monitor" className="w-4 h-4 text-[#C5A97A]" />
+                          <span>Join in App</span>
                         </button>
-                        <button 
+                        <button
                           onClick={() => {
+                            const link = selectedSession.class_link;
+                            const sessionId = selectedSession.id;
+                            setSelectedSession(null);
                             navigate('/staffs/meet/app', {
                               state: {
-                                class_link: selectedSession.class_link,
-                                class_schedule_id: selectedSession.id
+                                class_link: link,
+                                class_schedule_id: sessionId,
+                                topic: selectedSession.class?.title || selectedSession.title
                               }
                             });
                           }}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center shadow-lg transition-all"
+                          className="py-3 px-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-2xl font-black text-xs uppercase tracking-wider text-center flex items-center justify-center gap-1.5 shadow-md transition-all"
                         >
-                          Join via Zoom App
+                          <Icon icon="logos:zoom" className="w-4 h-4" />
+                          <span>In Zoom App</span>
                         </button>
                       </div>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          handleJoinClass(selectedSession);
-                        }}
-                        className="w-full bg-[#0F2843] hover:bg-[#E83831] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-center block shadow-lg shadow-slate-200 dark:shadow-none hover:shadow-xl transition-all active:scale-98"
-                      >
-                        Join Class Now
-                      </button>
-                    )
+                    </div>
                   ) : (
                     <div className="text-center py-2 text-xs font-bold text-slate-400 dark:text-slate-500 italic">
                       Class Link Pending

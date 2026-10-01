@@ -33,16 +33,16 @@ export default function StaffAppMeetWrapper() {
       class_schedule_id: state.class_schedule_id
     });
 
-    if (setIsClassActive) setIsClassActive(true);
-
-    // Launch the Zoom App
+    // Launch Zoom external desktop client / web link
+    let launchTimer = null;
     if (state.class_link) {
-        setTimeout(() => {
-            window.location.href = state.class_link;
-        }, 500);
+      launchTimer = setTimeout(() => {
+        window.location.href = state.class_link;
+      }, 500);
     }
 
     return () => {
+      if (launchTimer) clearTimeout(launchTimer);
       if (setIsClassActive) setIsClassActive(false);
     };
   }, [location, navigate, staffToken, setIsClassActive]);
@@ -125,10 +125,25 @@ export default function StaffAppMeetWrapper() {
                 End Class & Return to Overview
              </button>
              
+             {sessionDetails?.class_schedule_id && (
+               <button
+                  onClick={() => navigate(`/classroom/${sessionDetails.class_schedule_id}`)}
+                  className="w-full bg-[#09314F] hover:bg-[#15466f] text-white font-bold py-3.5 rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+               >
+                  <Icon icon="lucide:monitor" className="w-4 h-4 text-[#C5A97A]" />
+                  Switch to In-App Classroom
+               </button>
+             )}
+
              <button
-                onClick={() => window.location.href = sessionDetails.class_link}
-                className="w-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-white font-bold py-4 rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-wider"
+                onClick={() => {
+                  if (sessionDetails?.class_link) {
+                    window.location.href = sessionDetails.class_link;
+                  }
+                }}
+                className="w-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-white font-bold py-3.5 rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-wider flex items-center justify-center gap-2"
              >
+                <Icon icon="logos:zoom" className="w-4 h-4" />
                 Relaunch Zoom App
              </button>
           </div>
