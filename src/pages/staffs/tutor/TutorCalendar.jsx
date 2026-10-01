@@ -1016,17 +1016,25 @@ export default function TutorCalendar() {
                               </button>
                               <button
                                 onClick={() => {
+                                  const joinUrl = s.zoom_join_url || s.class_link;
+                                  if (joinUrl) {
+                                    window.open(joinUrl, '_blank', 'noopener,noreferrer');
+                                  }
                                   setSelectedDateModal(null);
                                   navigate('/staffs/meet/app', {
                                     state: {
-                                      class_link: s.class_link,
+                                      class_link: joinUrl,
+                                      zoom_meeting_id: s.zoom_meeting_id,
+                                      zoom_meeting_password: s.zoom_meeting_password,
+                                      zoom_join_url: s.zoom_join_url,
                                       class_schedule_id: s.id,
-                                      topic: s.class?.title || s.title
+                                      topic: s.class?.title || s.title,
+                                      subject: s.subject_name || s.subject?.name,
                                     }
                                   });
                                 }}
                                 className="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-[11px] rounded-xl shadow-sm flex items-center justify-center gap-1.5 uppercase tracking-wider transition-all"
-                                title="Launch via Zoom Desktop App"
+                                title="Launch via Zoom Desktop App in a new tab"
                               >
                                 <Icon icon="logos:zoom" className="w-3.5 h-3.5" />
                                 <span>In Zoom App</span>
@@ -1172,14 +1180,21 @@ export default function TutorCalendar() {
                         </button>
                         <button
                           onClick={() => {
-                            const link = selectedSession.class_link;
+                            const link = selectedSession.zoom_join_url || selectedSession.class_link;
                             const sessionId = selectedSession.id;
+                            if (link) {
+                              window.open(link, '_blank', 'noopener,noreferrer');
+                            }
                             setSelectedSession(null);
                             navigate('/staffs/meet/app', {
                               state: {
                                 class_link: link,
+                                zoom_meeting_id: selectedSession.zoom_meeting_id,
+                                zoom_meeting_password: selectedSession.zoom_meeting_password,
+                                zoom_join_url: selectedSession.zoom_join_url,
                                 class_schedule_id: sessionId,
-                                topic: selectedSession.class?.title || selectedSession.title
+                                topic: selectedSession.class?.title || selectedSession.title,
+                                subject: selectedSession.subject_name || selectedSession.subject?.name,
                               }
                             });
                           }}

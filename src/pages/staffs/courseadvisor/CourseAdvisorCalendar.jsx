@@ -970,16 +970,24 @@ export default function CourseAdvisorCalendar() {
                                 </button>
                                 <button 
                                   onClick={() => {
+                                    const joinUrl = s.zoom_join_url || s.class_link;
+                                    if (joinUrl) {
+                                      window.open(joinUrl, '_blank', 'noopener,noreferrer');
+                                    }
                                     navigate('/staffs/meet/app', {
                                       state: {
-                                        class_link: s.class_link,
+                                        class_link: joinUrl,
+                                        zoom_meeting_id: s.zoom_meeting_id,
+                                        zoom_meeting_password: s.zoom_meeting_password,
+                                        zoom_join_url: s.zoom_join_url,
                                         class_schedule_id: s.id,
-                                        topic: s.class?.title || s.title
+                                        topic: s.class?.title || s.title,
+                                        subject: s.subject_name || s.subject?.name,
                                       }
                                     });
                                   }}
                                   className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
-                                  title="Launch via Zoom Desktop App"
+                                  title="Launch via Zoom Desktop App in a new tab"
                                 >
                                   <Icon icon="logos:zoom" className="w-4 h-4" />
                                   <span>In Zoom App</span>
@@ -1080,17 +1088,25 @@ export default function CourseAdvisorCalendar() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (!selectedSession?.class_link && !selectedSession?.id) return;
+                      const link = selectedSession?.zoom_join_url || selectedSession?.class_link;
+                      if (!link && !selectedSession?.id) return;
+                      if (link) {
+                        window.open(link, '_blank', 'noopener,noreferrer');
+                      }
                       setSelectedSession(null);
                       navigate('/staffs/meet/app', {
                         state: {
-                          class_link: selectedSession.class_link,
+                          class_link: link,
+                          zoom_meeting_id: selectedSession.zoom_meeting_id,
+                          zoom_meeting_password: selectedSession.zoom_meeting_password,
+                          zoom_join_url: selectedSession.zoom_join_url,
                           class_schedule_id: selectedSession.id,
-                          topic: selectedSession.class?.title || selectedSession.title
+                          topic: selectedSession.class?.title || selectedSession.title,
+                          subject: selectedSession.subject_name || selectedSession.subject?.name,
                         }
                       });
                     }}
-                    disabled={!selectedSession.class_link && !selectedSession.id}
+                    disabled={!selectedSession?.class_link && !selectedSession?.id}
                     className="flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black text-[11px] uppercase tracking-wider text-center leading-tight transition-all active:scale-95 shadow-sm"
                   >
                     <Icon icon="logos:zoom" className="w-4 h-4" />

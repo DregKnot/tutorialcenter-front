@@ -1456,15 +1456,24 @@ export default function AdminCalendar() {
                       </button>
                       <button
                         onClick={() => {
+                          const joinUrl = selectedSession.zoom_join_url || selectedSession.class_link;
+                          if (joinUrl) {
+                            window.open(joinUrl, '_blank', 'noopener,noreferrer');
+                          }
                           navigate('/staffs/meet/app', {
                             state: {
-                              class_link: selectedSession.class_link,
-                              class_schedule_id: selectedSession.id
+                              class_link: joinUrl,
+                              zoom_meeting_id: selectedSession.zoom_meeting_id,
+                              zoom_meeting_password: selectedSession.zoom_meeting_password,
+                              zoom_join_url: selectedSession.zoom_join_url,
+                              class_schedule_id: selectedSession.id,
+                              topic: selectedSession.class?.title || selectedSession.title,
+                              subject: selectedSession.subject_name || selectedSession.subject?.name,
                             }
                           });
                         }}
                         className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all"
-                        title="Launch directly in Zoom desktop/mobile application"
+                        title="Launch directly in Zoom desktop application in a new tab"
                       >
                         <ArrowTopRightOnSquareIcon className="w-4 h-4" /> Zoom App
                       </button>
