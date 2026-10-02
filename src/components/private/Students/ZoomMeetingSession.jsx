@@ -1,4 +1,4 @@
-import React, { useEffect, useState, forwardRef, useImperativeHandle, useCallback } from "react";
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle, useCallback } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 
@@ -6,6 +6,10 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [sdkReady, setSdkReady] = useState(false);
+
+    const isJoiningRef = useRef(false);
+    const hasJoinedRef = useRef(false);
+    const prevSessionIdRef = useRef(classSessionId);
 
     const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
     
@@ -73,9 +77,47 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
         };
     }, []);
 
+    // Suppress internal Zoom SDK Promise cancellations while session is active
+    useEffect(() => {
+        const handleRejection = (e) => {
+            const reasonStr = String(e.reason?.message || e.reason || "");
+            const stackStr = String(e.reason?.stack || "");
+            if (reasonStr.includes("Job was cancelled") || stackStr.includes("zoom")) {
+                e.stopImmediatePropagation();
+                e.preventDefault();
+            }
+        };
+
+        const handleError = (e) => {
+            const msg = String(e.message || "");
+            const file = String(e.filename || "");
+            if (msg.includes("Job was cancelled") || file.includes("zoom")) {
+                e.stopImmediatePropagation();
+                e.preventDefault();
+            }
+        };
+
+        window.addEventListener("unhandledrejection", handleRejection, true);
+        window.addEventListener("error", handleError, true);
+
+        return () => {
+            window.removeEventListener("unhandledrejection", handleRejection, true);
+            window.removeEventListener("error", handleError, true);
+        };
+    }, []);
+
     // Step 2: Once SDK is ready, fetch signature and join
     useEffect(() => {
         if (!sdkReady || !classSessionId) return;
+
+        if (prevSessionIdRef.current !== classSessionId) {
+            hasJoinedRef.current = false;
+            isJoiningRef.current = false;
+            prevSessionIdRef.current = classSessionId;
+        }
+
+        if (isJoiningRef.current || hasJoinedRef.current) return;
+        isJoiningRef.current = true;
 
         let isMounted = true;
 
@@ -136,6 +178,8 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
                             userEmail: "",
                             tk: "",
                             success: () => {
+                                hasJoinedRef.current = true;
+                                isJoiningRef.current = false;
                                 if (isMounted) {
                                     setLoading(false);
                                 }
@@ -150,27 +194,45 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
                                 }
                             },
                             error: (joinErr) => {
+                                const joinErrMsg = String(joinErr?.result || joinErr?.message || joinErr || "");
+                                if (joinErrMsg.includes("Job was cancelled")) {
+                                    console.warn("Zoom internal job cancelled (safe to ignore):", joinErr);
+                                    return;
+                                }
                                 console.error("Zoom Join Error:", joinErr);
+                                isJoiningRef.current = false;
                                 if (isMounted) {
-                                    setError(joinErr.result || joinErr.message || "Failed to join Zoom meeting.");
+                                    setError(joinErrMsg || "Failed to join Zoom meeting.");
                                     setLoading(false);
                                 }
                             }
                         });
                     },
                     error: (initErr) => {
+                        const initErrMsg = String(initErr?.message || initErr || "");
+                        if (initErrMsg.includes("Job was cancelled")) {
+                            console.warn("Zoom internal init cancelled (safe to ignore):", initErr);
+                            return;
+                        }
                         console.error("Zoom Init Error:", initErr);
+                        isJoiningRef.current = false;
                         if (isMounted) {
-                            setError(initErr.message || "Failed to initialize Zoom.");
+                            setError(initErrMsg || "Failed to initialize Zoom.");
                             setLoading(false);
                         }
                     }
                 });
 
             } catch (err) {
+                const errMsg = String(err.response?.data?.message || err.message || "");
+                if (errMsg.includes("Job was cancelled")) {
+                    console.warn("Zoom caught cancelled job:", err);
+                    return;
+                }
                 console.error("Zoom SDK Error:", err);
+                isJoiningRef.current = false;
                 if (isMounted) {
-                    setError(err.response?.data?.message || err.message || "Could not launch Zoom classroom.");
+                    setError(errMsg || "Could not launch Zoom classroom.");
                     setLoading(false);
                 }
             }

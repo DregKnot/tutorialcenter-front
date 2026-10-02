@@ -3,7 +3,6 @@ import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { Icon } from "@iconify/react";
 import { useNavigate, useLocation } from "react-router-dom";
-import JoinMethodModal from "../../../components/common/JoinMethodModal";
 import TutorPostClassReportModal from "../../../components/private/Tutor/TutorPostClassReportModal";
 import { 
   ClockIcon,
@@ -54,22 +53,17 @@ export default function TutorDashboard() {
   const token = localStorage.getItem("staff_token");
   const staffName = localStorage.getItem("staff_name") || "Tutor";
 
-  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const [sessionToJoin, setSessionToJoin] = useState(null);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackSession, setFeedbackSession] = useState(null);
 
   const handleJoinClass = (session) => {
     if (!session) return;
+    if (session.id) {
+      navigate(`/classroom/${session.id}`);
+      return;
+    }
     const link = session.class_link || session.recording_link;
-    if (!link && !session.id) return;
-
-    const isZoom = link ? (link.includes("zoom.us") || link.includes("zoom")) : true;
-    if (isZoom && session.id) {
-      setSessionToJoin(session);
-      setIsJoinModalOpen(true);
-    } else if (link) {
-      window.open(link, '_blank');
+    if (link) {
       navigate('/staffs/meet', {
         state: {
           class_link: link,
@@ -1028,27 +1022,7 @@ export default function TutorDashboard() {
       </div>
     </StaffDashboardLayout>
 
-    {/* ====== CLASS JOIN METHOD MODAL ====== */}
-    <JoinMethodModal 
-      isOpen={isJoinModalOpen}
-      onClose={() => setIsJoinModalOpen(false)}
-      onJoinApp={() => {
-        setIsJoinModalOpen(false);
-        const link = sessionToJoin?.class_link || sessionToJoin?.recording_link;
-        if (link) {
-          navigate('/staffs/meet/app', {
-            state: {
-              class_link: link,
-              class_schedule_id: sessionToJoin.id
-            }
-          });
-        }
-      }}
-      onJoinWeb={() => {
-        setIsJoinModalOpen(false);
-        if (sessionToJoin?.id) navigate(`/classroom/${sessionToJoin.id}`);
-      }}
-    />
+
 
     {/* ====== POST-CLASS TUTOR REPORT POPUP MODAL ====== */}
     <TutorPostClassReportModal 

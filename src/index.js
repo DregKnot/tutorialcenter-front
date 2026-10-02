@@ -13,29 +13,44 @@ import QueryProvider from "./providers/QueryProvider";
 import { HelmetProvider } from "react-helmet-async";
 import { createRoot } from "react-dom/client";
 
-// Intercept and ignore browser extension errors (like MetaMask) to prevent React development error overlay crashes
-window.addEventListener("error", (e) => {
-  if (
-    e.message &&
-    (e.message.includes("MetaMask") ||
-      e.message.includes("failed to connect") ||
-      e.filename?.includes("chrome-extension"))
-  ) {
-    e.stopImmediatePropagation();
-    e.preventDefault();
-  }
-});
+// Intercept and ignore browser extension errors and Zoom SDK internal cancellations to prevent React development error overlay crashes
+window.addEventListener(
+  "error",
+  (e) => {
+    const msg = String(e.message || "");
+    const file = String(e.filename || "");
+    if (
+      msg.includes("MetaMask") ||
+      msg.includes("failed to connect") ||
+      msg.includes("Job was cancelled") ||
+      file.includes("chrome-extension") ||
+      file.includes("zoom")
+    ) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  },
+  true
+);
 
-window.addEventListener("unhandledrejection", (e) => {
-  if (
-    e.reason &&
-    (String(e.reason).includes("MetaMask") ||
-      String(e.reason).includes("failed to connect") ||
-      e.reason.stack?.includes("chrome-extension"))
-  ) {
-    e.preventDefault();
-  }
-});
+window.addEventListener(
+  "unhandledrejection",
+  (e) => {
+    const reasonStr = String(e.reason?.message || e.reason || "");
+    const stackStr = String(e.reason?.stack || "");
+    if (
+      reasonStr.includes("MetaMask") ||
+      reasonStr.includes("failed to connect") ||
+      reasonStr.includes("Job was cancelled") ||
+      stackStr.includes("chrome-extension") ||
+      stackStr.includes("zoom")
+    ) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  },
+  true
+);
 
 const rootElement = document.getElementById("root");
 const appElement = (

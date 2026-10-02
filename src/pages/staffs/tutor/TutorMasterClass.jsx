@@ -10,8 +10,7 @@ import {
   VideoCameraIcon,
   ArrowPathIcon,
   ClockIcon,
-  AcademicCapIcon,
-  ArrowTopRightOnSquareIcon
+  AcademicCapIcon
 } from "@heroicons/react/24/outline";
 import { Icon } from "@iconify/react";
 
@@ -285,6 +284,40 @@ export default function TutorMasterClass() {
   }, [flattenedSessions, timelineFilter, searchQuery]);
 
   // --- ACTIONS ---
+  const getClassSessionId = (cls) => {
+    if (!cls) return null;
+    if (cls.next_session?.id) return cls.next_session.id;
+    if (cls.session?.id) return cls.session.id;
+
+    const match = flattenedSessions.find(s => String(s.class_id || s.class?.id) === String(cls.id));
+    if (match?.id) return match.id;
+
+    const sessions = cls.sessions || [];
+    if (!sessions.length) return null;
+    const now = new Date().getTime();
+    const toTime = (s) => new Date(`${(s.session_date || '').split('T')[0]}T${s.starts_at || '00:00:00'}`).getTime();
+    const upcoming = sessions
+      .map(s => ({ s, diff: toTime(s) - now }))
+      .filter(item => item.diff >= -3600000)
+      .sort((a, b) => a.diff - b.diff);
+    if (upcoming.length) return upcoming[0].s.id;
+    const latest = [...sessions].sort((a, b) => toTime(b) - toTime(a))[0];
+    return latest?.id ?? null;
+  };
+
+  const handleLaunchClassRoom = (cls) => {
+    const sessionId = getClassSessionId(cls);
+    if (sessionId) {
+      navigate(`/classroom/${sessionId}`);
+      return;
+    }
+    if (scheduleData?.next_class && String(scheduleData.next_class.class_id || scheduleData.next_class.class?.id) === String(cls.id)) {
+      navigate(`/classroom/${scheduleData.next_class.id}`);
+      return;
+    }
+    setToast({ type: "error", message: "No active session is currently scheduled for this class." });
+  };
+
   const handleOpenLaunchModal = (session) => {
     setSelectedSession(session);
   };
@@ -292,16 +325,6 @@ export default function TutorMasterClass() {
   const handleLaunchWebClass = (session) => {
     if (!session?.id) return;
     navigate(`/classroom/${session.id}`);
-  };
-
-  const handleLaunchZoomApp = (session) => {
-    if (!session?.class_link) return;
-    navigate('/staffs/meet/app', {
-      state: {
-        class_link: session.class_link,
-        class_schedule_id: session.id
-      }
-    });
   };
 
   const handleOpenReportModal = (session) => {
@@ -629,17 +652,16 @@ export default function TutorMasterClass() {
                             <span>View Sessions</span>
                           </button>
 
-                          {cls.zoom_start_url || cls.zoom_join_url ? (
-                            <a
-                              href={cls.zoom_start_url || cls.zoom_join_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-3 py-2 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 shadow-sm"
-                              title="Direct Zoom Link"
+                          {(cls.zoom_start_url || cls.zoom_join_url || getClassSessionId(cls)) ? (
+                            <button
+                              type="button"
+                              onClick={() => handleLaunchClassRoom(cls)}
+                              className="px-4 py-2 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                              title="Join In-App Classroom"
                             >
-                              <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                              <VideoCameraIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
                               <span>Room</span>
-                            </a>
+                            </button>
                           ) : null}
                         </div>
                       </div>
@@ -750,6 +772,18 @@ export default function TutorMasterClass() {
                             <span>Details</span>
                           </button>
 
+                          {session.id && (
+                            <button
+                              type="button"
+                              onClick={() => handleLaunchWebClass(session)}
+                              className="px-3.5 py-2 rounded-xl bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+                              title="Join In-App Classroom"
+                            >
+                              <VideoCameraIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                              <span>Room</span>
+                            </button>
+                          )}
+
                           {session.recording_link && (
                             <a
                               href={session.recording_link}
@@ -832,44 +866,38 @@ export default function TutorMasterClass() {
                   </div>
                 </div>
 
-                {/* Meeting Room - OPTIONS SHOWN DIRECTLY WITHOUT EXTRA CLICK */}
+                {/* Meeting Room - STRICTLY IN-APP LAUNCH */}
                 <div className="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
                       <LinkIcon className="w-3.5 h-3.5" />
-                      Classroom Meeting Room
+                      In-App Meeting Room
                     </span>
-                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                      {selectedSession.class_link ? "Configured" : "Pending link"}
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                      {selectedSession.class_link || selectedSession.id ? "Ready to Join" : "Pending setup"}
                     </span>
                   </div>
 
-                  {selectedSession.class_link ? (
+                  {selectedSession.id ? (
                     <div className="space-y-2">
-                      <div className="text-[11px] text-slate-500 dark:text-gray-400 truncate font-medium">
-                        {selectedSession.class_link.replace(/^https?:\/\//, '')}
+                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                        <Icon icon="solar:shield-check-bold" className="w-4 h-4 text-emerald-500" />
+                        <span>In-App Secure Classroom · Protected</span>
                       </div>
 
-                      {/* Direct Launch Options Displayed Instantly */}
-                      <div className="grid grid-cols-2 gap-2 pt-0.5">
+                      {/* Direct In-App Classroom Launcher */}
+                      <div className="pt-0.5">
                         <button 
                           onClick={() => handleLaunchWebClass(selectedSession)}
-                          className="py-2.5 bg-[#09314F] hover:bg-[#15466f] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                          className="w-full py-3 bg-[#09314F] hover:bg-[#15466f] text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
                         >
-                          <Icon icon="lucide:globe" className="w-3.5 h-3.5 text-[#C5A97A]" />
-                          <span>Join on Web</span>
-                        </button>
-                        <button 
-                          onClick={() => handleLaunchZoomApp(selectedSession)}
-                          className="py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
-                        >
-                          <Icon icon="lucide:video" className="w-3.5 h-3.5" />
-                          <span>Join via Zoom App</span>
+                          <VideoCameraIcon className="w-4 h-4 text-[#C5A97A]" />
+                          <span>Join In-App Classroom</span>
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-400 italic">No meeting link configured for this session yet.</p>
+                    <p className="text-xs text-slate-400 italic">No session ID configured for this class yet.</p>
                   )}
                 </div>
 

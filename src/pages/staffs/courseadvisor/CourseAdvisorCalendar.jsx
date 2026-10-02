@@ -963,24 +963,34 @@ export default function CourseAdvisorCalendar() {
                                     if (s.id) navigate(`/classroom/${s.id}`);
                                   }}
                                   className="w-full py-2.5 bg-[#09314F] hover:bg-[#1a4a75] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
+                                  title="Join In-App Classroom"
                                 >
-                                  <Icon icon="lucide:monitor" className="w-4 h-4" />
-                                  Join on Web
+                                  <Icon icon="lucide:monitor" className="w-4 h-4 text-[#C5A97A]" />
+                                  <span>Join in App</span>
                                 </button>
                                 <button 
                                   onClick={() => {
+                                    const joinUrl = s.zoom_join_url || s.class_link;
+                                    if (joinUrl) {
+                                      window.open(joinUrl, '_blank', 'noopener,noreferrer');
+                                    }
                                     navigate('/staffs/meet/app', {
                                       state: {
-                                        class_link: s.class_link,
+                                        class_link: joinUrl,
+                                        zoom_meeting_id: s.zoom_meeting_id,
+                                        zoom_meeting_password: s.zoom_meeting_password,
+                                        zoom_join_url: s.zoom_join_url,
                                         class_schedule_id: s.id,
-                                        topic: s.class?.title || s.title
+                                        topic: s.class?.title || s.title,
+                                        subject: s.subject_name || s.subject?.name,
                                       }
                                     });
                                   }}
                                   className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
+                                  title="Launch via Zoom Desktop App in a new tab"
                                 >
                                   <Icon icon="logos:zoom" className="w-4 h-4" />
-                                  Join via Zoom App
+                                  <span>In Zoom App</span>
                                 </button>
                                 <button
                                   type="button"
@@ -1070,73 +1080,43 @@ export default function CourseAdvisorCalendar() {
                     type="button"
                     onClick={() => handleJoinClassRoom(selectedSession)}
                     disabled={!selectedSession.id}
-                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F2843] hover:bg-[#E83831] disabled:bg-slate-200 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black text-[11px] uppercase tracking-wider text-center leading-tight transition-all active:scale-95"
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0F2843] hover:bg-[#1a4a75] disabled:bg-slate-200 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black text-[11px] uppercase tracking-wider text-center leading-tight transition-all active:scale-95 shadow-sm"
                   >
-                    <Icon icon="mdi:web" className="w-4 h-4" />
-                    Join on Web
+                    <Icon icon="lucide:monitor" className="w-4 h-4 text-[#C5A97A]" />
+                    Join in App
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleJoinClassRoom(selectedSession)}
-                    disabled={!selectedSession.id}
-                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black text-[11px] uppercase tracking-wider text-center leading-tight transition-all active:scale-95"
+                    onClick={() => {
+                      const link = selectedSession?.zoom_join_url || selectedSession?.class_link;
+                      if (!link && !selectedSession?.id) return;
+                      if (link) {
+                        window.open(link, '_blank', 'noopener,noreferrer');
+                      }
+                      setSelectedSession(null);
+                      navigate('/staffs/meet/app', {
+                        state: {
+                          class_link: link,
+                          zoom_meeting_id: selectedSession.zoom_meeting_id,
+                          zoom_meeting_password: selectedSession.zoom_meeting_password,
+                          zoom_join_url: selectedSession.zoom_join_url,
+                          class_schedule_id: selectedSession.id,
+                          topic: selectedSession.class?.title || selectedSession.title,
+                          subject: selectedSession.subject_name || selectedSession.subject?.name,
+                        }
+                      });
+                    }}
+                    disabled={!selectedSession?.class_link && !selectedSession?.id}
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black text-[11px] uppercase tracking-wider text-center leading-tight transition-all active:scale-95 shadow-sm"
                   >
-                    <Icon icon="lucide:video" className="w-4 h-4" />
-                    Join via Zoom App
+                    <Icon icon="logos:zoom" className="w-4 h-4" />
+                    In Zoom App
                   </button>
                 </div>
                 {!selectedSession.id && (
                   <p className="mt-3 text-[11px] font-bold text-slate-400 dark:text-slate-500 italic text-center">No link assigned</p>
                 )}
               </div>
-
-              {selectedSession.class_link && !isPastSession(selectedSession) && (
-                <div className="pt-2">
-                  {joiningSessionId === selectedSession.id ? (
-                    <div className="flex flex-col gap-2 w-full animate-in fade-in duration-200">
-                      <button 
-                        onClick={() => {
-                          if (selectedSession.id) navigate(`/classroom/${selectedSession.id}`);
-                        }}
-                        className="w-full bg-[#09314F] hover:bg-[#1a4a75] text-white py-3 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md"
-                      >
-                        <Icon icon="lucide:monitor" className="w-4 h-4" />
-                        Join on Web
-                      </button>
-                      <button 
-                        onClick={() => {
-                          navigate('/staffs/meet/app', {
-                            state: {
-                              class_link: selectedSession.class_link,
-                              class_schedule_id: selectedSession.id,
-                              topic: selectedSession.class?.title || selectedSession.title
-                            }
-                          });
-                        }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md"
-                      >
-                        <Icon icon="logos:zoom" className="w-4 h-4" />
-                        Join via Zoom App
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setJoiningSessionId(null)}
-                        className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-semibold py-1 text-center transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setJoiningSessionId(selectedSession.id)}
-                      className="w-full bg-[#09314F] hover:bg-[#E83831] text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-98"
-                    >
-                      <Icon icon="logos:zoom" className="w-4 h-4" />
-                      Start Class Now
-                    </button>
-                  )}
-                </div>
-              )}
 
               {/* Video Recording Manager */}
               <div className="border-t border-slate-100 dark:border-white/5 pt-6 mt-6">

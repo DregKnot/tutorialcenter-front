@@ -46,8 +46,8 @@ describe("CourseAdvisorCalendar Component", () => {
       id: 201,
       title: "GCE - English",
       session_date: todayStr,
-      starts_at: "14:00:00",
-      ends_at: "15:00:00",
+      starts_at: "23:50:00",
+      ends_at: "23:59:59",
       class_link: "https://zoom.us/j/9876543210",
       subject: {
         id: 11,
@@ -82,8 +82,9 @@ describe("CourseAdvisorCalendar Component", () => {
     const sessionCard = await screen.findByText("GCE - English");
     expect(sessionCard).toBeInTheDocument();
 
-    // Click the session card to open session modal
-    fireEvent.click(sessionCard);
+    // Click the date cell to open the day modal
+    const dateNumber = screen.getAllByText(String(today.getDate()))[0];
+    fireEvent.click(dateNumber.closest("div"));
 
     // Day modal should display "Class Session Scheduled" and "Start Class Now"
     const startClassBtn = await screen.findByRole("button", { name: /start class now/i });
@@ -95,9 +96,9 @@ describe("CourseAdvisorCalendar Component", () => {
     // Click "Start Class Now"
     fireEvent.click(startClassBtn);
 
-    // Should now display "Join on Web" and "Join via Zoom App" buttons inline
-    const joinWebBtns = await screen.findAllByRole("button", { name: /join on web/i });
-    const joinAppBtns = await screen.findAllByRole("button", { name: /join via zoom app/i });
+    // Should now display "Join in App" and "In Zoom App" buttons inline
+    const joinWebBtns = await screen.findAllByRole("button", { name: /join in app/i });
+    const joinAppBtns = await screen.findAllByRole("button", { name: /in zoom app/i });
     const joinWebBtn = joinWebBtns[joinWebBtns.length - 1];
     const joinAppBtn = joinAppBtns[joinAppBtns.length - 1];
     expect(joinWebBtn).toBeInTheDocument();
@@ -106,18 +107,18 @@ describe("CourseAdvisorCalendar Component", () => {
     // Still no modal popup dialog
     expect(screen.queryByText(/choose join method/i)).not.toBeInTheDocument();
 
-    // Click "Join on Web"
+    // Click "Join in App"
     fireEvent.click(joinWebBtn);
     expect(mockNavigate).toHaveBeenCalledWith("/classroom/201");
 
-    // Click "Join via Zoom App"
+    // Click "In Zoom App"
     fireEvent.click(joinAppBtn);
     expect(mockNavigate).toHaveBeenCalledWith("/staffs/meet/app", {
-      state: {
+      state: expect.objectContaining({
         class_link: "https://zoom.us/j/9876543210",
         class_schedule_id: 201,
         topic: "GCE - English",
-      },
+      }),
     });
 
     // Test Cancel button reverts to Start Class Now

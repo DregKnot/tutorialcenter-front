@@ -14,9 +14,14 @@ export default function ClassRoom() {
     const { setIsClassActive: setStaffClassActive } = useStaffAuth();
 
     useEffect(() => {
-        // Suppress Zoom SDK internal warnings from triggering Webpack dev overlay
+        // Suppress Zoom SDK internal warnings/cancellations from triggering Webpack dev overlay
         const preventDevOverlay = (e) => {
-            e.stopImmediatePropagation();
+            const msg = String(e.message || e.reason?.message || e.reason || "");
+            const stack = String(e.filename || e.reason?.stack || "");
+            if (msg.includes("Job was cancelled") || stack.includes("zoom")) {
+                e.stopImmediatePropagation();
+                e.preventDefault();
+            }
         };
 
         window.addEventListener('error', preventDevOverlay, true);
