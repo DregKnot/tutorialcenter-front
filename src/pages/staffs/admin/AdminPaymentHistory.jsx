@@ -124,7 +124,16 @@ function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
     if (saving) return;
     setReviewPayment(payment);
     setAction("approve");
-    setForm({ confirmed_amount: "", bank_reference: "", reason: "", paid_at: "" });
+    setForm({
+      confirmed_amount: "",
+      bank_reference: "",
+      reason: "",
+      paid_at: "",
+      is_waived: false,
+      waiver_type: "test_account",
+      waiver_reason: "",
+      purge_unverified_account: false,
+    });
     setNotice(null);
   };
 
@@ -141,18 +150,26 @@ function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
     }
     const payload = {};
     if (action === "approve") {
-      const amount = Number(form.confirmed_amount);
-      const expected = Number(reviewPayment.amount);
-      if (!/^\d+(\.\d{1,2})?$/.test(form.confirmed_amount.trim()) ||
-          !Number.isFinite(amount) || amount <= 0 || !Number.isFinite(expected) ||
-          !Number.isSafeInteger(Math.round(amount * 100)) ||
-          Math.abs(Math.round(amount * 100) - Math.round(expected * 100)) > 1) {
-        setNotice({ type: "error", text: "Enter the amount confirmed in the bank account. It must match the payment amount (within ₦0.01)." });
-        return;
+      if (form.is_waived) {
+        payload.confirmed_amount = 0;
+        payload.is_waived = true;
+        payload.waiver_type = form.waiver_type || "test_account";
+        payload.waiver_reason = (form.waiver_reason || form.reason || "Fee waiver granted").trim();
+        if (form.reason?.trim()) payload.reason = form.reason.trim();
+      } else {
+        const amount = Number(form.confirmed_amount);
+        const expected = Number(reviewPayment.amount);
+        if (!/^\d+(\.\d{1,2})?$/.test(form.confirmed_amount.trim()) ||
+            !Number.isFinite(amount) || amount <= 0 || !Number.isFinite(expected) ||
+            !Number.isSafeInteger(Math.round(amount * 100)) ||
+            Math.abs(Math.round(amount * 100) - Math.round(expected * 100)) > 1) {
+          setNotice({ type: "error", text: "Enter the amount confirmed in the bank account. It must match the payment amount (within ₦0.01), or check 'Grant Fee Waiver (Free / Test Account)'." });
+          return;
+        }
+        payload.confirmed_amount = amount;
       }
-      payload.confirmed_amount = amount;
-      if (form.bank_reference.trim()) payload.bank_reference = form.bank_reference.trim();
-      if (form.reason.trim()) payload.reason = form.reason.trim();
+      if (form.bank_reference?.trim()) payload.bank_reference = form.bank_reference.trim();
+      if (form.reason?.trim()) payload.reason = form.reason.trim();
       if (form.paid_at) {
         const paidAt = new Date(form.paid_at);
         if (Number.isNaN(paidAt.getTime())) {
@@ -167,6 +184,9 @@ function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
         return;
       }
       payload.reason = form.reason.trim();
+      if (form.purge_unverified_account) {
+        payload.purge_unverified_account = true;
+      }
     }
     submitLock.current = true;
     setSaving(true);
@@ -314,9 +334,21 @@ function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
             <div><dt className="text-gray-500 dark:text-gray-300">Claimed amount</dt><dd>{claim.amount_paid != null ? `₦${Number(claim.amount_paid).toLocaleString()}` : "Not provided"}</dd></div>
             <div><dt className="text-gray-500 dark:text-gray-300">Sender's account name</dt><dd>{claim.paid_from_account_name || "Not provided"}</dd></div>
             <div><dt className="text-gray-500 dark:text-gray-300">Claim time</dt><dd>{claim.claimed_paid_at ? new Date(claim.claimed_paid_at).toLocaleString() : "Not claimed yet"}</dd></div>
+            <div>
+              <dt className="text-gray-500 dark:text-gray-300">Exam Track / Program</dt>
+              <dd className="font-bold text-[#09314F] dark:text-blue-200">
+                {claim.exam_track ? `${claim.exam_track} (${reviewPayment.enrollment?.course?.title || "O-Levels"})` : (reviewPayment.enrollment?.course?.title || "Standard Course")}
+              </dd>
+            </div>
+            {claim.subjects && claim.subjects.length > 0 && (
+              <div>
+                <dt className="text-gray-500 dark:text-gray-300">Selected Subject IDs</dt>
+                <dd className="font-mono text-xs text-gray-700 dark:text-gray-200">{claim.subjects.join(", ")}</dd>
+              </div>
+            )}
             <div className="sm:col-span-2"><dt className="text-gray-500 dark:text-gray-300">Student's note</dt><dd className="whitespace-pre-wrap break-words">{claim.note || "No note"}</dd></div>
             {claim.review && <div className="sm:col-span-2"><dt className="text-gray-500 dark:text-gray-300">Previous review</dt>
-              <dd>{claim.review.action} · Staff #{claim.review.by_staff_id || "—"} · {claim.review.reason || "No reason recorded"}</dd>
+              <dd>{claim.review.action} · Staff #{claim.review.by_staff_id || "—"} · {claim.review.reason || "No reason recorded"}{claim.review.is_waived ? ` · (Waived: ${claim.review.waiver_type || "Free"})` : ""}</dd>
             </div>}
           </dl>
           {canReview && canReviewBankPayment(reviewPayment) ? (
@@ -356,15 +388,79 @@ function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
 
               {action === "approve" ? (
                 <div className="space-y-4">
-                  <p className="flex items-start gap-2.5 rounded-2xl border border-amber-100 bg-amber-50/80 p-3.5 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
-                    <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>Check the actual credit in the bank account before approving. The student's claim alone is not confirmation.</span>
-                  </p>
+                  {/* FEE WAIVER TOGGLE (FREE / SCHOLARSHIP / TEST ACCOUNT) */}
+                  <div className="rounded-2xl border border-purple-200 bg-purple-50/70 p-4 dark:border-purple-900/50 dark:bg-purple-950/20">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.is_waived || false}
+                        disabled={saving}
+                        onChange={e => setForm(c => ({ ...c, is_waived: e.target.checked }))}
+                        className="h-5 w-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                      />
+                      <div>
+                        <span className="text-xs font-black uppercase tracking-wider text-purple-900 dark:text-purple-200 block">
+                          Grant Fee Waiver (Mark as Free / Scholarship / Test Account)
+                        </span>
+                        <span className="text-[11px] text-purple-700 dark:text-purple-300">
+                          Activate enrollment without bank credit for test accounts, full scholarships, or administrative waivers.
+                        </span>
+                      </div>
+                    </label>
+
+                    {form.is_waived && (
+                      <div className="mt-3.5 pt-3.5 border-t border-purple-200/80 dark:border-purple-800/40 grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wide text-purple-900 dark:text-purple-200">
+                            Waiver Classification
+                          </label>
+                          <select
+                            value={form.waiver_type || "test_account"}
+                            disabled={saving}
+                            onChange={e => setForm(c => ({ ...c, waiver_type: e.target.value }))}
+                            className="mt-1 w-full rounded-xl border border-purple-300 bg-white p-2.5 text-xs font-semibold text-gray-800 dark:bg-gray-800 dark:text-white"
+                          >
+                            <option value="test_account">Test Account (Dev / Demo)</option>
+                            <option value="scholarship">Full Scholarship / Sponsored</option>
+                            <option value="admin_waiver">Administrative Fee Waiver</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wide text-purple-900 dark:text-purple-200">
+                            Waiver Justification
+                          </label>
+                          <input
+                            type="text"
+                            value={form.waiver_reason || ""}
+                            placeholder="e.g. Test student QA verification"
+                            disabled={saving}
+                            onChange={e => setForm(c => ({ ...c, waiver_reason: e.target.value }))}
+                            className="mt-1 w-full rounded-xl border border-purple-300 bg-white p-2.5 text-xs text-gray-800 dark:bg-gray-800 dark:text-white"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {!form.is_waived && (
+                    <p className="flex items-start gap-2.5 rounded-2xl border border-amber-100 bg-amber-50/80 p-3.5 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
+                      <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>Check the actual credit in the bank account before approving. The student's claim alone is not confirmation.</span>
+                    </p>
+                  )}
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300">Confirmed amount (NGN)
-                      <input type="number" required min="0.01" step="0.01" value={form.confirmed_amount} disabled={saving}
+                    <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300">
+                      Confirmed amount (NGN) {form.is_waived && <span className="text-purple-600 font-bold">(Waived - ₦0.00)</span>}
+                      <input
+                        type="number"
+                        required={!form.is_waived}
+                        min="0"
+                        step="0.01"
+                        value={form.is_waived ? "0.00" : form.confirmed_amount}
+                        disabled={saving || form.is_waived}
                         onChange={event => setForm(current => ({ ...current, confirmed_amount: event.target.value }))}
-                        className="mt-1.5 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm outline-none transition focus:border-[#09314F] focus:ring-4 focus:ring-[#09314F]/10 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900/40 dark:text-white" />
+                        className="mt-1.5 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm outline-none transition focus:border-[#09314F] focus:ring-4 focus:ring-[#09314F]/10 disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900/40 dark:text-white"
+                      />
                     </label>
                     <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300">Bank transaction reference (optional)
                       <input maxLength={255} value={form.bank_reference} disabled={saving}
@@ -380,10 +476,24 @@ function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
                   <p className="text-xs text-gray-500 dark:text-gray-400">Approving activates the enrollment and queues the student's receipt.</p>
                 </div>
               ) : (
-                <p className="flex items-start gap-2.5 rounded-2xl border border-rose-100 bg-rose-50/80 p-3.5 text-sm text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-200">
-                  <XCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>Only reject when you cannot find the credit. The student sees your reason and can submit a new claim.</span>
-                </p>
+                <div className="space-y-3">
+                  <p className="flex items-start gap-2.5 rounded-2xl border border-rose-100 bg-rose-50/80 p-3.5 text-sm text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-200">
+                    <XCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>Only reject when you cannot find the credit. The student sees your reason and can submit a new claim.</span>
+                  </p>
+                  <label className="flex items-center gap-2.5 text-xs text-gray-600 dark:text-gray-300 cursor-pointer pt-1">
+                    <input
+                      type="checkbox"
+                      checked={form.purge_unverified_account || false}
+                      disabled={saving}
+                      onChange={e => setForm(c => ({ ...c, purge_unverified_account: e.target.checked }))}
+                      className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                    />
+                    <span className="font-semibold text-rose-700 dark:text-rose-400">
+                      Purge unverified student record (cleans up test/temporary account if no other active courses exist)
+                    </span>
+                  </label>
+                </div>
               )}
 
               <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-300">{action === "reject" ? "Rejection reason (shown to the student)" : "Internal note (optional)"}

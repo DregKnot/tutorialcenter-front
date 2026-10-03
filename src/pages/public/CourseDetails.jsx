@@ -6,6 +6,7 @@ import Footer from "../../components/public/Footer";
 import ScrollReveal from "../../components/public/ScrollReveal";
 import DiscountCard from "../../components/public/DiscountCard";
 import { formatDepartments } from "../../utils/textUtils";
+import { getProgramConfig, OLEVEL_COURSE_ID } from "../../config/programsConfig";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
@@ -14,10 +15,24 @@ const CourseDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const staticProgram = getProgramConfig(slug);
   const initialCourse = location.state?.course || null;
 
-  const [course, setCourse] = useState(initialCourse);
-  const [loading, setLoading] = useState(!initialCourse);
+  const [course, setCourse] = useState(() => {
+    if (initialCourse) return initialCourse;
+    if (staticProgram) {
+      return {
+        id: staticProgram.backendCourseId || OLEVEL_COURSE_ID,
+        title: staticProgram.title,
+        description: staticProgram.description,
+        price: 25000,
+        banner: staticProgram.banner,
+        isStaticProgram: true,
+      };
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(!initialCourse && !staticProgram);
   
   const [subjects, setSubjects] = useState([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
@@ -25,45 +40,83 @@ const CourseDetails = () => {
   const [selectedSubject, setSelectedSubject] = useState(null);
 
   useEffect(() => {
-    if (!course) {
-      const fetchCourse = async () => {
-        try {
-          const res = await axios.get(`${API_BASE_URL}/api/courses`);
-          const fetchedCourses = res?.data?.courses || [];
-          const foundCourse = fetchedCourses.find((c) => c.title.toLowerCase().replace(/\s+/g, '-') === slug);
-          if (foundCourse) {
-            setCourse(foundCourse);
-          } else {
-            navigate("/training");
-          }
-        } catch (err) {
-          console.error("Failed to fetch courses:", err);
-          navigate("/training");
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchCourse();
-    }
-  }, [course, slug, navigate]);
+    let isMounted = true;
+    const fetchCourseData = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/courses`);
+        if (!isMounted) return;
+        const fetchedCourses = res?.data?.courses || [];
 
-  useEffect(() => {
-    if (course && course.id) {
-      const fetchSubjects = async () => {
-        setLoadingSubjects(true);
-        try {
-          const res = await axios.get(`${API_BASE_URL}/api/courses/${course.id}/subjects`);
-          const fetchedSubjects = res?.data?.subjects || res?.data?.data || res?.data || [];
-          setSubjects(Array.isArray(fetchedSubjects) ? fetchedSubjects : []);
-        } catch (err) {
-          console.error("Failed to fetch subjects:", err);
-        } finally {
-          setLoadingSubjects(false);
+        if (staticProgram) {
+          const isJamb = staticProgram.slug === "jamb";
+          // If JAMB, sync with Course ID 1 (JAMB); if O-Levels (WAEC, NECO, GCE), sync with Course ID 4 (O'Levels)
+          const targetCourse = isJamb
+            ? (fetchedCourses.find((c) => Number(c.id) === 1 || c.title?.toLowerCase().includes("jamb") || c.title?.toLowerCase().includes("utme")) || fetchedCourses[0])
+            : (fetchedCourses.find((c) => Number(c.id) === OLEVEL_COURSE_ID || c.title?.toLowerCase().includes("level") || c.title?.toLowerCase().includes("gce")) || fetchedCourses[0]);
+
+          setCourse((prev) => {
+            const nextPrice = targetCourse?.price ? Number(targetCourse.price) : (isJamb ? 8000 : 25000);
+            const nextId = targetCourse?.id || (isJamb ? 1 : OLEVEL_COURSE_ID);
+            if (prev && prev.id === nextId && prev.price === nextPrice) {
+              return prev; // Preserve identity to prevent triggering downstream effects
+            }
+            return {
+              id: nextId,
+              title: staticProgram.title,
+              description: staticProgram.description,
+              price: nextPrice,
+              banner: staticProgram.banner,
+              isStaticProgram: true,
+            };
+          });
+        } else {
+          setCourse((prev) => {
+            if (prev) return prev;
+            const foundCourse = fetchedCourses.find((c) => c.title.toLowerCase().replace(/\s+/g, "-") === slug);
+            if (foundCourse) return foundCourse;
+            navigate("/training");
+            return null;
+          });
         }
-      };
-      fetchSubjects();
-    }
-  }, [course]);
+      } catch (err) {
+        console.error("Failed to fetch courses:", err);
+        if (!staticProgram) {
+          navigate("/training");
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchCourseData();
+    return () => { isMounted = false; };
+  }, [slug, navigate, staticProgram]);
+
+  const courseId = course?.id;
+  useEffect(() => {
+    if (!courseId) return;
+    let active = true;
+
+    const fetchSubjects = async () => {
+      setLoadingSubjects(true);
+      try {
+        // If this is an O-Level track (WAEC, NECO, GCE) or Course ID is 2, 3, or 4, fetch from Course ID 4
+        const isJamb = staticProgram?.slug === "jamb";
+        const queryId = (!isJamb && (staticProgram || [2, 3, 4].includes(Number(courseId)))) ? OLEVEL_COURSE_ID : courseId;
+        const res = await axios.get(`${API_BASE_URL}/api/courses/${queryId}/subjects`);
+        if (!active) return;
+        const fetchedSubjects = res?.data?.subjects || res?.data?.data || res?.data || [];
+        setSubjects(Array.isArray(fetchedSubjects) ? fetchedSubjects : []);
+      } catch (err) {
+        console.error("Failed to fetch subjects:", err);
+      } finally {
+        if (active) setLoadingSubjects(false);
+      }
+    };
+
+    fetchSubjects();
+    return () => { active = false; };
+  }, [courseId, staticProgram]);
 
   useEffect(() => {
     console.log("PAGE INFORMATION (Course):", course);
@@ -89,8 +142,14 @@ const CourseDetails = () => {
 
   if (!course) return null;
 
-  const bannerUrl = course.banner
-    ? `${API_BASE_URL}/storage/${course.banner}`
+  const bannerUrl = staticProgram?.banner
+    ? staticProgram.banner
+    : course.banner
+    ? (typeof course.banner === "string" && course.banner.startsWith("http")
+        ? course.banner
+        : typeof course.banner === "string" && !course.banner.startsWith("static") && !course.banner.includes("/")
+        ? `${API_BASE_URL}/storage/${course.banner}`
+        : course.banner)
     : null;
 
   const basePrice = Number(course.price) || 25000;
@@ -174,28 +233,47 @@ const CourseDetails = () => {
                 )}
               </div>
 
-              {/* What's Included */}
+              {/* What's Included / Course Features */}
               <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-                <h3 className="text-xl font-black text-[#09314F] mb-5 uppercase tracking-tight">What's Included</h3>
+                <h3 className="text-xl font-black text-[#09314F] mb-5 uppercase tracking-tight">
+                  {staticProgram ? "Course Features" : "What's Included"}
+                </h3>
                 <ul className="space-y-4">
-                  <li className="flex items-start gap-4 text-gray-700 text-lg">
-                    <span className="text-green-500 font-bold bg-green-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">✓</span> 
-                    Comprehensive tutorials tailored to the syllabus
-                  </li>
-                  <li className="flex items-start gap-4 text-gray-700 text-lg">
-                    <span className="text-green-500 font-bold bg-green-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">✓</span> 
-                    Weekly masterclasses with subject experts
-                  </li>
-                  <li className="flex items-start gap-4 text-gray-700 text-lg">
-                    <span className="text-green-500 font-bold bg-green-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">✓</span> 
-                    Standard mock tests and practice questions
-                  </li>
-                  <li className="flex items-start gap-4 text-gray-700 text-lg">
-                    <span className="text-green-500 font-bold bg-green-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">✓</span> 
-                    Live Q&A sessions for difficult topics
-                  </li>
+                  {(staticProgram?.features || [
+                    "Comprehensive tutorials tailored to the syllabus",
+                    "Weekly masterclasses with subject experts",
+                    "Standard mock tests and practice questions",
+                    "Live Q&A sessions for difficult topics",
+                  ]).map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-4 text-gray-700 text-base sm:text-lg">
+                      <span className="text-green-500 font-bold bg-green-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">✓</span> 
+                      {feature}
+                    </li>
+                  ))}
                 </ul>
               </div>
+
+              {/* Why Choose Section (For Static Programs) */}
+              {staticProgram?.whyChoose && (
+                <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 rounded-3xl p-8 border border-blue-100/80 shadow-sm">
+                  <h3 className="text-xl font-black text-[#09314F] mb-5 uppercase tracking-tight">
+                    Why Choose Tutorial Center?
+                  </h3>
+                  <ul className="space-y-4 mb-6">
+                    {staticProgram.whyChoose.map((point, idx) => (
+                      <li key={idx} className="flex items-start gap-4 text-gray-800 text-base sm:text-lg">
+                        <span className="text-blue-600 font-bold bg-blue-100/80 w-8 h-8 rounded-full flex items-center justify-center shrink-0">★</span>
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                  {staticProgram.closingStatement && (
+                    <p className="text-sm sm:text-base font-semibold text-gray-600 border-t border-blue-200/60 pt-4 leading-relaxed">
+                      {staticProgram.closingStatement}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Subjects List (Clickable Cards) */}
               <div>

@@ -61,8 +61,10 @@ export const StudentSubjectSelection = () => {
         // Fetch subjects for each selected course
         for (const course of activeCourses) {
           try {
+            // For O-Level courses (ID 2: WAEC, 3: NECO, 4: GCE/O-Levels), always fetch subjects from Course ID 4
+            const queryCourseId = [2, 3, 4].includes(Number(course.id)) ? 4 : course.id;
             const res = await axios.get(
-              `${API_BASE_URL}/api/courses/${course.id}/subjects/${department}`
+              `${API_BASE_URL}/api/courses/${queryCourseId}/subjects/${department}`
             );
             const subjects = res?.data?.subjects || res?.data?.data || [];
             subjectMap[course.id] = subjects;
@@ -252,7 +254,9 @@ export const StudentSubjectSelection = () => {
                       {/* COURSE HEADER */}
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="text-xs sm:text-sm font-black text-[#09314F] uppercase tracking-wide truncate">
-                          {course.title}
+                          {[2, 3, 4].includes(Number(course.id)) && getStudentData()?.selectedExamTrack
+                            ? `O'Levels (${getStudentData().selectedExamTrack})`
+                            : course.title}
                         </span>
                         {!isAutoCurriculum && (
                           <span className={`text-[11px] font-black px-2.5 py-1 rounded-full ${

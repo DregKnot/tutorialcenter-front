@@ -73,6 +73,7 @@ export default function StudentDashboard({ blogs = [] }) {
   const [courses, setCourses] = useState(() => cachedData?.courses || []);
   const [loading, setLoading] = useState(() => !cachedData); // Only show spinner if NO cache exists
   const [showNoCoursePopup, setShowNoCoursePopup] = useState(false);
+  const [hasPendingPayment, setHasPendingPayment] = useState(false);
   const [attempts, setAttempts] = useState(() => cachedData?.attempts || []);
   const [unreadCount, setUnreadCount] = useState(() => cachedData?.unreadCount || 0);
   const [leaderboardRank, setLeaderboardRank] = useState(() => cachedData?.leaderboardRank || null);
@@ -191,10 +192,14 @@ export default function StudentDashboard({ blogs = [] }) {
           }
         });
 
+        const hasPendingEnrollment = fetchedCourses.some(c => c.status?.toLowerCase() === 'pending') ||
+          paymentsList.some(p => p.status === 'pending');
+        setHasPendingPayment(hasPendingEnrollment);
+
         const mergedCourses = Array.from(activeMap.values());
         currentCourses = mergedCourses;
         setCourses(mergedCourses);
-        if (mergedCourses.length === 0) setShowNoCoursePopup(true);
+        if (mergedCourses.length === 0 && !hasPendingEnrollment) setShowNoCoursePopup(true);
         else setShowNoCoursePopup(false);
       } catch (error) {
         console.log(error);
@@ -429,6 +434,23 @@ export default function StudentDashboard({ blogs = [] }) {
 
         {/* ── Welcome header ────────────────────────────────────────────────── */}
         <WelcomeHeader leaderboardRank={leaderboardRank} />
+
+        {/* ── Pending Verification Alert ────────────────────────────────────── */}
+        {hasPendingPayment && (
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-3xl p-5 sm:p-6 shadow-sm flex items-start gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Icon icon="lucide:clock" className="w-5 h-5 animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm sm:text-base font-black text-amber-900 dark:text-amber-200 tracking-tight">
+                Payment & Account Verification In Progress
+              </h3>
+              <p className="text-xs sm:text-sm text-amber-800/90 dark:text-amber-300/80 mt-1 leading-relaxed">
+                Your bank transfer details have been submitted. An administrator is currently reviewing your payment. Once approved, your enrolled subjects, live masterclasses, and CBT practice materials will activate automatically.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Stats Bar ─────────────────────────────────────────────────── */}
         <StudentStatsBar avgScore={avgScore} streak={actualMaxStreak} weekActivity={weekActivity} highlights={highlights} unreadCount={unreadCount} leaderboardRank={leaderboardRank} />

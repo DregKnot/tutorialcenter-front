@@ -30,8 +30,8 @@ const ProgramCard = ({ subject, title, month, quarter, semiAnnual, year, slashed
                                 transition-transform duration-300 ease-in-out
                                 hover:scale-105
                             "/>
-                        <div className="absolute -bottom-6 right-4 bg-sencondary w-10 h-10 rounded-full flex items-center justify-center">
-                            <img loading="lazy" className="max-w-4" src={PenIcon} alt="" />
+                        <div className="absolute bottom-3 right-4 bg-sencondary w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
+                            <img loading="lazy" className="max-w-4 brightness-0 invert" src={PenIcon} alt="" />
                         </div>
                     </div>
                     <div className="pb-3 px-5 pt-8">

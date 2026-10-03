@@ -11,10 +11,10 @@ import lawFaculty from "../../assets/images/giammarco-boscaro-zeH-ljawHtg-unspla
 import accountingFaculty from "../../assets/images/olga-delawrence-5616whx5NdQ-unsplash.webp"
 import engineerFaculty from "../../assets/images/ej-yao-D46mXLsQRJw-unsplash.webp"
 import environmentFalculty from "../../assets/images/danist-soh-dqXiw7nCb9Q-unsplash.webp"
-import jambLogo from "../../assets/images/jamb_logo.webp";
-import waecLogo from "../../assets/images/waec_logo.webp";
+import jambBanner from "../../assets/images/jamb_banner.jpg";
 import crowd from "../../assets/svg/Transmission-Virus-Crowd--Streamline-Covid.svg";
 import ScrollReveal from "../../components/public/ScrollReveal";
+import { PROGRAMS_CONFIG, OLEVEL_COURSE_ID } from "../../config/programsConfig";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
@@ -91,14 +91,7 @@ const admissionSectors = [
   },
 ];
 
-/* ═══════════════════════════════════════════════════
-   LOGO MAP — maps course title keywords to logos
-   ═══════════════════════════════════════════════════ */
-const getLogoForCourse = (title) => {
-  const t = (title || "").toLowerCase();
-  if (t.includes("jamb") || t.includes("utme")) return jambLogo;
-  return waecLogo; // WAEC, NECO, GCE all use waec logo for now
-};
+
 
 /* ═══════════════════════════════════════════════════
    MAIN COMPONENT
@@ -277,202 +270,251 @@ const Training = () => {
               <div className="flex justify-center items-center py-20">
                 <div className="w-10 h-10 border-4 border-[#09314F]/20 border-t-[#09314F] rounded-full animate-spin" />
               </div>
-            ) : courses.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-gray-400 font-bold text-lg">No programs available at this time.</p>
-              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 lg:gap-x-8 gap-y-3 lg:gap-y-4 items-start">
-                {courses.map((course, index) => {
-                  const isExpanded = expandedCard === course.id;
-                  const bannerUrl = course.banner
-                    ? `${API_BASE_URL}/storage/${course.banner}`
-                    : getLogoForCourse(course.title);
-                  const hasBanner = !!course.banner;
-                  const basePrice = Number(course.price) || 25000;
+              (() => {
+                const olevelCourse = courses.find(c => Number(c.id) === OLEVEL_COURSE_ID || c.title?.toLowerCase().includes("o'level") || c.title?.toLowerCase().includes("olevel") || c.title?.toLowerCase().includes("gce")) 
+                  || courses.find(c => Number(c.id) === 2 || c.title?.toLowerCase().includes("waec"))
+                  || courses[0];
+                const jambCourse = courses.find(c => Number(c.id) === 1 || c.title?.toLowerCase().includes("jamb") || c.title?.toLowerCase().includes("utme"))
+                  || courses[0];
 
-                  // Actual Normal Prices (from backend)
-                  const monthly = basePrice;
-                  const quarterly = Math.round(basePrice * 3 * 0.95);
-                  const semiAnnually = Math.round(basePrice * 6 * 0.95);
-                  const annually = Math.round(basePrice * 12 * 0.95);
+                const olevelBasePrice = Number(olevelCourse?.price) || 25000;
+                const jambBasePrice = Number(jambCourse?.price) || 25000;
 
-                  // Expensive Slashed Prices (calculated from 40,000)
-                  const slashedMonthly = 40000;
-                  const slashedQuarterly = 40000 * 3;
-                  const slashedSemiAnnually = 40000 * 6;
-                  const slashedAnnually = 40000 * 12;
+                const displayPrograms = [
+                  {
+                    id: "jamb",
+                    title: "JAMB",
+                    slug: "jamb",
+                    bannerUrl: PROGRAMS_CONFIG.jamb?.banner || jambBanner,
+                    hasBanner: true,
+                    basePrice: jambBasePrice,
+                    subjectCount: "4 Subjects",
+                    courseObj: jambCourse,
+                  },
+                  {
+                    id: "waec",
+                    title: "WAEC",
+                    slug: "waec",
+                    bannerUrl: PROGRAMS_CONFIG.waec.banner,
+                    hasBanner: true,
+                    basePrice: olevelBasePrice,
+                    subjectCount: "8-9 Subjects",
+                    courseObj: olevelCourse,
+                  },
+                  {
+                    id: "neco",
+                    title: "NECO",
+                    slug: "neco",
+                    bannerUrl: PROGRAMS_CONFIG.neco.banner,
+                    hasBanner: true,
+                    basePrice: olevelBasePrice,
+                    subjectCount: "8-9 Subjects",
+                    courseObj: olevelCourse,
+                  },
+                  {
+                    id: "gce",
+                    title: "GCE",
+                    slug: "gce",
+                    bannerUrl: PROGRAMS_CONFIG.gce.banner,
+                    hasBanner: true,
+                    basePrice: olevelBasePrice,
+                    subjectCount: "8-9 Subjects",
+                    courseObj: olevelCourse,
+                  },
+                ];
 
-                  return (
-                    <ScrollReveal key={course.id} delay={0.1 * index} direction="up" distance={30}>
-                      <div
-                        onClick={() => toggleProgramCard(course.id)}
-                        className={`
-                          relative bg-white rounded-[24px] overflow-hidden cursor-pointer
-                          border-2 transition-all duration-500 group
-                          shadow-[0_8px_30px_rgba(0,0,0,0.06)]
-                          hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)]
-                          hover:-translate-y-1
-                          ${isExpanded
-                            ? "border-[#09314F] shadow-[0_12px_40px_rgba(9,49,79,0.15)]"
-                            : "border-gray-100 hover:border-[#BB9E7F]/50"
-                          }
-                        `}
-                      >
-                        {/* Top Area with Banner or Logo */}
-                        <div className="bg-[#FFF0F0] flex items-center justify-center relative overflow-hidden" style={{ height: hasBanner ? '180px' : undefined, paddingTop: hasBanner ? 0 : '2rem', paddingBottom: hasBanner ? 0 : '2rem' }}>
-                          <img
-                            src={bannerUrl}
-                            alt={course.title}
-                            loading="lazy"
-                            className={hasBanner
-                              ? "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              : "h-24 w-24 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500"
-                            }
-                          />
-                          {/* Red icon badge */}
-                          <div className="absolute bottom-4 right-4 w-10 h-10 bg-[#E83831] rounded-xl flex items-center justify-center shadow-lg">
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                          </div>
-                        </div>
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 lg:gap-x-8 gap-y-3 lg:gap-y-4 items-start">
+                    {displayPrograms.map((course, index) => {
+                      const isExpanded = expandedCard === course.id;
+                      const bannerUrl = course.bannerUrl;
+                      const hasBanner = course.hasBanner;
+                      const basePrice = course.basePrice;
 
-                        {/* Card Content */}
-                        <div className="p-6 pb-8">
-                          {/* Subject count badge */}
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-red-400 text-sm">📚</span>
-                            <span className="text-xs font-bold text-gray-400">
-                              {course.title?.toLowerCase().includes("jamb") ? "4 Subjects" : "8-9 Subjects"}
-                            </span>
-                          </div>
+                      // Actual Normal Prices (from backend)
+                      const monthly = basePrice;
+                      const quarterly = Math.round(basePrice * 3 * 0.95);
+                      const semiAnnually = Math.round(basePrice * 6 * 0.95);
+                      const annually = Math.round(basePrice * 12 * 0.95);
 
-                          <h3 className="text-xl font-black text-[#09314F] uppercase tracking-tight mb-4">
-                            {course.title}
-                          </h3>
+                      // Expensive Slashed Prices (calculated from 40,000)
+                      const slashedMonthly = 40000;
+                      const slashedQuarterly = 40000 * 3;
+                      const slashedSemiAnnually = 40000 * 6;
+                      const slashedAnnually = 40000 * 12;
 
-                          {/* Pricing Section — always visible but expands */}
-                          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"}`}>
-                            {/* Duration Pricing */}
-                            <div className="mb-4">
-                              <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Duration:</p>
-                              <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-xs font-bold text-gray-500">Monthly (1 month):</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedMonthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                    <span className="text-xs font-black text-[#09314F]">₦{monthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                  </div>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                  <span className="text-xs font-bold text-gray-500">Quarterly (3 months):</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedQuarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                    <span className="text-xs font-black text-[#09314F]">₦{quarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                  </div>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                  <span className="text-xs font-bold text-gray-500">Semi-Annually (6 months):</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedSemiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                    <span className="text-xs font-black text-[#09314F]">₦{semiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                  </div>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                  <span className="text-xs font-bold text-gray-500">Annually (1 year):</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                    <span className="text-xs font-black text-[#09314F]">₦{annually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Includes */}
-                            <div className="mb-5">
-                              <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Includes:</p>
-                              <ul className="space-y-1.5">
-                                <li className="text-xs text-gray-500 flex items-start gap-2">
-                                  <span className="text-green-500 mt-0.5">✓</span> Comprehensive tutorials
-                                </li>
-                                <li className="text-xs text-gray-500 flex items-start gap-2">
-                                  <span className="text-green-500 mt-0.5">✓</span> Weekly masterclasses
-                                </li>
-                                <li className="text-xs text-gray-500 flex items-start gap-2">
-                                  <span className="text-green-500 mt-0.5">✓</span> Mock tests & practice questions
-                                </li>
-                                <li className="text-xs text-gray-500 flex items-start gap-2">
-                                  <span className="text-green-500 mt-0.5">✓</span> Live Q&A sessions with experts
-                                </li>
-                              </ul>
-                            </div>
-
-                            {/* Savings callout */}
-                            <div className="bg-gray-50 rounded-xl p-3 mb-5">
-                              <p className="text-[9px] font-black text-[#09314F] uppercase tracking-widest mb-1">
-                                Save up to 5% on multi-month plans
-                              </p>
-                              <div className="flex justify-between">
-                                <span className="text-[10px] text-gray-500 font-bold">Quarterly savings:</span>
-                                <span className="text-[10px] font-black text-green-600">₦{Math.round(monthly * 3 * 0.05).toLocaleString()}</span>
-                              </div>
-                              <div className="flex justify-between mt-1">
-                                <span className="text-[10px] text-gray-500 font-bold">Semi-Annual savings:</span>
-                                <span className="text-[10px] font-black text-green-600">₦{Math.round(monthly * 6 * 0.05).toLocaleString()}</span>
-                              </div>
-                              <div className="flex justify-between mt-1">
-                                <span className="text-[10px] text-gray-500 font-bold">Annual savings:</span>
-                                <span className="text-[10px] font-black text-green-600">₦{Math.round(monthly * 12 * 0.05).toLocaleString()}</span>
-                              </div>
-                            </div>
-
-                            {/* Learn More (Expanded) */}
-                            <div 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const slug = course.title.toLowerCase().replace(/\s+/g, '-');
-                                  navigate(`/program/${slug}`, { state: { course } });
-                                }}
-                              className="flex items-center justify-center gap-1 text-[#09314F] font-bold text-sm mb-4 cursor-pointer hover:underline transition-all"
-                            >
-                              Learn More
-                              <span className="text-lg">→</span>
-                            </div>
-
-                            {/* Enroll */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (course?.title?.toLowerCase().includes("gce")) {
-                                  navigate("/campaign/gce/department");
-                                } else {
-                                  navigate("/register");
+                      return (
+                        <ScrollReveal key={course.id} delay={0.1 * index} direction="up" distance={30}>
+                          <div
+                            onClick={() => toggleProgramCard(course.id)}
+                            className={`
+                              relative bg-white rounded-[24px] overflow-hidden cursor-pointer
+                              border-2 transition-all duration-500 group
+                              shadow-[0_8px_30px_rgba(0,0,0,0.06)]
+                              hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)]
+                              hover:-translate-y-1
+                              ${isExpanded
+                                ? "border-[#09314F] shadow-[0_12px_40px_rgba(9,49,79,0.15)]"
+                                : "border-gray-100 hover:border-[#BB9E7F]/50"
+                              }
+                            `}
+                          >
+                            {/* Top Area with Banner or Logo */}
+                            <div className="bg-[#FFF0F0] flex items-center justify-center relative overflow-hidden" style={{ height: hasBanner ? '180px' : undefined, paddingTop: hasBanner ? 0 : '2rem', paddingBottom: hasBanner ? 0 : '2rem' }}>
+                              <img
+                                src={bannerUrl}
+                                alt={course.title}
+                                loading="lazy"
+                                className={hasBanner
+                                  ? "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                  : "h-24 w-24 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500"
                                 }
-                              }}
-                              className="w-full py-3.5 text-white font-bold text-sm rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
-                              style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
-                            >
-                              Apply Now
-                            </button>
-                          </div>
-
-                          {/* "See more" CTA when collapsed */}
-                          {!isExpanded && (
-                            <div className="flex items-center gap-1 text-[#09314F] font-bold text-sm mt-2 group-hover:gap-2 transition-all">
-                              See more
-                              <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                              </svg>
+                              />
+                              {/* Red icon badge */}
+                              <div className="absolute bottom-4 right-4 w-10 h-10 bg-[#E83831] rounded-xl flex items-center justify-center shadow-lg">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </ScrollReveal>
-                  );
-                })}
-              </div>
+
+                            {/* Card Content */}
+                            <div className="p-6 pb-8">
+                              {/* Subject count badge */}
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-red-400 text-sm">📚</span>
+                                <span className="text-xs font-bold text-gray-400">
+                                  {course.subjectCount}
+                                </span>
+                              </div>
+
+                              <h3 className="text-xl font-black text-[#09314F] uppercase tracking-tight mb-4">
+                                {course.title}
+                              </h3>
+
+                              {/* Pricing Section — always visible but expands */}
+                              <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"}`}>
+                                {/* Duration Pricing */}
+                                <div className="mb-4">
+                                  <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Duration:</p>
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-xs font-bold text-gray-500">Monthly (1 month):</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedMonthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        <span className="text-xs font-black text-[#09314F]">₦{monthly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-xs font-bold text-gray-500">Quarterly (3 months):</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedQuarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        <span className="text-xs font-black text-[#09314F]">₦{quarterly.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-xs font-bold text-gray-500">Semi-Annually (6 months):</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedSemiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        <span className="text-xs font-black text-[#09314F]">₦{semiAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-xs font-bold text-gray-500">Annually (1 year):</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-[11px] font-bold text-gray-400 line-through">₦{slashedAnnually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        <span className="text-xs font-black text-[#09314F]">₦{annually.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Includes */}
+                                <div className="mb-5">
+                                  <p className="text-[10px] font-black text-[#09314F] uppercase tracking-wider mb-2">Includes:</p>
+                                  <ul className="space-y-1.5">
+                                    <li className="text-xs text-gray-500 flex items-start gap-2">
+                                      <span className="text-green-500 mt-0.5">✓</span> Comprehensive tutorials
+                                    </li>
+                                    <li className="text-xs text-gray-500 flex items-start gap-2">
+                                      <span className="text-green-500 mt-0.5">✓</span> Weekly masterclasses
+                                    </li>
+                                    <li className="text-xs text-gray-500 flex items-start gap-2">
+                                      <span className="text-green-500 mt-0.5">✓</span> Mock tests & practice questions
+                                    </li>
+                                    <li className="text-xs text-gray-500 flex items-start gap-2">
+                                      <span className="text-green-500 mt-0.5">✓</span> Live Q&A sessions with experts
+                                    </li>
+                                  </ul>
+                                </div>
+
+                                {/* Savings callout */}
+                                <div className="bg-gray-50 rounded-xl p-3 mb-5">
+                                  <p className="text-[9px] font-black text-[#09314F] uppercase tracking-widest mb-1">
+                                    Save up to 5% on multi-month plans
+                                  </p>
+                                  <div className="flex justify-between">
+                                    <span className="text-[10px] text-gray-500 font-bold">Quarterly savings:</span>
+                                    <span className="text-[10px] font-black text-green-600">₦{Math.round(monthly * 3 * 0.05).toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between mt-1">
+                                    <span className="text-[10px] text-gray-500 font-bold">Semi-Annual savings:</span>
+                                    <span className="text-[10px] font-black text-green-600">₦{Math.round(monthly * 6 * 0.05).toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex justify-between mt-1">
+                                    <span className="text-[10px] text-gray-500 font-bold">Annual savings:</span>
+                                    <span className="text-[10px] font-black text-green-600">₦{Math.round(monthly * 12 * 0.05).toLocaleString()}</span>
+                                  </div>
+                                </div>
+
+                                {/* Learn More (Expanded) */}
+                                <div 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/program/${course.slug}`, { state: { course: course.courseObj } });
+                                    }}
+                                  className="flex items-center justify-center gap-1 text-[#09314F] font-bold text-sm mb-4 cursor-pointer hover:underline transition-all"
+                                >
+                                  Learn More
+                                  <span className="text-lg">→</span>
+                                </div>
+
+                                {/* Enroll */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (course?.slug === "gce") {
+                                      navigate("/campaign/gce/department");
+                                    } else {
+                                      navigate("/register");
+                                    }
+                                  }}
+                                  className="w-full py-3.5 text-white font-bold text-sm rounded-2xl shadow-lg hover:brightness-110 transition-all active:scale-95"
+                                  style={{ background: "linear-gradient(90deg, #0F2C45 0%, #A92429 100%)" }}
+                                >
+                                  Apply Now
+                                </button>
+                              </div>
+
+                              {/* "See more" CTA when collapsed */}
+                              {!isExpanded && (
+                                <div className="flex items-center gap-1 text-[#09314F] font-bold text-sm mt-2 group-hover:gap-2 transition-all">
+                                  See more
+                                  <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </ScrollReveal>
+                      );
+                    })}
+                  </div>
+                );
+              })()
             )}
           </div>
         </section>
