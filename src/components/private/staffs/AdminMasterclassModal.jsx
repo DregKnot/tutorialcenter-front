@@ -14,6 +14,14 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
+const O_LEVELS_COURSE = {
+  id: "o-levels",
+  title: "O-LEVELS",
+  name: "O-LEVELS",
+  subtitle: "WAEC, NECO & GCE",
+  is_o_levels: true,
+};
+
 export default function CreateMasterClassModal({ onClose, onSuccess, editClass = null }) {
   /* =============================
      CONSTANTS
@@ -40,7 +48,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
   const [loading, setLoading] = useState(false);
 
-  const [courses, setCourses] = useState([]);
+  const [courses, setCourses] = useState([O_LEVELS_COURSE]);
   const [subjects, setSubjects] = useState([]);
 
   const [tutors, setTutors] = useState([]);
@@ -91,14 +99,53 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
       const res = await axios.get(`${API_BASE_URL}/api/courses`);
       console.log("Fetched Courses Response:", res.data);
       const fetched = res.data?.courses || res.data?.data || [];
-      setCourses(fetched);
+      const nonOlevels = fetched.filter(
+        (c) => c.id !== "o-levels" && (c.title || "").toUpperCase() !== "O-LEVELS"
+      );
+      setCourses([O_LEVELS_COURSE, ...nonOlevels]);
     } catch (error) {
       console.error("Failed to fetch courses", error);
+      setCourses([O_LEVELS_COURSE]);
     }
   }, [API_BASE_URL]);
 
   const fetchSubjects = useCallback(async (courseId) => {
     try {
+      if (courseId === "o-levels") {
+        const targetIds = [2, 3, 4];
+        const promises = targetIds.map((cid) =>
+          axios
+            .get(`${API_BASE_URL}/api/courses/${cid}/subjects`)
+            .then((res) => res.data?.subjects || res.data?.data || [])
+            .catch(() => [])
+        );
+        const responses = await Promise.all(promises);
+        const combined = responses.flat();
+
+        const uniqueMap = new Map();
+        combined.forEach((sub) => {
+          if (!sub || !sub.name) return;
+          const norm = sub.name.trim().toLowerCase();
+          if (!uniqueMap.has(norm)) {
+            uniqueMap.set(norm, {
+              ...sub,
+              id: sub.id,
+              name: sub.name.trim(),
+              all_subject_ids: [sub.id],
+            });
+          } else {
+            const existing = uniqueMap.get(norm);
+            if (!existing.all_subject_ids.includes(sub.id)) {
+              existing.all_subject_ids.push(sub.id);
+            }
+          }
+        });
+
+        const deduplicated = Array.from(uniqueMap.values());
+        setSubjects(deduplicated);
+        return;
+      }
+
       const res = await axios.get(
         `${API_BASE_URL}/api/courses/${courseId}/subjects`,
       );
@@ -108,7 +155,6 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
       console.log(
         `Fetched ${fetched.length} subjects for course ID ${courseId}`,
       );
-      console.log("Subjects:", fetched);
     } catch (error) {
       console.error("Failed to fetch subjects", error);
       setSubjects([]);
@@ -159,7 +205,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
   // Sync title whenever course or subject changes (only for new classes)
   useEffect(() => {
     if (!editClass && selectedCourse && selectedSubject) {
-      const generatedTitle = `${selectedCourse.title || selectedCourse.name} - ${selectedSubject.name}`;
+      const coursePrefix = selectedCourse.is_o_levels ? "O-Levels" : (selectedCourse.title || selectedCourse.name);
+      const generatedTitle = `${coursePrefix} - ${selectedSubject.name}`;
       setFormData((prev) => ({
         ...prev,
         title: generatedTitle,
@@ -189,18 +236,24 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
       
       const subjectObj = editClass.subject;
 
-      // 1. Resolve Course: from subject.courses, editClass.course_id, or infer from title prefix (e.g. "GCE - English")
-      let courseObj = subjectObj?.courses?.[0] || editClass.course || null;
-      if (!courseObj && courses.length > 0) {
-        if (editClass.course_id) {
-          courseObj = courses.find(c => c.id === editClass.course_id);
-        }
-        if (!courseObj && editClass.title && editClass.title.includes(" - ")) {
-          const prefix = editClass.title.split(" - ")[0].trim().toLowerCase();
-          courseObj = courses.find(c => 
-            (c.title || "").toLowerCase() === prefix || 
-            (c.name || "").toLowerCase() === prefix
-          );
+      // 1. Resolve Course: from title prefix (e.g. "O-Levels - ..."), subject.courses, or editClass.course
+      let courseObj = null;
+      const lowerTitle = (editClass.title || "").toLowerCase().trim();
+      if (lowerTitle.startsWith("o-levels") || lowerTitle.startsWith("o-level")) {
+        courseObj = O_LEVELS_COURSE;
+      } else {
+        courseObj = subjectObj?.courses?.[0] || editClass.course || null;
+        if (!courseObj && courses.length > 0) {
+          if (editClass.course_id) {
+            courseObj = courses.find(c => c.id === editClass.course_id);
+          }
+          if (!courseObj && editClass.title && editClass.title.includes(" - ")) {
+            const prefix = editClass.title.split(" - ")[0].trim().toLowerCase();
+            courseObj = courses.find(c => 
+              (c.title || "").toLowerCase() === prefix || 
+              (c.name || "").toLowerCase() === prefix
+            );
+          }
         }
       }
 
@@ -557,13 +610,18 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
       /* =============================
        BUILD FINAL PAYLOAD
     ============================= */
+      const isOLevels = selectedCourse?.is_o_levels || formData.course_id === "o-levels";
       const subId = formData.subject_id 
         ? Number(formData.subject_id) 
         : (editClass?.subject_id || editClass?.subject?.id ? Number(editClass.subject_id || editClass.subject.id) : null);
 
+      const allSubIds = selectedSubject?.all_subject_ids || (subId ? [subId] : []);
+
       const payload = {
         subject_id: subId,
-        title: formData.title?.trim() || editClass?.title || "Master Class",
+        all_subject_ids: allSubIds,
+        is_o_levels: isOLevels,
+        title: formData.title?.trim() || editClass?.title || (isOLevels ? "O-Levels - Master Class" : "Master Class"),
         description: formData.description?.trim() || null,
         status: formData.status || "active",
         class_link: formData.link?.trim() ? formData.link.trim() : null,
@@ -757,7 +815,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
               <BookOpenIcon className="w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search and select course (e.g. JAMB, WAEC)..."
+                placeholder="Search and select course (e.g. O-LEVELS, JAMB, WAEC)..."
                 value={courseSearch}
                 onChange={handleCourseSearchChange}
                 onFocus={() => setCourseFocused(true)}
@@ -766,24 +824,60 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                 className="flex-1 bg-transparent text-gray-900 dark:text-white font-medium outline-none placeholder:text-gray-400"
               />
               {selectedCourse && (
-                <span className="text-xs font-black text-green-500 bg-green-500/10 px-3 py-1 rounded-full uppercase tracking-wider">
-                  Selected
-                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCourse(null);
+                    setCourseSearch("");
+                    setFormData((prev) => ({
+                      ...prev,
+                      course_id: "",
+                      subject_id: "",
+                    }));
+                    setSubjectSearch("");
+                    setSelectedSubject(null);
+                    setSubjects([]);
+                  }}
+                  className="text-xs font-black text-green-600 dark:text-green-400 bg-green-500/10 hover:bg-red-500/10 hover:text-red-500 px-3 py-1 rounded-full uppercase tracking-wider transition-colors flex items-center gap-1.5"
+                  title="Click to clear and change course"
+                >
+                  <span>{selectedCourse.title || selectedCourse.name}</span>
+                  <span className="text-sm font-bold leading-none">×</span>
+                </button>
               )}
             </div>
 
             {/* Custom Course Dropdown */}
             {!selectedCourse && (courseFocused || courseSearch.trim()) && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-[120] max-h-[200px] overflow-y-auto custom-scrollbar">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-[120] max-h-[220px] overflow-y-auto custom-scrollbar">
                 {(() => {
-                  const filtered = courseSearch.trim()
-                    ? courses.filter(c => (c.title || c.name || "").toLowerCase().includes(courseSearch.toLowerCase()))
+                  const q = courseSearch.trim().toLowerCase();
+                  const cleanQ = q.replace(/[^a-z0-9]/g, "");
+                  const filtered = q
+                    ? courses.filter(c => {
+                        const t = (c.title || c.name || "").toLowerCase();
+                        const sub = (c.subtitle || "").toLowerCase();
+                        if (c.is_o_levels) {
+                          if (
+                            cleanQ.includes("o") ||
+                            cleanQ.includes("level") ||
+                            cleanQ.includes("olevel") ||
+                            q.includes("waec") ||
+                            q.includes("neco") ||
+                            q.includes("gce")
+                          ) {
+                            return true;
+                          }
+                        }
+                        return t.includes(q) || sub.includes(q);
+                      })
                     : courses;
                   return filtered.length > 0 ? (
                     filtered.map(course => (
                       <button
                         key={course.id}
                         type="button"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => {
                           setSelectedCourse(course);
                           setCourseSearch(course.title || course.name || "");
@@ -795,9 +889,32 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                           setSubjectSearch("");
                           setSelectedSubject(null);
                         }}
-                        className="w-full text-left px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium text-sm text-[#0F2843] dark:text-white transition-colors border-b border-gray-50 dark:border-gray-700/30 last:border-0"
+                        className="w-full text-left px-6 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium text-sm text-[#0F2843] dark:text-white transition-colors border-b border-gray-50 dark:border-gray-700/30 last:border-0 flex items-center justify-between"
                       >
-                        {course.title || course.name}
+                        <div>
+                          <div className="font-bold flex items-center gap-2">
+                            <span>{course.title || course.name}</span>
+                            {course.is_o_levels && (
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 rounded-md">
+                                WAEC • NECO • GCE
+                              </span>
+                            )}
+                          </div>
+                          {course.is_o_levels ? (
+                            <div className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5">
+                              Creates Master Class for WAEC, NECO & GCE students
+                            </div>
+                          ) : course.subtitle ? (
+                            <div className="text-xs text-gray-400 font-normal mt-0.5">
+                              {course.subtitle}
+                            </div>
+                          ) : null}
+                        </div>
+                        {course.is_o_levels && (
+                          <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                            Combined
+                          </span>
+                        )}
                       </button>
                     ))
                   ) : (
@@ -809,6 +926,12 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
               </div>
             )}
           </div>
+          {selectedCourse?.is_o_levels && (
+            <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold px-1 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+              All students registered for WAEC, NECO & GCE will automatically see this Master Class.
+            </p>
+          )}
           {errors.course_id && <p className="text-red-500 text-xs mt-2">{errors.course_id}</p>}
         </div>
 
@@ -822,7 +945,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
               <BookOpenIcon className="w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder={formData.course_id ? "Search and select subject (e.g. Mathematics)..." : "Please select a course first"}
+                placeholder={formData.course_id ? (formData.course_id === "o-levels" ? "Search and select O-Level subject (e.g. Mathematics)..." : "Search and select subject (e.g. Mathematics)...") : "Please select a course first"}
                 value={subjectSearch}
                 onChange={handleSubjectSearchChange}
                 onFocus={() => setSubjectFocused(true)}
@@ -832,9 +955,22 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                 className="flex-1 bg-transparent text-gray-900 dark:text-white font-medium outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
               />
               {selectedSubject && (
-                <span className="text-xs font-black text-green-500 bg-green-500/10 px-3 py-1 rounded-full uppercase tracking-wider">
-                  Selected
-                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSubject(null);
+                    setSubjectSearch("");
+                    setFormData((prev) => ({
+                      ...prev,
+                      subject_id: "",
+                    }));
+                  }}
+                  className="text-xs font-black text-green-600 dark:text-green-400 bg-green-500/10 hover:bg-red-500/10 hover:text-red-500 px-3 py-1 rounded-full uppercase tracking-wider transition-colors flex items-center gap-1.5"
+                  title="Click to clear and change subject"
+                >
+                  <span>{selectedSubject.name}</span>
+                  <span className="text-sm font-bold leading-none">×</span>
+                </button>
               )}
             </div>
 
@@ -850,6 +986,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                       <button
                         key={subject.id}
                         type="button"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => {
                           setSelectedSubject(subject);
                           setSubjectSearch(subject.name || "");
