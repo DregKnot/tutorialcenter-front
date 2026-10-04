@@ -119,7 +119,16 @@ export default function CoursesManagement() {
     console.group("Course Management: Delete Course");
     console.log("Delete ID:", id);
     try {
-      const res = await axios.delete(`${API_BASE_URL}/api/admin/courses/${id}`, config);
+      let res;
+      try {
+        res = await axios.delete(`${API_BASE_URL}/api/admin/courses/destroy/${id}`, config);
+      } catch (firstErr) {
+        if (firstErr.response && firstErr.response.status === 404) {
+          res = await axios.delete(`${API_BASE_URL}/api/admin/courses/${id}`, config);
+        } else {
+          throw firstErr;
+        }
+      }
       console.log("Delete Response:", res.data);
       fetchCourses();
       setToast({ type: "success", message: "Course deleted." });
@@ -138,7 +147,16 @@ export default function CoursesManagement() {
     console.group("Course Management: Delete Subject");
     console.log("Delete ID:", id);
     try {
-      const res = await axios.delete(`${API_BASE_URL}/api/admin/subjects/${id}`, config);
+      let res;
+      try {
+        res = await axios.delete(`${API_BASE_URL}/api/admin/subjects/destroy/${id}`, config);
+      } catch (firstErr) {
+        if (firstErr.response && firstErr.response.status === 404) {
+          res = await axios.delete(`${API_BASE_URL}/api/admin/subjects/${id}`, config);
+        } else {
+          throw firstErr;
+        }
+      }
       console.log("Delete Response:", res.data);
       fetchSubjects();
       setToast({ type: "success", message: "Subject deleted." });

@@ -37,6 +37,7 @@ export const getStudentData = () => {
       surname: student?.surname || parsed?.surname || "",
       department: student?.department || parsed?.department || "Science",
       selectedTraining: parsed.selectedTraining || [],
+      selectedExamTrack: parsed.selectedExamTrack || student?.selectedExamTrack || "",
       selectedSubjects: parsed.selectedSubjects || {},
       selectedDurations: parsed.selectedDurations || {},
       selectedEnrollments: parsed.selectedEnrollments || {},
@@ -98,6 +99,9 @@ export const updateStudentData = (updates = {}) => {
     // If root properties like selectedTraining are provided, ensure they don't get wiped
     if (updates.selectedTraining !== undefined) {
       updatedData.selectedTraining = updates.selectedTraining;
+    }
+    if (updates.selectedExamTrack !== undefined) {
+      updatedData.selectedExamTrack = updates.selectedExamTrack;
     }
     if (updates.selectedSubjects !== undefined) {
       updatedData.selectedSubjects = updates.selectedSubjects;

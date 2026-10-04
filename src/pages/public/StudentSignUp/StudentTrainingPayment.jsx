@@ -143,7 +143,17 @@ export const StudentTrainingPayment = () => {
     };
   }, [studentData, selectedDurations, bankTransfers]);
 
-  const courseName = (id) => studentData?.availableTrainings?.find(course => String(course.id) === String(id))?.title || `Course #${id}`;
+  const courseName = (id) => {
+    const found = studentData?.availableTrainings?.find(course => String(course.id) === String(id))?.title;
+    if (found && !found.toLowerCase().includes("o'level") && !found.toLowerCase().includes("gce")) {
+      return found;
+    }
+    if ([2, 3, 4].includes(Number(id))) {
+      return studentData?.selectedExamTrack || found || "WAEC";
+    }
+    if (Number(id) === 1) return "JAMB";
+    return found || `Course #${id}`;
+  };
 
   const startBankTransfer = async () => {
     if (bankLock.current || claimLock.current || verificationLock.current || !studentData) return;

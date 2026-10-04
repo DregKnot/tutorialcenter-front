@@ -44,7 +44,24 @@ export const StudentSubjectSelection = () => {
         // Fetch courses list
         const courseRes = await axios.get(`${API_BASE_URL}/api/courses`);
         const allCourses = courseRes?.data?.courses || courseRes?.data?.data || [];
-        const activeCourses = allCourses.filter((c) => storedTraining.includes(c.id));
+        const chosenTrack = studentData?.selectedExamTrack || "WAEC";
+        const activeCourses = allCourses
+          .filter((c) => storedTraining.includes(c.id))
+          .map((c) => {
+            if ([2, 3, 4].includes(Number(c.id))) {
+              return {
+                ...c,
+                title: chosenTrack,
+              };
+            }
+            if (Number(c.id) === 1 || c.title?.toUpperCase().includes("JAMB")) {
+              return {
+                ...c,
+                title: "JAMB",
+              };
+            }
+            return c;
+          });
 
         if (activeCourses.length === 0) {
           console.warn("[SubjectSelection] None of the stored training IDs matched active courses.");
@@ -254,9 +271,7 @@ export const StudentSubjectSelection = () => {
                       {/* COURSE HEADER */}
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <span className="text-xs sm:text-sm font-black text-[#09314F] uppercase tracking-wide truncate">
-                          {[2, 3, 4].includes(Number(course.id)) && getStudentData()?.selectedExamTrack
-                            ? `O'Levels (${getStudentData().selectedExamTrack})`
-                            : course.title}
+                          {course.title}
                         </span>
                         {!isAutoCurriculum && (
                           <span className={`text-[11px] font-black px-2.5 py-1 rounded-full ${

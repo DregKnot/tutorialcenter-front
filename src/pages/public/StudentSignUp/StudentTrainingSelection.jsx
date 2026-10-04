@@ -120,10 +120,13 @@ export default function StudentTrainingSelection() {
         finalCourseIds.push(Number(olevelCourse.id));
       }
 
-      const availableTrainings = [
-        { ...jambCourse, id: Number(jambCourse.id), title: "JAMB" },
-        { ...olevelCourse, id: Number(olevelCourse.id), title: chosenTrack ? `O'Levels (${chosenTrack})` : "O'Levels" },
-      ];
+      const availableTrainings = [];
+      if (selectedExams.includes("jamb")) {
+        availableTrainings.push({ ...jambCourse, id: Number(jambCourse.id), title: "JAMB" });
+      }
+      if (chosenOlevelId) {
+        availableTrainings.push({ ...olevelCourse, id: Number(olevelCourse.id), title: chosenTrack || "WAEC" });
+      }
 
       // Safely persist selected trainings and courses
       updateStudentData({
