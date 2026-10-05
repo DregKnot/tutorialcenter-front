@@ -5,7 +5,7 @@ import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { ChevronLeftIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 import Paystack from "../../../components/Paystack";
-import { getStudentData, updateStudentData } from "./studentStorageHelper";
+import { getStudentData, updateStudentData, clearStudentRegistrationData } from "./studentStorageHelper";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -143,7 +143,17 @@ export const StudentTrainingPayment = () => {
     };
   }, [studentData, selectedDurations, bankTransfers]);
 
-  const courseName = (id) => studentData?.availableTrainings?.find(course => String(course.id) === String(id))?.title || `Course #${id}`;
+  const courseName = (id) => {
+    const found = studentData?.availableTrainings?.find(course => String(course.id) === String(id))?.title;
+    if (found && !found.toLowerCase().includes("o'level") && !found.toLowerCase().includes("gce")) {
+      return found;
+    }
+    if ([2, 3, 4].includes(Number(id))) {
+      return studentData?.selectedExamTrack || found || "WAEC";
+    }
+    if (Number(id) === 1) return "JAMB";
+    return found || `Course #${id}`;
+  };
 
   const startBankTransfer = async () => {
     if (bankLock.current || claimLock.current || verificationLock.current || !studentData) return;
@@ -165,8 +175,13 @@ export const StudentTrainingPayment = () => {
             // Starting again recovers the server-issued reference/token pair.
           }
         }
+        const courseSubjects = studentData.selectedSubjects?.[id] || [];
+        const examTrack = studentData.selectedExamTrack || null;
         const response = await axios.post(`${API_BASE_URL}/api/payments/bank-transfer`, {
-          student_id: Number(studentData.id), course_enrollment_id: enrollmentId,
+          student_id: Number(studentData.id),
+          course_enrollment_id: enrollmentId,
+          subjects: courseSubjects,
+          exam_track: examTrack,
         }, {
           headers: { "Content-Type": "application/json", Accept: "application/json" }, timeout: 30000,
         });
@@ -533,6 +548,36 @@ export const StudentTrainingPayment = () => {
                         </div>
                       );
                     })}
+
+                    {/* CONTINUE TO STUDENT PORTAL (PENDING REVIEW) */}
+                    {Object.values(bankTransfers).some(transfer => ["awaiting_confirmation", "initiated", "rejected"].includes(transfer.state)) && (
+                      <div className="mt-6 rounded-2xl bg-amber-50/90 border border-amber-200 p-5 text-center">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <span className="text-amber-600 text-lg">⏳</span>
+                          <h4 className="text-sm font-black text-[#09314F] uppercase tracking-wide">
+                            Payment Verification In Progress
+                          </h4>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-4 leading-relaxed max-w-sm mx-auto">
+                          Once you have transferred and submitted your claim, you can proceed to your student portal. Your account and enrolled subjects will activate immediately upon admin confirmation.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            clearStudentRegistrationData();
+                            navigate("/student/login", {
+                              state: {
+                                message: "Registration submitted! Your payment is awaiting admin review. You can log in to check your account status."
+                              }
+                            });
+                          }}
+                          className="w-full py-4 px-6 rounded-2xl font-black text-white bg-[#09314F] hover:bg-[#09314F]/90 shadow-lg shadow-[#09314F]/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                          <span>Continue to Student Portal</span>
+                          <span className="text-lg">→</span>
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
                 {!bankLoading && (error || enrollmentIds.some(id => !bankTransfers[id])) &&

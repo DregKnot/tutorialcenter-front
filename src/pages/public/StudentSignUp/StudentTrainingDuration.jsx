@@ -48,7 +48,24 @@ export const StudentTrainingDuration = () => {
         const res = await axios.get(`${API_BASE_URL}/api/courses`);
         const allCourses = res?.data?.courses || res?.data?.data || [];
         const selectedIds = new Set(selectedTraining.map(String));
-        const activeCourses = allCourses.filter((c) => selectedIds.has(String(c.id)));
+        const chosenTrack = studentData?.selectedExamTrack || "WAEC";
+        const activeCourses = allCourses
+          .filter((c) => selectedIds.has(String(c.id)))
+          .map((c) => {
+            if ([2, 3, 4].includes(Number(c.id))) {
+              return {
+                ...c,
+                title: chosenTrack,
+              };
+            }
+            if (Number(c.id) === 1 || c.title?.toUpperCase().includes("JAMB")) {
+              return {
+                ...c,
+                title: "JAMB",
+              };
+            }
+            return c;
+          });
 
         if (activeCourses.length === 0) {
           navigate("/register/student/training/selection");

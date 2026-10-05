@@ -44,7 +44,24 @@ export const StudentSubjectSelection = () => {
         // Fetch courses list
         const courseRes = await axios.get(`${API_BASE_URL}/api/courses`);
         const allCourses = courseRes?.data?.courses || courseRes?.data?.data || [];
-        const activeCourses = allCourses.filter((c) => storedTraining.includes(c.id));
+        const chosenTrack = studentData?.selectedExamTrack || "WAEC";
+        const activeCourses = allCourses
+          .filter((c) => storedTraining.includes(c.id))
+          .map((c) => {
+            if ([2, 3, 4].includes(Number(c.id))) {
+              return {
+                ...c,
+                title: chosenTrack,
+              };
+            }
+            if (Number(c.id) === 1 || c.title?.toUpperCase().includes("JAMB")) {
+              return {
+                ...c,
+                title: "JAMB",
+              };
+            }
+            return c;
+          });
 
         if (activeCourses.length === 0) {
           console.warn("[SubjectSelection] None of the stored training IDs matched active courses.");
@@ -61,8 +78,10 @@ export const StudentSubjectSelection = () => {
         // Fetch subjects for each selected course
         for (const course of activeCourses) {
           try {
+            // For O-Level courses (ID 2: WAEC, 3: NECO, 4: GCE/O-Levels), always fetch subjects from Course ID 4
+            const queryCourseId = [2, 3, 4].includes(Number(course.id)) ? 4 : course.id;
             const res = await axios.get(
-              `${API_BASE_URL}/api/courses/${course.id}/subjects/${department}`
+              `${API_BASE_URL}/api/courses/${queryCourseId}/subjects/${department}`
             );
             const subjects = res?.data?.subjects || res?.data?.data || [];
             subjectMap[course.id] = subjects;

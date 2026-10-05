@@ -4,8 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import ProgramCard from "./ProgramCard.jsx";
 import SectionHeading from "./SectionHeading.jsx";
 import ScrollReveal from "./ScrollReveal";
-// import jamb from "../../assets/images/jamb_logo.webp";
-// import waec from "../../assets/images/waec_logo.webp";
+import { PROGRAMS_CONFIG, OLEVEL_COURSE_ID } from "../../config/programsConfig";
+import jambBanner from "../../assets/images/jamb_banner.jpg";
+import waecBanner from "../../assets/images/waec_banner.jpg";
+import necoBanner from "../../assets/images/neco_banner.jpg";
+import gceBanner from "../../assets/images/gce_banner.jpg";
 
 const ProgramSection = () => {
 
@@ -33,7 +36,7 @@ const ProgramSection = () => {
 
     const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
-    const { data: programDatas = [] } = useQuery({
+    const { data: rawCourses = [] } = useQuery({
         queryKey: ['courses'],
         queryFn: async () => {
             const res = await axios.get(`${API_BASE_URL}/api/courses`);
@@ -42,7 +45,57 @@ const ProgramSection = () => {
         staleTime: 1000 * 60 * 5 // 5 minutes cache
     });
 
+    const olevelCourse = rawCourses.find(c => Number(c.id) === OLEVEL_COURSE_ID || c.title?.toLowerCase().includes("level") || c.title?.toLowerCase().includes("gce")) 
+        || rawCourses.find(c => Number(c.id) === 2 || c.title?.toLowerCase().includes("waec"))
+        || rawCourses[0];
+    const jambCourse = rawCourses.find(c => Number(c.id) === 1 || c.title?.toLowerCase().includes("jamb") || c.title?.toLowerCase().includes("utme"))
+        || rawCourses[0];
 
+    const olevelBasePrice = Number(olevelCourse?.price) || 25000;
+    const jambBasePrice = Number(jambCourse?.price) || 25000;
+
+    const programDatas = [
+        {
+            id: "jamb",
+            title: "JAMB",
+            slug: "jamb",
+            banner: PROGRAMS_CONFIG.jamb?.banner || jambBanner,
+            subject: "4 Subjects",
+            basePrice: jambBasePrice,
+            courseObj: jambCourse,
+            path: "/program/jamb",
+        },
+        {
+            id: "waec",
+            title: "WAEC",
+            slug: "waec",
+            banner: PROGRAMS_CONFIG.waec?.banner || waecBanner,
+            subject: "8-9 Subjects",
+            basePrice: olevelBasePrice,
+            courseObj: olevelCourse,
+            path: "/program/waec",
+        },
+        {
+            id: "neco",
+            title: "NECO",
+            slug: "neco",
+            banner: PROGRAMS_CONFIG.neco?.banner || necoBanner,
+            subject: "8-9 Subjects",
+            basePrice: olevelBasePrice,
+            courseObj: olevelCourse,
+            path: "/program/neco",
+        },
+        {
+            id: "gce",
+            title: "GCE",
+            slug: "gce",
+            banner: PROGRAMS_CONFIG.gce?.banner || gceBanner,
+            subject: "8-9 Subjects",
+            basePrice: olevelBasePrice,
+            courseObj: olevelCourse,
+            path: "/program/gce",
+        },
+    ];
 
     //next slide function
     const nextSlide = useCallback(() => {
@@ -115,7 +168,7 @@ const ProgramSection = () => {
                                 >
                                     {programDatas.map((item, index) => {
 
-                                        const basePrice = Number(item.price) || 25000;
+                                        const basePrice = item.basePrice;
                                         
                                         // Actual Normal Prices (from backend)
                                         const monthly = basePrice;
@@ -129,20 +182,16 @@ const ProgramSection = () => {
                                         const slashedSemiAnnually = 40000 * 6;
                                         const slashedAnnually = 40000 * 12;
 
-                                        const bannerUrl = item.banner
-                                            ? `${API_BASE_URL}/storage/${item.banner}`
-                                            : null;
-
                                         return (
                                             <div
-                                                key={index}
+                                                key={item.id || index}
                                                 className="flex-shrink-0"
                                                 style={{ width: `${100 / slidesToShow}%` }}
                                             >
                                                 <ProgramCard
-                                                    subject={item.title?.toLowerCase().includes("jamb") ? "4 Subjects" : "8-9 Subjects"}
+                                                    subject={item.subject}
                                                     title={item.title}
-                                                    logo={bannerUrl}
+                                                    logo={item.banner}
                                                     month={monthly}
                                                     quarter={quarterly}
                                                     semiAnnual={semiAnnually}
@@ -155,8 +204,8 @@ const ProgramSection = () => {
                                                     topic2="Weekly masterclasses"
                                                     topic3="Mock tests and practice questions"
                                                     topic4="Live Q&A sessions with experts"
-                                                    path={`/program/${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-                                                    state={{ course: item }}
+                                                    path={item.path}
+                                                    state={{ course: item.courseObj }}
                                                 />
                                             </div>
                                         );
