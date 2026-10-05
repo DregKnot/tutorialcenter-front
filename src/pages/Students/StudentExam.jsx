@@ -20,6 +20,7 @@ export default function StudentExam() {
   const [availableExams, setAvailableExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pendingEnrollment, setPendingEnrollment] = useState(null);
 
   // Selections
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -198,6 +199,8 @@ export default function StudentExam() {
       console.log("Available Exams Response:", availableRes.data);
 
       const coursesData = coursesRes.data?.courses || coursesRes.data?.data || [];
+      const pendingData = coursesRes.data?.pending_enrollment || null;
+      setPendingEnrollment(pendingData);
       const availableData = Array.isArray(availableRes.data)
         ? availableRes.data
         : availableRes.data?.exams || availableRes.data?.data || [];
@@ -1259,10 +1262,31 @@ export default function StudentExam() {
               </div>
 
               {courses.length === 0 ? (
-                <div className="p-8 text-center bg-gray-50 dark:bg-gray-800/30 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
-                  <Icon icon="lucide:book-x" className="w-10 h-10 text-gray-400 mx-auto mb-2 opacity-60" />
-                  <p className="text-sm text-gray-400 font-bold">No active enrolled courses found.</p>
-                </div>
+                pendingEnrollment ? (
+                  <div className="p-8 text-center bg-amber-50/60 dark:bg-amber-950/20 rounded-3xl border-2 border-amber-300/60 dark:border-amber-800/60 space-y-3 animate-in fade-in">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+                      <Icon icon="lucide:clock" className="w-6 h-6 animate-pulse" />
+                    </div>
+                    <h4 className="text-base font-black text-amber-950 dark:text-amber-200 uppercase">
+                      Enrollment Pending Approval
+                    </h4>
+                    <p className="text-xs text-amber-800/90 dark:text-amber-300/80 max-w-md mx-auto leading-relaxed">
+                      Your temporary ID <strong className="font-mono font-bold text-amber-900 dark:text-amber-100">{pendingEnrollment?.enrollment_code}</strong> is awaiting bank transfer approval. CBT questions and timed practice will unlock as soon as your payment is approved.
+                    </p>
+                    <a
+                      href="/student/dashboard"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md active:scale-95"
+                    >
+                      <Icon icon="lucide:arrow-left" className="w-4 h-4" />
+                      Back to Dashboard Overview
+                    </a>
+                  </div>
+                ) : (
+                  <div className="p-8 text-center bg-gray-50 dark:bg-gray-800/30 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                    <Icon icon="lucide:book-x" className="w-10 h-10 text-gray-400 mx-auto mb-2 opacity-60" />
+                    <p className="text-sm text-gray-400 font-bold">No active enrolled courses found.</p>
+                  </div>
+                )
               ) : (
                 <div className="relative">
                   {/* Left and right fade overlays */}

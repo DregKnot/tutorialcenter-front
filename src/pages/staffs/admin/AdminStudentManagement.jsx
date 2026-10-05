@@ -73,10 +73,67 @@ export default function AdminStudentManagement() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
+  const isStudentSuspended = (student) => {
+    return student.banned === 1 || 
+      student.account_status === "suspended" || 
+      student.deleted_at != null || 
+      student.information?.deleted_at != null || 
+      (Array.isArray(student.information) && student.information[0]?.deleted_at != null);
+  };
+
+  const isStudentActive = (student) => {
+    // If backend computed is_active is boolean, prioritize it
+    if (typeof student?.is_active === "boolean") {
+      return student.is_active;
+    }
+
+    const courses = student?.courses || student?.course_enrollments || [];
+    const payments = student?.payments || [];
+    const subjects = student?.enrolled_subjects || student?.subject_enrollments || [];
+
+    const hasActiveCourse = courses.some(c => 
+      (c.status === 'active' || c.enrollment_status === 'active') && 
+      (!c.end_date || new Date(c.end_date) >= new Date())
+    );
+
+    const hasSuccessfulPayment = payments.some(p => 
+      p.status === 'successful' || p.status === 'paid'
+    );
+
+    const hasSubjects = subjects.length > 0;
+
+    return hasActiveCourse && hasSuccessfulPayment && hasSubjects;
+  };
+
+  const getStudentStatusInfo = (student) => {
+    if (isStudentSuspended(student)) {
+      return { label: "Suspended", badgeClass: "bg-red-50 dark:bg-red-900/30 text-red-500", key: "suspended" };
+    }
+    if (isStudentActive(student)) {
+      return { label: "Active", badgeClass: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600", key: "active" };
+    }
+
+    const courses = student?.courses || student?.course_enrollments || [];
+    const payments = student?.payments || [];
+    const isTerminated = courses.some(c => c.status === 'terminated' || c.status === 'expired') || student?.enrollment_status === 'terminated';
+    if (isTerminated) {
+      return { label: "Terminated", badgeClass: "bg-rose-50 dark:bg-rose-900/30 text-rose-600", key: "terminated" };
+    }
+
+    const hasPending = courses.some(c => c.status === 'pending' || c.enrollment_status === 'pending') || 
+      payments.some(p => p.status === 'pending') || 
+      student?.enrollment_status === 'pending_approval';
+
+    if (hasPending) {
+      return { label: "Pending Approval", badgeClass: "bg-amber-50 dark:bg-amber-900/30 text-amber-600 border border-amber-200 dark:border-amber-800", key: "pending" };
+    }
+
+    return { label: "Inactive", badgeClass: "bg-gray-100 dark:bg-gray-700 text-gray-400", key: "inactive" };
+  };
+
   const getLatestCourse = (student) => {
     const payments = student.payments || [];
     if (payments.length > 0) {
-       // Filter for successful payments that have an enrollment end_date, sort by created_at descending
        const sortedPayments = [...payments]
          .filter(p => p.status === 'successful' && p.enrollment && p.enrollment.end_date)
          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -101,20 +158,6 @@ export default function AdminStudentManagement() {
        const dateB = new Date(b.end_date || 0);
        return dateB - dateA;
     })[0];
-  };
-
-  const isStudentActive = (student) => {
-    const latest = getLatestCourse(student);
-    if (!latest) return false;
-    return latest.status === 'active' || (latest.end_date && new Date(latest.end_date) >= new Date());
-  };
-
-  const isStudentSuspended = (student) => {
-    return student.banned === 1 || 
-      student.account_status === "suspended" || 
-      student.deleted_at != null || 
-      student.information?.deleted_at != null || 
-      (Array.isArray(student.information) && student.information[0]?.deleted_at != null);
   };
 
   const fetchData = useCallback(async () => {
@@ -229,7 +272,10 @@ export default function AdminStudentManagement() {
 
     const fullName = `${student.firstname || ''} ${student.surname || ''}`.toLowerCase();
     const query = searchQuery.toLowerCase();
-    return fullName.includes(query) || (student.email && student.email.toLowerCase().includes(query));
+    const enrollmentCode = (student.enrollment_code || '').toLowerCase();
+    return fullName.includes(query) || 
+      (student.email && student.email.toLowerCase().includes(query)) ||
+      enrollmentCode.includes(query);
   });
 
   // Pagination
@@ -369,6 +415,7 @@ export default function AdminStudentManagement() {
 
                    const phoneStr = student.tel || student.guardian?.tel || "—";
                    const isActive = isStudentActive(student);
+                   const statusInfo = getStudentStatusInfo(student);
 
                    return (
                      <div key={student.id || idx}>
@@ -393,28 +440,29 @@ export default function AdminStudentManagement() {
                                 )}
                              </div>
                              <div className="flex flex-col truncate min-w-0">
-                               <span className="font-bold text-[#0F2843] dark:text-white text-sm truncate" title={displayName}>
-                                 {displayName}
-                               </span>
+                               <div className="flex items-center gap-2">
+                                 <span className="font-bold text-[#0F2843] dark:text-white text-sm truncate" title={displayName}>
+                                   {displayName}
+                                 </span>
+                                 {student.enrollment_code && (
+                                   <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${student.enrollment_code.startsWith("TMP") ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800" : "bg-slate-100 text-slate-700 dark:bg-slate-700/60 dark:text-slate-300"}`}>
+                                     {student.enrollment_code}
+                                   </span>
+                                 )}
+                               </div>
                                {student.created_at && (
                                  <span className="text-[10px] text-gray-400 font-medium">
-                                   Joined {new Date(student.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                                 </span>
+                                    Joined {new Date(student.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                  </span>
                                )}
                              </div>
                           </div>
                           
                           {/* Status Column */}
                           <div className="text-center font-bold text-xs uppercase">
-                            {isSuspended ? (
-                              <span className="px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-900/30 text-red-500 font-bold">Suspended</span>
-                            ) : (
-                              <span className={`px-2.5 py-1 rounded-full font-bold ${
-                                isActive ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600" : "bg-gray-100 dark:bg-gray-700 text-gray-400"
-                              }`}>
-                                {isActive ? "Active" : "Inactive"}
-                              </span>
-                            )}
+                            <span className={`px-2.5 py-1 rounded-full font-bold ${statusInfo.badgeClass}`}>
+                              {statusInfo.label}
+                            </span>
                           </div>
 
                           {/* Email Column */}
