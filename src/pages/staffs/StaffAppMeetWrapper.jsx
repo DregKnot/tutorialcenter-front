@@ -4,6 +4,7 @@ import StaffDashboardLayout from '../../components/private/staffs/DashboardLayou
 import { useStaffAuth } from '../../context/StaffAuthContext';
 import { Icon } from '@iconify/react';
 import axios from 'axios';
+import { isAdvisorStaff, isTutorStaff } from '../../utils/roleUtils';
 
 export default function StaffAppMeetWrapper() {
   const location = useLocation();
@@ -25,9 +26,11 @@ export default function StaffAppMeetWrapper() {
     const state = location.state;
     if (!state || (!state.class_link && !state.class_schedule_id)) {
       const staffRole = localStorage.getItem("staff_role") || "";
-      const redirectPath = staffRole.toLowerCase() === 'course_advisor' || staffRole.toLowerCase() === 'advisor'
+      const redirectPath = isAdvisorStaff(staffRole)
           ? '/staffs/course-advisor/master-class'
-          : '/staffs/tutor/master-class';
+          : isTutorStaff(staffRole)
+          ? '/staffs/tutor/master-class'
+          : '/staffs/calendar';
       navigate(redirectPath, { replace: true });
       return;
     }
@@ -105,47 +108,58 @@ export default function StaffAppMeetWrapper() {
   };
 
   const handleReturnToDashboard = () => {
+      const staffRole = localStorage.getItem("staff_role") || "";
       const sessionId = sessionDetails?.class_schedule_id;
 
-      if (sessionId) {
-          sessionStorage.setItem("just_completed_class_session_id", String(sessionId));
+      // 1. Tutors: conclude session, store in unreported queue, and prompt post-class report
+      if (isTutorStaff(staffRole)) {
+          if (sessionId) {
+              sessionStorage.setItem("just_completed_class_session_id", String(sessionId));
 
-          // Save to persistent tutor_unreported_sessions
-          try {
-            const stored = JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
-            if (!stored.some(s => String(s.id) === String(sessionId))) {
-              stored.unshift({
-                id: sessionId,
-                class_id: sessionDetails.class_id || sessionId,
-                class_title: sessionDetails.topic || "Masterclass",
-                subject: sessionDetails.subject || "General Subject",
-                session_date: new Date().toISOString(),
-                starts_at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                leftAt: Date.now()
-              });
-              localStorage.setItem("tutor_unreported_sessions", JSON.stringify(stored.slice(0, 10)));
-            }
-          } catch (e) {}
+              try {
+                const stored = JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
+                if (!stored.some(s => String(s.id) === String(sessionId))) {
+                  stored.unshift({
+                    id: sessionId,
+                    class_id: sessionDetails.class_id || sessionId,
+                    class_title: sessionDetails.topic || "Masterclass",
+                    subject: sessionDetails.subject || "General Subject",
+                    session_date: new Date().toISOString(),
+                    starts_at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    leftAt: Date.now()
+                  });
+                  localStorage.setItem("tutor_unreported_sessions", JSON.stringify(stored.slice(0, 10)));
+                }
+              } catch (e) {}
 
-          // Notify backend that session is concluded
-          if (staffToken) {
-            axios.post(`${API_BASE_URL}/api/tutor/classes/sessions/${sessionId}/conclude`, {}, {
-              headers: { Authorization: `Bearer ${staffToken}`, Accept: "application/json" }
-            }).catch(() => {});
+              if (staffToken) {
+                axios.post(`${API_BASE_URL}/api/tutor/classes/sessions/${sessionId}/conclude`, {}, {
+                  headers: { Authorization: `Bearer ${staffToken}`, Accept: "application/json" }
+                }).catch(() => {});
+              }
           }
-      }
-
-      const staffRole = localStorage.getItem("staff_role") || "";
-      if (staffRole.toLowerCase() === 'course_advisor' || staffRole.toLowerCase() === 'advisor') {
-          navigate(`/staffs/course-advisor/master-class${sessionId ? `?feedback_session=${sessionId}` : ''}`);
-      } else {
           navigate(`/staffs/tutor/dashboard${sessionId ? `?feedback_session=${sessionId}` : ''}`, {
               state: {
                   promptPostClassReport: true,
                   completedSessionId: sessionId
               }
           });
+          return;
       }
+
+      // 2. Course Advisors: redirect to advisor supervision feedback report
+      if (isAdvisorStaff(staffRole)) {
+          if (sessionId) {
+              sessionStorage.setItem("just_completed_class_session_id", String(sessionId));
+          }
+          navigate(`/staffs/course-advisor/master-class${sessionId ? `?feedback_session=${sessionId}` : ''}`);
+          return;
+      }
+
+      // 3. Admin / COO / Moderator / Staff Observer:
+      // Never prompt tutor/advisor report, never poison unreported queues, return cleanly to calendar
+      const returnPath = location.state?.from || '/staffs/calendar';
+      navigate(returnPath);
   };
 
   if (!sessionDetails) {

@@ -13,6 +13,7 @@ import AchievementsPanel from "../../components/private/Students/dashboard/Achie
 import MiniCalendarWidget from "../../components/private/Students/dashboard/MiniCalendarWidget.jsx";
 import RecommendedExamPractice from "../../components/private/Students/dashboard/RecommendedExamPractice.jsx";
 import PendingApprovalScreen from "../../components/private/Students/dashboard/PendingApprovalScreen.jsx";
+import SurveyPromptBanner from "../../components/private/Students/dashboard/SurveyPromptBanner.jsx";
 import useStudentActivity from "../../hooks/useStudentActivity.js";
 import { getDashboardCache, setDashboardCache } from "../../utils/dashboardCache.js";
 
@@ -198,8 +199,21 @@ export default function StudentDashboard({ blogs = [] }) {
         const pendingData = res?.data?.pending_enrollment || null;
         setPendingEnrollmentData(pendingData);
 
+        let hasStoredPendingTransfer = false;
+        try {
+          const store = JSON.parse(localStorage.getItem("studentBankTransfers") || "{}");
+          hasStoredPendingTransfer = Object.values(store).some(
+            t => t && (t.state === "awaiting_confirmation" || t.status === "pending")
+          );
+          if (!hasStoredPendingTransfer) {
+            const pendingIds = JSON.parse(localStorage.getItem("pendingBankTransferCourseIds") || "[]");
+            hasStoredPendingTransfer = Array.isArray(pendingIds) && pendingIds.length > 0;
+          }
+        } catch {}
+
         const hasPendingEnrollment = Boolean(
           pendingData ||
+          hasStoredPendingTransfer ||
           fetchedCourses.some(c => c.status?.toLowerCase() === 'pending') ||
           paymentsList.some(p => p.status === 'pending')
         );
@@ -482,6 +496,9 @@ export default function StudentDashboard({ blogs = [] }) {
 
         {/* ── Welcome header ────────────────────────────────────────────────── */}
         <WelcomeHeader leaderboardRank={leaderboardRank} />
+
+        {/* ── Student Feedback & Courses Experience Survey Banner ──────────── */}
+        <SurveyPromptBanner />
 
         {/* ── Pending Verification Alert ────────────────────────────────────── */}
         {hasPendingPayment && (

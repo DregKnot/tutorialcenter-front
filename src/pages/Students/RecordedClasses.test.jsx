@@ -101,6 +101,7 @@ describe("RecordedClasses & View Counter Suite", () => {
   describe("Admin / Staff Engagement Analytics Modal", () => {
     test("allows staff to open viewers modal with metrics, repeat watchers, and privacy compliance", async () => {
       localStorage.setItem("staff_token", "fake-staff-token");
+      localStorage.setItem("staff_role", "admin");
 
       const mockClasses = [
         {

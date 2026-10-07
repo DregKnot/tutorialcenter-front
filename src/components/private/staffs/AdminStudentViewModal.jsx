@@ -357,18 +357,21 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
 
   const enrolledSubjects = student?.enrolled_subjects || student?.enrolled_subject || studentInfo?.enrolled_subjects || studentInfo?.enrolled_subject || student?.subjects || [];
   const enrolledCourses = student?.courses || student?.course_enrollments || studentInfo?.courses || studentInfo?.course_enrollments || [];
+  const paymentsList = student?.payments || studentInfo?.payments || [];
+  const hasSuccessfulPayment = paymentsList.some(p => p.status === 'successful' || p.status === 'paid');
+
   const pendingEnrollment = enrolledCourses.find(ce => {
     const status = ce?.enrollment_status || ce?.status;
     const code = ce?.enrollment_code || student?.enrollment_code;
+    if (status === 'active' || hasSuccessfulPayment) return false;
     return status === 'pending' || (code && String(code).startsWith('TMP'));
-  }) || (student?.enrollment_code && String(student.enrollment_code).startsWith('TMP') ? {
+  }) || (!hasSuccessfulPayment && student?.enrollment_code && String(student.enrollment_code).startsWith('TMP') ? {
     enrollment_id: student.courses?.[0]?.enrollment_id || student.course_enrollments?.[0]?.id,
     enrollment_code: student.enrollment_code,
     course_information: student.courses?.[0]?.course_information,
     title: student.courses?.[0]?.course_information?.title || "O-Levels",
   } : null);
   const pendingSubjects = student?.pending_subjects || [];
-  const activeCourses = enrolledCourses.filter(ce => (ce?.enrollment_status || ce?.status) === 'active');
   const guardiansList = student?.guardians || studentInfo?.guardians || [];
   const advisorsList = student?.advisors || studentInfo?.advisors || [];
 

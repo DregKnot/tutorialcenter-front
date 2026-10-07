@@ -1,10 +1,15 @@
 import { useEffect, useLayoutEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import axios from "axios";
 import { Icon } from "@iconify/react";
-import { useNavigate } from "react-router-dom";
 import EmbeddedVideoModal from "../../components/private/EmbeddedVideoModal.jsx";
+import ClassSessionStatusBadge, {
+  isSessionCancelled,
+  isSessionProposed,
+  hasSessionRecording,
+} from "../../components/common/ClassSessionStatusBadge.jsx";
 
 // SVG Icons to avoid import issues
 const ChevronLeftIcon = () => (
@@ -557,6 +562,10 @@ export default function StudentCalendar() {
                           <div className="flex flex-col gap-1 overflow-y-auto max-h-[80px] pr-0.5">
                             {daySessions.slice(0, 3).map((s, sIdx) => {
                               const colors = getClassColor(s.class?.title || s.title);
+                              const cancelled = isSessionCancelled(s);
+                              const proposed = isSessionProposed(s);
+                              const hasRec = hasSessionRecording(s);
+
                               return (
                                 <button
                                   key={s.id || sIdx}
@@ -564,9 +573,30 @@ export default function StudentCalendar() {
                                     e.stopPropagation();
                                     setSelectedSession(s);
                                   }}
-                                  className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border ${colors.bg} ${colors.border} ${colors.text} truncate hover:opacity-85 transition-opacity active:scale-[0.98]`}
+                                  className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border transition-opacity active:scale-[0.98] flex items-center justify-between gap-1 ${
+                                    cancelled
+                                      ? "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 line-through opacity-75"
+                                      : proposed
+                                      ? "bg-amber-50 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-250 dark:border-amber-800/70"
+                                      : `${colors.bg} ${colors.border} ${colors.text} hover:opacity-85`
+                                  }`}
                                 >
-                                  {s.class?.title || s.title}
+                                  <span className="truncate flex-1">{s.class?.title || s.title}</span>
+                                  <div className="flex items-center gap-0.5 shrink-0">
+                                    {cancelled && (
+                                      <span className="text-[8px] font-black uppercase text-rose-600 dark:text-rose-400 no-underline">
+                                        CAN
+                                      </span>
+                                    )}
+                                    {proposed && !cancelled && (
+                                      <span className="text-[8px] font-black uppercase text-amber-700 dark:text-amber-300">
+                                        PROP
+                                      </span>
+                                    )}
+                                    {hasRec && (
+                                      <Icon icon="lucide:play-circle" className="w-2.5 h-2.5 text-purple-600 dark:text-purple-400 shrink-0" title="Recording uploaded" />
+                                    )}
+                                  </div>
                                 </button>
                               );
                             })}
@@ -646,16 +676,36 @@ export default function StudentCalendar() {
                           <div className="p-1 relative border-r border-gray-100 dark:border-[#1a4a75]/10 bg-white dark:bg-transparent flex flex-col gap-1">
                             {getSessionsForDateAndHour(currentDate, hour).map((s, sIdx) => {
                               const colors = getClassColor(s.class?.title || s.title);
+                              const cancelled = isSessionCancelled(s);
+                              const proposed = isSessionProposed(s);
+                              const hasRec = hasSessionRecording(s);
+
                               return (
                                 <button
                                   key={s.id || sIdx}
                                   onClick={() => setSelectedSession(s)}
-                                  className={`w-full text-left p-2.5 rounded-xl border ${colors.bg} ${colors.border} ${colors.text} shadow-sm transition-all hover:scale-[1.01] hover:shadow-md cursor-pointer`}
+                                  className={`w-full text-left p-2.5 rounded-xl border shadow-sm transition-all hover:scale-[1.01] hover:shadow-md cursor-pointer ${
+                                    cancelled
+                                      ? "bg-rose-50/90 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 opacity-80"
+                                      : proposed
+                                      ? "bg-amber-50/90 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-250 dark:border-amber-800/70"
+                                      : `${colors.bg} ${colors.border} ${colors.text}`
+                                  }`}
                                 >
-                                  <div className="text-xs font-extrabold">{s.class?.title || s.title}</div>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className={`text-xs font-extrabold truncate ${cancelled ? "line-through opacity-75" : ""}`}>{s.class?.title || s.title}</span>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <ClassSessionStatusBadge session={s} size="xs" showScheduled={false} />
+                                    </div>
+                                  </div>
                                   {s.starts_at && (
-                                    <div className="text-[9px] opacity-80 mt-1 font-semibold">
-                                      {formatTimeRange(s.starts_at, s.ends_at)}
+                                    <div className="text-[9px] opacity-80 mt-1 font-semibold flex items-center justify-between">
+                                      <span>{formatTimeRange(s.starts_at, s.ends_at)}</span>
+                                      {hasRec && (
+                                        <span className="flex items-center gap-0.5 text-purple-600 dark:text-purple-400 font-bold">
+                                          <Icon icon="lucide:play-circle" className="w-3 h-3" /> Recording
+                                        </span>
+                                      )}
                                     </div>
                                   )}
                                 </button>
@@ -675,13 +725,28 @@ export default function StudentCalendar() {
                               >
                                 {cellSessions.map((s, sIdx) => {
                                   const colors = getClassColor(s.class?.title || s.title);
+                                  const cancelled = isSessionCancelled(s);
+                                  const proposed = isSessionProposed(s);
+                                  const hasRec = hasSessionRecording(s);
+
                                   return (
                                     <button
                                       key={s.id || sIdx}
                                       onClick={() => setSelectedSession(s)}
-                                      className={`w-full text-left p-1 text-[9px] font-bold rounded border ${colors.bg} ${colors.border} ${colors.text} truncate hover:opacity-90 active:scale-[0.98] transition-all`}
+                                      className={`w-full text-left p-1 text-[9px] font-bold rounded border truncate hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-between gap-1 ${
+                                        cancelled
+                                          ? "opacity-75 line-through bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60"
+                                          : proposed
+                                          ? "bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-950/40 dark:text-amber-250 dark:border-amber-800/70"
+                                          : `${colors.bg} ${colors.border} ${colors.text}`
+                                      }`}
                                     >
-                                      {s.class?.title || s.title}
+                                      <span className="truncate flex-1">{s.class?.title || s.title}</span>
+                                      <div className="flex items-center gap-0.5 shrink-0">
+                                        {cancelled && <span className="text-[8px] font-black text-rose-600 uppercase">CAN</span>}
+                                        {proposed && !cancelled && <span className="text-[8px] font-black text-amber-700 uppercase">PROP</span>}
+                                        {hasRec && <Icon icon="lucide:play-circle" className="w-2.5 h-2.5 text-purple-600 shrink-0" />}
+                                      </div>
                                     </button>
                                   );
                                 })}
@@ -839,26 +904,30 @@ export default function StudentCalendar() {
                 getSessionsForDate(selectedDateModal).map((s, idx) => {
                   const colors = getClassColor(s.class?.title || s.title);
                   const past = isPastSession(s);
+                  const cancelled = isSessionCancelled(s);
+                  const proposed = isSessionProposed(s);
                   const recUrl = s.recording_link || s.recording_url || s.recorded_url || s.video_url;
 
                   return (
                     <div
                       key={s.id || idx}
-                      className={`p-5 rounded-2xl border ${colors.bg} ${colors.border} flex flex-col justify-between shadow-sm hover:shadow-md transition-all space-y-4`}
+                      className={`p-5 rounded-2xl border flex flex-col justify-between shadow-sm hover:shadow-md transition-all space-y-4 ${
+                        cancelled
+                          ? "bg-rose-50/90 border-rose-300 dark:bg-rose-950/40 dark:border-rose-900/60"
+                          : proposed
+                          ? "bg-amber-50/90 border-amber-300 dark:bg-amber-950/40 dark:border-amber-800/70"
+                          : `${colors.bg} ${colors.border}`
+                      }`}
                     >
                       <div>
-                        <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                           <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${colors.text} bg-white/60 dark:bg-black/30 backdrop-blur-sm`}>
                             {getSubjectDisplayName(s)}
                           </span>
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                            past ? "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                          }`}>
-                            {past ? "Ended" : "Scheduled"}
-                          </span>
+                          <ClassSessionStatusBadge session={s} size="xs" showScheduled={true} />
                         </div>
                         
-                        <h3 className={`text-base font-extrabold leading-snug ${colors.text}`}>
+                        <h3 className={`text-base font-extrabold leading-snug ${colors.text} ${cancelled ? "line-through opacity-75" : ""}`}>
                           {s.class?.title || s.title || "Master Class"}
                         </h3>
 
@@ -872,7 +941,11 @@ export default function StudentCalendar() {
 
                       {/* Action Button */}
                       <div className="pt-3 border-t border-black/5 dark:border-white/10">
-                        {past ? (
+                        {cancelled ? (
+                          <div className="w-full py-2.5 text-center text-xs font-black uppercase tracking-wider text-rose-700 bg-rose-100 dark:bg-rose-950/50 dark:text-rose-300 rounded-xl border border-rose-200 dark:border-rose-900">
+                            Session Cancelled
+                          </div>
+                        ) : past ? (
                           recUrl ? (
                             <button
                               onClick={() => handleWatchVideo(recUrl)}
@@ -937,14 +1010,34 @@ export default function StudentCalendar() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedSession(null)} />
           <div className="relative bg-white dark:bg-[#09314F] rounded-3xl p-6 md:p-8 w-[90%] max-w-md shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 border border-gray-150 dark:border-[#1a4a75]">
-            <div className="flex items-center gap-3.5 mb-6">
+            <div className="flex items-center gap-3.5 mb-4">
               <div className="w-11 h-11 rounded-full bg-[#09314F] dark:bg-black/20 flex items-center justify-center text-white font-extrabold text-sm shrink-0">
                 {getInitials(selectedSession.class?.title || selectedSession.title)}
               </div>
-              <h3 className="text-base font-extrabold text-[#09314F] dark:text-white leading-tight">
-                {selectedSession.class?.title || selectedSession.title || "Master Class"}
-              </h3>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <ClassSessionStatusBadge session={selectedSession} size="xs" showScheduled={true} />
+                </div>
+                <h3 className={`text-base font-extrabold text-[#09314F] dark:text-white leading-tight ${
+                  isSessionCancelled(selectedSession) ? "line-through text-rose-700 dark:text-rose-400" : ""
+                }`}>
+                  {selectedSession.class?.title || selectedSession.title || "Master Class"}
+                </h3>
+              </div>
             </div>
+
+            {isSessionCancelled(selectedSession) && (
+              <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-center gap-2 text-xs font-bold text-rose-700 dark:text-rose-300">
+                <Icon icon="lucide:ban" className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>This session was cancelled by the academy. Classroom access is disabled.</span>
+              </div>
+            )}
+            {isSessionProposed(selectedSession) && !isSessionCancelled(selectedSession) && (
+              <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-900/60 flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+                <Icon icon="lucide:clock" className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>This class is proposed and tentative, but you can still join when it starts.</span>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2">
@@ -961,7 +1054,12 @@ export default function StudentCalendar() {
               </div>
               <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2 gap-4">
                 <span className="text-xs font-bold text-gray-400 dark:text-blue-300 shrink-0">Class Access:</span>
-                {selectedSession.class_link || selectedSession.id ? (
+                {isSessionCancelled(selectedSession) ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60">
+                    <Icon icon="lucide:ban" className="w-3 h-3 text-rose-600" />
+                    Session Cancelled
+                  </span>
+                ) : selectedSession.class_link || selectedSession.id ? (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                     <Icon icon="lucide:shield-check" className="w-3 h-3 text-emerald-600" />
                     In-App Classroom Protected
@@ -983,9 +1081,13 @@ export default function StudentCalendar() {
               </div>
             </div>
 
-            {/* Action button: Recorded Class if past, else Join Class */}
+            {/* Action button: Cancelled, Recorded Class if past, else Join Class */}
             <div className="mt-6">
-              {isPastSession(selectedSession) ? (
+              {isSessionCancelled(selectedSession) ? (
+                <div className="w-full py-3.5 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-extrabold rounded-xl text-center text-xs uppercase tracking-wider border border-rose-200 dark:border-rose-900">
+                  Session Cancelled
+                </div>
+              ) : isPastSession(selectedSession) ? (
                 selectedSession.recording_link || selectedSession.recording_url ? (
                   <button
                     onClick={() => handleWatchVideo(selectedSession.recording_link || selectedSession.recording_url)}

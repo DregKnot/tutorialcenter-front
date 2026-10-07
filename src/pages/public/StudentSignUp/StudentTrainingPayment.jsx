@@ -328,6 +328,7 @@ export const StudentTrainingPayment = () => {
     if (verificationLock.current) return;
     const reference = response?.reference;
     if (!reference) {
+      console.log("Paystack Error: No payment reference was returned from gateway response", response);
       setError("No payment reference was returned. Contact support before making another payment.");
       setShowModal(false);
       return;
@@ -354,6 +355,8 @@ export const StudentTrainingPayment = () => {
       localStorage.removeItem("studentTel");
       navigate("/register/student/training/payment/success");
     } catch (err) {
+      console.log("Paystack Verification Error:", err.response?.data || err);
+      console.error("Paystack verification error:", err);
       setError(`${err.response?.data?.message || err.message || "Unable to verify payment."} If you were charged, do not pay again. Retry verification using the saved reference.`);
     } finally {
       verificationLock.current = false;

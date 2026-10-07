@@ -8,6 +8,10 @@ jest.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
 }), { virtual: true });
 
+jest.mock("@iconify/react", () => ({
+  Icon: (props) => <span data-testid="icon" {...props} />,
+}));
+
 // Mock StaffDashboardLayout
 jest.mock("../../../components/private/staffs/DashboardLayout.jsx", () => {
   return function MockStaffDashboardLayout({ children }) {

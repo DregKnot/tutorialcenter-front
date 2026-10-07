@@ -4,6 +4,12 @@ import axios from "axios";
 import { Icon } from "@iconify/react";
 import { useNavigate, useLocation } from "react-router-dom";
 import TutorPostClassReportModal from "../../../components/private/Tutor/TutorPostClassReportModal";
+import { isAdminStaff } from "../../../utils/roleUtils";
+import ClassSessionStatusBadge, {
+  isSessionCancelled,
+  isSessionProposed,
+  hasSessionRecording,
+} from "../../../components/common/ClassSessionStatusBadge.jsx";
 
 // SVG Icons to match premium look
 const ChevronLeftIcon = () => (
@@ -264,6 +270,11 @@ export default function TutorCalendar() {
 
     if (feedbackSessionId) {
       sessionStorage.removeItem("just_completed_class_session_id");
+
+      const staffRole = localStorage.getItem("staff_role") || "";
+      if (isAdminStaff(staffRole)) {
+        return;
+      }
 
       const session = sessions.find((s) => String(s.id) === String(feedbackSessionId));
       if (session) {
@@ -631,6 +642,10 @@ export default function TutorCalendar() {
                             {daySessions.slice(0, 3).map((s, sIdx) => {
                               const colors = getClassColor(s.class?.title || s.title);
                               const isMine = isAssignedToMe(s);
+                              const cancelled = isSessionCancelled(s);
+                              const proposed = isSessionProposed(s);
+                              const hasRec = hasSessionRecording(s);
+
                               return (
                                 <button
                                   key={s.id || sIdx}
@@ -638,12 +653,35 @@ export default function TutorCalendar() {
                                     e.stopPropagation();
                                     setSelectedSession(s);
                                   }}
-                                  className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border ${colors.bg} ${colors.border} ${colors.text} truncate hover:opacity-85 transition-opacity active:scale-[0.98] flex items-center gap-1`}
+                                  className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border transition-opacity active:scale-[0.98] flex items-center justify-between gap-1 ${
+                                    cancelled
+                                      ? "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 line-through opacity-75"
+                                      : proposed
+                                      ? "bg-amber-50 text-amber-850 border-amber-300 dark:bg-amber-950/40 dark:text-amber-250 dark:border-amber-900/60"
+                                      : `${colors.bg} ${colors.border} ${colors.text} hover:opacity-85`
+                                  }`}
                                 >
-                                  {isMine && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block shadow-xs" title="Assigned to you" />
-                                  )}
-                                  <span className="truncate">{s.class?.title || s.title}</span>
+                                  <div className="flex items-center gap-1 min-w-0 flex-1">
+                                    {isMine && !cancelled && (
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block shadow-xs" title="Assigned to you" />
+                                    )}
+                                    <span className="truncate">{s.class?.title || s.title}</span>
+                                  </div>
+                                  <div className="flex items-center gap-0.5 shrink-0">
+                                    {cancelled && (
+                                      <span className="text-[8px] font-black uppercase text-rose-600 dark:text-rose-400 no-underline">
+                                        CAN
+                                      </span>
+                                    )}
+                                    {proposed && (
+                                      <span className="text-[8px] font-black uppercase text-amber-700 dark:text-amber-300">
+                                        PROPOSED
+                                      </span>
+                                    )}
+                                    {hasRec && (
+                                      <Icon icon="lucide:play-circle" className="w-2.5 h-2.5 text-purple-600 dark:text-purple-400 shrink-0" title="Recording uploaded" />
+                                    )}
+                                  </div>
                                 </button>
                               );
                             })}
@@ -720,30 +758,46 @@ export default function TutorCalendar() {
                             {getSessionsForDateAndHour(currentDate, hour).map((s, sIdx) => {
                               const colors = getClassColor(s.class?.title || s.title);
                               const isMine = isAssignedToMe(s);
+                              const cancelled = isSessionCancelled(s);
+                              const proposed = isSessionProposed(s);
                               return (
                                 <button
                                   key={s.id || sIdx}
                                   onClick={() => setSelectedSession(s)}
-                                  className={`w-full text-left p-2.5 rounded-xl border ${colors.bg} ${colors.border} ${colors.text} shadow-sm transition-all hover:scale-[1.01] hover:shadow-md cursor-pointer`}
+                                  className={`w-full text-left p-2.5 rounded-xl border shadow-sm transition-all hover:scale-[1.01] hover:shadow-md cursor-pointer ${
+                                    cancelled
+                                      ? "bg-rose-50/90 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 opacity-80"
+                                      : proposed
+                                      ? "bg-amber-50/90 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-250 dark:border-amber-800/70"
+                                      : `${colors.bg} ${colors.border} ${colors.text}`
+                                  }`}
                                 >
-                                  <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center justify-between gap-2 flex-wrap">
                                     <div className="text-xs font-extrabold truncate flex items-center gap-1.5">
-                                      {isMine && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 inline-block" title="Assigned to you" />}
-                                      <span>{s.class?.title || s.title}</span>
+                                      {isMine && !cancelled && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 inline-block" title="Assigned to you" />}
+                                      <span className={cancelled ? "line-through" : ""}>{s.class?.title || s.title}</span>
                                     </div>
-                                    {isMine ? (
-                                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 shrink-0">
-                                        Yours
-                                      </span>
-                                    ) : (
-                                      <span className="text-[9px] font-medium opacity-70 truncate max-w-[100px] shrink-0">
-                                        {getSessionTutorName(s)}
-                                      </span>
-                                    )}
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <ClassSessionStatusBadge session={s} size="xs" showScheduled={false} />
+                                      {isMine ? (
+                                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 shrink-0">
+                                          Yours
+                                        </span>
+                                      ) : (
+                                        <span className="text-[9px] font-medium opacity-70 truncate max-w-[100px] shrink-0">
+                                          {getSessionTutorName(s)}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                   {s.starts_at && (
-                                    <div className="text-[9px] opacity-80 mt-1 font-semibold">
-                                      {formatTimeRange(s.starts_at, s.ends_at)}
+                                    <div className="text-[9px] opacity-80 mt-1 font-semibold flex items-center justify-between">
+                                      <span>{formatTimeRange(s.starts_at, s.ends_at)}</span>
+                                      {hasSessionRecording(s) && (
+                                        <span className="flex items-center gap-0.5 text-purple-600 dark:text-purple-400 font-bold">
+                                          <Icon icon="lucide:play-circle" className="w-3 h-3" /> Recording
+                                        </span>
+                                      )}
                                     </div>
                                   )}
                                 </button>
@@ -764,14 +818,29 @@ export default function TutorCalendar() {
                                 {cellSessions.map((s, sIdx) => {
                                   const colors = getClassColor(s.class?.title || s.title);
                                   const isMine = isAssignedToMe(s);
+                                  const cancelled = isSessionCancelled(s);
+                                  const proposed = isSessionProposed(s);
                                   return (
                                     <button
                                       key={s.id || sIdx}
                                       onClick={() => setSelectedSession(s)}
-                                      className={`w-full text-left p-1 text-[9px] font-bold rounded border ${colors.bg} ${colors.border} ${colors.text} truncate hover:opacity-90 active:scale-[0.98] transition-all flex items-center gap-1`}
+                                      className={`w-full text-left p-1 text-[9px] font-bold rounded border truncate hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-between gap-1 ${
+                                        cancelled
+                                          ? "opacity-75 line-through bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60"
+                                          : proposed
+                                          ? "bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-950/40 dark:text-amber-250 dark:border-amber-800/70"
+                                          : `${colors.bg} ${colors.border} ${colors.text}`
+                                      }`}
                                     >
-                                      {isMine && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block" title="Assigned to you" />}
-                                      <span className="truncate">{s.class?.title || s.title}</span>
+                                      <div className="flex items-center gap-1 truncate flex-1">
+                                        {isMine && !cancelled && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block" title="Assigned to you" />}
+                                        <span className="truncate">{s.class?.title || s.title}</span>
+                                      </div>
+                                      <div className="flex items-center gap-0.5 shrink-0">
+                                        {cancelled && <span className="text-[8px] font-black text-rose-600 uppercase">CAN</span>}
+                                        {proposed && !cancelled && <span className="text-[8px] font-black text-amber-700 uppercase">PROP</span>}
+                                        {hasSessionRecording(s) && <Icon icon="lucide:play-circle" className="w-2.5 h-2.5 text-purple-600 shrink-0" />}
+                                      </div>
                                     </button>
                                   );
                                 })}
@@ -858,31 +927,49 @@ export default function TutorCalendar() {
                         getSessionsForDate(selectedMobileDate).map((s, sIdx) => {
                           const colors = getClassColor(s.class?.title || s.title);
                           const isMine = isAssignedToMe(s);
+                          const cancelled = isSessionCancelled(s);
+                          const proposed = isSessionProposed(s);
                           return (
                             <div
                               key={s.id || sIdx}
                               onClick={() => setSelectedSession(s)}
-                              className={`flex flex-col p-4 rounded-2xl border ${colors.bg} ${colors.border} ${colors.text} shadow-sm transition-all active:scale-[0.98] cursor-pointer`}
+                              className={`flex flex-col p-4 rounded-2xl border shadow-sm transition-all active:scale-[0.98] cursor-pointer ${
+                                cancelled
+                                  ? "bg-rose-50/90 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 opacity-80"
+                                  : proposed
+                                  ? "bg-amber-50/90 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-250 dark:border-amber-800/70"
+                                  : `${colors.bg} ${colors.border} ${colors.text}`
+                              }`}
                             >
-                              <div className="flex items-center justify-between gap-2">
-                                <h4 className="text-sm font-extrabold leading-snug truncate">
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <h4 className={`text-sm font-extrabold leading-snug truncate ${isSessionCancelled(s) ? "line-through" : ""}`}>
                                   {s.class?.title || s.title || "Master Class"}
                                 </h4>
-                                {isMine ? (
-                                  <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 shrink-0">
-                                    Your Class
-                                  </span>
-                                ) : (
-                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 opacity-75 shrink-0">
-                                    {getSessionTutorName(s)}
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <ClassSessionStatusBadge session={s} size="xs" showScheduled={false} />
+                                  {isMine ? (
+                                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 shrink-0">
+                                      Your Class
+                                    </span>
+                                  ) : (
+                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 opacity-75 shrink-0">
+                                      {getSessionTutorName(s)}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                               {s.starts_at && (
-                                <p className="text-xs font-semibold opacity-95 mt-1.5 flex items-center gap-1.5">
-                                  <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-                                  {formatTimeRange(s.starts_at, s.ends_at)}
-                                </p>
+                                <div className="text-xs font-semibold opacity-95 mt-1.5 flex items-center justify-between">
+                                  <p className="flex items-center gap-1.5">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                                    {formatTimeRange(s.starts_at, s.ends_at)}
+                                  </p>
+                                  {hasSessionRecording(s) && (
+                                    <span className="flex items-center gap-1 text-[10px] font-bold text-purple-650 dark:text-purple-400">
+                                      <Icon icon="lucide:play-circle" className="w-3.5 h-3.5" /> Recording
+                                    </span>
+                                  )}
+                                </div>
                               )}
                             </div>
                           );
@@ -957,15 +1044,11 @@ export default function TutorCalendar() {
                                 Faculty: {getSessionTutorName(s)}
                               </span>
                             )}
-                            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                              past ? "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300" : "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
-                            }`}>
-                              {past ? "Ended" : "Scheduled"}
-                            </span>
+                            <ClassSessionStatusBadge session={s} size="xs" showScheduled={true} />
                           </div>
                         </div>
                         
-                        <h3 className={`text-base font-extrabold leading-snug ${colors.text}`}>
+                        <h3 className={`text-base font-extrabold leading-snug ${colors.text} ${isSessionCancelled(s) ? "line-through opacity-75" : ""}`}>
                           {s.class?.title || s.title || "Master Class"}
                         </h3>
 
@@ -979,7 +1062,12 @@ export default function TutorCalendar() {
 
                       {/* Action Button */}
                       <div className="pt-3 border-t border-black/5 dark:border-white/10">
-                        {past ? (
+                        {isSessionCancelled(s) ? (
+                          <div className="py-2.5 px-3 bg-rose-100/70 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-xl text-center text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center justify-center gap-1.5">
+                            <Icon icon="lucide:ban" className="w-4 h-4 text-rose-500" />
+                            <span>Session Cancelled</span>
+                          </div>
+                        ) : past ? (
                           recUrl ? (
                             <a
                               href={recUrl}
@@ -1079,22 +1167,39 @@ export default function TutorCalendar() {
             
             <div className="space-y-6">
               <div className="bg-slate-50 dark:bg-black/25 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
-                <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
                   <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Class Title</p>
-                  {isAssignedToMe(selectedSession) ? (
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
-                      Your Class
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 opacity-80">
-                      Faculty: {getSessionTutorName(selectedSession)}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    <ClassSessionStatusBadge session={selectedSession} size="xs" showScheduled={true} />
+                    {isAssignedToMe(selectedSession) ? (
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                        Your Class
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 opacity-80">
+                        Faculty: {getSessionTutorName(selectedSession)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <p className="text-[15px] font-black text-slate-800 dark:text-white">
+                <p className={`text-[15px] font-black text-slate-800 dark:text-white ${isSessionCancelled(selectedSession) ? "line-through text-rose-700 dark:text-rose-400" : ""}`}>
                   {selectedSession.class?.title || selectedSession.title || "Master Class"}
                 </p>
               </div>
+
+              {/* Status Alert Banners */}
+              {isSessionCancelled(selectedSession) && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl flex items-center gap-2.5 text-xs font-bold text-rose-700 dark:text-rose-300">
+                  <Icon icon="lucide:alert-triangle" className="w-4 h-4 text-rose-500 shrink-0" />
+                  <span>This class session was cancelled by administration. Live attendance is disabled.</span>
+                </div>
+              )}
+              {isSessionProposed(selectedSession) && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-2xl flex items-center gap-2.5 text-xs font-bold text-amber-800 dark:text-amber-300">
+                  <Icon icon="lucide:clock" className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>This class session has been rescheduled. Please review the updated schedule.</span>
+                </div>
+              )}
 
               <div className="flex items-center gap-4 text-slate-650 dark:text-slate-350">
                 <Icon icon="mdi:calendar" className="w-5 h-5 shrink-0 text-[#C5A97A]" />
@@ -1113,7 +1218,12 @@ export default function TutorCalendar() {
               {/* Class Join Link */}
               <div className="flex items-center gap-4 text-slate-650 dark:text-slate-350 pb-2 border-b border-slate-100 dark:border-white/5">
                 <Icon icon="mdi:link" className="w-5 h-5 shrink-0 text-[#C5A97A]" />
-                {selectedSession.class_link || selectedSession.id ? (
+                {isSessionCancelled(selectedSession) ? (
+                  <span className="text-[13px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                    <Icon icon="lucide:ban" className="w-4 h-4 text-rose-500" />
+                    Session Cancelled · Link Inactive
+                  </span>
+                ) : selectedSession.class_link || selectedSession.id ? (
                   <span className="text-[13px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                     <Icon icon="solar:shield-check-bold" className="w-4 h-4 text-emerald-500" />
                     In-App Secure Classroom · Protected
@@ -1124,25 +1234,38 @@ export default function TutorCalendar() {
               </div>
 
               {/* Class Video Recording Link */}
-              <div className="flex items-center gap-4 text-slate-650 dark:text-slate-350">
-                <Icon icon="mdi:video" className="w-5 h-5 shrink-0 text-[#C5A97A]" />
-                {selectedSession.recording_link ? (
-                  <a
-                    href={selectedSession.recording_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[14px] font-bold text-blue-500 hover:text-blue-600 underline truncate max-w-[280px]"
-                  >
-                    Recorded Session link
-                  </a>
-                ) : (
-                  <span className="text-[14px] font-bold text-slate-300 dark:text-slate-600 italic">No recording uploaded</span>
+              <div className="flex items-center justify-between text-slate-650 dark:text-slate-350">
+                <div className="flex items-center gap-4">
+                  <Icon icon="mdi:video" className="w-5 h-5 shrink-0 text-[#C5A97A]" />
+                  {selectedSession.recording_link ? (
+                    <a
+                      href={selectedSession.recording_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[14px] font-bold text-blue-500 hover:text-blue-600 underline truncate max-w-[200px]"
+                    >
+                      Recorded Session link
+                    </a>
+                  ) : (
+                    <span className="text-[14px] font-bold text-slate-300 dark:text-slate-600 italic">No recording uploaded</span>
+                  )}
+                </div>
+                {hasSessionRecording(selectedSession) && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 flex items-center gap-1">
+                    <Icon icon="lucide:check-circle-2" className="w-3 h-3 text-purple-600" />
+                    Uploaded
+                  </span>
                 )}
               </div>
 
-              {/* Action Button: Recorded Class if past, else Join Class */}
+              {/* Action Button: Cancelled, Recorded Class if past, else Join Class */}
               <div className="pt-4 border-t border-slate-100 dark:border-white/5">
-                {isPastSession(selectedSession) ? (
+                {isSessionCancelled(selectedSession) ? (
+                  <div className="py-3 px-4 bg-rose-100/70 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-2xl text-center text-xs font-extrabold text-rose-700 dark:text-rose-300 flex items-center justify-center gap-2">
+                    <Icon icon="lucide:ban" className="w-4 h-4 text-rose-500" />
+                    <span>Class Cancelled · Attendance & Joining Closed</span>
+                  </div>
+                ) : isPastSession(selectedSession) ? (
                   (selectedSession.recording_link || selectedSession.recording_url) ? (
                     <a
                       href={selectedSession.recording_link || selectedSession.recording_url}

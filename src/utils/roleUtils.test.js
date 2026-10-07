@@ -1,4 +1,4 @@
-import { isReadOnlyStaff, isCsa, READ_ONLY_ROLES } from "./roleUtils";
+import { isReadOnlyStaff, isCsa, isAdminStaff, isAdvisorStaff, isTutorStaff } from "./roleUtils";
 import { canManageExams, getExamApiBase, getExamBasePath } from "./examAccess";
 
 describe("roleUtils - Role and Permission Testing", () => {
@@ -90,6 +90,56 @@ describe("roleUtils - Role and Permission Testing", () => {
       localStorage.setItem("staff_role", "course advisor");
       expect(getExamApiBase()).toBe("/api/admin");
       expect(getExamBasePath()).toBe("/staffs/course-advisor/exams");
+    });
+  });
+
+  describe("isAdminStaff", () => {
+    test("identifies admin, superadmin, coo, moderator, and csa as admin staff", () => {
+      expect(isAdminStaff("admin")).toBe(true);
+      expect(isAdminStaff("ADMIN")).toBe(true);
+      expect(isAdminStaff("superadmin")).toBe(true);
+      expect(isAdminStaff("super_admin")).toBe(true);
+      expect(isAdminStaff("coo")).toBe(true);
+      expect(isAdminStaff("moderator")).toBe(true);
+      expect(isAdminStaff("csa")).toBe(true);
+      expect(isAdminStaff("operations")).toBe(true);
+    });
+
+    test("identifies tutors and advisors as non-admin staff", () => {
+      expect(isAdminStaff("tutor")).toBe(false);
+      expect(isAdminStaff("advisor")).toBe(false);
+      expect(isAdminStaff("course advisor")).toBe(false);
+      expect(isAdminStaff("course_advisor")).toBe(false);
+      expect(isAdminStaff("student")).toBe(false);
+    });
+
+    test("reads from localStorage when argument is omitted", () => {
+      localStorage.setItem("staff_role", "admin");
+      expect(isAdminStaff()).toBe(true);
+
+      localStorage.setItem("staff_role", "tutor");
+      expect(isAdminStaff()).toBe(false);
+    });
+  });
+
+  describe("isAdvisorStaff", () => {
+    test("detects advisor and course advisor variants", () => {
+      expect(isAdvisorStaff("advisor")).toBe(true);
+      expect(isAdvisorStaff("course advisor")).toBe(true);
+      expect(isAdvisorStaff("course_advisor")).toBe(true);
+      expect(isAdvisorStaff("academic advisor")).toBe(true);
+      expect(isAdvisorStaff("academic_advisor")).toBe(true);
+      expect(isAdvisorStaff("admin")).toBe(false);
+      expect(isAdvisorStaff("tutor")).toBe(false);
+    });
+  });
+
+  describe("isTutorStaff", () => {
+    test("detects tutor correctly", () => {
+      expect(isTutorStaff("tutor")).toBe(true);
+      expect(isTutorStaff("TUTOR")).toBe(true);
+      expect(isTutorStaff("admin")).toBe(false);
+      expect(isTutorStaff("advisor")).toBe(false);
     });
   });
 });

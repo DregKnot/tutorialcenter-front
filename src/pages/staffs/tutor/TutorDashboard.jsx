@@ -4,6 +4,7 @@ import StaffDashboardLayout from "../../../components/private/staffs/DashboardLa
 import { Icon } from "@iconify/react";
 import { useNavigate, useLocation } from "react-router-dom";
 import TutorPostClassReportModal from "../../../components/private/Tutor/TutorPostClassReportModal";
+import { isAdminStaff } from "../../../utils/roleUtils";
 import { 
   ClockIcon,
   VideoCameraIcon,
@@ -92,6 +93,7 @@ export default function TutorDashboard() {
 
         // Read client-side unreported sessions from leaving sessions
         const localUnreported = (() => {
+          if (isAdminStaff()) return [];
           try {
             return JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
           } catch (e) {
@@ -199,6 +201,7 @@ export default function TutorDashboard() {
         const classes = Array.isArray(data.classes) ? data.classes : [];
 
         const localUnreported = (() => {
+          if (isAdminStaff()) return [];
           try {
             return JSON.parse(localStorage.getItem("tutor_unreported_sessions") || "[]");
           } catch (e) {
@@ -292,6 +295,11 @@ export default function TutorDashboard() {
 
     if (feedbackSessionId) {
       sessionStorage.removeItem("just_completed_class_session_id");
+
+      const staffRole = localStorage.getItem("staff_role") || "";
+      if (isAdminStaff(staffRole)) {
+        return;
+      }
 
       const allSessions = [
         ...(overviewData.today_classes || []),

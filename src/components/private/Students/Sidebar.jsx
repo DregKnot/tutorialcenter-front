@@ -70,6 +70,11 @@ const menuItems = [
     destination: "/student/payment-history",
   },
   {
+    label: "Learning Survey",
+    icon: "mdi:clipboard-text-star-outline",
+    destination: "/student/survey",
+  },
+  {
     label: "Feedback",
     icon: "mdi:message-star-outline",
     destination: "/student/feedback",

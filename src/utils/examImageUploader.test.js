@@ -1,3 +1,11 @@
+import {
+  sanitizeExamHtml,
+  extractOptionTextAndImage,
+  combineOptionTextAndImage,
+  extractExplanationTextAndImage,
+  combineExplanationTextAndImage
+} from "./examImageUploader";
+
 jest.mock("axios", () => ({
   __esModule: true,
   default: {
@@ -11,14 +19,6 @@ jest.mock("axios", () => ({
   put: jest.fn(),
   delete: jest.fn(),
 }));
-
-import {
-  sanitizeExamHtml,
-  extractOptionTextAndImage,
-  combineOptionTextAndImage,
-  extractExplanationTextAndImage,
-  combineExplanationTextAndImage
-} from "./examImageUploader";
 
 describe("examImageUploader Utilities", () => {
   describe("sanitizeExamHtml", () => {

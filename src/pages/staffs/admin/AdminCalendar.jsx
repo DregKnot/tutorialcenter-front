@@ -26,6 +26,13 @@ import {
   EyeIcon,
   InformationCircleIcon
 } from "@heroicons/react/24/outline";
+import { Icon } from "@iconify/react";
+import ClassSessionStatusBadge, {
+  isSessionCancelled,
+  isSessionRescheduled,
+  isSessionProposed,
+  hasSessionRecording,
+} from "../../../components/common/ClassSessionStatusBadge.jsx";
 
 // Official Tutorial Center African Time Zone (West Africa Time / UTC+1)
 const AFRICAN_TIMEZONE = "Africa/Lagos";
@@ -159,10 +166,13 @@ const extractFlatSessions = (data) => {
     const startTime = session.starts_at || session.start_time || "10:00";
     const endTime = session.ends_at || session.end_time || "11:30";
 
+    const resolvedStatus = session.status || source.status || "active";
     list.push({
       ...session,
       id: session.id,
       class_id: source.id || session.class_id,
+      status: resolvedStatus,
+      class: source,
       session_date: dateStr,
       starts_at: startTime ? startTime.substring(0, 5) : "10:00",
       ends_at: endTime ? endTime.substring(0, 5) : "11:30",
@@ -254,6 +264,7 @@ export default function AdminCalendar() {
   const [modalTab, setModalTab] = useState("overview"); // 'overview', 'tutor', 'recordings'
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // --- FETCH SCHEDULES ---
   const fetchAllSchedules = useCallback(async () => {
@@ -282,6 +293,11 @@ export default function AdminCalendar() {
 
   useEffect(() => {
     fetchAllSchedules();
+    // Ensure any stale tutor/advisor report queues from previous class tests are cleared for admin
+    try {
+      localStorage.removeItem("tutor_unreported_sessions");
+      sessionStorage.removeItem("just_completed_class_session_id");
+    } catch (e) {}
   }, [fetchAllSchedules]);
 
   // Unique subjects and tutors for filter dropdowns
@@ -401,7 +417,11 @@ export default function AdminCalendar() {
     if (!link) return;
     navigator.clipboard.writeText(link);
     setCopiedLink(id);
-    setTimeout(() => setCopiedLink(null), 2500);
+    setToast({ type: "success", message: "Class link copied to clipboard!" });
+    setTimeout(() => {
+      setCopiedLink(null);
+      setToast(null);
+    }, 2500);
   };
 
   // Month grid generator
@@ -439,6 +459,16 @@ export default function AdminCalendar() {
 
   return (
     <StaffDashboardLayout>
+      {toast && (
+        <div 
+          className={`fixed top-5 right-5 z-[200] px-6 py-4 rounded-2xl shadow-2xl text-white transition-all duration-300 flex items-center gap-3 ${
+            toast.type === "success" ? "bg-emerald-600" : "bg-rose-600"
+          }`}
+        >
+          <Icon icon={toast.type === "success" ? "lucide:check-circle" : "lucide:alert-circle"} className="w-5 h-5 shrink-0" />
+          <p className="font-bold text-sm">{toast.message}</p>
+        </div>
+      )}
       <div className="p-4 sm:p-6 lg:p-8 max-w-[1650px] mx-auto min-h-screen">
         
         {/* TOP HEADER & ACTION BAR */}
@@ -688,6 +718,9 @@ export default function AdminCalendar() {
                       {daySessions.slice(0, 3).map((session) => {
                         const style = getSubjectColor(session.subject_name);
                         const isLive = isSessionLiveNow(session);
+                        const isCancelled = isSessionCancelled(session);
+                        const isProposed = isSessionProposed(session);
+                        const hasRecording = hasSessionRecording(session);
 
                         return (
                           <div
@@ -697,19 +730,42 @@ export default function AdminCalendar() {
                               setSelectedSession(session);
                               setModalTab("overview");
                             }}
-                            className={`p-1.5 rounded-lg text-[11px] font-semibold border cursor-pointer transition-all hover:scale-[1.02] hover:shadow-sm ${style.bg} ${style.border} ${style.text} relative overflow-hidden`}
+                            className={`p-1.5 rounded-lg text-[11px] font-semibold border cursor-pointer transition-all hover:scale-[1.02] hover:shadow-sm ${
+                              isCancelled
+                                ? "bg-rose-50/90 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900/60 text-rose-800 dark:text-rose-300"
+                                : isProposed
+                                  ? "bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-900/60 text-amber-900 dark:text-amber-300"
+                                  : `${style.bg} ${style.border} ${style.text}`
+                            } relative overflow-hidden`}
                             title={`${session.topic} (${session.starts_at} - ${session.ends_at}) - Tutor: ${session.tutor.name}`}
                           >
-                            {isLive && (
+                            {isLive && !isCancelled && (
                               <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                             )}
                             <div className="flex items-center justify-between gap-1">
                               <span className="font-bold text-[10px] opacity-90">{session.starts_at?.slice(0, 5)}</span>
-                              <span className="text-[9px] font-extrabold px-1 rounded bg-black/5 dark:bg-white/10 truncate max-w-[65px]">
-                                {session.subject_name}
-                              </span>
+                              <div className="flex items-center gap-1">
+                                {isCancelled && (
+                                  <span className="text-[9px] font-black uppercase px-1 rounded bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200">
+                                    Cancelled
+                                  </span>
+                                )}
+                                {isProposed && !isCancelled && (
+                                  <span className="text-[9px] font-black uppercase px-1 rounded bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200">
+                                    Proposed
+                                  </span>
+                                )}
+                                {hasRecording && (
+                                  <Icon icon="lucide:video" className="w-3 h-3 text-purple-600 dark:text-purple-400 shrink-0" title="Recording Uploaded" />
+                                )}
+                                <span className="text-[9px] font-extrabold px-1 rounded bg-black/5 dark:bg-white/10 truncate max-w-[55px]">
+                                  {session.subject_name}
+                                </span>
+                              </div>
                             </div>
-                            <p className="font-bold truncate mt-0.5 leading-tight">{session.topic}</p>
+                            <p className={`font-bold truncate mt-0.5 leading-tight ${isCancelled ? "line-through opacity-75" : ""}`}>
+                              {session.topic}
+                            </p>
                             <p className="text-[10px] opacity-80 truncate flex items-center gap-1 mt-0.5">
                               <UserIcon className="w-2.5 h-2.5 inline" /> {session.tutor.name}
                             </p>
@@ -785,6 +841,10 @@ export default function AdminCalendar() {
                           >
                             {cellSessions.map(session => {
                               const style = getSubjectColor(session.subject_name);
+                              const isCancelled = isSessionCancelled(session);
+                              const isProposed = isSessionProposed(session);
+                              const hasRecording = hasSessionRecording(session);
+
                               return (
                                 <div
                                   key={session.id}
@@ -793,15 +853,36 @@ export default function AdminCalendar() {
                                     setSelectedSession(session);
                                     setModalTab("overview");
                                   }}
-                                  className={`p-2 rounded-xl border text-xs cursor-pointer shadow-sm mb-1.5 transition-all hover:scale-[1.02] ${style.bg} ${style.border} ${style.text}`}
+                                  className={`p-2 rounded-xl border text-xs cursor-pointer shadow-sm mb-1.5 transition-all hover:scale-[1.02] ${
+                                    isCancelled
+                                      ? "bg-rose-50/90 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900/60 text-rose-800 dark:text-rose-300"
+                                      : isProposed
+                                        ? "bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-900/60 text-amber-900 dark:text-amber-300"
+                                        : `${style.bg} ${style.border} ${style.text}`
+                                  }`}
                                 >
                                   <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-extrabold px-1 rounded bg-white/60 dark:bg-black/20 uppercase">
-                                      {session.subject_name}
-                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      {isCancelled && (
+                                        <span className="text-[9px] font-black uppercase px-1 rounded bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200">
+                                          Cancelled
+                                        </span>
+                                      )}
+                                      {isProposed && !isCancelled && (
+                                        <span className="text-[9px] font-black uppercase px-1 rounded bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200">
+                                          Proposed
+                                        </span>
+                                      )}
+                                      {hasRecording && (
+                                        <Icon icon="lucide:video" className="w-3 h-3 text-purple-600 dark:text-purple-400 shrink-0" title="Recording Uploaded" />
+                                      )}
+                                      <span className="text-[9px] font-extrabold px-1 rounded bg-white/60 dark:bg-black/20 uppercase">
+                                        {session.subject_name}
+                                      </span>
+                                    </div>
                                     <span className="text-[10px] font-bold">{session.starts_at}</span>
                                   </div>
-                                  <p className="font-bold text-xs truncate mt-1">{session.topic}</p>
+                                  <p className={`font-bold text-xs truncate mt-1 ${isCancelled ? "line-through opacity-75" : ""}`}>{session.topic}</p>
                                   <p className="text-[10px] opacity-80 truncate mt-0.5">Tutor: {session.tutor.name}</p>
                                 </div>
                               );
@@ -842,7 +923,13 @@ export default function AdminCalendar() {
                         setSelectedSession(session);
                         setModalTab("overview");
                       }}
-                      className={`p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer transition-all hover:shadow-lg hover:border-primary/40 ${style.bg} ${style.border}`}
+                      className={`p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer transition-all hover:shadow-lg hover:border-primary/40 ${
+                        isSessionCancelled(session)
+                          ? "bg-rose-50/90 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900/60"
+                          : isSessionProposed(session)
+                          ? "bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-900/60"
+                          : `${style.bg} ${style.border}`
+                      }`}
                     >
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700 flex items-center justify-center text-primary font-extrabold text-lg">
@@ -854,17 +941,18 @@ export default function AdminCalendar() {
                         </div>
 
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md ${style.badge}`}>
                               {session.subject_name}
                             </span>
-                            {isLive && (
+                            <ClassSessionStatusBadge session={session} size="xs" showScheduled={true} />
+                            {isLive && !isSessionCancelled(session) && (
                               <span className="flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" /> LIVE NOW
                               </span>
                             )}
                           </div>
-                          <h4 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">{session.topic}</h4>
+                          <h4 className={`text-base sm:text-lg font-bold text-gray-900 dark:text-white ${isSessionCancelled(session) ? "line-through opacity-75" : ""}`}>{session.topic}</h4>
                           
                           <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-4 mt-2">
                             <span className="flex items-center gap-1 font-semibold text-[#09314F] dark:text-gray-200">
@@ -888,7 +976,11 @@ export default function AdminCalendar() {
                         >
                           Tutor Bio & History
                         </button>
-                        {session.class_link && (
+                        {isSessionCancelled(session) ? (
+                          <span className="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 text-xs font-bold">
+                            Cancelled
+                          </span>
+                        ) : session.class_link && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -941,7 +1033,13 @@ export default function AdminCalendar() {
                         setSelectedSession(session);
                         setModalTab("overview");
                       }}
-                      className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50/70 dark:hover:bg-gray-800/40 cursor-pointer transition-colors"
+                      className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer transition-colors ${
+                        isSessionCancelled(session)
+                          ? "bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-50/80"
+                          : isSessionProposed(session)
+                          ? "bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-50/80"
+                          : "hover:bg-gray-50/70 dark:hover:bg-gray-800/40"
+                      }`}
                     >
                       <div className="flex items-start gap-4">
                         <div className="text-center p-3 bg-gray-100 dark:bg-gray-800 rounded-2xl min-w-[70px] border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -954,11 +1052,12 @@ export default function AdminCalendar() {
                         </div>
 
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${style.badge}`}>
                               {session.subject_name}
                             </span>
-                            {isLive && (
+                            <ClassSessionStatusBadge session={session} size="xs" showScheduled={true} />
+                            {isLive && !isSessionCancelled(session) && (
                               <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" /> LIVE
                               </span>
@@ -968,7 +1067,7 @@ export default function AdminCalendar() {
                             </span>
                           </div>
                           
-                          <h4 className="text-base font-bold text-gray-900 dark:text-white">{session.topic}</h4>
+                          <h4 className={`text-base font-bold text-gray-900 dark:text-white ${isSessionCancelled(session) ? "line-through opacity-75" : ""}`}>{session.topic}</h4>
                           
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex flex-wrap items-center gap-3">
                             <span className="flex items-center gap-1">
@@ -1006,7 +1105,11 @@ export default function AdminCalendar() {
                             {copiedLink === session.id ? <CheckIcon className="w-4 h-4 text-emerald-500" /> : <ClipboardDocumentIcon className="w-4 h-4" />}
                           </button>
                         )}
-                        {session.class_link && (
+                        {isSessionCancelled(session) ? (
+                          <span className="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 text-xs font-bold">
+                            Cancelled
+                          </span>
+                        ) : session.class_link && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1090,18 +1193,19 @@ export default function AdminCalendar() {
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md ${style.badge}`}>
                               {session.subject_name}
                             </span>
-                            {isLive && (
+                            <ClassSessionStatusBadge session={session} size="xs" showScheduled={true} />
+                            {isLive && !isSessionCancelled(session) && (
                               <span className="flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" /> LIVE NOW
                               </span>
                             )}
                           </div>
                           
-                          <h4 className="text-base font-bold text-gray-900 dark:text-white">{session.topic}</h4>
+                          <h4 className={`text-base font-bold text-gray-900 dark:text-white ${isSessionCancelled(session) ? "line-through opacity-75" : ""}`}>{session.topic}</h4>
                           
                           <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-4 mt-2">
                             <span className="flex items-center gap-1 font-semibold text-[#09314F] dark:text-gray-200">
@@ -1124,7 +1228,11 @@ export default function AdminCalendar() {
                           >
                             <EyeIcon className="w-4 h-4 text-gray-500" /> Details
                           </button>
-                          {session.class_link && (
+                          {isSessionCancelled(session) ? (
+                            <span className="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 text-xs font-bold">
+                              Cancelled
+                            </span>
+                          ) : session.class_link && (
                             <button
                               onClick={() => {
                                 if (session.id) {
@@ -1188,13 +1296,14 @@ export default function AdminCalendar() {
                   <XMarkIcon className="w-5 h-5" />
                 </button>
 
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-white/20 text-white">
                     {selectedSession.subject_name}
                   </span>
                   <span className="text-[11px] font-bold text-white/80">
                     Tier: {selectedSession.class_tier}
                   </span>
+                  <ClassSessionStatusBadge session={selectedSession} size="sm" showScheduled={true} />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-extrabold">{selectedSession.topic}</h3>
                 <div className="text-xs text-white/80 mt-1 flex items-center gap-4">
@@ -1205,6 +1314,19 @@ export default function AdminCalendar() {
                     <ClockIcon className="w-4 h-4 text-white/80" /> {selectedSession.starts_at} - {selectedSession.ends_at}
                   </span>
                 </div>
+
+                {isSessionCancelled(selectedSession) && (
+                  <div className="mt-3 p-3 bg-rose-600/40 border border-rose-300/40 rounded-xl text-xs font-bold text-white flex items-center gap-2">
+                    <Icon icon="lucide:alert-triangle" className="w-4 h-4 text-white shrink-0" />
+                    <span>This class session is CANCELLED. Students cannot join live meetings for cancelled sessions.</span>
+                  </div>
+                )}
+                {isSessionRescheduled(selectedSession) && (
+                  <div className="mt-3 p-3 bg-amber-500/40 border border-amber-300/40 rounded-xl text-xs font-bold text-white flex items-center gap-2">
+                    <Icon icon="lucide:calendar-clock" className="w-4 h-4 text-white shrink-0" />
+                    <span>This class session has been RESCHEDULED. Please refer to the updated date and time.</span>
+                  </div>
+                )}
               </div>
 
               {/* Navigation Tabs inside Modal */}
@@ -1439,12 +1561,18 @@ export default function AdminCalendar() {
                   >
                     Close
                   </button>
-                  {selectedSession.class_link && (
+                  {isSessionCancelled(selectedSession) ? (
+                    <span className="px-4 py-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-xl flex items-center gap-1.5">
+                      <Icon icon="lucide:ban" className="w-4 h-4" /> Class is Cancelled
+                    </span>
+                  ) : selectedSession.class_link && (
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
                           if (selectedSession.id) {
-                            navigate(`/classroom/${selectedSession.id}`);
+                            navigate(`/classroom/${selectedSession.id}`, {
+                              state: { from: '/staffs/calendar', isAdminObserver: true }
+                            });
                           } else {
                             window.open(selectedSession.class_link, "_blank");
                           }
@@ -1462,6 +1590,8 @@ export default function AdminCalendar() {
                           }
                           navigate('/staffs/meet/app', {
                             state: {
+                              from: '/staffs/calendar',
+                              isAdminObserver: true,
                               class_link: joinUrl,
                               zoom_meeting_id: selectedSession.zoom_meeting_id,
                               zoom_meeting_password: selectedSession.zoom_meeting_password,

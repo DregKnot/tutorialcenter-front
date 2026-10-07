@@ -13,6 +13,11 @@ import {
 } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
+import ClassSessionStatusBadge, {
+  isSessionCancelled,
+  isSessionProposed,
+  hasSessionRecording,
+} from "../../components/common/ClassSessionStatusBadge.jsx";
 
 export default function StudentClassSchedule() {
   const { token: authToken } = useAuth();
@@ -298,15 +303,20 @@ export default function StudentClassSchedule() {
               {status === 'live' && <span className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 bg-[#22C55E] border-2 border-white rounded-full shadow-sm animate-pulse"></span>}
             </div>
             <div className="flex flex-col min-w-0">
-              <span className={`font-black text-[#09314F] dark:text-white leading-tight uppercase truncate ${isHighRes || isMobile ? "text-[16px]" : "text-[15px]"}`}>
+              <span className={`font-black leading-tight uppercase truncate ${
+                isSessionCancelled(session)
+                  ? "line-through text-rose-700 dark:text-rose-400"
+                  : "text-[#09314F] dark:text-white"
+              } ${isHighRes || isMobile ? "text-[16px]" : "text-[15px]"}`}>
                 {isHighRes || isMobile
                   ? (session.class?.title || session.title || "Master Class")
                   : abbreviateTitle(session.class?.title || session.title || "Master Class")
                 }
               </span>
-              {isToday && status !== 'completed' && (
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {status === 'live' ? (
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <ClassSessionStatusBadge session={session} size="xs" showScheduled={false} />
+                {isToday && status !== 'completed' && !isSessionCancelled(session) && (
+                  status === 'live' ? (
                     <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100 italic">
                       <SignalIcon className="w-3.5 h-3.5 animate-pulse" /> LIVE
                     </span>
@@ -314,9 +324,9 @@ export default function StudentClassSchedule() {
                     <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100 italic">
                       UPCOMING
                     </span>
-                  )}
-                </div>
-              )}
+                  )
+                )}
+              </div>
             </div>
           </div>
           
@@ -331,7 +341,11 @@ export default function StudentClassSchedule() {
           {/* Action Column */}
           <div className="text-left lg:text-center min-w-0 flex flex-col items-start lg:items-center">
             <span className="text-[11px] font-black text-gray-400 dark:text-blue-300 uppercase tracking-widest block mb-1">Session</span>
-            {session.recording_link ? (
+            {isSessionCancelled(session) ? (
+              <span className="inline-flex items-center px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-[11px] font-black rounded-lg uppercase tracking-wider">
+                Cancelled
+              </span>
+            ) : (session.recording_link || hasSessionRecording(session)) ? (
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
@@ -351,6 +365,8 @@ export default function StudentClassSchedule() {
                 className={`inline-flex items-center gap-1 px-3 py-1 text-[11px] font-extrabold rounded-lg transition-all shadow-xs active:scale-95 ${
                   status === 'live'
                     ? "bg-[#22C55E] hover:bg-[#16a34a] text-white animate-pulse"
+                    : isSessionProposed(session)
+                    ? "bg-[#8C5E24] hover:bg-[#A87431] text-white"
                     : "bg-[#09314F] hover:bg-[#062035] text-white dark:bg-[#BB9E7F] dark:hover:bg-white dark:text-[#09314F]"
                 }`}
               >
@@ -437,12 +453,20 @@ export default function StudentClassSchedule() {
                   Click anywhere to close full view
                 </p>
                 <div className="flex items-center gap-4 w-full">
-                  <button 
-                    onClick={(e) => handleJoinClass(e, session)}
-                    className="flex-1 px-10 py-5 bg-[#09314F] text-white font-black rounded-2xl hover:bg-black transition-all shadow-xl active:scale-95 uppercase tracking-widest text-[11px] text-center"
-                  >
-                    Join Now
-                  </button>
+                  {isSessionCancelled(session) ? (
+                    <div className="flex-1 px-10 py-5 bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-black rounded-2xl border border-rose-200 dark:border-rose-900 uppercase tracking-widest text-[11px] text-center">
+                      Session Cancelled by Academy
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={(e) => handleJoinClass(e, session)}
+                      className={`flex-1 px-10 py-5 text-white font-black rounded-2xl transition-all shadow-xl active:scale-95 uppercase tracking-widest text-[11px] text-center ${
+                        isSessionProposed(session) ? "bg-[#8C5E24] hover:bg-[#734A1B]" : "bg-[#09314F] hover:bg-black"
+                      }`}
+                    >
+                      Join Now
+                    </button>
+                  )}
                   <button 
                     onClick={(e) => { e.stopPropagation(); setExpandedSessionId(null); }}
                     className="flex-1 lg:hidden px-8 py-5 bg-gray-100 text-[#09314F] font-black rounded-2xl uppercase tracking-widest text-[11px]"

@@ -157,7 +157,13 @@ export default function StudentRegistration() {
     if (!formData.department.trim()) newErrors.department = "Department is required";
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (Object.keys(newErrors).length > 0) {
+      console.log("Student Registration Validation Error:", newErrors);
+      const firstErrorMessage = Object.values(newErrors)[0];
+      setToast({ type: "error", message: firstErrorMessage || "Please fill all required fields correctly." });
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -207,13 +213,16 @@ export default function StudentRegistration() {
         setShowModal(true);
       }
     } catch (error) {
+      console.log("Student Registration API Error:", error.response?.data || error);
       console.error("Submit error:", error.response?.data || error);
       const backendMessage = error?.response?.data?.message || "";
       const backendErrors = error.response?.data?.errors || {};
 
       if (Object.keys(backendErrors).length > 0) {
         const firstErrorKey = Object.keys(backendErrors)[0];
-        const firstErrorMessage = backendErrors[firstErrorKey][0];
+        const firstErrorMessage = Array.isArray(backendErrors[firstErrorKey]) 
+          ? backendErrors[firstErrorKey][0] 
+          : backendErrors[firstErrorKey];
         setToast({ type: "error", message: firstErrorMessage || backendMessage || "Validation failed." });
         setErrors(backendErrors);
       } else {

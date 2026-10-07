@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 import axios from "axios";
+import { isAdminStaff } from "../../../utils/roleUtils";
 
 // Default (blank) report state. Used on mount and whenever the form is reset.
 const createInitialFormData = () => ({
@@ -263,6 +264,8 @@ export default function TutorPostClassReportModal({
     "Behaviour/Discipline",
     "Other",
   ];
+
+  if (!isOpen || isAdminStaff()) return null;
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">

@@ -460,9 +460,9 @@ const RecordedClasses = () => {
                     </div>
                   )}
 
-                  {/* Play Button Overlay */}
-                  <div className="relative z-10 w-12 h-12 md:w-14 md:h-14 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center border border-white/40 group-hover:scale-110 group-hover:bg-[#E83831] group-hover:border-[#E83831] transition-all duration-300 shadow-xl">
-                    <Icon icon="lucide:play" className="w-5 h-5 md:w-6 md:h-6 text-white ml-0.5" />
+                  {/* Play Button Overlay - Bottom Left */}
+                  <div className="absolute bottom-3 left-3 z-10 w-11 h-11 md:w-12 md:h-12 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/40 group-hover:scale-110 group-hover:bg-[#E83831] group-hover:border-[#E83831] transition-all duration-300 shadow-xl">
+                    <Icon icon="lucide:play" className="w-5 h-5 md:w-5 md:h-5 text-white ml-0.5" />
                   </div>
 
                   {/* Views Badge (Student vs Admin View) */}
