@@ -155,6 +155,7 @@ export const StudentSubjectSelection = () => {
     });
 
     if (incompleteCourse) {
+      console.log("Subject Selection Validation Error: Please select subjects for " + incompleteCourse.title);
       setToast({
         type: "error",
         message: `Please select subjects for ${incompleteCourse.title}.`,
@@ -173,6 +174,7 @@ export const StudentSubjectSelection = () => {
       });
       navigate("/register/student/training/duration");
     } catch (err) {
+      console.log("Subject Selection Error:", err);
       console.error("[SubjectSelection] Failed to persist subjects:", err);
       setToast({ type: "error", message: "Failed to save subject selections. Please try again." });
     } finally {

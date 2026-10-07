@@ -69,3 +69,66 @@ export const canAccessVideoVault = (role) => {
   return allowedRoles.includes(targetRole);
 };
 
+export const ADMIN_STAFF_ROLES = [
+  "admin",
+  "super_admin",
+  "superadmin",
+  "coo",
+  "moderator",
+  "csa",
+  "customer support",
+  "customer_support",
+  "customer-support",
+  "operations",
+  "preview"
+];
+
+export const ADVISOR_ROLES = [
+  "advisor",
+  "academic_advisor",
+  "academic advisor",
+  "course_advisor",
+  "course advisor"
+];
+
+/**
+ * Checks if a given staff role (or the currently stored staff role) is an admin/management role.
+ * Admins, COOs, moderators, and support observe classes and should NEVER be prompted
+ * to fill out post-class tutor reports, student feedback, or advisor reports.
+ *
+ * @param {string} [role] - Optional role string. If omitted, reads from localStorage.
+ * @returns {boolean}
+ */
+export const isAdminStaff = (role) => {
+  const targetRole = (role !== undefined && role !== null ? role : localStorage.getItem("staff_role") || "")
+    .toLowerCase()
+    .trim();
+  if (!targetRole) return false;
+  return ADMIN_STAFF_ROLES.includes(targetRole);
+};
+
+/**
+ * Checks if a given staff role is a course or academic advisor.
+ *
+ * @param {string} [role] - Optional role string. If omitted, reads from localStorage.
+ * @returns {boolean}
+ */
+export const isAdvisorStaff = (role) => {
+  const targetRole = (role !== undefined && role !== null ? role : localStorage.getItem("staff_role") || "")
+    .toLowerCase()
+    .trim();
+  return ADVISOR_ROLES.includes(targetRole);
+};
+
+/**
+ * Checks if a given staff role is specifically a tutor.
+ *
+ * @param {string} [role] - Optional role string. If omitted, reads from localStorage.
+ * @returns {boolean}
+ */
+export const isTutorStaff = (role) => {
+  const targetRole = (role !== undefined && role !== null ? role : localStorage.getItem("staff_role") || "")
+    .toLowerCase()
+    .trim();
+  return targetRole === "tutor";
+};

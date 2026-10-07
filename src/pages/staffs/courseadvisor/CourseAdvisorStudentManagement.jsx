@@ -97,10 +97,22 @@ export default function CourseAdvisorStudentManagement() {
   }, []);
 
   const isStudentActive = useCallback((student) => {
-    const latest = getLatestCourse(student);
-    if (!latest) return false;
-    return latest.status === 'active' || (latest.end_date && new Date(latest.end_date) >= new Date());
-  }, [getLatestCourse]);
+    // If backend computed is_active is boolean, prioritize it
+    if (typeof student?.is_active === "boolean") {
+      return student.is_active;
+    }
+
+    const courses = student?.courses || student?.course_enrollments || [];
+    const payments = student?.payments || [];
+    const hasActiveCourse = courses.some(c => 
+      (c.status === 'active' || c.enrollment_status === 'active') && 
+      (!c.end_date || new Date(c.end_date) >= new Date())
+    );
+    const hasSuccessfulPayment = payments.some(p => 
+      p.status === 'successful' || p.status === 'paid'
+    );
+    return hasActiveCourse && hasSuccessfulPayment;
+  }, []);
 
   const isStudentSuspended = useCallback((student) => {
     return student.banned === 1 || 
@@ -109,6 +121,28 @@ export default function CourseAdvisorStudentManagement() {
       student.information?.deleted_at != null || 
       (Array.isArray(student.information) && student.information[0]?.deleted_at != null);
   }, []);
+
+  const getStudentStatusInfo = useCallback((student) => {
+    if (isStudentSuspended(student)) {
+      return { label: "Suspended", badgeClass: "text-[#EF4444]" };
+    }
+    if (isStudentActive(student)) {
+      return { label: "Active", badgeClass: "text-[#22C55E]" };
+    }
+    const courses = student?.courses || student?.course_enrollments || [];
+    const payments = student?.payments || [];
+    const isTerminated = courses.some(c => c.status === 'terminated' || c.status === 'expired') || student?.enrollment_status === 'terminated';
+    if (isTerminated) {
+      return { label: "Terminated", badgeClass: "text-[#EF4444]" };
+    }
+    const hasPending = courses.some(c => c.status === 'pending' || c.enrollment_status === 'pending') || 
+      payments.some(p => p.status === 'pending') || 
+      student?.enrollment_status === 'pending_approval';
+    if (hasPending) {
+      return { label: "Pending Payment", badgeClass: "text-[#F59E0B]" };
+    }
+    return { label: "Inactive", badgeClass: "text-gray-500" };
+  }, [isStudentSuspended, isStudentActive]);
 
   const calculateStats = useCallback((allStudents) => {
     const now = new Date();
@@ -367,13 +401,10 @@ export default function CourseAdvisorStudentManagement() {
                      
                      {/* Data Columns */}
                      <div className="text-center font-black text-[13px] tracking-tight uppercase">
-                       {isSuspended ? (
-                         <span className="text-[#EF4444]">Suspended</span>
-                       ) : (
-                         <span className={isStudentActive(student) ? 'text-[#22C55E]' : 'text-gray-500'}>
-                           {isStudentActive(student) ? "Active" : "Inactive"}
-                         </span>
-                       )}
+                       {(() => {
+                         const status = getStudentStatusInfo(student);
+                         return <span className={status.badgeClass}>{status.label}</span>;
+                       })()}
                      </div>
                      <div className="text-center text-gray-500 font-bold text-[13px] truncate">{student.email || "—"}</div>
                      

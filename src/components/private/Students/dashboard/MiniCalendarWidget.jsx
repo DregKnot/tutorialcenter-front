@@ -3,6 +3,10 @@ import { Icon } from "@iconify/react";
 import axios from "axios";
 import { useAuth } from "../../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import ClassSessionStatusBadge, {
+  isSessionCancelled,
+  isSessionProposed,
+} from "../../../common/ClassSessionStatusBadge";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -110,18 +114,26 @@ function SessionModal({ session, onClose, token, API_BASE_URL }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4">
-          <span className={`text-xs font-black px-3 py-1 rounded-full ${
-            isPast ? "bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300" : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-          }`}>
-            {isPast ? "Ended Class" : "Class Session"}
-          </span>
+          <ClassSessionStatusBadge session={session} size="xs" showScheduled={true} />
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
             <Icon icon="lucide:x" className="w-4 h-4 text-gray-400" />
           </button>
         </div>
-        <h3 className="text-lg font-black text-[#09314F] dark:text-white mb-4 leading-tight">
+        <h3 className={`text-lg font-black text-[#09314F] dark:text-white mb-2 leading-tight ${isSessionCancelled(session) ? "line-through text-rose-700 dark:text-rose-400" : ""}`}>
           {session.class?.title || session.title || "Class"}
         </h3>
+        {isSessionCancelled(session) && (
+          <div className="mb-4 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 flex items-center gap-2 text-xs font-bold text-rose-700 dark:text-rose-300">
+            <Icon icon="lucide:ban" className="w-4 h-4 text-rose-500 shrink-0" />
+            <span>This class session was cancelled. Live classroom entry is closed.</span>
+          </div>
+        )}
+        {isSessionProposed(session) && !isSessionCancelled(session) && (
+          <div className="mb-4 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+            <Icon icon="lucide:clock" className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>This session is proposed and liable to change. You can still join below.</span>
+          </div>
+        )}
         <div className="space-y-2.5 mb-5">
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Icon icon="lucide:calendar" className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -145,7 +157,12 @@ function SessionModal({ session, onClose, token, API_BASE_URL }) {
           )}
         </div>
 
-        {isPast ? (
+        {isSessionCancelled(session) ? (
+          <div className="flex items-center justify-center gap-2 w-full py-3 bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 rounded-xl font-black text-xs uppercase tracking-wider">
+            <Icon icon="lucide:ban" className="w-4 h-4 text-rose-500" />
+            <span>Session Cancelled</span>
+          </div>
+        ) : isPast ? (
           recUrl ? (
             <a
               href={recUrl}
@@ -169,10 +186,14 @@ function SessionModal({ session, onClose, token, API_BASE_URL }) {
           (session.class_link || session.id) && (
             <button
               onClick={handleJoin}
-              className="flex items-center justify-center gap-2 w-full py-3 bg-[#09314F] hover:bg-[#0a426b] text-white rounded-xl font-black text-sm transition-colors shadow-lg active:scale-95"
+              className={`flex items-center justify-center gap-2 w-full py-3 text-white rounded-xl font-black text-sm transition-colors shadow-lg active:scale-95 ${
+                isSessionProposed(session)
+                  ? "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800"
+                  : "bg-[#09314F] hover:bg-[#0a426b]"
+              }`}
             >
               <Icon icon="logos:zoom" className="w-4 h-4" />
-              Join Live Classroom
+              <span>Join Live Classroom {isSessionProposed(session) ? "(Proposed)" : ""}</span>
             </button>
           )
         )}
@@ -187,6 +208,8 @@ function SessionCard({ session, onClick, token, API_BASE_URL }) {
   const startDate = session.session_date ? new Date(session.session_date) : new Date();
   const isToday = isSameDay(startDate, new Date());
   const isPast = isPastSession(session);
+  const cancelled = isSessionCancelled(session);
+  const isProposed = isSessionProposed(session);
   const recUrl = session.recording_link || session.recording_url;
   const participantCount = session.class?.staffs?.length || session.participants?.length || session.participant_count || 6;
   const visibleAvatars = Math.min(4, participantCount);
@@ -218,16 +241,18 @@ function SessionCard({ session, onClick, token, API_BASE_URL }) {
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(e); }}
-      className="w-full text-left bg-gray-50 dark:bg-gray-700/40 hover:bg-gray-100 dark:bg-gray-700/60 rounded-2xl p-4 transition-all duration-150 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#09314F]"
+      className={`w-full text-left bg-gray-50 dark:bg-gray-700/40 hover:bg-gray-100 dark:bg-gray-700/60 rounded-2xl p-4 transition-all duration-150 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#09314F] ${
+        cancelled ? "opacity-80 border border-rose-200/60 dark:border-rose-900/40" : isProposed ? "border border-amber-300 dark:border-amber-800/60 bg-amber-50/30 dark:bg-amber-950/20" : ""
+      }`}
     >
-      {/* Title + dots */}
-      <div className="flex items-start justify-between mb-1">
-        <p className="text-[14px] font-black text-gray-900 dark:text-white leading-snug">
+      {/* Title + status badge */}
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <p className={`text-[14px] font-black text-gray-900 dark:text-white leading-snug truncate ${cancelled ? "line-through text-rose-700 dark:text-rose-400" : ""}`}>
           {session.class?.title || session.title || "Class Session"}
         </p>
-        <span className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-0.5">
-          <Icon icon="lucide:more-horizontal" className="w-4 h-4" />
-        </span>
+        <div className="shrink-0 flex items-center gap-1">
+          <ClassSessionStatusBadge session={session} size="xs" showScheduled={false} />
+        </div>
       </div>
 
       {/* Date + time */}
@@ -240,7 +265,12 @@ function SessionCard({ session, onClick, token, API_BASE_URL }) {
       {/* Bottom row: Zoom / Recorded Class + Avatars */}
       <div className="flex items-center justify-between">
         {/* Zoom / Recorded Class pill */}
-        {isPast ? (
+        {cancelled ? (
+          <span className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-full px-3 py-1.5 text-[11px] font-black text-rose-700 dark:text-rose-300 shadow-sm">
+            <Icon icon="lucide:ban" className="w-3.5 h-3.5 text-rose-500" />
+            Cancelled
+          </span>
+        ) : isPast ? (
           <a
             href={recUrl || "/student/recorded-classes"}
             target="_blank"
@@ -254,10 +284,14 @@ function SessionCard({ session, onClick, token, API_BASE_URL }) {
         ) : (session.class_link || session.id) ? (
           <button
             onClick={handlePillClick}
-            className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 text-[12px] font-bold text-gray-700 dark:text-gray-200 hover:border-blue-400 transition-colors shadow-sm active:scale-95"
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold transition-colors shadow-sm active:scale-95 ${
+              isProposed
+                ? "bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 hover:bg-amber-200"
+                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:border-blue-400 text-gray-700 dark:text-gray-200"
+            }`}
           >
             <Icon icon="logos:zoom" className="w-10 h-3.5" />
-            <span className="text-[#09314F] dark:text-blue-300 font-extrabold text-[11px]">
+            <span className={isProposed ? "text-amber-800 dark:text-amber-300 font-extrabold text-[11px]" : "text-[#09314F] dark:text-blue-300 font-extrabold text-[11px]"}>
               Join Class
             </span>
           </button>
@@ -394,7 +428,10 @@ export default function MiniCalendarWidget() {
             {weekStrip.map((d, i) => {
               const isSelected = isSameDay(d, selectedDay);
               const isToday = isSameDay(d, today);
-              const hasSessions = sessions.some((s) => isSameDay(new Date(s.session_date), d));
+              const daySessions = sessions.filter((s) => isSameDay(new Date(s.session_date), d));
+              const hasSessions = daySessions.length > 0;
+              const hasCancelled = daySessions.some(isSessionCancelled);
+              const hasProposed = daySessions.some(isSessionProposed);
               return (
                 <button
                   key={i}
@@ -413,8 +450,16 @@ export default function MiniCalendarWidget() {
                     {d.getDate()}
                   </span>
                   {hasSessions && (
-                    <div className="absolute bottom-1 flex items-center justify-center">
-                      <Icon icon="logos:zoom" className="w-6 h-2.5 drop-shadow-sm transition-transform hover:scale-110" />
+                    <div className="absolute bottom-1 flex items-center justify-center gap-1">
+                      {hasCancelled ? (
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-xs ring-1 ring-white/60" title="Cancelled Session" />
+                      ) : null}
+                      {hasProposed ? (
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-xs ring-1 ring-white/60" title="Proposed Session" />
+                      ) : null}
+                      {!hasCancelled && !hasProposed && (
+                        <Icon icon="logos:zoom" className="w-6 h-2.5 drop-shadow-sm transition-transform hover:scale-110" />
+                      )}
                     </div>
                   )}
                 </button>

@@ -63,6 +63,10 @@ export default function StaffDashboard() {
 
   useEffect(() => {
     fetchPayments();
+    try {
+      localStorage.removeItem("tutor_unreported_sessions");
+      sessionStorage.removeItem("just_completed_class_session_id");
+    } catch (e) {}
   }, [fetchPayments]);
 
   // ─── Greeting based on time of day ────────────────────────────────────

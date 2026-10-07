@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import CourseAdvisorFeedbackModal from "../../../components/private/staffs/CourseAdvisorFeedbackModal";
+import MasterClassDetailModal from "../../../components/private/staffs/MasterClassDetailModal.jsx";
+import { isAdminStaff, isAdvisorStaff } from "../../../utils/roleUtils";
 import { 
   MagnifyingGlassIcon,
   CalendarIcon,
@@ -16,6 +18,10 @@ import {
   ShieldCheckIcon
 } from "@heroicons/react/24/outline";
 import { Icon } from "@iconify/react";
+import ClassSessionStatusBadge, {
+  isSessionCancelled,
+  isSessionProposed,
+} from "../../../components/common/ClassSessionStatusBadge";
 
 export default function CourseAdvisorMasterClass() {
   const [scheduleData, setScheduleData] = useState({
@@ -36,6 +42,7 @@ export default function CourseAdvisorMasterClass() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackSession, setFeedbackSession] = useState(null);
+  const [selectedClassOverview, setSelectedClassOverview] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -89,6 +96,12 @@ export default function CourseAdvisorMasterClass() {
 
     const incomingId = feedbackParam || stateSessionId || sessionStoredId;
     if (!incomingId) return;
+
+    const staffRole = localStorage.getItem("staff_role") || "";
+    if (isAdminStaff(staffRole) && !isAdvisorStaff(staffRole)) {
+      sessionStorage.removeItem("just_completed_class_session_id");
+      return;
+    }
 
     const idStr = String(incomingId);
     if (handledFeedbackRef.current.has(idStr)) return;
@@ -637,6 +650,9 @@ export default function CourseAdvisorMasterClass() {
                   const enrolledCount = cls.enrolled_count ?? (Array.isArray(cls.enrolled_students) ? cls.enrolled_students.length : 0);
                   const courseTitles = Array.isArray(cls.subject?.courses) ? cls.subject.courses.map(c => c.title).join(", ") : null;
                   const schedulesList = Array.isArray(cls.schedules) ? cls.schedules : [];
+                  const statusStr = String(cls.status || "active").toLowerCase().trim();
+                  const isClassCancelled = statusStr === "cancelled" || statusStr === "canceled";
+                  const isClassProposed = statusStr === "proposed" || statusStr === "rescheduled";
                   
                   return (
                     <div
@@ -644,10 +660,22 @@ export default function CourseAdvisorMasterClass() {
                       className="group bg-white dark:bg-gray-800 rounded-[30px] p-6 border border-gray-100 dark:border-gray-700/80 shadow-sm hover:shadow-xl hover:border-[#C5A97A]/40 transition-all flex flex-col justify-between"
                     >
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="px-3 py-1 rounded-xl bg-[#09314F]/10 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] text-[10px] font-black uppercase tracking-wider">
-                            {cls.subject?.name || "Subject"}
-                          </span>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="px-3 py-1 rounded-xl bg-[#09314F]/10 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] text-[10px] font-black uppercase tracking-wider">
+                              {cls.subject?.name || "Subject"}
+                            </span>
+                            {isClassCancelled && (
+                              <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50">
+                                Cancelled
+                              </span>
+                            )}
+                            {isClassProposed && (
+                              <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
+                                Proposed
+                              </span>
+                            )}
+                          </div>
                           <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-gray-400 bg-slate-50 dark:bg-gray-700/60 px-2.5 py-1 rounded-lg">
                             <UserGroupIcon className="w-3.5 h-3.5 text-blue-500" />
                             <span>{enrolledCount} enrolled</span>
@@ -655,7 +683,9 @@ export default function CourseAdvisorMasterClass() {
                         </div>
 
                         <div>
-                          <h3 className="text-lg font-black text-[#0F2843] dark:text-white group-hover:text-[#09314F] dark:group-hover:text-[#C5A97A] transition-colors line-clamp-1">
+                          <h3 className={`text-lg font-black text-[#0F2843] dark:text-white group-hover:text-[#09314F] dark:group-hover:text-[#C5A97A] transition-colors line-clamp-1 ${
+                            isClassCancelled ? "line-through text-rose-700 dark:text-rose-400" : ""
+                          }`}>
                             {cls.title}
                           </h3>
                           {courseTitles && (
@@ -730,7 +760,17 @@ export default function CourseAdvisorMasterClass() {
                       </div>
 
                       {/* Card Actions */}
-                      <div className="pt-6 mt-6 border-t border-gray-100 dark:border-gray-700/80 flex items-center gap-3">
+                      <div className="pt-6 mt-6 border-t border-gray-100 dark:border-gray-700/80 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedClassOverview(cls)}
+                          className="py-2.5 px-3 bg-blue-50/80 hover:bg-[#09314F] hover:text-white dark:bg-blue-950/30 dark:hover:bg-blue-600 text-[#09314F] dark:text-blue-300 font-bold text-xs rounded-xl transition-all text-center flex items-center justify-center gap-1.5 active:scale-95 shadow-xs"
+                          title="View Masterclass Details & Conditions"
+                        >
+                          <Icon icon="mdi:eye-outline" className="w-3.5 h-3.5" />
+                          <span>View More</span>
+                        </button>
+
                         <button
                           onClick={() => {
                             setActiveTab("timeline");
@@ -739,14 +779,14 @@ export default function CourseAdvisorMasterClass() {
                           className="flex-1 py-2.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/60 dark:hover:bg-gray-700 active:scale-95 text-[#09314F] dark:text-white font-black text-xs rounded-xl transition-all text-center flex items-center justify-center gap-1.5"
                         >
                           <CalendarIcon className="w-3.5 h-3.5" />
-                          <span>View Sessions</span>
+                          <span>Sessions</span>
                         </button>
 
                         {(cls.zoom_start_url || cls.zoom_join_url || flattenedSessions.some(s => String(s.class_id || s.class?.id) === String(cls.id)) || getClassSessionId(cls)) ? (
                           <button
                             type="button"
                             onClick={() => handleLaunchClassRoom(cls)}
-                            className="px-4 py-2.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                            className="px-3.5 py-2.5 bg-[#09314F] hover:bg-[#0e446d] active:scale-95 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                             title="Join Classroom (In-App SDK Wrapper)"
                           >
                             <VideoCameraIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
@@ -810,15 +850,20 @@ export default function CourseAdvisorMasterClass() {
                 {filteredSessions.map((session) => {
                   const sessionIsPast = isPast(session);
                   const isNext = scheduleData.next_class && String(scheduleData.next_class.id) === String(session.id);
+                  const cancelled = isSessionCancelled(session);
                   
                   return (
                     <div
                       key={session.id}
-                      className={`p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:bg-gray-50/70 dark:hover:bg-gray-700/40 ${isNext ? "bg-amber-500/5 dark:bg-amber-500/10 border-l-4 border-l-amber-500" : ""}`}
+                      className={`p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:bg-gray-50/70 dark:hover:bg-gray-700/40 ${
+                        isNext ? "bg-amber-500/5 dark:bg-amber-500/10 border-l-4 border-l-amber-500" : ""
+                      } ${cancelled ? "opacity-80" : ""}`}
                     >
                       {/* Left Side: Avatar + Details */}
                       <div className="flex items-start sm:items-center gap-4 min-w-0">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 shadow-sm ${isNext ? "bg-amber-500 text-white shadow-amber-500/20" : sessionIsPast ? "bg-gray-100 dark:bg-gray-700 text-gray-400" : "bg-[#09314F] text-white"}`}>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs shrink-0 shadow-sm ${
+                          cancelled ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300" : isNext ? "bg-amber-500 text-white shadow-amber-500/20" : sessionIsPast ? "bg-gray-100 dark:bg-gray-700 text-gray-400" : "bg-[#09314F] text-white"
+                        }`}>
                           {getInitials(session.class?.title || session.title)}
                         </div>
 
@@ -832,12 +877,13 @@ export default function CourseAdvisorMasterClass() {
                             <span className="px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-slate-700 dark:text-gray-300 text-[10px] font-black uppercase tracking-wider">
                               {session.class?.subject?.name || "Subject"}
                             </span>
+                            <ClassSessionStatusBadge session={session} size="xs" showScheduled={false} />
                             <span className="text-[11px] font-bold text-slate-400">
                               {formatDayName(session.session_date)}, {formatDate(session.session_date)}
                             </span>
                           </div>
 
-                          <h4 className="text-base font-black text-[#0F2843] dark:text-white truncate">
+                          <h4 className={`text-base font-black text-[#0F2843] dark:text-white truncate ${cancelled ? "line-through text-rose-700 dark:text-rose-400" : ""}`}>
                             {session.class?.title || session.title || "Class Session"}
                           </h4>
 
@@ -857,14 +903,22 @@ export default function CourseAdvisorMasterClass() {
 
                       {/* Right Side: Options & Recording Actions */}
                       <div className="flex items-center gap-2 self-end md:self-center shrink-0 pt-2 md:pt-0">
+                        {cancelled && (
+                          <span className="px-3.5 py-2 rounded-xl bg-rose-100/70 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 font-black text-xs uppercase tracking-wider flex items-center gap-1.5">
+                            <Icon icon="lucide:ban" className="w-3.5 h-3.5 text-rose-500" />
+                            <span>Cancelled</span>
+                          </span>
+                        )}
+
                         {session.recording_link && (
                           <a
                             href={session.recording_link}
                             target="_blank"
                             rel="noreferrer"
-                            className="px-3.5 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold text-xs hover:bg-emerald-100 transition-all flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800"
+                            className="px-3.5 py-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-bold text-xs hover:bg-purple-100 transition-all flex items-center gap-1.5 border border-purple-200 dark:border-purple-800"
+                            title="Recording Uploaded"
                           >
-                            <VideoCameraIcon className="w-4 h-4" />
+                            <VideoCameraIcon className="w-4 h-4 text-purple-600" />
                             <span>Watch</span>
                           </a>
                         )}
@@ -913,14 +967,31 @@ export default function CourseAdvisorMasterClass() {
             
             <div className="space-y-4">
               <div className="bg-slate-50 dark:bg-gray-900/60 rounded-2xl p-4 border border-slate-100 dark:border-gray-700/60 space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Class & Subject</span>
-                <h3 className="text-base font-black text-[#0F2843] dark:text-white">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Class & Subject</span>
+                  <ClassSessionStatusBadge session={selectedSession} size="xs" showScheduled={true} />
+                </div>
+                <h3 className={`text-base font-black text-[#0F2843] dark:text-white ${isSessionCancelled(selectedSession) ? "line-through text-rose-700 dark:text-rose-400" : ""}`}>
                   {selectedSession.class?.title || selectedSession.title}
                 </h3>
                 <p className="text-xs font-bold text-[#C5A97A]">
                   Subject: {selectedSession.class?.subject?.name || "General Subject"} • {selectedSession.enrolled_count ?? selectedSession.class?.enrolled_count ?? 0} students enrolled
                 </p>
               </div>
+
+              {/* Status Alert Banners */}
+              {isSessionCancelled(selectedSession) && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl flex items-center gap-2 text-xs font-bold text-rose-700 dark:text-rose-300">
+                  <Icon icon="lucide:ban" className="w-4 h-4 text-rose-500 shrink-0" />
+                  <span>This class session was cancelled by administration. Live entry is closed.</span>
+                </div>
+              )}
+              {isSessionProposed(selectedSession) && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+                  <Icon icon="lucide:clock" className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>This session is proposed and pending administrative confirmation.</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl border border-gray-100 dark:border-gray-700">
@@ -946,11 +1017,16 @@ export default function CourseAdvisorMasterClass() {
                     Live Classroom
                   </span>
                   <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                    {selectedSession.class_link ? "Configured" : "No link"}
+                    {isSessionCancelled(selectedSession) ? "Inactive" : (selectedSession.class_link ? "Configured" : "No link")}
                   </span>
                 </div>
 
-                {selectedSession.class_link ? (
+                {isSessionCancelled(selectedSession) ? (
+                  <div className="py-2.5 px-3 bg-rose-100/70 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 rounded-xl text-center font-bold text-xs flex items-center justify-center gap-1.5">
+                    <Icon icon="lucide:ban" className="w-4 h-4 text-rose-500" />
+                    <span>Live Classroom Closed (Cancelled)</span>
+                  </div>
+                ) : selectedSession.class_link ? (
                   <div className="space-y-2">
                     <div className="text-[11px] text-slate-500 dark:text-gray-400 truncate font-medium">
                       {selectedSession.class_link.replace(/^https?:\/\//, '')}
@@ -991,8 +1067,9 @@ export default function CourseAdvisorMasterClass() {
                       href={selectedSession.recording_link}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 hover:underline"
+                      className="text-[10px] font-black text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
                     >
+                      <Icon icon="lucide:play-circle" className="w-3 h-3" />
                       Preview Recording ↗
                     </a>
                   )}
@@ -1029,9 +1106,28 @@ export default function CourseAdvisorMasterClass() {
           </div>
         </div>
       )}
+      {/* Master Class Detail Modal with Condition Management */}
+      {selectedClassOverview && (
+        <MasterClassDetailModal
+          cls={selectedClassOverview}
+          onClose={() => setSelectedClassOverview(null)}
+          onConditionUpdated={(updatedClass) => {
+            setScheduleData((prev) => ({
+              ...prev,
+              classes: (prev.classes || []).map((c) => (c.id === updatedClass.id ? { ...c, ...updatedClass } : c)),
+            }));
+            setSelectedClassOverview(updatedClass);
+            setToast({
+              type: "success",
+              message: `Master class condition updated to "${updatedClass.status.toUpperCase()}"!`,
+            });
+          }}
+          canManageCondition={true}
+        />
+      )}
     </StaffDashboardLayout>
 
-      <CourseAdvisorFeedbackModal
+    <CourseAdvisorFeedbackModal
         isOpen={feedbackModalOpen}
         onClose={() => setFeedbackModalOpen(false)}
         sessionDetails={feedbackSession}

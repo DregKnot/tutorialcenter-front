@@ -271,6 +271,45 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
     }
   };
 
+  const handleApproveEnrollment = async (enrollmentId) => {
+    if (!enrollmentId) return;
+    setActionLoading(true);
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/api/admin/enrollments/${enrollmentId}/approve`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setToast({ type: "success", message: res.data?.message || "Enrollment approved and student subjects activated!" });
+      fetchStudentDetails();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      setToast({ type: "error", message: err.response?.data?.message || "Failed to approve enrollment" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleTerminateEnrollment = async (enrollmentId) => {
+    if (!enrollmentId) return;
+    if (!window.confirm("Are you sure you want to terminate this pending enrollment? The temporary ID will be invalidated.")) return;
+    setActionLoading(true);
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/api/admin/enrollments/${enrollmentId}/terminate`,
+        { reason: "Terminated by administrator due to unconfirmed payment within 48 hours." },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setToast({ type: "success", message: res.data?.message || "Enrollment terminated successfully" });
+      fetchStudentDetails();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      setToast({ type: "error", message: err.response?.data?.message || "Failed to terminate enrollment" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleSuspend = async () => {
     if (!window.confirm("Are you sure you want to suspend this student?")) return;
     setSubmitting(true);
@@ -318,6 +357,21 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
 
   const enrolledSubjects = student?.enrolled_subjects || student?.enrolled_subject || studentInfo?.enrolled_subjects || studentInfo?.enrolled_subject || student?.subjects || [];
   const enrolledCourses = student?.courses || student?.course_enrollments || studentInfo?.courses || studentInfo?.course_enrollments || [];
+  const paymentsList = student?.payments || studentInfo?.payments || [];
+  const hasSuccessfulPayment = paymentsList.some(p => p.status === 'successful' || p.status === 'paid');
+
+  const pendingEnrollment = enrolledCourses.find(ce => {
+    const status = ce?.enrollment_status || ce?.status;
+    const code = ce?.enrollment_code || student?.enrollment_code;
+    if (status === 'active' || hasSuccessfulPayment) return false;
+    return status === 'pending' || (code && String(code).startsWith('TMP'));
+  }) || (!hasSuccessfulPayment && student?.enrollment_code && String(student.enrollment_code).startsWith('TMP') ? {
+    enrollment_id: student.courses?.[0]?.enrollment_id || student.course_enrollments?.[0]?.id,
+    enrollment_code: student.enrollment_code,
+    course_information: student.courses?.[0]?.course_information,
+    title: student.courses?.[0]?.course_information?.title || "O-Levels",
+  } : null);
+  const pendingSubjects = student?.pending_subjects || [];
   const guardiansList = student?.guardians || studentInfo?.guardians || [];
   const advisorsList = student?.advisors || studentInfo?.advisors || [];
 
@@ -625,6 +679,90 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
             {/* Enrolled Courses & Subjects */}
             <div className="space-y-3">
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Enrolled Courses & Subjects</label>
+              {/* PENDING APPROVAL & TEMPORARY ID CARD */}
+              {(pendingEnrollment || pendingSubjects.length > 0) && (
+                <div className="p-5 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-950/40 dark:via-amber-900/10 dark:to-transparent rounded-2xl border-2 border-amber-400/40 dark:border-amber-700/60 shadow-lg space-y-4 animate-in fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200 dark:border-amber-800/60">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                        <Icon icon="lucide:clock" className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-black text-amber-950 dark:text-amber-200 uppercase tracking-tight">
+                            Awaiting Payment Approval
+                          </h4>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200">
+                            48h Temporary ID
+                          </span>
+                        </div>
+                        <p className="text-xs font-mono font-bold text-amber-800 dark:text-amber-300 mt-0.5">
+                          ID: {pendingEnrollment?.enrollment_code || student?.enrollment_code || "TMP-ENR-PENDING"}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {pendingEnrollment?.expires_at && (
+                      <div className="text-left sm:text-right">
+                        <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400">Validity Window</span>
+                        <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                          Expires: {new Date(pendingEnrollment.expires_at).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
+                      <Icon icon="heroicons:academic-cap-solid" className="w-4 h-4 text-amber-600" />
+                      <span>Program Selected:</span>
+                      <span className="font-extrabold text-[#0F2843] dark:text-white">
+                        {pendingEnrollment?.course_information?.title || pendingEnrollment?.title || "O-Levels"}
+                      </span>
+                    </div>
+
+                    {pendingSubjects.length > 0 && (
+                      <div>
+                        <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1.5">
+                          Subjects Chosen for Registration ({pendingSubjects.length}):
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {pendingSubjects.map((sub, idx) => (
+                            <span key={idx} className="px-2.5 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 rounded-lg text-xs font-bold border border-amber-300 dark:border-amber-700 flex items-center gap-1">
+                              <Icon icon="heroicons:book-open-solid" className="w-3 h-3 text-amber-700 dark:text-amber-400" />
+                              {sub.name || sub.title || `Subject #${sub.id || idx + 1}`}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {!isPreview && staffRole !== "advisor" && (
+                    <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleApproveEnrollment(pendingEnrollment?.enrollment_id || pendingEnrollment?.id || student.courses?.[0]?.enrollment_id)}
+                        disabled={actionLoading}
+                        className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-600/20 active:scale-95 disabled:opacity-50"
+                      >
+                        <Icon icon="heroicons:check-badge-solid" className="w-4 h-4" />
+                        {actionLoading ? "Processing..." : "Approve & Register Subjects"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleTerminateEnrollment(pendingEnrollment?.enrollment_id || pendingEnrollment?.id || student.courses?.[0]?.enrollment_id)}
+                        disabled={actionLoading}
+                        className="py-2.5 px-4 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                      >
+                        <Icon icon="heroicons:x-circle-solid" className="w-4 h-4" />
+                        Terminate (Unpaid/Expired)
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               {(enrolledSubjects.length > 0 || enrolledCourses.length > 0) ? (
                 <div className="space-y-3">
                   {/* Display Courses if available */}

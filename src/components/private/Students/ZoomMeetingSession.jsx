@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle, useCallback } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
+import { isAdvisorStaff, isTutorStaff } from "../../../utils/roleUtils";
 
 const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
     const [loading, setLoading] = useState(true);
@@ -26,12 +27,16 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
     const getLeaveUrl = useCallback(() => {
         if (isStaff) {
             const staffRole = localStorage.getItem("staff_role") || "";
-            if (staffRole.toLowerCase() === 'course_advisor' || staffRole.toLowerCase() === 'advisor') {
+            if (isAdvisorStaff(staffRole)) {
                 return `${window.location.origin}/staffs/course-advisor/master-class?feedback_session=${classSessionId}`;
             }
-            return `${window.location.origin}/staffs/tutor/master-class?feedback_session=${classSessionId}`;
+            if (isTutorStaff(staffRole)) {
+                return `${window.location.origin}/staffs/tutor/master-class?feedback_session=${classSessionId}`;
+            }
+            // Admin, COO, Moderator, or other management observer: return directly to calendar with no report prompts
+            return `${window.location.origin}/staffs/calendar`;
         }
-        return `${window.location.origin}/student/class-schedule?feedback_session=${classSessionId}`;
+        return `${window.location.origin}/student/class-schedule`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isStaff, classSessionId]);
 

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import signup_img from "../../../assets/images/Student_sign_up.webp";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { getStudentData, updateStudentData } from "./studentStorageHelper";
 
 const API_BASE_URL =
@@ -24,7 +24,16 @@ export const StudentTrainingDuration = () => {
   const [courses, setCourses] = useState([]);
   const [selectedDurations, setSelectedDurations] = useState({});
   const [error, setError] = useState("");
+  const [toast, setToast] = useState(null);
   const submitting = useRef(false);
+
+  // Auto-dismiss toast after 4 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   /* ================= HELPERS ================= */
   const calculatePrice = useCallback((basePrice, months) => {
@@ -140,13 +149,17 @@ export const StudentTrainingDuration = () => {
     );
 
     if (!valid) {
+      console.log("Training Duration Validation Error: Please choose a duration plan for all selected courses.");
       setError("Please choose a duration plan for all your selected examination courses.");
+      setToast({ type: "error", message: "Please choose a duration plan for all selected courses." });
       return;
     }
 
     const studentData = getStudentData();
     if (!Number.isInteger(Number(studentData?.id)) || Number(studentData.id) <= 0) {
+      console.log("Training Duration Validation Error: Student registration data missing");
       setError("Your student registration could not be found. Please return to registration before continuing.");
+      setToast({ type: "error", message: "Student registration session missing. Please restart registration." });
       return;
     }
 
@@ -164,10 +177,12 @@ export const StudentTrainingDuration = () => {
       for (const course of courses) {
         currentCourseTitle = course.title || `Course #${course.id}`;
         const duration = durations[course.id];
+        const courseSubjects = studentData?.selectedSubjects?.[course.id] || [];
         const response = await axios.post(`${API_BASE_URL}/api/course/enrollment`, {
           student_id: Number(studentData.id),
           course_id: Number(course.id),
           billing_cycle: duration.duration,
+          subjects: courseSubjects,
         }, {
           headers: { "Content-Type": "application/json", Accept: "application/json" },
           timeout: 30000,
@@ -202,9 +217,13 @@ export const StudentTrainingDuration = () => {
 
       navigate("/register/student/training/payment");
     } catch (err) {
+      console.log("Training Duration API Error:", err.response?.data || err);
+      console.error("Training Duration error:", err);
       const validationMessage = Object.values(err.response?.data?.errors || {}).flat().join(" ");
       const message = validationMessage || err.response?.data?.message || err.message || "Unable to prepare your enrollment. Please retry.";
-      setError(`${currentCourseTitle ? `${currentCourseTitle}: ` : ""}${message}`);
+      const fullMsg = `${currentCourseTitle ? `${currentCourseTitle}: ` : ""}${message}`;
+      setError(fullMsg);
+      setToast({ type: "error", message: fullMsg });
     } finally {
       submitting.current = false;
       setLoading(false);
@@ -213,6 +232,20 @@ export const StudentTrainingDuration = () => {
 
   return (
     <div className="w-full min-h-screen flex flex-col lg:flex-row bg-[#F4F4F4] font-sans selection:bg-[#09314F] selection:text-white">
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div
+          className={`fixed top-5 right-5 z-[300] px-6 py-4 rounded-2xl shadow-2xl text-white transition-all duration-300 ${
+            toast.type === "success" ? "bg-[#76D287]" : "bg-[#E83831]"
+          } animate-fadeIn`}
+        >
+          <div className="flex items-center gap-2.5 text-sm font-bold">
+            {toast.type === "error" && <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />}
+            {toast.message}
+          </div>
+        </div>
+      )}
+
       {/* VISUAL IMAGE PANEL */}
       <div className="w-full lg:w-1/2 h-[200px] sm:h-[260px] lg:h-auto lg:min-h-screen relative order-1 lg:order-2 overflow-hidden shrink-0">
         <div

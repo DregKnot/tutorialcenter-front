@@ -11,6 +11,7 @@ import {
   ShieldCheckIcon,
   SparklesIcon
 } from "@heroicons/react/24/outline";
+import { isAdminStaff, isAdvisorStaff } from "../../../utils/roleUtils";
 
 const initialFormState = () => ({
   // Question 1: Tutor's overall performance
@@ -348,6 +349,8 @@ export default function CourseAdvisorFeedbackModal({
     setError(null);
     onClose();
   };
+
+  if (!isOpen || (isAdminStaff() && !isAdvisorStaff())) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto bg-black/60 backdrop-blur-sm animate-fade-in">

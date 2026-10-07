@@ -117,6 +117,8 @@ const StudentAchievements = lazy(() => import("./pages/Students/StudentAchieveme
 const TutorAssessments = lazy(() => import("./pages/staffs/tutor/TutorAssessments.jsx"));
 const StudentAssessments = lazy(() => import("./pages/Students/StudentAssessments.jsx"));
 const StudentAssessmentTaker = lazy(() => import("./pages/Students/StudentAssessmentTaker.jsx"));
+const StudentSurvey = lazy(() => import("./pages/Students/StudentSurvey.jsx"));
+const AdminSurveyAnalytics = lazy(() => import("./pages/staffs/admin/AdminSurveyAnalytics.jsx"));
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
@@ -224,6 +226,7 @@ function App() {
               <Route path="/student/meet" element={<StudentMeetWrapper />} />
               <Route path="/student/settings" element={<StudentSettings />} />
               <Route path="/student/feedback" element={<StudentFeedback />} />
+              <Route path="/student/survey" element={<StudentSurvey />} />
               <Route path="/student/recorded-classes" element={<RecordedClasses />} />
               <Route path="/student/games" element={<StudentGames />} />
               <Route path="/student/exams" element={<StudentExam />} />
@@ -241,6 +244,7 @@ function App() {
               <Route path="/staffs/manage-blogs" element={<BlogManagement />} />
               <Route path="/staffs/audit-logs" element={<AuditLog />} />
               <Route path="/staffs/feedback" element={<StaffFeedback />} />
+              <Route path="/staffs/admin/survey-analytics" element={<AdminSurveyAnalytics />} />
               <Route path="/staffs/leaderboard" element={<StaffLeaderboard />} />
               <Route path="/staffs/notifications" element={<StaffNotification />} />
               <Route path="/staffs/meet" element={<StaffMeetWrapper />} />

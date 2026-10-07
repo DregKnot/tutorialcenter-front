@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
+import { Icon } from "@iconify/react";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -96,8 +97,14 @@ async function fetchBankTransferStatus(transfer, signal) {
  *  - enrollments: [{ enrollmentId, courseName, amount }] — pending course enrollments
  *  - studentId: the paying student id
  *  - onAllSettled: called once every enrollment is confirmed paid (approved)
+ *  - onPendingSubmitted: called when a claim is submitted/pending approval
  */
-export default function BankTransferPayment({ enrollments = [], studentId, onAllSettled }) {
+export default function BankTransferPayment({
+  enrollments = [],
+  studentId,
+  onAllSettled,
+  onPendingSubmitted,
+}) {
   const [transfers, setTransfers] = useState(readStore);
   const [loading, setLoading] = useState(true);
   const [sharedForm, setSharedForm] = useState({
@@ -332,17 +339,27 @@ export default function BankTransferPayment({ enrollments = [], studentId, onAll
   };
 
   const claimAll = async (event) => {
-    event.preventDefault();
-    if (claimLock.current) return;
+    if (event?.preventDefault) event.preventDefault();
+    if (claimLock.current) return false;
     const targets = claimableIds;
-    if (!targets.length) return;
+    if (!targets.length) {
+      if (onPendingSubmitted) {
+        onPendingSubmitted({
+          references: referenceRows,
+          courses: enrollments,
+          totalAmount,
+          whatsappMessage,
+        });
+      }
+      return true;
+    }
 
     const name = sharedForm.paid_from_account_name?.trim();
     const note = sharedForm.note?.trim();
     const amountPaid = sharedForm.amount_paid?.trim();
     if (amountPaid && (!Number.isFinite(Number(amountPaid)) || Number(amountPaid) <= 0)) {
       setSharedError("Enter a valid amount paid, or leave it empty.");
-      return;
+      return false;
     }
 
     claimLock.current = true;
@@ -409,13 +426,46 @@ export default function BankTransferPayment({ enrollments = [], studentId, onAll
       }
     }
 
+    claimLock.current = false;
+    setClaiming(false);
+
     if (failures) {
       setSharedError(
         "Some courses could not be claimed. Review the messages below and submit your claim again."
       );
+      return false;
     }
-    claimLock.current = false;
-    setClaiming(false);
+
+    if (onPendingSubmitted) {
+      onPendingSubmitted({
+        references: referenceRows,
+        courses: enrollments,
+        totalAmount,
+        whatsappMessage,
+      });
+    }
+    return true;
+  };
+
+  const handleShareAndContinue = async () => {
+    if (claiming) return;
+    let success = true;
+    if (claimableIds.length > 0) {
+      success = await claimAll();
+    }
+    if (!success) return;
+
+    const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+    window.open(waUrl, "_blank");
+
+    if (onPendingSubmitted) {
+      onPendingSubmitted({
+        references: referenceRows,
+        courses: enrollments,
+        totalAmount,
+        whatsappMessage,
+      });
+    }
   };
 
   const retrySetup = () => {
@@ -555,19 +605,20 @@ export default function BankTransferPayment({ enrollments = [], studentId, onAll
         </form>
       )}
 
-      {claimed && referenceRows.length > 0 && (
-        <div className="space-y-2">
-          <a
-            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full rounded-xl bg-green-600 px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-green-700"
+      {/* Primary Action: Share on WhatsApp & Continue */}
+      {!loading && referenceRows.length > 0 && (
+        <div className="pt-2 space-y-2">
+          <button
+            type="button"
+            onClick={handleShareAndContinue}
+            disabled={claiming}
+            className="w-full py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/25 disabled:opacity-50"
           >
-            Send your payment receipt on WhatsApp
-          </a>
-          <p className="text-xs text-gray-500">
-            After WhatsApp opens, tap the attachment (📎) icon and add your payment screenshot to the
-            chat, then send it.
+            <Icon icon="ic:baseline-whatsapp" className="w-5 h-5 text-white" />
+            <span>{claiming ? "Submitting Claim..." : "Share on WhatsApp & Continue"}</span>
+          </button>
+          <p className="text-xs text-gray-500 text-center">
+            Submits your transfer as pending admin review and opens WhatsApp to attach your payment screenshot.
           </p>
         </div>
       )}

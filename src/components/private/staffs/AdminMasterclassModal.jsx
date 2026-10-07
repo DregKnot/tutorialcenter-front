@@ -13,6 +13,7 @@ import {
   ChatBubbleBottomCenterTextIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { Icon } from "@iconify/react";
 
 const O_LEVELS_COURSE = {
   id: "o-levels",
@@ -312,7 +313,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         tutor_ids: tutorNumericIds,
         assistant_ids: assistantNumericIds,
         link: editClass.class_link || editClass.zoom_join_url || "",
-        status: editClass.status || "active",
+        status: editClass.status === "rescheduled" ? "proposed" : (editClass.status || "active"),
         description: editClass.description || "",
       });
 
@@ -695,6 +696,16 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
      UI
   ============================= */
 
+  const isProposed = formData.status === "proposed" || formData.status === "rescheduled";
+  const isCancelled = formData.status === "cancelled" || formData.status === "canceled";
+
+  // Standard blue form factor tokens preserved across all conditions
+  const cardBg = "bg-gray-50 dark:bg-blue-600/10 border-gray-200 dark:border-blue-500/30 text-gray-900 dark:text-white";
+  const inputBg = "bg-white dark:bg-blue-600/20 border-gray-200 dark:border-blue-500/30 text-gray-900 dark:text-white focus:ring-blue-500";
+  const labelColor = "text-gray-500 dark:text-gray-400";
+  const sublabelColor = "text-gray-700 dark:text-gray-300";
+  const iconColor = "text-gray-400";
+
   return ReactDOM.createPortal(
    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
   {/* Backdrop */}
@@ -703,19 +714,53 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
     onClick={onClose}
   />
   
-  {/* Modal Container */}
-  <div className="relative w-full max-w-3xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+  {/* Modal Container: Matches cancelled container format with sleek border and gradient header in dusty gold */}
+  <div className={`relative w-full max-w-3xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transition-all duration-300 bg-white dark:bg-gray-900 ${
+    isProposed
+      ? "border-2 border-[#C5A97A] dark:border-[#C5A97A] shadow-[0_0_35px_rgba(197,169,122,0.25)]"
+      : isCancelled
+      ? "border-2 border-rose-400 dark:border-rose-900 shadow-2xl"
+      : "border border-gray-200 dark:border-gray-800"
+  }`}>
     
-    {/* Header - Fixed */}
-    <div className="flex-shrink-0 px-8 py-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-        {editClass ? "Edit Master Class" : "Schedule Master Class"}
-      </h2>
+    {/* Header - Styled like cancelled container with dusty gold gradient */}
+    <div className={`flex-shrink-0 px-8 py-5 flex items-center justify-between border-b transition-all duration-300 ${
+      isProposed
+        ? "bg-gradient-to-r from-[#826435] via-[#5a4421] to-[#1e1e1e] text-white border-b border-[#C5A97A]/50"
+        : isCancelled
+        ? "bg-gradient-to-r from-rose-900 via-rose-800 to-[#1e1e1e] text-white border-rose-700/60"
+        : "bg-[#09314F] text-white border-gray-200 dark:border-gray-800"
+    }`}>
+      <div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+            {editClass ? "Edit Master Class" : "Schedule Master Class"}
+          </h2>
+          {isProposed && (
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#C5A97A]/30 text-[#fff5e1] border border-[#C5A97A]/70">
+              PROPOSED
+            </span>
+          )}
+          {isCancelled && (
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/25 text-rose-200 border border-rose-400/50">
+              CANCELLED
+            </span>
+          )}
+        </div>
+        <p className="text-xs mt-0.5 text-white/80">
+          {isProposed
+            ? "This masterclass is PROPOSED and liable to change. Students can still view and attend."
+            : isCancelled
+            ? "This masterclass is CANCELLED. All upcoming classroom sessions are paused."
+            : "Finalized masterclass cohort and weekly live timetable schedule."}
+        </p>
+      </div>
       <button
         onClick={onClose}
-        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all"
+        className="p-2 hover:bg-white/10 rounded-full transition-all text-white/80 hover:text-white"
+        title="Close"
       >
-        <XMarkIcon className="w-5 h-5 text-gray-500" />
+        <XMarkIcon className="w-5 h-5" />
       </button>
     </div>
 
@@ -733,26 +778,93 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         onSubmit={handleSubmit}
         className="space-y-6"
       >
+        {/* CLASS CONDITION TOGGLE (Active | Proposed | Cancelled) */}
+        <div className={`p-4 rounded-2xl border transition-all ${
+          isProposed
+            ? "bg-amber-50/80 dark:bg-[#C5A97A]/15 border-amber-300 dark:border-[#C5A97A]/50"
+            : isCancelled
+            ? "bg-rose-50/80 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900/60"
+            : "bg-blue-50/60 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/50"
+        }`}>
+          <div className="flex items-center justify-between mb-2.5 flex-wrap gap-2">
+            <label className={`text-xs font-black uppercase tracking-wider ${
+              isProposed ? "text-[#C5A97A] dark:text-[#f3e5ce]" : isCancelled ? "text-rose-700 dark:text-rose-300" : "text-[#09314F] dark:text-blue-200"
+            }`}>
+              Class Status Condition
+            </label>
+            <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full ${
+              isProposed
+                ? "bg-[#C5A97A]/25 text-amber-900 dark:text-[#fff0d4] border border-[#C5A97A]/60"
+                : isCancelled
+                ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+            }`}>
+              {isProposed ? "Proposed (Liable to change)" : isCancelled ? "Cancelled (Closed)" : "Active (Finalized)"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5">
+            <button
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, status: "active" }))}
+              className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
+                !isProposed && !isCancelled
+                  ? "bg-[#09314F] text-white shadow-md ring-2 ring-blue-400"
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${!isProposed && !isCancelled ? "bg-emerald-400 animate-pulse" : "bg-gray-400"}`} />
+              <span>Active</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, status: "proposed" }))}
+              className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
+                isProposed
+                  ? "bg-[#C5A97A] hover:bg-[#b89a68] text-[#081d30] font-black shadow-md shadow-[#C5A97A]/30 ring-2 ring-[#f3e5ce]"
+                  : "bg-white dark:bg-gray-800 text-amber-700 dark:text-[#C5A97A] border border-amber-300 dark:border-amber-700/60 hover:bg-amber-50"
+              }`}
+            >
+              <Icon icon="lucide:clock" className={`w-3.5 h-3.5 ${isProposed ? "text-[#081d30]" : "text-[#C5A97A]"}`} />
+              <span>Proposed</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, status: "cancelled" }))}
+              className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
+                isCancelled
+                  ? "bg-rose-600 text-white shadow-md ring-2 ring-rose-400"
+                  : "bg-white dark:bg-gray-800 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-50"
+              }`}
+            >
+              <Icon icon="lucide:ban" className="w-3.5 h-3.5 text-rose-400" />
+              <span>Cancelled</span>
+            </button>
+          </div>
+        </div>
+
         {/* PERIOD Section */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <label className={`block text-xs font-semibold uppercase tracking-wide mb-3 ${labelColor}`}>
             PERIOD
           </label>
           
           {/* Session Duration */}
-          <div className={`bg-gray-50 dark:bg-blue-600/10 rounded-2xl p-5 border ${
+          <div className={`rounded-2xl p-5 border ${cardBg} ${
             errors.start_date || errors.end_date 
               ? "border-red-300" 
-              : "border-gray-200 dark:border-blue-500/30"
+              : ""
           }`}>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className={`text-sm font-medium ${sublabelColor}`}>
                 Session Duration
               </span>
             </div>
             <div ref={dateContainerRef} className="flex items-center gap-4">
               <div className="flex-1 relative">
-                <span className="block text-xs text-gray-500 mb-1">Start</span>
+                <span className={`block text-xs mb-1 ${labelColor}`}>Start</span>
                 <div className="relative">
                   <input
                     ref={startDateRef}
@@ -767,16 +879,16 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                         startDateRef.current?.focus();
                       }
                     }}
-                    className="w-full px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden"
+                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden ${inputBg}`}
                   />
                   <CalendarIcon 
-                    className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    className={`w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${iconColor}`}
                   />
                 </div>
               </div>
               <span className="text-gray-400 mt-6">-</span>
               <div className="flex-1 relative">
-                <span className="block text-xs text-gray-500 mb-1">End</span>
+                <span className={`block text-xs mb-1 ${labelColor}`}>End</span>
                 <div className="relative">
                   <input
                     ref={endDateRef}
@@ -791,10 +903,10 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                         endDateRef.current?.focus();
                       }
                     }}
-                    className="w-full px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden"
+                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden ${inputBg}`}
                   />
                   <CalendarIcon 
-                    className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    className={`w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${iconColor}`}
                   />
                 </div>
               </div>
@@ -807,12 +919,12 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
         {/* Course Selection */}
         <div className="space-y-3">
-          <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Course Selection</label>
+          <label className={`text-[11px] font-black uppercase tracking-widest px-1 ${labelColor}`}>Course Selection</label>
           <div className="relative">
-            <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border transition-all ${
-              errors.course_id ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
+            <div className={`flex items-center gap-3 rounded-2xl px-5 py-4 border transition-all ${cardBg} ${
+              errors.course_id ? "border-red-300" : ""
             } ${selectedCourse ? "bg-green-50/10 border-green-500/30" : ""}`}>
-              <BookOpenIcon className="w-5 h-5 text-gray-400" />
+              <BookOpenIcon className={`w-5 h-5 ${iconColor}`} />
               <input
                 type="text"
                 placeholder="Search and select course (e.g. O-LEVELS, JAMB, WAEC)..."
@@ -821,7 +933,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                 onFocus={() => setCourseFocused(true)}
                 onBlur={() => setTimeout(() => setCourseFocused(false), 200)}
                 autoComplete="off"
-                className="flex-1 bg-transparent text-gray-900 dark:text-white font-medium outline-none placeholder:text-gray-400"
+                className="flex-1 bg-transparent font-medium outline-none text-gray-900 dark:text-white placeholder:text-gray-400"
               />
               {selectedCourse && (
                 <button
@@ -838,7 +950,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                     setSelectedSubject(null);
                     setSubjects([]);
                   }}
-                  className="text-xs font-black text-green-600 dark:text-green-400 bg-green-500/10 hover:bg-red-500/10 hover:text-red-500 px-3 py-1 rounded-full uppercase tracking-wider transition-colors flex items-center gap-1.5"
+                  className="text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider transition-colors flex items-center gap-1.5 text-green-600 dark:text-green-400 bg-green-500/10 hover:bg-red-500/10 hover:text-red-500"
                   title="Click to clear and change course"
                 >
                   <span>{selectedCourse.title || selectedCourse.name}</span>
@@ -849,7 +961,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
             {/* Custom Course Dropdown */}
             {!selectedCourse && (courseFocused || courseSearch.trim()) && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-[120] max-h-[220px] overflow-y-auto custom-scrollbar">
+              <div className="absolute top-full left-0 right-0 mt-2 border rounded-2xl shadow-2xl z-[120] max-h-[220px] overflow-y-auto custom-scrollbar bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
                 {(() => {
                   const q = courseSearch.trim().toLowerCase();
                   const cleanQ = q.replace(/[^a-z0-9]/g, "");
@@ -889,19 +1001,19 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                           setSubjectSearch("");
                           setSelectedSubject(null);
                         }}
-                        className="w-full text-left px-6 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium text-sm text-[#0F2843] dark:text-white transition-colors border-b border-gray-50 dark:border-gray-700/30 last:border-0 flex items-center justify-between"
+                        className="w-full text-left px-6 py-3.5 font-medium text-sm transition-colors border-b last:border-0 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 text-[#0F2843] dark:text-white border-gray-50 dark:border-gray-700/30"
                       >
                         <div>
                           <div className="font-bold flex items-center gap-2">
                             <span>{course.title || course.name}</span>
                             {course.is_o_levels && (
-                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 rounded-md">
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
                                 WAEC • NECO • GCE
                               </span>
                             )}
                           </div>
                           {course.is_o_levels ? (
-                            <div className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5">
+                            <div className="text-xs font-medium mt-0.5 text-blue-600 dark:text-blue-400">
                               Creates Master Class for WAEC, NECO & GCE students
                             </div>
                           ) : course.subtitle ? (
@@ -927,7 +1039,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
             )}
           </div>
           {selectedCourse?.is_o_levels && (
-            <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold px-1 flex items-center gap-1.5">
+            <p className="text-xs font-semibold px-1 flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
               All students registered for WAEC, NECO & GCE will automatically see this Master Class.
             </p>
@@ -937,12 +1049,12 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
         {/* Subject Selection */}
         <div className="space-y-3">
-          <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Subject Selection</label>
+          <label className={`text-[11px] font-black uppercase tracking-widest px-1 ${labelColor}`}>Subject Selection</label>
           <div className="relative">
-            <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border transition-all ${
-              errors.subject_id ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
+            <div className={`flex items-center gap-3 rounded-2xl px-5 py-4 border transition-all ${cardBg} ${
+              errors.subject_id ? "border-red-300" : ""
             } ${!formData.course_id ? "opacity-50 cursor-not-allowed" : ""} ${selectedSubject ? "bg-green-50/10 border-green-500/30" : ""}`}>
-              <BookOpenIcon className="w-5 h-5 text-gray-400" />
+              <BookOpenIcon className={`w-5 h-5 ${iconColor}`} />
               <input
                 type="text"
                 placeholder={formData.course_id ? (formData.course_id === "o-levels" ? "Search and select O-Level subject (e.g. Mathematics)..." : "Search and select subject (e.g. Mathematics)...") : "Please select a course first"}
@@ -952,7 +1064,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                 onBlur={() => setTimeout(() => setSubjectFocused(false), 200)}
                 disabled={!formData.course_id}
                 autoComplete="off"
-                className="flex-1 bg-transparent text-gray-900 dark:text-white font-medium outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
+                className="flex-1 bg-transparent font-medium outline-none disabled:cursor-not-allowed text-gray-900 dark:text-white placeholder:text-gray-400"
               />
               {selectedSubject && (
                 <button
@@ -965,7 +1077,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                       subject_id: "",
                     }));
                   }}
-                  className="text-xs font-black text-green-600 dark:text-green-400 bg-green-500/10 hover:bg-red-500/10 hover:text-red-500 px-3 py-1 rounded-full uppercase tracking-wider transition-colors flex items-center gap-1.5"
+                  className="text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider transition-colors flex items-center gap-1.5 text-green-600 dark:text-green-400 bg-green-500/10 hover:bg-red-500/10 hover:text-red-500"
                   title="Click to clear and change subject"
                 >
                   <span>{selectedSubject.name}</span>
@@ -976,7 +1088,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
             {/* Custom Subject Dropdown */}
             {formData.course_id && !selectedSubject && (subjectFocused || subjectSearch.trim()) && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-[120] max-h-[200px] overflow-y-auto custom-scrollbar">
+              <div className="absolute top-full left-0 right-0 mt-2 border rounded-2xl shadow-2xl z-[120] max-h-[200px] overflow-y-auto custom-scrollbar bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
                 {(() => {
                   const filtered = subjectSearch.trim()
                     ? subjects.filter(s => (s.name || "").toLowerCase().includes(subjectSearch.toLowerCase()))
@@ -997,7 +1109,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                             title: autoTitle,
                           }));
                         }}
-                        className="w-full text-left px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium text-sm text-[#0F2843] dark:text-white transition-colors border-b border-gray-50 dark:border-gray-700/30 last:border-0"
+                        className="w-full text-left px-6 py-4 font-medium text-sm transition-colors border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50 text-[#0F2843] dark:text-white border-gray-50 dark:border-gray-700/30"
                       >
                         {subject.name}
                       </button>
@@ -1015,8 +1127,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         </div>
 
         {/* Generated Class Title */}
-        <div className="bg-gray-50 dark:bg-blue-600/10 rounded-2xl p-5 border border-gray-200 dark:border-blue-500/30">
-          <span className="block text-xs text-gray-500 mb-2">Generated Class Title</span>
+        <div className={`rounded-2xl p-5 border ${cardBg}`}>
+          <span className={`block text-xs mb-2 ${labelColor}`}>Generated Class Title</span>
           <p className="text-base font-semibold text-gray-900 dark:text-white">
             {selectedSubject 
               ? `${selectedCourse?.title || selectedCourse?.name} - ${selectedSubject.name}` 
@@ -1029,8 +1141,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <ClockIcon className="w-5 h-5 text-gray-900 dark:text-white" />
-              <span className="text-sm font-medium text-gray-500">West Africa Standard Time</span>
+              <ClockIcon className={`w-5 h-5 ${iconColor}`} />
+              <span className={`text-sm font-medium ${labelColor}`}>West Africa Standard Time</span>
             </div>
           </div>
           
@@ -1045,8 +1157,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                   onClick={() => toggleDay(day.value)}
                   className={`py-3 rounded-xl text-xs font-medium transition-all ${
                     isActive
-                      ? "bg-blue-400 text-white"
-                      : "bg-gray-100 dark:bg-blue-600/20 text-gray-600 dark:text-gray-300 border-none"
+                      ? "bg-blue-400 text-white font-bold shadow-sm"
+                      : "bg-gray-100 dark:bg-blue-600/20 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-blue-600/30 border-none"
                   }`}
                 >
                   {day.label}
@@ -1057,8 +1169,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
           {/* Time Slots Table */}
           {daySchedules.length > 0 && (
-            <div className="bg-gray-50 dark:bg-blue-600/10 rounded-2xl p-4 border border-gray-200 dark:border-blue-500/30">
-              <div className="grid grid-cols-3 gap-4 mb-3 text-xs font-medium text-gray-500">
+            <div className={`rounded-2xl p-4 border ${cardBg}`}>
+              <div className={`grid grid-cols-3 gap-4 mb-3 text-xs font-medium ${labelColor}`}>
                 <span>Day</span>
                 <span className="text-center">Start</span>
                 <span className="text-center">End</span>
@@ -1068,20 +1180,20 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                   key={schedule.day}
                   className="grid grid-cols-3 gap-4 items-center py-2"
                 >
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  <span className="text-sm font-medium capitalize text-gray-900 dark:text-white">
                     {schedule.day}
                   </span>
                   <input
                     type="time"
                     value={schedule.start_time}
                     onChange={(e) => handleTimeChange(schedule.day, "start_time", e.target.value)}
-                    className="px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`px-3 py-2 border rounded-lg text-sm text-center focus:outline-none focus:ring-2 ${inputBg}`}
                   />
                   <input
                     type="time"
                     value={schedule.end_time}
                     onChange={(e) => handleTimeChange(schedule.day, "end_time", e.target.value)}
-                    className="px-3 py-2 bg-white dark:bg-blue-600/20 border border-gray-200 dark:border-blue-500/30 rounded-lg text-sm dark:text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`px-3 py-2 border rounded-lg text-sm text-center focus:outline-none focus:ring-2 ${inputBg}`}
                   />
                 </div>
               ))}
@@ -1092,16 +1204,16 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
         {/* Tutors */}
         <div>
-          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border ${
-            errors.tutor_ids ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
+          <div className={`flex items-center gap-3 rounded-2xl px-5 py-4 border ${cardBg} ${
+            errors.tutor_ids ? "border-red-300" : ""
           }`}>
-            <UserGroupIcon className="w-5 h-5 text-gray-400" />
+            <UserGroupIcon className={`w-5 h-5 ${iconColor}`} />
             <input
               list="tutor-list"
               value={tutorSearch}
               onChange={(e) => handleStaffChange(e, "tutor_ids")}
               placeholder="Search and select tutors"
-              className="flex-1 bg-transparent text-sm text-gray-500 dark:text-white italic outline-none placeholder:text-gray-400"
+              className="flex-1 bg-transparent text-sm italic outline-none text-gray-500 dark:text-white placeholder:text-gray-400"
             />
             <datalist id="tutor-list">
               {tutors.map((s) => (
@@ -1111,7 +1223,10 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             {selectedTutors.map((s) => (
-              <div key={s.id} className="flex items-center gap-2 px-4 py-2 bg-[#0a1d3a] text-white text-sm rounded-full">
+              <div 
+                key={s.id} 
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-full bg-[#0a1d3a] text-white"
+              >
                 {s.name || `${s.firstname} ${s.surname}`}
                 <button type="button" onClick={() => removeStaff(s.id, "tutor_ids")}>
                   <XMarkIcon className="w-4 h-4" />
@@ -1124,14 +1239,14 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
         {/* Assistants */}
         <div>
-          <div className="flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border border-gray-200 dark:border-blue-500/30">
-            <UserGroupIcon className="w-5 h-5 text-gray-400" />
+          <div className={`flex items-center gap-3 rounded-2xl px-5 py-4 border ${cardBg}`}>
+            <UserGroupIcon className={`w-5 h-5 ${iconColor}`} />
             <input
               list="assistant-list"
               value={assistantSearch}
               onChange={(e) => handleStaffChange(e, "assistant_ids")}
               placeholder="Search and select assistants (optional)"
-              className="flex-1 bg-transparent text-sm text-gray-500 dark:text-white italic outline-none placeholder:text-gray-400"
+              className="flex-1 bg-transparent text-sm italic outline-none text-gray-500 dark:text-white placeholder:text-gray-400"
             />
             <datalist id="assistant-list">
               {assistants.map((s) => (
@@ -1141,7 +1256,10 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             {selectedAssistants.map((s) => (
-              <div key={s.id} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white text-sm rounded-full">
+              <div 
+                key={s.id} 
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
                 {s.name || `${s.firstname} ${s.surname}`}
                 <button type="button" onClick={() => removeStaff(s.id, "assistant_ids")}>
                   <XMarkIcon className="w-4 h-4" />
@@ -1153,49 +1271,54 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
         {/* Meeting Link */}
         <div>
-          <div className={`flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border ${
-            errors.link ? "border-red-300" : "border-gray-200 dark:border-blue-500/30"
+          <div className={`flex items-center gap-3 rounded-2xl px-5 py-4 border ${cardBg} ${
+            errors.link ? "border-red-300" : ""
           }`}>
-            <LinkIcon className="w-5 h-5 text-gray-400" />
+            <LinkIcon className={`w-5 h-5 ${iconColor}`} />
             <input
               type="url"
               name="link"
               value={formData.link}
               onChange={handleChange}
               placeholder="https://meet.google.com/ans-baxj-eyc"
-              className="flex-1 bg-transparent text-sm dark:text-white outline-none placeholder:text-gray-400"
+              className="flex-1 bg-transparent text-sm outline-none dark:text-white placeholder:text-gray-400"
             />
           </div>
           {errors.link && <p className="text-red-500 text-xs mt-2">{errors.link}</p>}
         </div>
 
-        {/* Status */}
+        {/* Class Condition / Status */}
         <div>
-          <div className="flex items-center gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border border-gray-200 dark:border-blue-500/30">
-            <UserCircleIcon className="w-5 h-5 text-gray-400" />
+          <label className={`block text-[11px] font-black uppercase tracking-wider mb-1.5 ${labelColor}`}>
+            Class Condition & Status
+          </label>
+          <div className={`flex items-center gap-3 rounded-2xl px-5 py-4 border ${cardBg}`}>
+            <UserCircleIcon className={`w-5 h-5 ${iconColor}`} />
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="flex-1 bg-transparent text-sm dark:text-white outline-none cursor-pointer border-none focus:ring-0"
+              className="flex-1 bg-transparent text-sm font-bold outline-none cursor-pointer border-none focus:ring-0 dark:text-white"
             >
-              <option value="active" className="dark:bg-[#0a1d3a]">active</option>
-              <option value="inactive" className="dark:bg-[#0a1d3a]">inactive</option>
+              <option value="active" className="dark:bg-[#0a1d3a]">Active (Finalized Schedule)</option>
+              <option value="proposed" className="dark:bg-[#0a1d3a]">Proposed (Liable to Change / Tentative)</option>
+              <option value="cancelled" className="dark:bg-[#0a1d3a]">Cancelled (Suspended / Closed)</option>
+              <option value="inactive" className="dark:bg-[#0a1d3a]">Inactive (Archived)</option>
             </select>
           </div>
         </div>
 
         {/* Description */}
         <div>
-          <div className="flex items-start gap-3 bg-gray-50 dark:bg-blue-600/10 rounded-2xl px-5 py-4 border border-gray-200 dark:border-blue-500/30">
-            <ChatBubbleBottomCenterTextIcon className="w-5 h-5 text-gray-400 mt-1" />
+          <div className={`flex items-start gap-3 rounded-2xl px-5 py-4 border ${cardBg}`}>
+            <ChatBubbleBottomCenterTextIcon className={`w-5 h-5 mt-1 ${iconColor}`} />
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               placeholder="Description (optional)"
               rows="3"
-              className="flex-1 bg-transparent text-sm text-gray-500 dark:text-white italic outline-none placeholder:text-gray-400 resize-none"
+              className="flex-1 bg-transparent text-sm italic outline-none resize-none text-gray-500 dark:text-white placeholder:text-gray-400"
             />
           </div>
         </div>
@@ -1203,7 +1326,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
     </div>
 
     {/* Footer - Fixed */}
-    <div className="flex-shrink-0 px-8 py-6 bg-white dark:bg-gray-900 flex items-center gap-4 border-t border-gray-200 dark:border-gray-800">
+    <div className="flex-shrink-0 px-8 py-6 flex items-center gap-4 border-t transition-all duration-300 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
       <button
         type="button"
         onClick={onClose}
@@ -1216,9 +1339,13 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         type="button"
         onClick={handleSubmit}
         disabled={loading}
-        className={`flex-1 py-3 bg-[#0a1d3a] text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 ${
-          loading ? "opacity-70 cursor-not-allowed" : "hover:bg-[#081627]"
-        }`}
+        className={`flex-1 py-3 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 ${
+          isProposed
+            ? "bg-[#C5A97A] hover:bg-[#b89a68] text-[#081d30] font-black shadow-lg shadow-[#C5A97A]/30 ring-2 ring-[#f3e5ce]"
+            : isCancelled
+            ? "bg-rose-600 hover:bg-rose-700 text-white font-bold"
+            : "bg-[#0a1d3a] hover:bg-[#081627] text-white"
+        } ${loading ? "opacity-70 cursor-not-allowed" : "active:scale-95"}`}
       >
         {loading ? (
           <>
@@ -1226,9 +1353,9 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
             Saving...
           </>
         ) : editClass ? (
-          "Save Changes"
+          isProposed ? "Save Changes (Proposed Class)" : isCancelled ? "Save Changes (Cancelled)" : "Save Changes"
         ) : (
-          "Save"
+          isProposed ? "Save as Proposed Class" : "Save Class"
         )}
       </button>
     </div>

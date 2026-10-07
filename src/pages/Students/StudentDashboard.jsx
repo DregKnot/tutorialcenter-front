@@ -12,6 +12,8 @@ import StudentActivityChart from "../../components/private/Students/dashboard/St
 import AchievementsPanel from "../../components/private/Students/dashboard/AchievementsPanel.jsx";
 import MiniCalendarWidget from "../../components/private/Students/dashboard/MiniCalendarWidget.jsx";
 import RecommendedExamPractice from "../../components/private/Students/dashboard/RecommendedExamPractice.jsx";
+import PendingApprovalScreen from "../../components/private/Students/dashboard/PendingApprovalScreen.jsx";
+import SurveyPromptBanner from "../../components/private/Students/dashboard/SurveyPromptBanner.jsx";
 import useStudentActivity from "../../hooks/useStudentActivity.js";
 import { getDashboardCache, setDashboardCache } from "../../utils/dashboardCache.js";
 
@@ -74,6 +76,8 @@ export default function StudentDashboard({ blogs = [] }) {
   const [loading, setLoading] = useState(() => !cachedData); // Only show spinner if NO cache exists
   const [showNoCoursePopup, setShowNoCoursePopup] = useState(false);
   const [hasPendingPayment, setHasPendingPayment] = useState(false);
+  const [pendingEnrollmentData, setPendingEnrollmentData] = useState(null);
+  const [refreshingStatus, setRefreshingStatus] = useState(false);
   const [attempts, setAttempts] = useState(() => cachedData?.attempts || []);
   const [unreadCount, setUnreadCount] = useState(() => cachedData?.unreadCount || 0);
   const [leaderboardRank, setLeaderboardRank] = useState(() => cachedData?.leaderboardRank || null);
@@ -192,8 +196,27 @@ export default function StudentDashboard({ blogs = [] }) {
           }
         });
 
-        const hasPendingEnrollment = fetchedCourses.some(c => c.status?.toLowerCase() === 'pending') ||
-          paymentsList.some(p => p.status === 'pending');
+        const pendingData = res?.data?.pending_enrollment || null;
+        setPendingEnrollmentData(pendingData);
+
+        let hasStoredPendingTransfer = false;
+        try {
+          const store = JSON.parse(localStorage.getItem("studentBankTransfers") || "{}");
+          hasStoredPendingTransfer = Object.values(store).some(
+            t => t && (t.state === "awaiting_confirmation" || t.status === "pending")
+          );
+          if (!hasStoredPendingTransfer) {
+            const pendingIds = JSON.parse(localStorage.getItem("pendingBankTransferCourseIds") || "[]");
+            hasStoredPendingTransfer = Array.isArray(pendingIds) && pendingIds.length > 0;
+          }
+        } catch {}
+
+        const hasPendingEnrollment = Boolean(
+          pendingData ||
+          hasStoredPendingTransfer ||
+          fetchedCourses.some(c => c.status?.toLowerCase() === 'pending') ||
+          paymentsList.some(p => p.status === 'pending')
+        );
         setHasPendingPayment(hasPendingEnrollment);
 
         const mergedCourses = Array.from(activeMap.values());
@@ -270,6 +293,32 @@ export default function StudentDashboard({ blogs = [] }) {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [API_BASE_URL, authToken, studentId]);
+
+
+  const handleRefreshStatus = async () => {
+    setRefreshingStatus(true);
+    try {
+      const coursesRes = await axios.get(`${API_BASE_URL}/api/students/courses`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          Accept: "application/json",
+        },
+      });
+      const pending = coursesRes?.data?.pending_enrollment || null;
+      setPendingEnrollmentData(pending);
+      const active = coursesRes?.data?.courses || [];
+      if (active.length > 0) {
+        setCourses(active);
+        setHasPendingPayment(false);
+      } else {
+        setHasPendingPayment(Boolean(pending));
+      }
+    } catch (e) {
+      console.error("Refresh status failed:", e);
+    } finally {
+      setRefreshingStatus(false);
+    }
+  };
 
   // Compute average score from history
   const avgScore = attempts.length > 0
@@ -401,6 +450,19 @@ export default function StudentDashboard({ blogs = [] }) {
     });
   }
 
+  if (!loading && courses.length === 0 && (hasPendingPayment || pendingEnrollmentData)) {
+    return (
+      <DashboardLayout hideRightPanel={true} hideHeader={true} pagetitle="Pending Approval">
+        <PendingApprovalScreen
+          student={student}
+          pendingEnrollment={pendingEnrollmentData}
+          onRefresh={handleRefreshStatus}
+          refreshing={refreshingStatus}
+        />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout hideRightPanel={true} hideHeader={true} pagetitle="Overview">
       {/* ── No Course Popup ─────────────────────────────────────────────── */}
@@ -434,6 +496,9 @@ export default function StudentDashboard({ blogs = [] }) {
 
         {/* ── Welcome header ────────────────────────────────────────────────── */}
         <WelcomeHeader leaderboardRank={leaderboardRank} />
+
+        {/* ── Student Feedback & Courses Experience Survey Banner ──────────── */}
+        <SurveyPromptBanner />
 
         {/* ── Pending Verification Alert ────────────────────────────────────── */}
         {hasPendingPayment && (

@@ -134,7 +134,13 @@ export default function StudentBiodata() {
     if (!formData.department.trim()) newErrors.department = "Department is required";
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (Object.keys(newErrors).length > 0) {
+      console.log("Student Biodata Validation Errors:", newErrors);
+      const firstErrorMessage = Object.values(newErrors)[0];
+      setToast({ type: "error", message: firstErrorMessage || "Please fill all required fields." });
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -172,23 +178,23 @@ export default function StudentBiodata() {
         setTimeout(() => navigate('/register/student/training/selection'), 1500);
       }
     } catch (error) {
+      console.log("Student Biodata API Error:", error.response?.data || error);
       console.error("Submit error:", error.response?.data || error);
 
       const backendMessage = error?.response?.data?.message || "";
       const backendErrors = error.response?.data?.errors || {};
 
-      if (backendErrors){
+      if (Object.keys(backendErrors).length > 0){
         const firstErrorKey = Object.keys(backendErrors)[0];
-        const firstErrorMessage = backendErrors[firstErrorKey][0];
-        setToast({type: "error", message: backendMessage || firstErrorMessage || "validation failed."});
+        const firstErrorMessage = Array.isArray(backendErrors[firstErrorKey])
+          ? backendErrors[firstErrorKey][0]
+          : backendErrors[firstErrorKey];
+        setToast({type: "error", message: firstErrorMessage || backendMessage || "Validation failed."});
         setErrors(backendErrors);
       }
       else{
         setToast({ type: "error", message: backendMessage || "Something went wrong. Please try again." });
       }
-
-
-      // setErrors(error?.response?.data?.errors || {});
     } finally {
       setLoading(false);
     }

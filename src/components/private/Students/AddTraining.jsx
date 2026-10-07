@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import axios from "axios";
 import {  
   ChevronLeftIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ClockIcon
 } from "@heroicons/react/24/outline";
 import SubjectSelectionModal from "./SubjectSelectionModal";
 import ReviewSelectionModal from "./ReviewSelectionModal";
@@ -19,6 +20,13 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
   const [loading, setLoading] = useState(true);
   const [selectedCourses, setSelectedCourses] = useState([]);
   const [currentStep, setCurrentStep] = useState("selection"); // selection, subjects, review, duration, payment
+  const [pendingCourseIds, setPendingCourseIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("pendingBankTransferCourseIds") || "[]");
+    } catch {
+      return [];
+    }
+  });
   
   // Modal Data
   const [subjectsByCourse, setSubjectsByCourse] = useState({});
@@ -262,6 +270,20 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
     finishSuccess("Bank transfer approved. Your training is now active!");
   };
 
+  const handleBankPending = () => {
+    const newlyPendingIds = selectedCourses.map(c => Number(c.id));
+    setPendingCourseIds(prev => {
+      const merged = Array.from(new Set([...prev, ...newlyPendingIds]));
+      try {
+        localStorage.setItem("pendingBankTransferCourseIds", JSON.stringify(merged));
+      } catch {}
+      return merged;
+    });
+    if (student?.id) {
+      clearDashboardCache(student.id);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden pt-4">
 
@@ -294,7 +316,7 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
           </div>
 
           {/* Quick Status Legend */}
-          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-wider shrink-0 bg-gray-50 p-2.5 rounded-2xl border border-gray-100">
+          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-wider shrink-0 bg-gray-50 p-2.5 rounded-2xl border border-gray-100 flex-wrap">
             <span className="flex items-center gap-1.5 text-gray-600">
               <span className="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block" /> Available to Add
             </span>
@@ -303,6 +325,9 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
             </span>
             <span className="flex items-center gap-1.5 text-amber-700">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> Paid Before (Renew)
+            </span>
+            <span className="flex items-center gap-1.5 text-amber-900">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" /> Pending Approval
             </span>
           </div>
         </div>
@@ -340,6 +365,40 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
 
               const status = (enrolledRecord?.status || paymentRecord?.status || 'active').toLowerCase();
               const isExpired = status === 'cancelled' || status === 'removed' || status === 'expired' || status === 'inactive' || status === 'unpaid';
+              const isPending = status === 'pending' || pendingCourseIds.includes(courseIdNum) || pendingCourseIds.includes(String(courseIdNum));
+
+              // ── Pending Administrator Approval (Amber State) ──
+              if (isPending) {
+                return (
+                  <button
+                    key={course.id}
+                    onClick={() => {
+                      const matchedEnrollment = enrolledRecord?.enrollment_id || enrolledRecord?.id || paymentRecord?.course_enrollment_id;
+                      if (matchedEnrollment) {
+                        setEnrollments(prev => ({
+                          ...prev,
+                          [course.id]: {
+                            course_enrollment_id: matchedEnrollment,
+                            cost: course.price || 0
+                          }
+                        }));
+                      }
+                      setSelectedCourses([course]);
+                      setCurrentStep("payment");
+                    }}
+                    title={`${course.title}: Payment submitted. Awaiting administrator confirmation.`}
+                    className="relative min-h-[96px] py-4 px-3 rounded-2xl border-2 border-amber-400 bg-amber-50/90 hover:bg-amber-100 text-center flex flex-col items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] group"
+                  >
+                    <span className="text-sm font-black uppercase tracking-wider text-amber-950">
+                      {course.title}
+                    </span>
+                    <span className="mt-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-sm flex items-center gap-1.5 transition-colors">
+                      <ClockIcon className="w-3 h-3 stroke-[2.5] animate-pulse" />
+                      Pending Approval
+                    </span>
+                  </button>
+                );
+              }
 
               // Build unified renew target record
               const renewTarget = enrolledRecord || {
@@ -456,6 +515,7 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
         bankEnrollments={bankEnrollments}
         studentId={student?.id}
         onBankSettled={handleBankSettled}
+        onPendingSubmitted={handleBankPending}
         selectedMethod={selectedPaymentMethod}
         setSelectedMethod={setSelectedPaymentMethod}
         loading={processing || enrolling}

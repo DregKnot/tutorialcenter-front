@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Modal Colors Comparison</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dustyGold: '#C5A97A',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0b132b] p-8 text-white font-sans">
+  <div class="max-w-7xl mx-auto space-y-12">
+    <div>
+      <h1 class="text-2xl font-bold text-white mb-2">Comparison: Cancelled Modal (from User Screenshot) vs Proposed Modal Variants</h1>
+      <p class="text-sm text-gray-400">Evaluating dusty gold header & container styling against the cancelled reference.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- 1. CANCELLED (Exact mirror of User Screenshot) -->
+      <div>
+        <div class="text-xs uppercase tracking-wider font-bold text-rose-400 mb-2">1. Cancelled (User Screenshot Reference)</div>
+        <div class="w-full rounded-3xl shadow-2xl flex flex-col overflow-hidden bg-gray-900 border-2 border-rose-400 dark:border-rose-900">
+          
+          <!-- Header -->
+          <div class="flex-shrink-0 px-6 py-5 flex items-center justify-between border-b bg-gradient-to-r from-rose-900 via-rose-800 to-[#1e1e1e] text-white border-rose-700/60">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-lg font-black tracking-tight text-white">Edit Master Class</h2>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/25 text-rose-200 border border-rose-400/50">CANCELLED</span>
+              </div>
+              <p class="text-[11px] mt-0.5 text-white/70">This masterclass is CANCELLED. All upcoming classroom sessions are paused.</p>
+            </div>
+            <button class="p-1 hover:bg-white/10 rounded-full text-white/80">✕</button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6 space-y-5">
+            <div class="p-4 rounded-2xl border bg-rose-50/80 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900/60">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-black uppercase tracking-wider text-rose-300">Class Status Condition</span>
+                <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40">CANCELLED (CLOSED)</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="py-2 px-2 rounded-xl text-xs font-black bg-gray-800 text-gray-200 border border-gray-700 text-center">Active</div>
+                <div class="py-2 px-2 rounded-xl text-xs font-black bg-gray-800 text-[#C5A97A] border border-amber-700/60 text-center">Proposed</div>
+                <div class="py-2 px-2 rounded-xl text-xs font-black bg-rose-600 text-white shadow-md ring-2 ring-rose-400 text-center">Cancelled</div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl p-4 border bg-blue-600/10 border-blue-500/30 text-xs text-gray-300">Standard Blue Form Factor Preserved</div>
+
+            <div class="flex items-center gap-3 pt-2 border-t border-gray-800">
+              <button class="flex-1 py-2.5 bg-red-500 text-white font-semibold rounded-xl text-xs">Cancel</button>
+              <button class="flex-1 py-2.5 bg-rose-600 text-white font-bold rounded-xl text-xs">Save Changes (Cancelled)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. PROPOSED - Variant A: Deep Gold-Amber to Dark (#684f27 -> #423218 -> #1e1e1e) -->
+      <div>
+        <div class="text-xs uppercase tracking-wider font-bold text-[#C5A97A] mb-2">2. Proposed - Warm Deep Gold Gradient</div>
+        <div class="w-full rounded-3xl shadow-2xl flex flex-col overflow-hidden bg-gray-900 border-2 border-[#C5A97A] shadow-[0_0_30px_rgba(197,169,122,0.2)]">
+          
+          <!-- Header -->
+          <div class="flex-shrink-0 px-6 py-5 flex items-center justify-between border-b bg-gradient-to-r from-[#6e5327] via-[#4d3919] to-[#1e1e1e] text-white border-[#C5A97A]/40">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-lg font-black tracking-tight text-white">Edit Master Class</h2>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#C5A97A]/25 text-[#fcedc7] border border-[#C5A97A]/60">PROPOSED</span>
+              </div>
+              <p class="text-[11px] mt-0.5 text-white/70">This masterclass is PROPOSED and liable to change. Students can still attend.</p>
+            </div>
+            <button class="p-1 hover:bg-white/10 rounded-full text-white/80">✕</button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6 space-y-5">
+            <div class="p-4 rounded-2xl border bg-[#C5A97A]/10 border-[#C5A97A]/40">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-black uppercase tracking-wider text-[#C5A97A]">Class Status Condition</span>
+                <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#C5A97A]/20 text-[#fcedc7] border border-[#C5A97A]/50">PROPOSED (TENTATIVE)</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="py-2 px-2 rounded-xl text-xs font-black bg-gray-800 text-gray-200 border border-gray-700 text-center">Active</div>
+                <div class="py-2 px-2 rounded-xl text-xs font-black bg-[#C5A97A] text-[#092238] shadow-md ring-2 ring-[#e2d0b5] text-center font-bold">Proposed</div>
+                <div class="py-2 px-2 rounded-xl text-xs font-black bg-gray-800 text-rose-400 border border-rose-900/60 text-center">Cancelled</div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl p-4 border bg-blue-600/10 border-blue-500/30 text-xs text-gray-300">Standard Blue Form Factor Preserved</div>
+
+            <div class="flex items-center gap-3 pt-2 border-t border-gray-800">
+              <button class="flex-1 py-2.5 bg-red-500 text-white font-semibold rounded-xl text-xs">Cancel</button>
+              <button class="flex-1 py-2.5 bg-[#C5A97A] text-[#092238] font-black rounded-xl text-xs shadow-md ring-2 ring-[#e2d0b5]">Save Changes (Proposed Class)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. PROPOSED - Variant B: Luminous Dusty Gold Header (#826435 -> #57421f -> #1a1713) -->
+      <div>
+        <div class="text-xs uppercase tracking-wider font-bold text-[#e0caa5] mb-2">3. Proposed - Luminous Dusty Gold</div>
+        <div class="w-full rounded-3xl shadow-2xl flex flex-col overflow-hidden bg-gray-900 border-2 border-[#C5A97A] shadow-[0_0_35px_rgba(197,169,122,0.25)]">
+          
+          <!-- Header -->
+          <div class="flex-shrink-0 px-6 py-5 flex items-center justify-between border-b bg-gradient-to-r from-[#826435] via-[#5a4421] to-[#1e1e1e] text-white border-[#C5A97A]/50">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-lg font-black tracking-tight text-white">Edit Master Class</h2>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#C5A97A]/30 text-[#fff5e1] border border-[#C5A97A]/70">PROPOSED</span>
+              </div>
+              <p class="text-[11px] mt-0.5 text-white/80">This masterclass is PROPOSED and liable to change. Students can still attend.</p>
+            </div>
+            <button class="p-1 hover:bg-white/10 rounded-full text-white/80">✕</button>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6 space-y-5">
+            <div class="p-4 rounded-2xl border bg-[#C5A97A]/15 border-[#C5A97A]/50">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-black uppercase tracking-wider text-[#e6d3b3]">Class Status Condition</span>
+                <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#C5A97A]/25 text-[#fff0d4] border border-[#C5A97A]/60">PROPOSED (TENTATIVE)</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="py-2 px-2 rounded-xl text-xs font-black bg-gray-800 text-gray-200 border border-gray-700 text-center">Active</div>
+                <div class="py-2 px-2 rounded-xl text-xs font-black bg-[#C5A97A] text-[#081d30] shadow-md ring-2 ring-[#f3e5ce] text-center font-bold">Proposed</div>
+                <div class="py-2 px-2 rounded-xl text-xs font-black bg-gray-800 text-rose-400 border border-rose-900/60 text-center">Cancelled</div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl p-4 border bg-blue-600/10 border-blue-500/30 text-xs text-gray-300">Standard Blue Form Factor Preserved</div>
+
+            <div class="flex items-center gap-3 pt-2 border-t border-gray-800">
+              <button class="flex-1 py-2.5 bg-red-500 text-white font-semibold rounded-xl text-xs">Cancel</button>
+              <button class="flex-1 py-2.5 bg-[#C5A97A] text-[#081d30] font-black rounded-xl text-xs shadow-md ring-2 ring-[#f3e5ce]">Save Changes (Proposed Class)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
