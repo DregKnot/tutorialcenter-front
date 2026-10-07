@@ -7,22 +7,35 @@ import { Icon } from "@iconify/react";
 export const isSessionCancelled = (session) => {
   if (!session) return false;
   if (session.is_cancelled === true) return true;
-  const status = String(session.status || session.class?.status || "").toLowerCase().trim();
-  return status === "cancelled" || status === "canceled";
+  const sessionStatus = String(session.status || "").toLowerCase().trim();
+  const classStatus = String(session.class?.status || session.class_status || "").toLowerCase().trim();
+  return (
+    sessionStatus === "cancelled" ||
+    sessionStatus === "canceled" ||
+    classStatus === "cancelled" ||
+    classStatus === "canceled"
+  );
 };
 
 export const isSessionProposed = (session) => {
   if (!session) return false;
   if (session.is_proposed === true) return true;
-  const status = String(session.status || session.class?.status || "").toLowerCase().trim();
-  return status === "proposed" || status === "rescheduled";
+  const sessionStatus = String(session.status || "").toLowerCase().trim();
+  const classStatus = String(session.class?.status || session.class_status || "").toLowerCase().trim();
+  return (
+    sessionStatus === "proposed" ||
+    sessionStatus === "rescheduled" ||
+    classStatus === "proposed" ||
+    classStatus === "rescheduled"
+  );
 };
 
 export const isSessionRescheduled = (session) => {
   if (!session) return false;
   if (session.is_rescheduled === true) return true;
-  const status = String(session.status || session.class?.status || "").toLowerCase().trim();
-  return status === "rescheduled" || status === "proposed";
+  const sessionStatus = String(session.status || "").toLowerCase().trim();
+  const classStatus = String(session.class?.status || session.class_status || "").toLowerCase().trim();
+  return sessionStatus === "rescheduled" || classStatus === "rescheduled";
 };
 
 export const hasSessionRecording = (session) => {
@@ -378,7 +391,7 @@ export default function ClassSessionStatusBadge({
         </span>
       )}
 
-      {showScheduled && !isCancelled && !isRescheduled && !hasRecording && (
+      {shouldShowScheduled && (
         <span
           className={`inline-flex items-center font-black uppercase tracking-wider rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 shadow-xs ${sizeClasses}`}
         >

@@ -1,10 +1,5 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-
-jest.mock("@iconify/react", () => ({
-  Icon: (props) => <span data-testid="icon" {...props} />,
-}));
-
 import ClassSessionStatusBadge, {
   isSessionCancelled,
   isSessionProposed,
@@ -12,6 +7,10 @@ import ClassSessionStatusBadge, {
   getSubjectMetadata,
   getSessionCardStyles,
 } from "../common/ClassSessionStatusBadge";
+
+jest.mock("@iconify/react", () => ({
+  Icon: (props) => <span data-testid="icon" {...props} />,
+}));
 
 describe("ClassSessionStatusBadge and Helpers", () => {
   test("correctly identifies cancelled sessions", () => {
@@ -23,6 +22,8 @@ describe("ClassSessionStatusBadge and Helpers", () => {
   test("correctly identifies proposed sessions", () => {
     expect(isSessionProposed({ status: "proposed" })).toBe(true);
     expect(isSessionProposed({ is_proposed: true })).toBe(true);
+    expect(isSessionProposed({ status: "scheduled", class: { status: "proposed" } })).toBe(true);
+    expect(isSessionProposed({ status: "scheduled", class_status: "proposed" })).toBe(true);
     expect(isSessionProposed({ status: "scheduled" })).toBe(false);
   });
 
@@ -56,11 +57,22 @@ describe("ClassSessionStatusBadge and Helpers", () => {
     expect(screen.getByText("Scheduled")).toBeInTheDocument();
   });
 
+  test("renders Proposed and NOT Scheduled when parent class is proposed even if showScheduled is true", () => {
+    render(
+      <ClassSessionStatusBadge
+        session={{ status: "scheduled", class: { status: "proposed" } }}
+        showScheduled={true}
+      />
+    );
+    expect(screen.getByText("Proposed")).toBeInTheDocument();
+    expect(screen.queryByText("Scheduled")).toBeNull();
+  });
+
   test("renders nothing when status is scheduled and showScheduled is false", () => {
     const { container } = render(
       <ClassSessionStatusBadge session={{ status: "scheduled" }} showScheduled={false} />
     );
-    expect(container.firstChild).toBeNull();
+    expect(container).toBeEmptyDOMElement();
   });
 
   test("differentiates Mathematics and Further Mathematics, correcting typos", () => {

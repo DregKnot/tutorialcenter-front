@@ -9,6 +9,8 @@ import ClassSessionStatusBadge, {
   isSessionCancelled,
   isSessionProposed,
   hasSessionRecording,
+  getSessionCardStyles,
+  SubjectBadge,
 } from "../../components/common/ClassSessionStatusBadge.jsx";
 
 // SVG Icons to avoid import issues
@@ -63,33 +65,7 @@ const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const HOURS = Array.from({ length: 24 }, (_, i) => i); // 0 to 23 (12 AM to 11 PM)
 
 // Color scheme mapping
-const COLORS = [
-  { bg: "bg-emerald-50 dark:bg-emerald-950/30", border: "border-emerald-200 dark:border-emerald-800/50", text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
-  { bg: "bg-indigo-50 dark:bg-indigo-950/30", border: "border-indigo-200 dark:border-indigo-800/50", text: "text-indigo-700 dark:text-indigo-300", dot: "bg-indigo-500" },
-  { bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800/50", text: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
-  { bg: "bg-pink-50 dark:bg-pink-950/30", border: "border-pink-200 dark:border-pink-800/50", text: "text-pink-700 dark:text-pink-300", dot: "bg-pink-500" },
-  { bg: "bg-cyan-50 dark:bg-cyan-950/30", border: "border-cyan-200 dark:border-cyan-800/50", text: "text-cyan-700 dark:text-cyan-300", dot: "bg-cyan-500" },
-  { bg: "bg-purple-50 dark:bg-purple-950/30", border: "border-purple-200 dark:border-purple-800/50", text: "text-purple-700 dark:text-purple-300", dot: "bg-purple-500" },
-];
 
-const getClassColor = (title) => {
-  if (!title) return COLORS[0];
-  let hash = 0;
-  for (let i = 0; i < title.length; i++) {
-    hash = title.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % COLORS.length;
-  return COLORS[index];
-};
-
-const getSubjectDisplayName = (session) => {
-  if (!session) return "Class";
-  if (typeof session.subject === "object" && session.subject?.name) return session.subject.name;
-  if (typeof session.subject === "string" && session.subject.trim()) return session.subject;
-  if (session.subject_name) return session.subject_name;
-  if (session.class?.subject?.name) return session.class.subject.name;
-  return session.class?.title || session.title || "Class";
-};
 
 const getInitials = (str) => {
   if (!str || typeof str !== "string") return "MC";
@@ -561,7 +537,6 @@ export default function StudentCalendar() {
                           {/* Sessions List */}
                           <div className="flex flex-col gap-1 overflow-y-auto max-h-[80px] pr-0.5">
                             {daySessions.slice(0, 3).map((s, sIdx) => {
-                              const colors = getClassColor(s.class?.title || s.title);
                               const cancelled = isSessionCancelled(s);
                               const proposed = isSessionProposed(s);
                               const hasRec = hasSessionRecording(s);
@@ -571,14 +546,15 @@ export default function StudentCalendar() {
                                   key={s.id || sIdx}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setSelectedSession(s);
+                                    if (!cancelled) setSelectedSession(s);
                                   }}
-                                  className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border transition-opacity active:scale-[0.98] flex items-center justify-between gap-1 ${
+                                  disabled={cancelled}
+                                  className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border transition-opacity flex items-center justify-between gap-1 ${
                                     cancelled
-                                      ? "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 line-through opacity-75"
+                                      ? "bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 line-through opacity-75 cursor-not-allowed select-none"
                                       : proposed
-                                      ? "bg-amber-50 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-250 dark:border-amber-800/70"
-                                      : `${colors.bg} ${colors.border} ${colors.text} hover:opacity-85`
+                                      ? "bg-white text-amber-900 border-amber-400 dark:bg-[#09314F] dark:text-[#E5C378] dark:border-[#BFA15F] hover:opacity-85"
+                                      : "bg-white text-emerald-900 border-emerald-500/80 dark:bg-[#09314F] dark:text-emerald-300 dark:border-emerald-500/60 hover:opacity-85"
                                   }`}
                                 >
                                   <span className="truncate flex-1">{s.class?.title || s.title}</span>
@@ -589,7 +565,7 @@ export default function StudentCalendar() {
                                       </span>
                                     )}
                                     {proposed && !cancelled && (
-                                      <span className="text-[8px] font-black uppercase text-amber-700 dark:text-amber-300">
+                                      <span className="text-[8px] font-black uppercase text-amber-700 dark:text-[#E5C378]">
                                         PROP
                                       </span>
                                     )}
@@ -675,7 +651,6 @@ export default function StudentCalendar() {
                         {viewMode === "day" ? (
                           <div className="p-1 relative border-r border-gray-100 dark:border-[#1a4a75]/10 bg-white dark:bg-transparent flex flex-col gap-1">
                             {getSessionsForDateAndHour(currentDate, hour).map((s, sIdx) => {
-                              const colors = getClassColor(s.class?.title || s.title);
                               const cancelled = isSessionCancelled(s);
                               const proposed = isSessionProposed(s);
                               const hasRec = hasSessionRecording(s);
@@ -683,13 +658,14 @@ export default function StudentCalendar() {
                               return (
                                 <button
                                   key={s.id || sIdx}
-                                  onClick={() => setSelectedSession(s)}
-                                  className={`w-full text-left p-2.5 rounded-xl border shadow-sm transition-all hover:scale-[1.01] hover:shadow-md cursor-pointer ${
+                                  onClick={() => !cancelled && setSelectedSession(s)}
+                                  disabled={cancelled}
+                                  className={`w-full text-left p-2.5 rounded-xl border shadow-sm transition-all ${
                                     cancelled
-                                      ? "bg-rose-50/90 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 opacity-80"
+                                      ? "bg-rose-50/90 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 opacity-80 cursor-not-allowed select-none line-through"
                                       : proposed
-                                      ? "bg-amber-50/90 text-amber-900 border-amber-300 dark:bg-amber-950/40 dark:text-amber-250 dark:border-amber-800/70"
-                                      : `${colors.bg} ${colors.border} ${colors.text}`
+                                      ? "bg-white text-amber-900 border-amber-400 dark:bg-[#09314F] dark:text-[#E5C378] dark:border-[#BFA15F] hover:shadow-md cursor-pointer"
+                                      : "bg-white text-emerald-900 border-emerald-500/80 dark:bg-[#09314F] dark:text-emerald-300 dark:border-emerald-500/60 hover:shadow-md cursor-pointer"
                                   }`}
                                 >
                                   <div className="flex items-center justify-between gap-2">
@@ -724,7 +700,6 @@ export default function StudentCalendar() {
                                 }`}
                               >
                                 {cellSessions.map((s, sIdx) => {
-                                  const colors = getClassColor(s.class?.title || s.title);
                                   const cancelled = isSessionCancelled(s);
                                   const proposed = isSessionProposed(s);
                                   const hasRec = hasSessionRecording(s);
@@ -732,19 +707,20 @@ export default function StudentCalendar() {
                                   return (
                                     <button
                                       key={s.id || sIdx}
-                                      onClick={() => setSelectedSession(s)}
-                                      className={`w-full text-left p-1 text-[9px] font-bold rounded border truncate hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-between gap-1 ${
+                                      onClick={() => !cancelled && setSelectedSession(s)}
+                                      disabled={cancelled}
+                                      className={`w-full text-left p-1 text-[9px] font-bold rounded border truncate transition-all flex items-center justify-between gap-1 ${
                                         cancelled
-                                          ? "opacity-75 line-through bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60"
+                                          ? "opacity-75 line-through bg-rose-50 border-rose-300 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 cursor-not-allowed select-none"
                                           : proposed
-                                          ? "bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-950/40 dark:text-amber-250 dark:border-amber-800/70"
-                                          : `${colors.bg} ${colors.border} ${colors.text}`
+                                          ? "bg-white border-amber-400 text-amber-900 dark:bg-[#09314F] dark:text-[#E5C378] dark:border-[#BFA15F] hover:opacity-90"
+                                          : "bg-white border-emerald-400 text-emerald-900 dark:bg-[#09314F] dark:text-emerald-300 dark:border-emerald-500/60 hover:opacity-90"
                                       }`}
                                     >
                                       <span className="truncate flex-1">{s.class?.title || s.title}</span>
                                       <div className="flex items-center gap-0.5 shrink-0">
                                         {cancelled && <span className="text-[8px] font-black text-rose-600 uppercase">CAN</span>}
-                                        {proposed && !cancelled && <span className="text-[8px] font-black text-amber-700 uppercase">PROP</span>}
+                                        {proposed && !cancelled && <span className="text-[8px] font-black text-amber-700 dark:text-[#E5C378] uppercase">PROP</span>}
                                         {hasRec && <Icon icon="lucide:play-circle" className="w-2.5 h-2.5 text-purple-600 shrink-0" />}
                                       </div>
                                     </button>
@@ -809,11 +785,13 @@ export default function StudentCalendar() {
                           {/* Event indicator dots */}
                           <div className="flex gap-0.5 justify-center flex-wrap max-w-full pb-1">
                             {daySessions.slice(0, 3).map((s, sIdx) => {
-                              const colors = getClassColor(s.class?.title || s.title);
+                              const cancelled = isSessionCancelled(s);
+                              const proposed = isSessionProposed(s);
+                              const dotColor = cancelled ? "bg-rose-500" : proposed ? "bg-amber-500" : "bg-emerald-500";
                               return (
                                 <span
                                   key={sIdx}
-                                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`}
+                                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`}
                                 />
                               );
                             })}
@@ -838,19 +816,26 @@ export default function StudentCalendar() {
                     <div className="flex-1 overflow-y-auto max-h-[55vh] p-4 space-y-4">
                       {getSessionsForDate(selectedMobileDate).length > 0 ? (
                         getSessionsForDate(selectedMobileDate).map((s, sIdx) => {
-                          const colors = getClassColor(s.class?.title || s.title);
+                          const cardStyles = getSessionCardStyles(s);
+                          const cancelled = isSessionCancelled(s);
                           return (
                             <div
                               key={s.id || sIdx}
-                              onClick={() => setSelectedSession(s)}
-                              className={`flex flex-col p-4 rounded-2xl border ${colors.bg} ${colors.border} ${colors.text} shadow-sm transition-all active:scale-[0.98] cursor-pointer`}
+                              onClick={() => !cancelled && setSelectedSession(s)}
+                              className={`flex flex-col p-4 rounded-2xl border ${cardStyles.cardBg} ${cardStyles.cardBorder} shadow-sm transition-all ${
+                                cancelled ? "cursor-not-allowed opacity-80" : "active:scale-[0.98] cursor-pointer"
+                              }`}
                             >
-                              <h4 className="text-sm font-extrabold leading-snug">
+                              <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                                <SubjectBadge session={s} />
+                                <ClassSessionStatusBadge session={s} size="xs" showScheduled={false} />
+                              </div>
+                              <h4 className={`text-sm font-extrabold leading-snug ${cardStyles.titleClass}`}>
                                 {s.class?.title || s.title || "Master Class"}
                               </h4>
                               {s.starts_at && (
-                                <p className="text-xs font-semibold opacity-95 mt-1.5 flex items-center gap-1.5">
-                                  <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                                <p className={`text-xs font-semibold mt-1.5 flex items-center gap-1.5 ${cardStyles.timeText}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${cancelled ? "bg-rose-500" : cardStyles.isProposed ? "bg-amber-500" : "bg-emerald-500"}`} />
                                   {formatTimeRange(s.starts_at, s.ends_at)}
                                 </p>
                               )}
@@ -902,37 +887,32 @@ export default function StudentCalendar() {
             <div className="flex-1 overflow-y-auto pr-1 space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 custom-scrollbar">
               {getSessionsForDate(selectedDateModal).length > 0 ? (
                 getSessionsForDate(selectedDateModal).map((s, idx) => {
-                  const colors = getClassColor(s.class?.title || s.title);
+                  const cardStyles = getSessionCardStyles(s);
                   const past = isPastSession(s);
                   const cancelled = isSessionCancelled(s);
-                  const proposed = isSessionProposed(s);
                   const recUrl = s.recording_link || s.recording_url || s.recorded_url || s.video_url;
 
                   return (
                     <div
                       key={s.id || idx}
-                      className={`p-5 rounded-2xl border flex flex-col justify-between shadow-sm hover:shadow-md transition-all space-y-4 ${
+                      className={`p-5 rounded-2xl border flex flex-col justify-between shadow-sm transition-all space-y-4 ${cardStyles.cardBg} ${cardStyles.cardBorder} ${
                         cancelled
-                          ? "bg-rose-50/90 border-rose-300 dark:bg-rose-950/40 dark:border-rose-900/60"
-                          : proposed
-                          ? "bg-amber-50/90 border-amber-300 dark:bg-amber-950/40 dark:border-amber-800/70"
-                          : `${colors.bg} ${colors.border}`
+                          ? "cursor-not-allowed opacity-85 select-none"
+                          : cardStyles.cardHover
                       }`}
                     >
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${colors.text} bg-white/60 dark:bg-black/30 backdrop-blur-sm`}>
-                            {getSubjectDisplayName(s)}
-                          </span>
+                          <SubjectBadge session={s} />
                           <ClassSessionStatusBadge session={s} size="xs" showScheduled={true} />
                         </div>
                         
-                        <h3 className={`text-base font-extrabold leading-snug ${colors.text} ${cancelled ? "line-through opacity-75" : ""}`}>
+                        <h3 className={`text-base font-extrabold leading-snug ${cardStyles.titleClass}`}>
                           {s.class?.title || s.title || "Master Class"}
                         </h3>
 
                         {s.starts_at && (
-                          <div className="flex items-center gap-1.5 text-xs font-semibold mt-2 opacity-90">
+                          <div className={`flex items-center gap-1.5 text-xs font-semibold mt-2 ${cardStyles.timeText}`}>
                             <Icon icon="lucide:clock" className="w-3.5 h-3.5 shrink-0" />
                             <span>{formatTimeRange(s.starts_at, s.ends_at)}</span>
                           </div>
@@ -942,7 +922,7 @@ export default function StudentCalendar() {
                       {/* Action Button */}
                       <div className="pt-3 border-t border-black/5 dark:border-white/10">
                         {cancelled ? (
-                          <div className="w-full py-2.5 text-center text-xs font-black uppercase tracking-wider text-rose-700 bg-rose-100 dark:bg-rose-950/50 dark:text-rose-300 rounded-xl border border-rose-200 dark:border-rose-900">
+                          <div className={cardStyles.actionButtonClass}>
                             Session Cancelled
                           </div>
                         ) : past ? (
@@ -970,7 +950,7 @@ export default function StudentCalendar() {
                                 setSelectedDateModal(null);
                                 handleJoinClass(s);
                               }}
-                              className="w-full py-2.5 px-4 bg-[#09314F] hover:bg-[#E83831] text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all"
+                              className={cardStyles.actionButtonClass}
                             >
                               <Icon icon="logos:zoom" className="w-4 h-4" />
                               Join Class Now
