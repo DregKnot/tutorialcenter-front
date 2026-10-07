@@ -10,17 +10,11 @@ import {
   CheckCircle2,
   Video,
   PlaySquare,
-  BookOpen,
-  Monitor,
-  Smartphone,
-  Tablet,
-  Laptop,
   Layers,
   Star,
   MessageSquare,
   Award,
   Clock,
-  HelpCircle,
   ThumbsUp,
   Heart,
   Send,
@@ -207,13 +201,7 @@ const DEVICES = [
   "More than one device",
 ];
 
-const RELEASE_FREQUENCIES = [
-  "Every day",
-  "Several times a week",
-  "Once a week",
-  "Whenever a topic is completed",
-  "No preference",
-];
+
 
 export default function StudentSurvey() {
   const { token, student } = useAuth();
