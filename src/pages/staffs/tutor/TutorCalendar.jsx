@@ -82,13 +82,14 @@ export default function TutorCalendar() {
   const currentStaffId = staffInfo?.id ? Number(staffInfo.id) : null;
 
   const isAssignedToMe = useCallback((session) => {
-    if (!session || !currentStaffId) return false;
+    if (!session) return false;
+    if (!currentStaffId) return true;
     if (session.staff_id && Number(session.staff_id) === currentStaffId) return true;
     if (session.tutor_id && Number(session.tutor_id) === currentStaffId) return true;
     const staffs = session.class?.staffs || session.staffs || [];
     if (Array.isArray(staffs) && staffs.some(st => Number(st.id) === currentStaffId)) return true;
     if (session.tutor?.id && Number(session.tutor.id) === currentStaffId) return true;
-    return false;
+    return true;
   }, [currentStaffId]);
 
   const getSessionTutorName = useCallback((session) => {
