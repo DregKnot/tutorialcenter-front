@@ -9,6 +9,8 @@ import ClassSessionStatusBadge, {
   isSessionCancelled,
   isSessionProposed,
   hasSessionRecording,
+  getSubjectMetadata,
+  getSessionCardStyles,
 } from "../common/ClassSessionStatusBadge";
 
 describe("ClassSessionStatusBadge and Helpers", () => {
@@ -60,4 +62,35 @@ describe("ClassSessionStatusBadge and Helpers", () => {
     );
     expect(container.firstChild).toBeNull();
   });
+
+  test("differentiates Mathematics and Further Mathematics, correcting typos", () => {
+    const mathMeta = getSubjectMetadata("GCE - Mathematics");
+    expect(mathMeta.displayName).toBe("Mathematics");
+    expect(mathMeta.icon).toBe("lucide:calculator");
+    expect(mathMeta.isAdvanced).toBe(false);
+
+    const furtherMeta = getSubjectMetadata("GCE - Furher mathematics");
+    expect(furtherMeta.displayName).toBe("Further Mathematics");
+    expect(furtherMeta.icon).toBe("lucide:function-square");
+    expect(furtherMeta.isAdvanced).toBe(true);
+  });
+
+  test("returns correct status-driven card styles for Active, Proposed, and Cancelled", () => {
+    const activeStyles = getSessionCardStyles({ status: "scheduled" });
+    expect(activeStyles.status).toBe("active");
+    expect(activeStyles.cardBorder).toContain("border-emerald");
+    expect(activeStyles.cardClickable).toBe(true);
+
+    const proposedStyles = getSessionCardStyles({ status: "proposed" });
+    expect(proposedStyles.status).toBe("proposed");
+    expect(proposedStyles.cardBorder).toContain("border-amber");
+    expect(proposedStyles.cardClickable).toBe(true);
+
+    const cancelledStyles = getSessionCardStyles({ status: "cancelled" });
+    expect(cancelledStyles.status).toBe("cancelled");
+    expect(cancelledStyles.cardBorder).toContain("border-rose");
+    expect(cancelledStyles.cardClickable).toBe(false);
+    expect(cancelledStyles.actionText).toBe("Session Cancelled");
+  });
 });
+
