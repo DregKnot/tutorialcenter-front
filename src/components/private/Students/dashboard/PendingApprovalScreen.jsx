@@ -9,7 +9,7 @@ export default function PendingApprovalScreen({
   refreshing = false 
 }) {
   const [copied, setCopied] = useState(false);
-  const [showFaq, setShowFaq] = useState(false);
+
 
   const enrollmentCode = pendingEnrollment?.enrollment_code || student?.enrollment_code || "TMP-ENR-PENDING";
   const courseTitle = pendingEnrollment?.course_title || pendingEnrollment?.course?.title || "Course Enrollment";

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../../../context/AuthContext";
-import { Sparkles, ArrowRight, X, Heart, CheckCircle2 } from "lucide-react";
+import { Sparkles, ArrowRight, X } from "lucide-react";
 
 export default function SurveyPromptBanner() {
   const { token } = useAuth();

@@ -114,7 +114,6 @@ export default function BankTransferPayment({
   });
   const [sharedError, setSharedError] = useState("");
   const [claiming, setClaiming] = useState(false);
-  const [claimed, setClaimed] = useState(false);
   const [copied, setCopied] = useState("");
   const [revision, setRevision] = useState(0);
   const transfersRef = useRef(transfers);
@@ -364,7 +363,6 @@ export default function BankTransferPayment({
 
     claimLock.current = true;
     setClaiming(true);
-    setClaimed(true);
     setSharedError("");
     let failures = 0;
 
