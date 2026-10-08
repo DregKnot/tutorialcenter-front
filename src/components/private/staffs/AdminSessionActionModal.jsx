@@ -16,6 +16,7 @@ import {
 
 // Standard reasons for session cancellation
 const CANCELLATION_REASONS = [
+  "Class was not held / Missed Session (Record keeping)",
   "Tutor Emergency / Medical Leave",
   "Technical / Power / Internet Connectivity Outage",
   "Official Public Holiday / Academy Schedule Shift",
@@ -88,23 +89,31 @@ export default function AdminSessionActionModal({
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Helper: check if session is in the past
+  const isPast = Boolean(session?.session_date && session.session_date < todayYMD);
+
   // Initialize form when session or mode changes
   useEffect(() => {
     if (session) {
       setStep("pick_time");
-      setCancelReasonPreset(CANCELLATION_REASONS[0]);
+      const pastSession = Boolean(session.session_date && session.session_date < todayYMD);
+      setCancelReasonPreset(
+        pastSession
+          ? "Class was not held / Missed Session (Record keeping)"
+          : CANCELLATION_REASONS[1]
+      );
       setCustomReason("");
       setErrorMessage("");
       setClashingSessions([]);
 
-      // For reschedule: default new date to next day or same date
+      // For reschedule: default new date to next day or today (must be >= todayYMD)
       const initialDate = session.session_date && session.session_date >= todayYMD 
         ? session.session_date 
         : todayYMD;
       setNewDate(initialDate);
       setNewStartTime(session.starts_at || "10:00");
       setNewEndTime(session.ends_at || addMinutesToTime(session.starts_at || "10:00", 90));
-      setRescheduleReason("");
+      setRescheduleReason(pastSession ? "Rescheduled from past missed session" : "");
     }
   }, [session, mode, todayYMD]);
 
@@ -489,15 +498,30 @@ export default function AdminSessionActionModal({
                 </div>
               ) : (
                 <>
-                  <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 flex items-start gap-3">
-                    <Icon icon="lucide:bell-ring" className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                    <div className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
-                      <p className="font-bold">Student Dashboard Notification Alert</p>
-                      <p className="mt-0.5 text-amber-800/80 dark:text-amber-300/80">
-                        Cancelling will immediately notify all enrolled students through their dashboard notification glass capsule with high urgency. This slot will be marked as cancelled in the academy directory.
-                      </p>
+                  {isPast ? (
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-start gap-3">
+                      <Icon icon="lucide:archive" className="w-5 h-5 text-slate-600 dark:text-slate-400 shrink-0 mt-0.5" />
+                      <div className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed">
+                        <p className="font-bold flex items-center gap-1.5">
+                          <span>Administrative Record Keeping</span>
+                          <span className="px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] uppercase font-extrabold">Past Date</span>
+                        </p>
+                        <p className="mt-0.5 text-slate-600 dark:text-slate-400">
+                          This class occurrence took place in the past ({session.session_date}). Labelling it as cancelled will officially record it in academy attendance and schedule archives as cancelled / not held.
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 flex items-start gap-3">
+                      <Icon icon="lucide:bell-ring" className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                        <p className="font-bold">Student Dashboard Notification Alert</p>
+                        <p className="mt-0.5 text-amber-800/80 dark:text-amber-300/80">
+                          Cancelling will immediately notify all enrolled students through their dashboard notification glass capsule with high urgency. This slot will be marked as cancelled in the academy directory.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">

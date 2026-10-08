@@ -1643,38 +1643,60 @@ export default function AdminCalendar() {
                   </button>
 
                   {/* Cancel / Reschedule Management Actions */}
-                  {!isSessionCancelled(selectedSession) && !isSessionInPast(selectedSession) && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleOpenRescheduleSession(selectedSession)}
-                        className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
-                        title="Reschedule this session to a new date and time"
-                      >
-                        <Icon icon="lucide:calendar-clock" className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span>Reschedule</span>
-                      </button>
+                  <div className="flex items-center gap-2">
+                    {/* If NOT cancelled: allow Reschedule & Cancel (including past sessions for record keeping) */}
+                    {!isSessionCancelled(selectedSession) && (
+                      <>
+                        <button
+                          onClick={() => handleOpenRescheduleSession(selectedSession)}
+                          className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+                          title={
+                            isSessionInPast(selectedSession)
+                              ? "Reschedule this missed past session to a future date and time"
+                              : "Reschedule this session to a new date and time"
+                          }
+                        >
+                          <Icon icon="lucide:calendar-clock" className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                          <span>Reschedule</span>
+                        </button>
 
-                      <button
-                        onClick={() => handleOpenCancelSession(selectedSession)}
-                        disabled={isSessionLiveNow(selectedSession)}
-                        className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                        title={
-                          isSessionLiveNow(selectedSession)
-                            ? "Live classes cannot be cancelled by Admin. Only the Course Advisor can conclude live calls."
-                            : "Cancel this class session"
-                        }
-                      >
-                        <Icon icon="lucide:ban" className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                        <span>Cancel Class</span>
-                      </button>
-                    </div>
-                  )}
+                        <button
+                          onClick={() => handleOpenCancelSession(selectedSession)}
+                          disabled={isSessionLiveNow(selectedSession)}
+                          className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={
+                            isSessionLiveNow(selectedSession)
+                              ? "Live classes cannot be cancelled by Admin. Only the Course Advisor can conclude live calls."
+                              : isSessionInPast(selectedSession)
+                              ? "Mark this past class session as cancelled for record purposes"
+                              : "Cancel this class session"
+                          }
+                        >
+                          <Icon icon="lucide:ban" className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                          <span>{isSessionInPast(selectedSession) ? "Mark Cancelled" : "Cancel Class"}</span>
+                        </button>
+                      </>
+                    )}
 
-                  {isSessionCancelled(selectedSession) ? (
-                    <span className="px-4 py-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-xl flex items-center gap-1.5">
-                      <Icon icon="lucide:ban" className="w-4 h-4" /> Class is Cancelled
-                    </span>
-                  ) : selectedSession.class_link && (
+                    {/* If ALREADY cancelled: show cancelled badge AND allow rescheduling to a new date/time */}
+                    {isSessionCancelled(selectedSession) && (
+                      <div className="flex items-center gap-2">
+                        <span className="px-3.5 py-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-xl flex items-center gap-1.5">
+                          <Icon icon="lucide:ban" className="w-4 h-4" /> Cancelled
+                        </span>
+                        <button
+                          onClick={() => handleOpenRescheduleSession(selectedSession)}
+                          className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+                          title="Reschedule this cancelled class to a new date and time"
+                        >
+                          <Icon icon="lucide:calendar-clock" className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                          <span>Reschedule to New Time</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {!isSessionCancelled(selectedSession) && selectedSession.class_link && (
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
