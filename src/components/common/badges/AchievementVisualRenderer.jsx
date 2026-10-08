@@ -35,6 +35,7 @@ import {
   MasterScholarMedal,
   EducationLegendMedal
 } from './practicemedals';
+import SurveyPioneerBadge from './specialmedals/SurveyPioneerBadge';
 
 /**
  * Achievement Category Metadata & Config
@@ -120,6 +121,7 @@ export const CATEGORY_CONFIG = {
 export const getAchievementIcon = (code = "", category = "") => {
   const c = code.toLowerCase();
   
+  if (c.includes("survey") || c.includes("pioneer")) return Trophy;
   if (c.includes("welcome")) return UserPlus;
   if (c.includes("profile_complete")) return UserCheck;
   if (c.includes("ready_to_learn")) return BookOpen;
@@ -157,6 +159,7 @@ export const getAchievementCondition = (achievement) => {
   if (reqs.accuracy_percentage) return `Achieve ${reqs.accuracy_percentage}% accuracy across weekly practice`;
 
   // Fallback map based on standard catalog codes
+  if (code.includes("survey") || code.includes("pioneer")) return "Complete and submit the student feedback & learning experience survey";
   if (code === "onboarding.welcome_aboard") return "Register your student account";
   if (code === "onboarding.profile_complete") return "Verify your email and complete your student profile";
   if (code === "onboarding.ready_to_learn") return "Enroll in your first subject or course";
@@ -301,6 +304,8 @@ export default function AchievementVisualRenderer({
             <ProfileCompleteBadge size={size} earned={true} />
           ) : code === "onboarding.welcome_aboard" ? (
             <WelcomeAboardBadge size={size} earned={true} />
+          ) : (code === "special_event.survey_pioneer" || code === "survey_pioneer") ? (
+            <SurveyPioneerBadge size={size} earned={true} animated={animated} />
           ) : code === "onboarding.first_step" ? (
             <FirstStepBadge size={size} earned={true} />
           ) : isMedal ? (
@@ -382,6 +387,8 @@ export default function AchievementVisualRenderer({
             <ProfileCompleteBadge size={size} earned={false} />
           ) : code === "onboarding.welcome_aboard" ? (
             <WelcomeAboardBadge size={size} earned={false} />
+          ) : (code === "special_event.survey_pioneer" || code === "survey_pioneer") ? (
+            <SurveyPioneerBadge size={size} earned={false} />
           ) : code === "onboarding.first_step" ? (
             <FirstStepBadge size={size} earned={false} />
           ) : isMedal ? (

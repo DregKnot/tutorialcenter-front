@@ -35,6 +35,7 @@ import ClassSessionStatusBadge, {
   getSessionCardStyles,
   SubjectBadge,
 } from "../../../components/common/ClassSessionStatusBadge.jsx";
+import AdminSessionActionModal from "../../../components/private/staffs/AdminSessionActionModal.jsx";
 
 // Official Tutorial Center African Time Zone (West Africa Time / UTC+1)
 const AFRICAN_TIMEZONE = "Africa/Lagos";
@@ -161,7 +162,7 @@ const extractFlatSessions = (data) => {
       session_date: dateStr,
       starts_at: startTime ? startTime.substring(0, 5) : "10:00",
       ends_at: endTime ? endTime.substring(0, 5) : "11:30",
-      topic: session.title || source.title || `${subject} Master Class`,
+      topic: session.topic || session.title || source.title || `${subject} Master Class`,
       subject_name: subject,
       subject: source.subject || session.subject,
       tutor,
@@ -202,6 +203,7 @@ const extractFlatSessions = (data) => {
     });
   } else if (data && typeof data === 'object') {
     if (Array.isArray(data.classes)) data.classes.forEach(processClassItem);
+    if (Array.isArray(data.data)) data.data.forEach(item => (item.schedules || item.subject_id ? processClassItem(item) : pushSession(item)));
     if (Array.isArray(data.sessions)) data.sessions.forEach(s => pushSession(s));
     if (Array.isArray(data.today_classes)) data.today_classes.forEach(s => pushSession(s));
     if (Array.isArray(data.upcoming_sessions)) data.upcoming_sessions.forEach(s => pushSession(s));
@@ -250,6 +252,10 @@ export default function AdminCalendar() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(null);
   const [toast, setToast] = useState(null);
+
+  // --- CANCEL & RESCHEDULE SESSION MODAL STATE ---
+  const [actionModalMode, setActionModalMode] = useState(null); // null | "cancel" | "reschedule"
+  const [actionModalSession, setActionModalSession] = useState(null);
 
   // --- FETCH SCHEDULES ---
   const fetchAllSchedules = useCallback(async () => {
@@ -407,6 +413,61 @@ export default function AdminCalendar() {
       setCopiedLink(null);
       setToast(null);
     }, 2500);
+  };
+
+  // Helper to check if a session is in the past
+  const isSessionInPast = (session) => {
+    if (!session || !session.session_date) return false;
+    const todayStr = getAfricanDateYMD();
+    if (session.session_date < todayStr) return true;
+    if (session.session_date > todayStr) return false;
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    const [eh, em] = (session.ends_at || "23:59").split(":").map(Number);
+    return (eh * 60 + em) < currentMins;
+  };
+
+  // Handlers for Cancel & Reschedule Flows
+  const handleOpenCancelSession = (session) => {
+    setActionModalSession(session);
+    setActionModalMode("cancel");
+  };
+
+  const handleOpenRescheduleSession = (session) => {
+    setActionModalSession(session);
+    setActionModalMode("reschedule");
+  };
+
+  const handleActionSuccess = ({ action, session: updatedSession, replacedSessionId, message }) => {
+    // 1. Optimistic update of local state for instant responsiveness
+    setSessions((prev) => {
+      return prev.map((s) => {
+        if (s.id === updatedSession.id) {
+          return { ...s, ...updatedSession };
+        }
+        if (replacedSessionId && s.id === replacedSessionId) {
+          return {
+            ...s,
+            status: "cancelled",
+            is_cancelled: true,
+            cancel_reason: `Replaced by ${updatedSession.subject_name || "rescheduled"} masterclass`,
+          };
+        }
+        return s;
+      });
+    });
+
+    // 2. Update selectedSession if it is currently open
+    if (selectedSession && selectedSession.id === updatedSession.id) {
+      setSelectedSession((prev) => ({ ...prev, ...updatedSession }));
+    }
+
+    // 3. Show Toast Notification
+    setToast({ message, type: "success" });
+    setTimeout(() => setToast(null), 4000);
+
+    // 4. Background re-fetch to sync canonical backend state
+    fetchAllSchedules();
   };
 
   // Month grid generator
@@ -711,13 +772,12 @@ export default function AdminCalendar() {
                             key={session.id}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (isCancelled) return;
                               setSelectedSession(session);
                               setModalTab("overview");
                             }}
                             className={`p-1.5 rounded-lg text-[11px] font-semibold border transition-all ${
                               isCancelled
-                                ? "bg-rose-50/95 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 opacity-80 cursor-not-allowed select-none line-through"
+                                ? "bg-rose-50/95 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 opacity-80 cursor-pointer select-none line-through"
                                 : isProposed
                                   ? "bg-white dark:bg-[#09314F] border-amber-400 dark:border-[#BFA15F] text-amber-900 dark:text-[#E5C378] hover:scale-[1.02] hover:shadow-sm cursor-pointer"
                                   : "bg-white dark:bg-[#09314F] border-emerald-400 dark:border-emerald-500/60 text-emerald-900 dark:text-emerald-300 hover:scale-[1.02] hover:shadow-sm cursor-pointer"
@@ -840,13 +900,12 @@ export default function AdminCalendar() {
                                   key={session.id}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    if (isCancelled) return;
                                     setSelectedSession(session);
                                     setModalTab("overview");
                                   }}
                                   className={`p-2 rounded-xl border text-xs shadow-sm mb-1.5 transition-all ${
                                     isCancelled
-                                      ? "bg-rose-50/95 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 opacity-80 cursor-not-allowed select-none line-through"
+                                      ? "bg-rose-50/95 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 opacity-80 cursor-pointer select-none line-through"
                                       : isProposed
                                         ? "bg-white dark:bg-[#09314F] border-amber-400 dark:border-[#BFA15F] text-amber-900 dark:text-[#E5C378] hover:scale-[1.02] cursor-pointer"
                                         : "bg-white dark:bg-[#09314F] border-emerald-400 dark:border-emerald-500/60 text-emerald-900 dark:text-emerald-300 hover:scale-[1.02] cursor-pointer"
@@ -919,13 +978,12 @@ export default function AdminCalendar() {
                     <div
                       key={session.id}
                       onClick={() => {
-                        if (isCancelled) return;
                         setSelectedSession(session);
                         setModalTab("overview");
                       }}
                       className={`p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${cardStyles.cardBg} ${cardStyles.cardBorder} ${
                         isCancelled
-                          ? "opacity-80 cursor-not-allowed select-none"
+                          ? "opacity-80 cursor-pointer select-none"
                           : "cursor-pointer hover:shadow-lg hover:border-primary/40"
                       }`}
                     >
@@ -1033,13 +1091,12 @@ export default function AdminCalendar() {
                     <div
                       key={session.id}
                       onClick={() => {
-                        if (isCancelled) return;
                         setSelectedSession(session);
                         setModalTab("overview");
                       }}
                       className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${
                         isCancelled
-                          ? "bg-rose-50/70 dark:bg-rose-950/30 opacity-80 cursor-not-allowed select-none"
+                          ? "bg-rose-50/70 dark:bg-rose-950/30 opacity-80 cursor-pointer select-none"
                           : isProposed
                           ? "border-l-4 border-l-amber-400 dark:border-l-[#BFA15F] bg-amber-50/20 dark:bg-amber-950/10 hover:bg-amber-50/40 cursor-pointer"
                           : "border-l-4 border-l-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 hover:bg-emerald-50/30 cursor-pointer"
@@ -1334,7 +1391,14 @@ export default function AdminCalendar() {
                 {isSessionCancelled(selectedSession) && (
                   <div className="mt-3 p-3 bg-rose-600/40 border border-rose-300/40 rounded-xl text-xs font-bold text-white flex items-center gap-2">
                     <Icon icon="lucide:alert-triangle" className="w-4 h-4 text-white shrink-0" />
-                    <span>This class session is CANCELLED. Students cannot join live meetings for cancelled sessions.</span>
+                    <div>
+                      <span>This class session is CANCELLED. Students cannot join live meetings for cancelled sessions.</span>
+                      {selectedSession.cancel_reason && (
+                        <p className="mt-0.5 text-[11px] text-white/90 font-medium">
+                          Cancellation Reason: {selectedSession.cancel_reason}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
                 {isSessionRescheduled(selectedSession) && (
@@ -1577,6 +1641,35 @@ export default function AdminCalendar() {
                   >
                     Close
                   </button>
+
+                  {/* Cancel / Reschedule Management Actions */}
+                  {!isSessionCancelled(selectedSession) && !isSessionInPast(selectedSession) && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenRescheduleSession(selectedSession)}
+                        className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+                        title="Reschedule this session to a new date and time"
+                      >
+                        <Icon icon="lucide:calendar-clock" className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <span>Reschedule</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenCancelSession(selectedSession)}
+                        disabled={isSessionLiveNow(selectedSession)}
+                        className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={
+                          isSessionLiveNow(selectedSession)
+                            ? "Live classes cannot be cancelled by Admin. Only the Course Advisor can conclude live calls."
+                            : "Cancel this class session"
+                        }
+                      >
+                        <Icon icon="lucide:ban" className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                        <span>Cancel Class</span>
+                      </button>
+                    </div>
+                  )}
+
                   {isSessionCancelled(selectedSession) ? (
                     <span className="px-4 py-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-xl flex items-center gap-1.5">
                       <Icon icon="lucide:ban" className="w-4 h-4" /> Class is Cancelled
@@ -1639,6 +1732,23 @@ export default function AdminCalendar() {
               setShowCreateModal(false);
               fetchAllSchedules();
             }}
+          />
+        )}
+
+        {/* --- CANCEL & RESCHEDULE SESSION MODAL --- */}
+        {actionModalMode && actionModalSession && (
+          <AdminSessionActionModal
+            isOpen={Boolean(actionModalMode)}
+            mode={actionModalMode}
+            session={actionModalSession}
+            allSessions={sessions}
+            onClose={() => {
+              setActionModalMode(null);
+              setActionModalSession(null);
+            }}
+            onSuccess={handleActionSuccess}
+            API_BASE_URL={API_BASE_URL}
+            token={token}
           />
         )}
 

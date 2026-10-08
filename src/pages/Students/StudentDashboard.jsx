@@ -434,6 +434,50 @@ export default function StudentDashboard({ blogs = [] }) {
     actionUrl: "/student/achievements"
   });
 
+  // 3.5 Urgent schedule alerts (Cancellations & Reschedules)
+  try {
+    const recentAlerts = JSON.parse(localStorage.getItem("recent_schedule_alerts") || "[]");
+    recentAlerts.forEach((alert) => {
+      highlights.unshift({
+        type: alert.type || "cancellation",
+        urgent: true,
+        text: alert.text || "A class session schedule has been updated.",
+        actionLabel: alert.actionLabel || "View",
+        actionUrl: alert.actionUrl || "/student/class-schedule",
+      });
+    });
+  } catch (e) {}
+
+  courses.forEach((course) => {
+    if (Array.isArray(course.schedules)) {
+      course.schedules.forEach((sched) => {
+        if (Array.isArray(sched.sessions)) {
+          sched.sessions.forEach((sess) => {
+            if (sess.status === "cancelled" || sess.is_cancelled) {
+              const subName = course.course_name || course.title || "Master Class";
+              highlights.unshift({
+                type: "cancellation",
+                urgent: true,
+                text: `${subName}: Session on ${sess.session_date || "today"} was cancelled.`,
+                actionLabel: "Schedule",
+                actionUrl: "/student/class-schedule",
+              });
+            } else if (sess.status === "rescheduled" || sess.is_rescheduled) {
+              const subName = course.course_name || course.title || "Master Class";
+              highlights.unshift({
+                type: "rescheduled",
+                urgent: true,
+                text: `${subName}: Session moved to ${sess.session_date} at ${sess.starts_at}.`,
+                actionLabel: "View Time",
+                actionUrl: "/student/class-schedule",
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+
   // 4. General fallbacks if empty or small pool
   if (highlights.length <= 2) {
     highlights.push({

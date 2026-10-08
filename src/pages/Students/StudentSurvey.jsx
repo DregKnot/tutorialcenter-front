@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
@@ -16,10 +16,169 @@ import {
   Award,
   Clock,
   ThumbsUp,
-  Heart,
   Send,
   RotateCcw,
+  Trophy,
+  Medal,
+  PartyPopper,
+  AlertCircle,
 } from "lucide-react";
+
+// ─── Animated Confetti Particle ───────────────────────────────────────────────
+const CONFETTI_COLORS = ["#C5A97A", "#0F2843", "#34d399", "#f59e0b", "#f472b6", "#60a5fa"];
+
+function ConfettiPiece({ style }) {
+  return (
+    <div
+      style={style}
+      className="absolute rounded-sm pointer-events-none"
+    />
+  );
+}
+
+function Confetti({ active }) {
+  const pieces = useRef(
+    Array.from({ length: 60 }, (_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      width: `${4 + Math.random() * 6}px`,
+      height: `${8 + Math.random() * 6}px`,
+      bg: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      delay: `${Math.random() * 1.2}s`,
+      duration: `${1.4 + Math.random() * 1.2}s`,
+      rotation: `${Math.random() * 360}deg`,
+    }))
+  ).current;
+
+  if (!active) return null;
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+      {pieces.map((p) => (
+        <ConfettiPiece
+          key={p.id}
+          style={{
+            left: p.left,
+            top: "-10px",
+            width: p.width,
+            height: p.height,
+            backgroundColor: p.bg,
+            transform: `rotate(${p.rotation})`,
+            animation: `confetti-fall ${p.duration} ${p.delay} ease-in forwards`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes confetti-fall {
+          0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+          80%  { opacity: 1; }
+          100% { transform: translateY(500px) rotate(720deg) scale(0.5); opacity: 0; }
+        }
+        @keyframes badge-pop {
+          0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+          60%  { transform: scale(1.12) rotate(4deg); opacity: 1; }
+          80%  { transform: scale(0.95) rotate(-2deg); }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes shimmer-badge {
+          0%   { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes ring-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(197,169,122,0.6), 0 0 0 0 rgba(197,169,122,0.3); }
+          50%       { box-shadow: 0 0 0 16px rgba(197,169,122,0), 0 0 0 32px rgba(197,169,122,0); }
+        }
+        @keyframes float-icon {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-8px); }
+        }
+        @keyframes stars-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        .badge-pop-enter  { animation: badge-pop 0.7s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .badge-shimmer {
+          background: linear-gradient(120deg, #C5A97A 0%, #fef3c7 40%, #e4cb9c 50%, #fef3c7 60%, #C5A97A 100%);
+          background-size: 200% auto;
+          animation: shimmer-badge 2.4s linear infinite;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .ring-pulse { animation: ring-pulse 2s ease-out infinite; }
+        .float-icon { animation: float-icon 3s ease-in-out infinite; }
+      `}</style>
+    </div>
+  );
+}
+
+// ─── Survey Completion Badge ───────────────────────────────────────────────────
+function SurveyBadge({ studentName }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setShow(true), 200); return () => clearTimeout(t); }, []);
+  return (
+    <div
+      className={`relative mx-auto w-64 transition-all duration-700 ${
+        show ? "badge-pop-enter opacity-100" : "opacity-0 scale-0"
+      }`}
+      style={{ animation: show ? "badge-pop 0.7s cubic-bezier(0.22,1,0.36,1) forwards" : "none" }}
+    >
+      {/* Outer glow ring */}
+      <div className="absolute inset-0 rounded-3xl ring-pulse" style={{ borderRadius: "1.5rem" }} />
+
+      {/* Badge card */}
+      <div className="relative rounded-3xl overflow-hidden border-4 border-[#C5A97A] shadow-2xl shadow-[#C5A97A]/40">
+        {/* Top ribbon */}
+        <div className="bg-gradient-to-r from-[#0F2843] via-[#163a5f] to-[#0F2843] px-4 py-2 text-center">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C5A97A]">Tutorial Center Africa</span>
+        </div>
+
+        {/* Badge body */}
+        <div className="bg-gradient-to-b from-[#0c2236] to-[#0a1c2e] px-6 py-5 flex flex-col items-center gap-3">
+          {/* Icon halo */}
+          <div
+            className="float-icon w-20 h-20 rounded-full flex items-center justify-center shadow-xl"
+            style={{
+              background: "radial-gradient(circle at 35% 35%, #fde68a, #C5A97A 60%, #92670e)",
+              boxShadow: "0 0 30px rgba(197,169,122,0.6), inset 0 2px 4px rgba(255,255,255,0.3)",
+            }}
+          >
+            <Trophy className="w-10 h-10 text-[#0F2843]" strokeWidth={2.5} />
+          </div>
+
+          {/* Title */}
+          <div className="text-center space-y-1">
+            <p className="text-[10px] text-[#C5A97A]/70 font-bold uppercase tracking-widest">Awarded To</p>
+            <p className="text-sm font-black text-white leading-tight">{studentName || "Valued Student"}</p>
+          </div>
+
+          {/* Badge name */}
+          <div className="text-center">
+            <h3 className="text-xl font-black badge-shimmer leading-tight">Survey Pioneer</h3>
+            <p className="text-[10px] text-[#C5A97A]/60 mt-0.5">Class of 2025 · Early Contributor</p>
+          </div>
+
+          {/* Stars row */}
+          <div className="flex gap-1">
+            {[1,2,3,4,5].map((s) => (
+              <Star key={s} className="w-3.5 h-3.5 text-[#C5A97A] fill-[#C5A97A]" />
+            ))}
+          </div>
+
+          {/* Seal line */}
+          <div className="w-full border-t border-[#C5A97A]/20 pt-2 flex items-center justify-center gap-2">
+            <Medal className="w-3.5 h-3.5 text-[#C5A97A]/50" />
+            <span className="text-[9px] font-bold text-[#C5A97A]/50 uppercase tracking-wider">Empowering Minds · Achieving Excellence</span>
+          </div>
+        </div>
+
+        {/* Bottom ribbon */}
+        <div className="bg-gradient-to-r from-[#C5A97A] via-[#e4cb9c] to-[#C5A97A] px-4 py-1.5 text-center">
+          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-[#0F2843]">Feedback · Honoured · 2025</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const TOTAL_STEPS = 5;
 const STORAGE_KEY = "tca_student_survey_draft_v1";
@@ -362,6 +521,7 @@ export default function StudentSurvey() {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError(null);
 
@@ -394,20 +554,49 @@ export default function StudentSurvey() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      await axios.post(`${API_BASE_URL}/api/students/survey/submit`, payload, {
-        headers,
-      });
+      // First try authenticated submission (if token available)
+      try {
+        await axios.post(`${API_BASE_URL}/api/students/survey/submit`, payload, {
+          headers,
+        });
+      } catch (firstErr) {
+        // If an authenticated submission fails due to server/database constraint mismatch with the token,
+        // retry anonymously so the student's submission is never rejected.
+        if (token && (!firstErr.response || firstErr.response.status >= 500)) {
+          console.warn("Survey authenticated submit failed; retrying anonymously as fallback...", firstErr);
+          await axios.post(`${API_BASE_URL}/api/students/survey/submit`, payload);
+        } else {
+          throw firstErr;
+        }
+      }
 
       // Clear draft
       localStorage.removeItem(STORAGE_KEY);
+      // Bust achievements cache so achievement badges & counters update instantly across app
+      try {
+        localStorage.removeItem("tc_student_achievements_summary");
+      } catch (cacheErr) {
+        // ignore storage errors
+      }
       setSubmittedSuccess(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Survey submission failed:", err);
-      const msg =
-        err.response?.data?.message ||
-        "Failed to submit survey. Please review your answers and try again.";
-      setError(msg);
+      const rawMsg = err.response?.data?.message || "";
+
+      // Sanitize: never leak raw SQL, database dumps, or backend exceptions to students
+      const isTechnicalOrSql =
+        !rawMsg ||
+        /SQLSTATE|QueryException|syntax error|insert into|constraint|foreign key|PDOException|values \(/i.test(
+          rawMsg
+        );
+
+      const friendlyMsg = isTechnicalOrSql
+        ? "We couldn't save your feedback right now due to a temporary server connection issue. Your answers have been preserved as a draft — please try clicking Submit again in a moment."
+        : rawMsg;
+
+      setError(friendlyMsg);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setLoading(false);
     }
@@ -457,7 +646,7 @@ export default function StudentSurvey() {
 
   if (checkingStatus) {
     return (
-      <DashboardLayout pagetitle="Student Feedback Survey">
+      <DashboardLayout pagetitle="Student Feedback Survey" hideRightPanel>
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#C5A97A]"></div>
         </div>
@@ -468,41 +657,56 @@ export default function StudentSurvey() {
   // Already submitted state
   if (hasSubmittedBefore && !submittedSuccess) {
     return (
-      <DashboardLayout pagetitle="Student Feedback Survey">
-        <div className="max-w-2xl mx-auto py-12 px-4">
-          <div className="bg-white dark:bg-[#09314F] rounded-3xl p-8 sm:p-10 shadow-xl border border-gray-100 dark:border-white/10 text-center space-y-6">
-            <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-inner">
-              <CheckCircle2 className="w-10 h-10" />
+      <DashboardLayout pagetitle="Student Feedback Survey" hideRightPanel>
+        <div className="max-w-2xl mx-auto py-10 px-4">
+          <div className="relative overflow-hidden bg-gradient-to-b from-[#0c2236] to-[#082033] rounded-3xl p-8 sm:p-10 shadow-2xl border border-[#C5A97A]/20 text-center space-y-7">
+            {/* Glow orb */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-16 w-64 h-64 bg-[#C5A97A]/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C5A97A]/10 border border-[#C5A97A]/20 text-[#C5A97A] text-[11px] font-black tracking-wider uppercase">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Already Submitted
+              </div>
             </div>
 
+            <SurveyBadge studentName={student ? `${student.firstname || ""} ${student.surname || ""}`.trim() : ""} />
+
             <div className="space-y-2">
-              <h2 className="text-2xl font-black text-[#0F2843] dark:text-white">
-                You’ve Already Shared Your Feedback! ❤️
+              <h2 className="text-2xl font-black text-white">
+                Your Badge is Secured! 🏆
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300 max-w-md mx-auto">
-                Thank you for helping us shape Tutorial Center Africa. Your responses
-                are actively guiding our new Courses feature and live classes.
+              <p className="text-sm text-gray-300 max-w-md mx-auto">
+                You've already helped shape Tutorial Center Africa. Your responses
+                are actively guiding our Courses feature and live classes.
               </p>
               {submissionDate && (
-                <p className="text-xs text-gray-400 font-medium">
+                <p className="text-xs text-[#C5A97A]/60 font-medium">
                   Submitted on: {new Date(submissionDate).toLocaleDateString()}
                 </p>
               )}
             </div>
 
-            <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => navigate("/student/achievements")}
+                className="px-6 py-3 bg-gradient-to-r from-[#C5A97A] to-[#d8be8d] text-[#0F2843] rounded-2xl text-xs font-black hover:opacity-90 transition shadow-lg shadow-[#C5A97A]/20 flex items-center justify-center gap-2"
+              >
+                <Trophy className="w-4 h-4 text-[#0F2843]" />
+                View in My Achievements 🏆
+              </button>
               <button
                 onClick={() => navigate("/student/dashboard")}
-                className="px-6 py-3 bg-[#0F2843] text-white rounded-2xl text-xs font-bold hover:bg-[#1a3e63] transition shadow-md"
+                className="px-6 py-3 bg-white/10 text-gray-200 rounded-2xl text-xs font-bold hover:bg-white/20 transition flex items-center justify-center border border-white/10"
               >
                 Back to Dashboard
               </button>
               <button
                 onClick={() => setHasSubmittedBefore(false)}
-                className="px-6 py-3 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200 rounded-2xl text-xs font-bold hover:bg-gray-200 dark:hover:bg-white/20 transition flex items-center justify-center gap-2"
+                className="px-6 py-3 bg-white/5 text-gray-300 rounded-2xl text-xs font-bold hover:bg-white/15 transition flex items-center justify-center gap-2 border border-white/10"
               >
                 <RotateCcw className="w-4 h-4" />
-                Update / Retake Survey
+                Update / Retake
               </button>
             </div>
           </div>
@@ -510,43 +714,63 @@ export default function StudentSurvey() {
       </DashboardLayout>
     );
   }
-
   // Submitted success state
   if (submittedSuccess) {
     return (
-      <DashboardLayout pagetitle="Survey Completed">
-        <div className="max-w-2xl mx-auto py-12 px-4 animate-fade-in">
-          <div className="bg-gradient-to-b from-white to-gray-50 dark:from-[#09314F] dark:to-[#082238] rounded-3xl p-8 sm:p-12 shadow-2xl border border-gray-100 dark:border-white/10 text-center space-y-6">
-            <div className="w-20 h-20 bg-gradient-to-tr from-[#C5A97A] to-[#e4cb9c] text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-[#C5A97A]/30 animate-bounce">
-              <Heart className="w-10 h-10 fill-current" />
+      <DashboardLayout pagetitle="Survey Completed" hideRightPanel>
+        <div className="max-w-2xl mx-auto py-10 px-4">
+          <div className="relative overflow-hidden bg-gradient-to-b from-[#0c2236] to-[#082033] rounded-3xl p-8 sm:p-12 shadow-2xl border border-[#C5A97A]/20 text-center space-y-7">
+            {/* Confetti burst */}
+            <Confetti active={submittedSuccess} />
+
+            {/* Glow orbs */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-20 w-72 h-72 bg-[#C5A97A]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Status pill */}
+            <div>
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-[11px] font-black uppercase tracking-widest">
+                <PartyPopper className="w-3.5 h-3.5" />
+                Survey Complete!
+              </span>
             </div>
 
+            {/* Badge */}
+            <SurveyBadge studentName={student ? `${student.firstname || ""} ${student.surname || ""}`.trim() : ""} />
+
+            {/* Text block */}
             <div className="space-y-3">
-              <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-full text-[11px] font-black uppercase tracking-wider">
-                Submission Received
-              </span>
-              <h2 className="text-3xl font-black text-[#0F2843] dark:text-white">
-                Thank You for Empowering Us!
+              <h2 className="text-3xl font-black text-white">
+                You've Earned Your Badge! 🎉
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed max-w-lg mx-auto">
-                Your feedback directly informs how we produce our recorded video
-                lessons, schedule masterclasses, and equip you for exam success.
+              <p className="text-sm text-gray-300 leading-relaxed max-w-lg mx-auto">
+                Your feedback directly shapes how we produce recorded video lessons,
+                schedule masterclasses, and equip you for exam success.
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#0F2843]/5 dark:bg-white/5 border border-dashed border-[#0F2843]/20 dark:border-white/20 text-xs font-semibold text-[#0F2843] dark:text-[#C5A97A]">
+            {/* Quote box */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-dashed border-[#C5A97A]/25 text-sm font-semibold text-[#C5A97A]">
               "Learn. Practise. Improve. Succeed."
-              <div className="text-[10px] text-gray-400 font-normal mt-1">
-                Tutorial Center Africa • Empowering Minds, Achieving Excellence
+              <div className="text-[10px] text-[#C5A97A]/50 font-normal mt-1">
+                Tutorial Center Africa · Empowering Minds, Achieving Excellence
               </div>
             </div>
 
-            <div className="pt-2">
+            {/* CTA */}
+            <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => navigate("/student/achievements")}
+                className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-[#C5A97A] to-[#d8be8d] text-[#0F2843] rounded-2xl text-xs font-black uppercase tracking-wider hover:opacity-90 transition shadow-lg shadow-[#C5A97A]/25 flex items-center justify-center gap-2"
+              >
+                <Trophy className="w-4 h-4 text-[#0F2843]" />
+                View in My Achievements 🏆
+              </button>
               <button
                 onClick={() => navigate("/student/dashboard")}
-                className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-[#0F2843] to-[#1a3e63] dark:from-[#C5A97A] dark:to-[#d8be8d] text-white dark:text-[#0F2843] rounded-2xl text-xs font-black uppercase tracking-wider hover:opacity-90 transition shadow-lg"
+                className="w-full sm:w-auto px-8 py-3.5 bg-white/10 text-white rounded-2xl text-xs font-bold hover:bg-white/20 transition flex items-center justify-center border border-white/10"
               >
-                Go to Student Dashboard
+                Go to Dashboard
               </button>
             </div>
           </div>
@@ -556,7 +780,7 @@ export default function StudentSurvey() {
   }
 
   return (
-    <DashboardLayout pagetitle="Student Feedback & Learning Experience Survey">
+    <DashboardLayout pagetitle="Student Feedback & Learning Experience Survey" hideRightPanel>
       <div className="max-w-3xl mx-auto py-6 px-4 space-y-6 pb-20">
         {/* HEADER HERO */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0F2843] via-[#163a5f] to-[#0F2843] text-white p-6 sm:p-8 shadow-xl">
@@ -613,11 +837,17 @@ export default function StudentSurvey() {
 
         {/* ERROR NOTIFICATION */}
         {error && (
-          <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center justify-between">
-            <span>{error}</span>
+          <div
+            id="survey-error-alert"
+            className="p-4 sm:p-5 rounded-2xl bg-rose-50/95 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-200 text-xs sm:text-sm font-medium flex items-start sm:items-center justify-between gap-3 shadow-md animate-fade-in"
+          >
+            <div className="flex items-start sm:items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5 sm:mt-0" />
+              <span className="leading-relaxed">{error}</span>
+            </div>
             <button
               onClick={() => setError(null)}
-              className="text-xs font-bold underline ml-2"
+              className="px-3 py-1.5 rounded-lg bg-rose-200/60 dark:bg-rose-900/40 hover:bg-rose-200 dark:hover:bg-rose-900/70 text-rose-900 dark:text-rose-100 text-xs font-bold transition shrink-0"
             >
               Dismiss
             </button>
