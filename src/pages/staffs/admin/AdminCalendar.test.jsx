@@ -32,9 +32,11 @@ jest.mock("axios", () => ({
   default: {
     get: jest.fn(),
     post: jest.fn(),
+    patch: jest.fn(),
   },
   get: jest.fn(),
   post: jest.fn(),
+  patch: jest.fn(),
 }));
 
 import AdminCalendar from "./AdminCalendar";
@@ -46,6 +48,13 @@ describe("AdminCalendar Video Vault Navigation", () => {
     localStorage.setItem("staff_token", "test-token");
     localStorage.setItem("staff_info", JSON.stringify({ role: "admin", name: "Administrator" }));
 
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Africa/Lagos",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+
     axios.get.mockResolvedValue({
       data: {
         success: true,
@@ -56,9 +65,9 @@ describe("AdminCalendar Video Vault Navigation", () => {
             subject_name: "Mathematics",
             topic: "Calculus",
             tutor: { id: 1, name: "Dr. Smith" },
-            session_date: "2026-09-23",
-            starts_at: "10:00 AM",
-            ends_at: "11:00 AM",
+            session_date: today,
+            starts_at: "23:00",
+            ends_at: "23:59",
             recording_link: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
           },
         ],
@@ -84,5 +93,24 @@ describe("AdminCalendar Video Vault Navigation", () => {
 
     fireEvent.click(vaultCard);
     expect(mockNavigate).toHaveBeenCalledWith("/staffs/recorded-classes");
+  });
+
+  test("renders Reschedule and Cancel Class action buttons in session detail modal and opens action modals", async () => {
+    render(<AdminCalendar />);
+
+    // Click on the session chip to open modal
+    const sessionChip = await screen.findByText("Calculus");
+    fireEvent.click(sessionChip);
+
+    // Verify detail modal opened with Reschedule and Cancel buttons
+    const rescheduleBtn = await screen.findByRole("button", { name: /reschedule/i });
+    const cancelBtn = await screen.findByRole("button", { name: /cancel class/i });
+    expect(rescheduleBtn).toBeInTheDocument();
+    expect(cancelBtn).toBeInTheDocument();
+
+    // Clicking Cancel opens the cancellation modal
+    fireEvent.click(cancelBtn);
+    expect(await screen.findByText(/Cancel Class Session/i)).toBeInTheDocument();
+    expect(screen.getByText(/Reason for Cancellation/i)).toBeInTheDocument();
   });
 });

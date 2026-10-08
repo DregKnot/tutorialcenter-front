@@ -271,6 +271,13 @@ function SmartAssistantWidget({ highlights = [], unreadCount = 0 }) {
         return { icon: "lucide:award", color: "text-emerald-400", bg: "bg-emerald-500/20 border-emerald-500/30", actionBg: "bg-emerald-500 hover:bg-emerald-600" };
       case "notification":
         return { icon: "lucide:bell-ring", color: "text-amber-400", bg: "bg-amber-500/20 border-amber-500/30", actionBg: "bg-amber-500 hover:bg-amber-600" };
+      case "cancellation":
+      case "cancelled":
+        return { icon: "lucide:alert-triangle", color: "text-rose-400", bg: "bg-rose-500/25 border-rose-500/40", actionBg: "bg-rose-600 hover:bg-rose-700 shadow-rose-900/40" };
+      case "rescheduled":
+        return { icon: "lucide:calendar-clock", color: "text-amber-400", bg: "bg-amber-500/25 border-amber-500/40", actionBg: "bg-amber-600 hover:bg-amber-700 shadow-amber-900/40" };
+      case "urgent":
+        return { icon: "lucide:flame", color: "text-rose-400", bg: "bg-rose-500/30 border-rose-500/50", actionBg: "bg-rose-600 hover:bg-rose-700 shadow-rose-900/50" };
       default:
         return { icon: "lucide:info", color: "text-blue-400", bg: "bg-blue-500/20 border-blue-500/30", actionBg: "bg-blue-500 hover:bg-blue-600" };
     }
@@ -308,6 +315,11 @@ function SmartAssistantWidget({ highlights = [], unreadCount = 0 }) {
     return items;
   }, [highlights, unreadCount]);
 
+  // Check if active or any message is urgent (cancellation / rescheduled / urgent)
+  const currentMsg = messages[activeIndex] || {};
+  const isUrgentActive = currentMsg.type === "cancellation" || currentMsg.type === "cancelled" || currentMsg.type === "urgent" || currentMsg.urgent;
+  const hasAnyUrgent = messages.some(m => m.type === "cancellation" || m.type === "cancelled" || m.type === "urgent" || m.urgent);
+
   // Auto-rotate with pause-on-hover
   useEffect(() => {
     if (isPaused || messages.length <= 1) return;
@@ -332,19 +344,42 @@ function SmartAssistantWidget({ highlights = [], unreadCount = 0 }) {
   };
 
   return (
-    <div ref={containerRef} className="w-full xl:w-[300px] shrink-0 h-[80px] xl:h-auto relative">
+    <div
+      ref={containerRef}
+      className={`w-full xl:w-[300px] shrink-0 h-[80px] xl:h-auto relative rounded-xl transition-all duration-700 ${
+        isUrgentActive
+          ? "ring-2 ring-rose-500/80 shadow-[0_0_35px_rgba(232,56,49,0.75)] animate-pulse"
+          : hasAnyUrgent
+          ? "ring-1 ring-rose-500/50 shadow-[0_0_20px_rgba(232,56,49,0.4)]"
+          : ""
+      }`}
+      style={{
+        boxShadow: isUrgentActive
+          ? "0 0 35px rgba(232, 56, 49, 0.8), inset 0 0 16px rgba(232, 56, 49, 0.4)"
+          : hasAnyUrgent
+          ? "0 0 20px rgba(232, 56, 49, 0.45), inset 0 0 10px rgba(232, 56, 49, 0.2)"
+          : undefined,
+      }}
+    >
+      {/* Urgent red beacon pip */}
+      {(isUrgentActive || hasAnyUrgent) && (
+        <span className="absolute -top-1 -right-1 z-30 flex h-3 w-3 pointer-events-none">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600 border border-white" />
+        </span>
+      )}
       <GlassSurface
         width="100%"
         height="100%"
         borderRadius={12}
-        brightness={45}
+        brightness={isUrgentActive ? 55 : 45}
         opacity={0.9}
         blur={14}
         displace={displaceAmount}
-        backgroundOpacity={0.03}
-        saturation={1.2}
+        backgroundOpacity={isUrgentActive ? 0.08 : 0.03}
+        saturation={isUrgentActive ? 1.5 : 1.2}
         distortionScale={distortion}
-        redOffset={2}
+        redOffset={isUrgentActive ? 18 : 2}
         greenOffset={8}
         blueOffset={16}
         className="absolute inset-0"

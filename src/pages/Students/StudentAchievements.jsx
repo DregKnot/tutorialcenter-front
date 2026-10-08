@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DashboardLayout from '../../components/private/Students/DashboardLayout';
 import AchievementVisualRenderer, { getAchievementCondition } from '../../components/common/badges/AchievementVisualRenderer';
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react';
 
 export default function StudentAchievements() {
+  const navigate = useNavigate();
   const API_BASE_URL = (process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test").replace(/\/$/, "");
   const token = localStorage.getItem("token") || localStorage.getItem("student_token");
   const { triggerCelebration } = useAchievement();
@@ -69,20 +71,36 @@ export default function StudentAchievements() {
   const earnedAchievements = allAchievements.filter(a => a.earned).length;
   const completionPercentage = totalAchievements > 0 ? Math.round((earnedAchievements / totalAchievements) * 100) : 0;
 
-  // Filtered list
-  const filteredList = allAchievements.filter((a) => {
-    const matchesCategory = activeCategory === "all" || a.category === activeCategory;
-    const matchesStatus = 
-      filterStatus === "all" || 
-      (filterStatus === "earned" && a.earned) || 
-      (filterStatus === "locked" && !a.earned);
-    const matchesSearch = 
-      searchQuery === "" ||
-      a.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      a.description?.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filtered and Sorted list (all earned achievements at the top, locked ones after)
+  const filteredList = allAchievements
+    .filter((a) => {
+      const matchesCategory = activeCategory === "all" || a.category === activeCategory;
+      const matchesStatus = 
+        filterStatus === "all" || 
+        (filterStatus === "earned" && a.earned) || 
+        (filterStatus === "locked" && !a.earned);
+      const matchesSearch = 
+        searchQuery === "" ||
+        a.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesCategory && matchesStatus && matchesSearch;
-  });
+      return matchesCategory && matchesStatus && matchesSearch;
+    })
+    .sort((a, b) => {
+      // 1. Earned achievements always at the top
+      if (a.earned && !b.earned) return -1;
+      if (!a.earned && b.earned) return 1;
+
+      // 2. Among earned: sort by most recently awarded
+      if (a.earned && b.earned) {
+        const dateA = a.awards?.[0]?.awarded_at ? new Date(a.awards[0].awarded_at).getTime() : 0;
+        const dateB = b.awards?.[0]?.awarded_at ? new Date(b.awards[0].awarded_at).getTime() : 0;
+        if (dateA !== dateB) return dateB - dateA;
+      }
+
+      // 3. Among locked: sort by display_order
+      return (a.display_order || 999) - (b.display_order || 999);
+    });
 
   return (
     <DashboardLayout pagetitle="Achievements & Badges" hideRightPanel={true}>
@@ -486,12 +504,26 @@ export default function StudentAchievements() {
                   <span>Replay Celebration</span>
                 </button>
               ) : (
-                <button
-                  onClick={() => setInspectingItem(null)}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold text-xs uppercase tracking-wider transition-all"
-                >
-                  Close
-                </button>
+                <div className="flex-1 flex gap-2">
+                  <button
+                    onClick={() => setInspectingItem(null)}
+                    className="flex-1 py-3 px-4 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold text-xs uppercase tracking-wider transition-all"
+                  >
+                    Close
+                  </button>
+                  {(inspectingItem.code?.includes("survey") || inspectingItem.code?.includes("pioneer")) && (
+                    <button
+                      onClick={() => {
+                        setInspectingItem(null);
+                        navigate("/student/survey");
+                      }}
+                      className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black text-xs uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Take Survey</span>
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 

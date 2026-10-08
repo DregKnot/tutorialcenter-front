@@ -45,6 +45,29 @@ export const hasSessionRecording = (session) => {
   return status === "recorded" || (typeof link === "string" && link.trim().length > 0);
 };
 
+export const isSessionLiveNow = (session) => {
+  if (!session || !session.session_date) return false;
+  const todayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Lagos",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+  if (session.session_date !== todayStr) return false;
+
+  const now = new Date();
+  const currentMins = now.getHours() * 60 + now.getMinutes();
+
+  const [sh, sm] = (session.starts_at || "00:00").split(":").map(Number);
+  const [eh, em] = (session.ends_at || "23:59").split(":").map(Number);
+
+  const startMins = sh * 60 + sm;
+  const endMins = eh * 60 + em;
+
+  return currentMins >= startMins && currentMins <= endMins;
+};
+
 /**
  * Metadata & Vector Iconography for subjects (e.g. distinguishing Further Maths vs Maths)
  */
