@@ -219,10 +219,10 @@ const CourseDetails = () => {
           </ScrollReveal>
 
           {/* Layout Grid */}
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
             
             {/* Left Column: Description & Subjects */}
-            <ScrollReveal delay={0.3} direction="up" distance={20} className="md:col-span-2 space-y-12">
+            <ScrollReveal delay={0.3} direction="up" distance={20} className="lg:col-span-2 space-y-12">
               {/* Overview */}
               <div>
                 <h2 className="text-3xl font-black text-[#09314F] mb-6 uppercase tracking-tight border-b-2 border-gray-200 pb-2 inline-block">Program Overview</h2>
@@ -338,37 +338,39 @@ const CourseDetails = () => {
             </ScrollReveal>
 
             {/* Right Column: Discount Cards */}
-            <ScrollReveal delay={0.4} direction="up" distance={20} className="md:col-span-1">
-              <div className="sticky top-28 space-y-8">
+            <ScrollReveal delay={0.4} direction="up" distance={20} className="lg:col-span-1">
+              <div className="lg:sticky lg:top-28 space-y-8">
                 <h3 className="text-2xl font-black text-[#09314F] mb-6 uppercase tracking-tight text-center">Investment Options</h3>
                 
-                <DiscountCard 
-                  title="Monthly (1 month)" 
-                  slashedPrice={slashedMonthly} 
-                  actualPrice={monthly} 
-                />
-                
-                <DiscountCard 
-                  title="Quarterly (3 months)" 
-                  slashedPrice={slashedQuarterly} 
-                  actualPrice={quarterly} 
-                  savingsText="Save 5%"
-                  isPopular={true}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
+                  <DiscountCard 
+                    title="Monthly (1 month)" 
+                    slashedPrice={slashedMonthly} 
+                    actualPrice={monthly} 
+                  />
+                  
+                  <DiscountCard 
+                    title="Quarterly (3 months)" 
+                    slashedPrice={slashedQuarterly} 
+                    actualPrice={quarterly} 
+                    savingsText="Save 5%"
+                    isPopular={true}
+                  />
 
-                <DiscountCard 
-                  title="Semi-Annually (6 months)" 
-                  slashedPrice={slashedSemiAnnually} 
-                  actualPrice={semiAnnually} 
-                  savingsText="Save 5%"
-                />
+                  <DiscountCard 
+                    title="Semi-Annually (6 months)" 
+                    slashedPrice={slashedSemiAnnually} 
+                    actualPrice={semiAnnually} 
+                    savingsText="Save 5%"
+                  />
 
-                <DiscountCard 
-                  title="Annually (1 year)" 
-                  slashedPrice={slashedAnnually} 
-                  actualPrice={annually} 
-                  savingsText="Save 5%"
-                />
+                  <DiscountCard 
+                    title="Annually (1 year)" 
+                    slashedPrice={slashedAnnually} 
+                    actualPrice={annually} 
+                    savingsText="Save 5%"
+                  />
+                </div>
 
                 <button
                   onClick={handleApply}

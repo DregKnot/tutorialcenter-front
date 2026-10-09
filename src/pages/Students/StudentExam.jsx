@@ -78,13 +78,12 @@ export default function StudentExam() {
   const [modalHours, setModalHours] = useState(0);
   const [modalMinutes, setModalMinutes] = useState(50);
 
-  // Warning modal state
+  // Warning & Paper Type Stacking Modal state
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
   const [warningMessage, setWarningMessage] = useState("");
-
-  // Paper Type modal state
-  const [isPaperTypeModalOpen, setIsPaperTypeModalOpen] = useState(false);
+  const [activeNoticeCardIndex, setActiveNoticeCardIndex] = useState(0); // 0: Indemnity Notice, 1: Paper Types Notice
   const [selectedPaperType, setSelectedPaperType] = useState("");
+  const [selectedJambPaperTypes, setSelectedJambPaperTypes] = useState({}); // { [subjectId]: "Type C" }
 
   // Sync modal controls when modal is opened
   useEffect(() => {
@@ -550,6 +549,72 @@ export default function StudentExam() {
     }));
   };
 
+  // Extract subjects with paper types for the current selection (JAMB combination or single subject)
+  const getActiveSubjectsWithPaperTypes = useCallback(() => {
+    if (isJambSelected) {
+      if (!selectedCourse) return [];
+      const engSub = getCourseEnglishSubject(selectedCourse);
+      const allFour = [engSub, ...jambElectives].filter(Boolean);
+      const result = [];
+
+      allFour.forEach((sub) => {
+        const subYears = getAvailableYearsForSubject(sub.id);
+        const selectedYearId = jambSubjectYears[sub.id];
+        const chosenYear =
+          subYears.find((y) => String(y.exam_year_id) === String(selectedYearId)) || subYears[0];
+
+        if (
+          chosenYear &&
+          chosenYear.has_paper_types &&
+          Array.isArray(chosenYear.paper_types) &&
+          chosenYear.paper_types.length > 0
+        ) {
+          result.push({
+            subject_id: sub.id,
+            subject_name: sub.name || sub.title,
+            year: chosenYear.year,
+            exam_year_id: chosenYear.exam_year_id,
+            paper_types: chosenYear.paper_types,
+            selected_type:
+              selectedJambPaperTypes[sub.id] || chosenYear.paper_types[0] || "Type A",
+          });
+        }
+      });
+      return result;
+    } else {
+      if (!selectedSubject || !selectedYear) return [];
+      if (
+        selectedYear.has_paper_types &&
+        Array.isArray(selectedYear.paper_types) &&
+        selectedYear.paper_types.length > 0
+      ) {
+        return [
+          {
+            subject_id: selectedSubject.id,
+            subject_name: selectedSubject.name || selectedSubject.title,
+            year: selectedYear.year,
+            exam_year_id: selectedYear.exam_year_id,
+            paper_types: selectedYear.paper_types,
+            selected_type:
+              selectedPaperType || selectedYear.paper_types[0] || "Type A",
+          },
+        ];
+      }
+      return [];
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isJambSelected,
+    selectedCourse,
+    jambElectives,
+    jambSubjectYears,
+    selectedJambPaperTypes,
+    selectedSubject,
+    selectedYear,
+    selectedPaperType,
+    availableExams,
+  ]);
+
   // Handle subject select and fetch years
   const handleSubjectSelect = (subject) => {
     if (!isSubjectAvailable(subject.id)) {
@@ -631,11 +696,29 @@ export default function StudentExam() {
           Accept: "application/json",
         };
 
+        const jambPaperTypesMap = {};
+        allFour.forEach((sub) => {
+          const subYears = getAvailableYearsForSubject(sub.id);
+          const selectedExamYearId = jambSubjectYears[sub.id];
+          const chosenYear =
+            subYears.find((y) => String(y.exam_year_id) === String(selectedExamYearId)) || subYears[0];
+          if (
+            chosenYear &&
+            chosenYear.has_paper_types &&
+            Array.isArray(chosenYear.paper_types) &&
+            chosenYear.paper_types.length > 0
+          ) {
+            jambPaperTypesMap[sub.id] =
+              selectedJambPaperTypes[sub.id] || chosenYear.paper_types[0];
+          }
+        });
+
         const response = await axios.post(
           `${API_BASE_URL}/api/students/exams/start-jamb`,
           {
             exam_year_ids: examYearIds,
             timer: parseInt(timer, 10) || 120,
+            ...(Object.keys(jambPaperTypesMap).length > 0 ? { paper_types: jambPaperTypesMap } : {}),
           },
           { headers }
         );
@@ -1734,7 +1817,10 @@ export default function StudentExam() {
 
                           <div className="w-full md:w-auto">
                             <button
-                              onClick={() => setIsWarningModalOpen(true)}
+                              onClick={() => {
+                                setActiveNoticeCardIndex(0);
+                                setIsWarningModalOpen(true);
+                              }}
                               disabled={startingExam}
                               className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all shrink-0 cursor-pointer"
                             >
@@ -1984,19 +2070,8 @@ export default function StudentExam() {
                   <div className="w-full md:w-auto">
                     <button
                       onClick={() => {
-                        const hasPaperTypes = Boolean(
-                          selectedYear?.has_paper_types &&
-                          Array.isArray(selectedYear?.paper_types) &&
-                          selectedYear.paper_types.length > 0
-                        );
-                        if (hasPaperTypes) {
-                          if (!selectedPaperType) {
-                            setSelectedPaperType(selectedYear.paper_types[0]);
-                          }
-                          setIsPaperTypeModalOpen(true);
-                        } else {
-                          setIsWarningModalOpen(true);
-                        }
+                        setActiveNoticeCardIndex(0);
+                        setIsWarningModalOpen(true);
                       }}
                       disabled={startingExam}
                       className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all shrink-0 cursor-pointer"
@@ -2185,180 +2260,322 @@ export default function StudentExam() {
         </div>
       )}
 
-      {/* Paper Type Notification Modal */}
-      {isPaperTypeModalOpen && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsPaperTypeModalOpen(false)} />
-          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/40 rounded-2xl sm:rounded-[28px] md:rounded-[32px] p-5 sm:p-7 md:p-8 w-full max-w-lg max-h-[94vh] flex flex-col shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white my-auto">
-            {/* Modal Header */}
-            <div className="text-center shrink-0 mb-4">
-              <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-amber-500/10 to-[#C5A97A]/20 dark:bg-amber-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-[#C5A97A]/40 shadow-inner">
-                <Icon icon="lucide:file-text" className="w-7 h-7 md:w-8 md:h-8 text-[#C5A97A]" />
-              </div>
-              <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[#C5A97A] block mb-1">
-                Question Paper Notice
-              </span>
-              <h3 className="text-lg md:text-2xl font-black uppercase tracking-wide text-[#09314F] dark:text-white">
-                Exam Paper Classification
-              </h3>
-              <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-[#C5A97A] to-transparent mx-auto mt-2" />
-            </div>
+      {/* Exam Integrity & Paper Types Stacked Modal */}
+      {isWarningModalOpen && (() => {
+        const activeSubjectsWithPaperTypes = getActiveSubjectsWithPaperTypes();
+        const hasTwoCards = activeSubjectsWithPaperTypes.length > 0;
 
-            {/* Prominent Announcement Banner */}
-            <div className="overflow-y-auto pr-1 space-y-4 text-xs md:text-sm leading-relaxed text-gray-600 dark:text-gray-300 font-medium flex-1 min-h-0 my-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
-              <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-[#09314F]/5 to-transparent dark:from-amber-500/15 dark:via-white/5 border border-amber-500/30 text-center">
-                <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
-                  Assigned Question Variant
-                </span>
-                <p className="text-xl md:text-2xl font-black text-[#09314F] dark:text-white tracking-tight">
-                  This is a{" "}
-                  <span className="text-amber-500 dark:text-amber-400 underline decoration-2 underline-offset-4">
-                    {selectedPaperType || selectedYear?.paper_types?.[0] || "Type A"}
-                  </span>{" "}
-                  question.
-                </p>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-2">
-                  Subject: <span className="font-bold text-[#09314F] dark:text-white uppercase">{selectedSubject?.name || selectedSubject?.title}</span> • Year: <span className="font-bold text-[#09314F] dark:text-white">{selectedYear?.year}</span>
-                </p>
-              </div>
+        return (
+          <div className="fixed inset-0 z-[3000] flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-y-auto animate-in fade-in duration-300">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsWarningModalOpen(false)} />
 
-              {/* If multiple paper types are available for this exam year, allow selecting */}
-              {Array.isArray(selectedYear?.paper_types) && selectedYear.paper_types.length > 1 && (
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
-                    Assigned a different paper type? Switch variant:
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {selectedYear.paper_types.map((type) => {
-                      const isActive = (selectedPaperType || selectedYear.paper_types[0]) === type;
-                      return (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => setSelectedPaperType(type)}
-                          className={`py-2 px-3 rounded-xl text-xs font-black uppercase transition-all duration-150 border cursor-pointer ${
-                            isActive
-                              ? "bg-gradient-to-r from-[#C5A97A] to-[#E83831] text-white border-transparent shadow-md scale-[1.02]"
-                              : "bg-gray-50 dark:bg-[#06243A] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-[#C5A97A]"
-                          }`}
-                        >
-                          {type}
-                        </button>
-                      );
-                    })}
+            <div className="relative w-full max-w-lg my-auto pt-6 pb-2">
+              {/* The Peeking Background Card (Visible when 2 cards exist) */}
+              {hasTwoCards && (
+                <div
+                  onClick={() => setActiveNoticeCardIndex((prev) => (prev === 0 ? 1 : 0))}
+                  className={`absolute inset-x-2 -top-1 sm:-top-2 h-full rounded-2xl sm:rounded-[28px] md:rounded-[32px] border transition-all duration-300 cursor-pointer shadow-xl ${
+                    activeNoticeCardIndex === 0
+                      ? "bg-[#072138]/90 dark:bg-[#051726]/95 border-[#C5A97A]/50 scale-[0.97] -translate-y-2 hover:-translate-y-3"
+                      : "bg-gray-100 dark:bg-[#072138]/90 border-red-500/40 scale-[0.97] -translate-y-2 hover:-translate-y-3"
+                  }`}
+                  title="Click to switch card"
+                >
+                  {/* Peeking top pill header on the background card */}
+                  <div
+                    className={`absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-widest shadow-md flex items-center gap-1.5 transition-transform hover:scale-105 border z-20 ${
+                      activeNoticeCardIndex === 0
+                        ? "bg-gradient-to-r from-[#C5A97A] to-amber-600 text-white border-amber-300/40"
+                        : "bg-gradient-to-r from-red-600 to-rose-700 text-white border-red-400/40"
+                    }`}
+                  >
+                    {activeNoticeCardIndex === 0 ? (
+                      <>
+                        <Icon icon="lucide:file-text" className="w-3.5 h-3.5" />
+                        <span>Card 2 Behind: Assigned Paper Types ({activeSubjectsWithPaperTypes.length})</span>
+                        <Icon icon="lucide:arrow-up-right" className="w-3 h-3" />
+                      </>
+                    ) : (
+                      <>
+                        <Icon icon="lucide:shield-alert" className="w-3.5 h-3.5" />
+                        <span>Card 1 Behind: Exam Integrity Rules</span>
+                        <Icon icon="lucide:arrow-up-right" className="w-3 h-3" />
+                      </>
+                    )}
                   </div>
                 </div>
               )}
 
-              <div className="bg-gray-50 dark:bg-[#06243A]/60 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 space-y-2.5 text-xs text-gray-600 dark:text-gray-300">
-                <div className="flex gap-2.5 items-start">
-                  <Icon icon="lucide:check-circle-2" className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <span>Your questions will strictly follow this paper format and order.</span>
-                </div>
-                <div className="flex gap-2.5 items-start">
-                  <Icon icon="lucide:info" className="w-4 h-4 text-[#C5A97A] shrink-0 mt-0.5" />
-                  <span>Ensure your booklet or physical instructions correspond to this question type.</span>
-                </div>
-              </div>
-            </div>
+              {/* The Active Front Card */}
+              <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/40 rounded-2xl sm:rounded-[28px] md:rounded-[32px] p-4 sm:p-6 md:p-8 w-full max-h-[92vh] flex flex-col shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white transition-all duration-300">
+                {/* If 2 cards exist, show Card Deck Tabs Header */}
+                {hasTwoCards && (
+                  <div className="flex items-center justify-between pb-3 mb-2 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#C5A97A] animate-ping" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#C5A97A]">
+                        {activeNoticeCardIndex === 0 ? "Card 1 of 2 • Integrity Notice" : "Card 2 of 2 • Assigned Paper Types"}
+                      </span>
+                    </div>
 
-            {/* Modal Actions */}
-            <div className="shrink-0 pt-3 flex gap-3 sm:gap-4 border-t border-gray-100 dark:border-gray-800">
-              <button
-                type="button"
-                onClick={() => setIsPaperTypeModalOpen(false)}
-                className="flex-1 py-3 md:py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest transition-all cursor-pointer"
-              >
-                Go Back
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsPaperTypeModalOpen(false);
-                  setIsWarningModalOpen(true);
-                }}
-                className="flex-1 py-3 md:py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
-              >
-                <span>Proceed</span>
-                <Icon icon="lucide:arrow-right" className="w-4 h-4" />
-              </button>
+                    <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#06243A] p-0.5 rounded-xl border border-gray-200 dark:border-gray-800">
+                      <button
+                        type="button"
+                        onClick={() => setActiveNoticeCardIndex(0)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                          activeNoticeCardIndex === 0
+                            ? "bg-white dark:bg-[#09314F] text-[#09314F] dark:text-white shadow-sm font-black"
+                            : "text-gray-400 hover:text-gray-200"
+                        }`}
+                      >
+                        1. Integrity
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveNoticeCardIndex(1)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 ${
+                          activeNoticeCardIndex === 1
+                            ? "bg-[#C5A97A] text-[#09314F] shadow-sm font-black"
+                            : "text-amber-500/80 hover:text-amber-400"
+                        }`}
+                      >
+                        <span>2. Types</span>
+                        <span className="w-4 h-4 rounded-full bg-amber-500/20 text-[9px] flex items-center justify-center font-bold">
+                          {activeSubjectsWithPaperTypes.length}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* CARD 1: EXAM INTEGRITY / INDEMNITY NOTICE */}
+                {activeNoticeCardIndex === 0 ? (
+                  <>
+                    {/* Modal Header */}
+                    <div className="text-center shrink-0 mb-3 md:mb-4">
+                      <div className="w-12 h-12 md:w-16 md:h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3 border border-red-200 dark:border-red-800/40">
+                        <Icon icon="lucide:shield-alert" className="w-6 h-6 md:w-9 md:h-9 text-red-500" />
+                      </div>
+                      <h3 className="text-base md:text-xl font-black uppercase tracking-widest text-[#09314F] dark:text-white mb-1">
+                        Exam Integrity Notice
+                      </h3>
+                      <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-[#C5A97A] to-transparent mx-auto" />
+                    </div>
+
+                    {/* If 2 cards exist, show hint pill inside Card 1 pointing to the card behind */}
+                    {hasTwoCards && (
+                      <div
+                        onClick={() => setActiveNoticeCardIndex(1)}
+                        className="mb-3 p-2.5 sm:p-3 bg-amber-500/10 hover:bg-amber-500/15 border border-[#C5A97A]/40 rounded-xl flex items-center justify-between text-[11px] sm:text-xs text-amber-300 cursor-pointer transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon icon="lucide:file-text" className="w-4 h-4 text-[#C5A97A] shrink-0" />
+                          <span>
+                            <strong>Paper Types Assigned:</strong> {activeSubjectsWithPaperTypes.length} subject{activeSubjectsWithPaperTypes.length > 1 ? "s have" : " has"} assigned question types (see card behind).
+                          </span>
+                        </div>
+                        <span className="text-[#C5A97A] font-black uppercase text-[10px] shrink-0 flex items-center gap-0.5 ml-2">
+                          View Types <Icon icon="lucide:chevron-right" className="w-3 h-3" />
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Scrollable Content Body */}
+                    <div className="overflow-y-auto pr-1 space-y-3.5 text-xs md:text-sm leading-relaxed text-gray-600 dark:text-gray-300 font-medium flex-1 min-h-0 my-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
+                      <p>
+                        Before you begin your practice attempt, please read and agree to the following conditions:
+                      </p>
+                      <div className="bg-gray-50 dark:bg-[#06243A]/60 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 md:p-5 space-y-3 md:space-y-4">
+                        <div className="flex gap-3">
+                          <Icon icon="lucide:lock" className="w-4 h-4 md:w-5 md:h-5 text-red-500 shrink-0 mt-0.5" />
+                          <p>
+                            <span className="font-bold text-[#09314F] dark:text-white">Browser Lockdown:</span> Your browser will be locked in full screen. Tab switching, copying, and right-clicking are strictly monitored and disabled.
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <Icon icon="lucide:x-circle" className="w-4 h-4 md:w-5 md:h-5 text-red-500 shrink-0 mt-0.5" />
+                          <p>
+                            <span className="font-bold text-[#09314F] dark:text-white">No AI assistance:</span> Do not use ChatGPT, Copilot, or any other AI tools during this exam.
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <Icon icon="lucide:search-slash" className="w-4 h-4 md:w-5 md:h-5 text-red-500 shrink-0 mt-0.5" />
+                          <p>
+                            <span className="font-bold text-[#09314F] dark:text-white">No search tabs:</span> Avoid researching answers in another tab or external resources.
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <Icon icon="lucide:swatch-book" className="w-4 h-4 md:w-5 md:h-5 text-[#C5A97A] shrink-0 mt-0.5" />
+                          <p>
+                            <span className="font-bold text-[#09314F] dark:text-white">Treat this like reality:</span> In the actual exam hall, there will be no external help or tabs. Do yourself a massive favor: test your true knowledge under real conditions to build actual readiness.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Modal Footer Action Buttons */}
+                    <div className="shrink-0 pt-3 flex gap-3 sm:gap-4 border-t border-gray-100 dark:border-gray-800">
+                      <button
+                        type="button"
+                        onClick={() => setIsWarningModalOpen(false)}
+                        className="flex-1 py-3 md:py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest transition-all cursor-pointer"
+                      >
+                        Go Back
+                      </button>
+
+                      {hasTwoCards ? (
+                        <button
+                          type="button"
+                          onClick={() => setActiveNoticeCardIndex(1)}
+                          className="flex-1 py-3 md:py-3.5 bg-gradient-to-r from-[#09314F] to-[#C5A97A] hover:opacity-90 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <span>Check Paper Types</span>
+                          <Icon icon="lucide:arrow-right" className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsWarningModalOpen(false);
+                            handleStartPractice();
+                          }}
+                          className="flex-1 py-3 md:py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md cursor-pointer"
+                        >
+                          I Agree & Start
+                        </button>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  /* CARD 2: ASSIGNED PAPER TYPES NOTICE */
+                  <>
+                    {/* Modal Header */}
+                    <div className="text-center shrink-0 mb-3 md:mb-4">
+                      <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-amber-500/10 to-[#C5A97A]/20 dark:bg-amber-500/20 rounded-2xl flex items-center justify-center mx-auto mb-2 md:mb-3 border border-[#C5A97A]/40 shadow-inner">
+                        <Icon icon="lucide:file-text" className="w-6 h-6 md:w-9 md:h-9 text-[#C5A97A]" />
+                      </div>
+                      <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[#C5A97A] block mb-1">
+                        Question Paper Notice
+                      </span>
+                      <h3 className="text-base md:text-xl font-black uppercase tracking-widest text-[#09314F] dark:text-white mb-1">
+                        Paper Types Assigned
+                      </h3>
+                      <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-[#C5A97A] to-transparent mx-auto" />
+                    </div>
+
+                    {/* Scrollable Content Body */}
+                    <div className="overflow-y-auto pr-1 space-y-3.5 text-xs md:text-sm leading-relaxed text-gray-600 dark:text-gray-300 font-medium flex-1 min-h-0 my-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        The questions you are about to attempt have assigned paper types. Verify your assigned variants below:
+                      </p>
+
+                      <div className="space-y-3">
+                        {activeSubjectsWithPaperTypes.map((item) => (
+                          <div
+                            key={item.subject_id}
+                            className="p-4 rounded-2xl bg-gray-50 dark:bg-[#06243A]/70 border border-gray-100 dark:border-gray-800 space-y-2.5"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">
+                                  Subject • Year
+                                </span>
+                                <h4 className="text-sm font-black text-[#09314F] dark:text-white uppercase">
+                                  {item.subject_name} ({item.year})
+                                </h4>
+                              </div>
+                              <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/40 rounded-xl text-center">
+                                <span className="text-[9px] uppercase tracking-wider text-gray-400 block">Assigned</span>
+                                <span className="text-sm font-black text-amber-400">
+                                  {item.selected_type}
+                                </span>
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-gray-600 dark:text-gray-300">
+                              You are given <strong className="text-amber-500 dark:text-amber-400">{item.selected_type}</strong> for {item.subject_name}.
+                            </p>
+
+                            {/* If multiple paper types are available for this subject's year, allow selecting */}
+                            {item.paper_types.length > 1 && (
+                              <div className="pt-1.5 border-t border-gray-200/50 dark:border-gray-800">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1.5">
+                                  Assigned a different variant? Select paper type:
+                                </label>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {item.paper_types.map((type) => {
+                                    const isChosen = item.selected_type === type;
+                                    return (
+                                      <button
+                                        key={type}
+                                        type="button"
+                                        onClick={() => {
+                                          if (isJambSelected) {
+                                            setSelectedJambPaperTypes((prev) => ({
+                                              ...prev,
+                                              [item.subject_id]: type,
+                                            }));
+                                          } else {
+                                            setSelectedPaperType(type);
+                                          }
+                                        }}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all cursor-pointer ${
+                                          isChosen
+                                            ? "bg-gradient-to-r from-[#C5A97A] to-[#E83831] text-white shadow-md scale-105"
+                                            : "bg-white dark:bg-[#09314F] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-[#C5A97A]"
+                                        }`}
+                                      >
+                                        {type}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="bg-gray-50 dark:bg-[#06243A]/60 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 space-y-2 text-xs text-gray-600 dark:text-gray-300">
+                        <div className="flex gap-2.5 items-start">
+                          <Icon icon="lucide:check-circle-2" className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                          <span>Your questions will strictly follow these question types and corresponding options.</span>
+                        </div>
+                        <div className="flex gap-2.5 items-start">
+                          <Icon icon="lucide:info" className="w-4 h-4 text-[#C5A97A] shrink-0 mt-0.5" />
+                          <span>Only subjects that have specific paper types are listed above.</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Modal Footer Action Buttons */}
+                    <div className="shrink-0 pt-3 flex gap-3 sm:gap-4 border-t border-gray-100 dark:border-gray-800">
+                      <button
+                        type="button"
+                        onClick={() => setActiveNoticeCardIndex(0)}
+                        className="flex-1 py-3 md:py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Icon icon="lucide:arrow-left" className="w-4 h-4" />
+                        <span>Back to Rules</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsWarningModalOpen(false);
+                          handleStartPractice();
+                        }}
+                        className="flex-1 py-3 md:py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md cursor-pointer"
+                      >
+                        I Agree & Start
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Exam Integrity Warning Modal */}
-      {isWarningModalOpen && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsWarningModalOpen(false)} />
-          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/30 rounded-2xl sm:rounded-[28px] md:rounded-[32px] p-4 sm:p-6 md:p-8 w-full max-w-lg max-h-[94vh] flex flex-col shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white my-auto">
-            {/* Modal Header */}
-            <div className="text-center shrink-0 mb-3 md:mb-4">
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-red-100 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3 border border-red-200 dark:border-red-800/40">
-                <Icon icon="lucide:shield-alert" className="w-6 h-6 md:w-9 md:h-9 text-red-500" />
-              </div>
-              <h3 className="text-base md:text-xl font-black uppercase tracking-widest text-[#09314F] dark:text-white mb-1">
-                Exam Integrity Notice
-              </h3>
-              <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-[#C5A97A] to-transparent mx-auto" />
-            </div>
-
-            {/* Scrollable Content Body */}
-            <div className="overflow-y-auto pr-1 space-y-3.5 text-xs md:text-sm leading-relaxed text-gray-600 dark:text-gray-300 font-medium flex-1 min-h-0 my-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
-              <p>
-                Before you begin your practice attempt, please read and agree to the following conditions:
-              </p>
-              <div className="bg-gray-50 dark:bg-[#06243A]/60 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 md:p-5 space-y-3 md:space-y-4">
-                <div className="flex gap-3">
-                  <Icon icon="lucide:lock" className="w-4 h-4 md:w-5 md:h-5 text-red-500 shrink-0 mt-0.5" />
-                  <p>
-                    <span className="font-bold text-[#09314F] dark:text-white">Browser Lockdown:</span> Your browser will be locked in full screen. Tab switching, copying, and right-clicking are strictly monitored and disabled.
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <Icon icon="lucide:x-circle" className="w-4 h-4 md:w-5 md:h-5 text-red-500 shrink-0 mt-0.5" />
-                  <p>
-                    <span className="font-bold text-[#09314F] dark:text-white">No AI assistance:</span> Do not use ChatGPT, Copilot, or any other AI tools during this exam.
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <Icon icon="lucide:search-slash" className="w-4 h-4 md:w-5 md:h-5 text-red-500 shrink-0 mt-0.5" />
-                  <p>
-                    <span className="font-bold text-[#09314F] dark:text-white">No search tabs:</span> Avoid researching answers in another tab or external resources.
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <Icon icon="lucide:swatch-book" className="w-4 h-4 md:w-5 md:h-5 text-[#C5A97A] shrink-0 mt-0.5" />
-                  <p>
-                    <span className="font-bold text-[#09314F] dark:text-white">Treat this like reality:</span> In the actual exam hall, there will be no external help or tabs. Do yourself a massive favor: test your true knowledge under real conditions to build actual readiness.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer Action Buttons */}
-            <div className="shrink-0 pt-3 flex gap-3 sm:gap-4 border-t border-gray-100 dark:border-gray-800">
-              <button
-                type="button"
-                onClick={() => setIsWarningModalOpen(false)}
-                className="flex-1 py-3 md:py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest transition-all"
-              >
-                Go Back
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsWarningModalOpen(false);
-                  handleStartPractice();
-                }}
-                className="flex-1 py-3 md:py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md"
-              >
-                I Agree & Start
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </DashboardLayout>
   );
 }
