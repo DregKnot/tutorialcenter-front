@@ -19,6 +19,7 @@ export default function VerificationModal() {
   } = useAuth();
 
   const [loading, setLoading] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -34,15 +35,44 @@ export default function VerificationModal() {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
-  // Focus first input on open
+  const sendVerificationCode = async () => {
+    setSendingCode(true);
+    setError(null);
+    try {
+      const endpoint = verificationType === "email" 
+        ? "/api/students/resend-email-verification"
+        : "/api/students/resend-phone-otp";
+      
+      const payload = verificationType === "email" 
+        ? { email: student?.email }
+        : { tel: student?.tel };
+
+      await axios.post(`${API_BASE_URL}${endpoint}`, payload);
+      setResendCooldown(60);
+    } catch (err) {
+      const errMsg = err.response?.data?.error || err.response?.data?.message || "Failed to send verification code.";
+      setError(errMsg);
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  // Focus first input and automatically send OTP on open
   useEffect(() => {
     if (isVerificationModalOpen && !success) {
       setTimeout(() => inputRefs.num1.current?.focus(), 100);
       setOtp({ num1: "", num2: "", num3: "", num4: "", num5: "", num6: "" });
       setError(null);
       setSuccess(false);
+
+      // Auto-trigger OTP send when opening modal if not on cooldown
+      if (student && (verificationType === "phone" ? student.tel : student.email)) {
+        if (resendCooldown === 0) {
+          sendVerificationCode();
+        }
+      }
     }
-  }, [isVerificationModalOpen, success, inputRefs.num1]);
+  }, [isVerificationModalOpen, verificationType]);
 
   // Handle Cooldown
   useEffect(() => {
@@ -92,27 +122,9 @@ export default function VerificationModal() {
     }
   };
 
-  const handleResend = async () => {
-    if (resendCooldown > 0) return;
-    
-    setLoading(true);
-    setError(null);
-    try {
-      const endpoint = verificationType === "email" 
-        ? "/api/students/resend-email-verification"
-        : "/api/students/resend-phone-otp";
-      
-      const payload = verificationType === "email" 
-        ? { email: student.email }
-        : { tel: student.tel };
-
-      await axios.post(`${API_BASE_URL}${endpoint}`, payload);
-      setResendCooldown(60);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to resend code.");
-    } finally {
-      setLoading(false);
-    }
+  const handleResend = () => {
+    if (resendCooldown > 0 || sendingCode) return;
+    sendVerificationCode();
   };
 
   const handleSubmit = async (e) => {
@@ -196,7 +208,11 @@ export default function VerificationModal() {
                 Verify your {verificationType}
               </h2>
               <p className="text-gray-500 dark:text-gray-400 font-bold text-sm mb-8">
-                We've sent a 6-digit code to <br/>
+                {sendingCode ? (
+                  <span className="text-blue-500 animate-pulse font-bold">Sending verification code to...</span>
+                ) : (
+                  <>We've sent a 6-digit code to</>
+                )} <br/>
                 <span className="text-[#09314F] dark:text-blue-300">
                   {verificationType === "email" ? student?.email : student?.tel}
                 </span>
@@ -222,7 +238,7 @@ export default function VerificationModal() {
 
                 {error && (
                   <div className="flex items-center gap-2 justify-center text-red-500 text-xs font-bold animate-pulse">
-                    <ExclamationCircleIcon className="w-4 h-4" />
+                    <ExclamationCircleIcon className="w-4 h-4 shrink-0" />
                     <span>{error}</span>
                   </div>
                 )}
@@ -230,9 +246,9 @@ export default function VerificationModal() {
                 <div className="space-y-4">
                   <button
                     type="submit"
-                    disabled={loading || Object.values(otp).join("").length < 6}
+                    disabled={loading || sendingCode || Object.values(otp).join("").length < 6}
                     className={`w-full py-4 rounded-2xl font-black text-white shadow-xl transition-all active:scale-[0.98] ${
-                      loading || Object.values(otp).join("").length < 6
+                      loading || sendingCode || Object.values(otp).join("").length < 6
                         ? "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
                         : "bg-gradient-to-r from-[#09314F] to-[#BB9E7F] hover:shadow-[#BB9E7F44]"
                     }`}
@@ -248,10 +264,10 @@ export default function VerificationModal() {
                       <button
                         type="button"
                         onClick={handleResend}
-                        className="text-[#09314F] dark:text-blue-400 hover:underline"
-                        disabled={loading}
+                        className="text-[#09314F] dark:text-blue-400 hover:underline disabled:opacity-50"
+                        disabled={loading || sendingCode}
                       >
-                        Resend Code
+                        {sendingCode ? "Sending..." : "Resend Code"}
                       </button>
                     )}
                   </div>

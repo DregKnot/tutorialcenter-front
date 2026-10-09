@@ -25,6 +25,34 @@ const renderFormattedQuestion = (text) => {
   });
 };
 
+// Sample 20 balanced questions like JAMB (5 Maths from 10, 10 English from 20, 5 Civic from 10)
+export const sampleJambStyleQuestions = (pool = cognitiveQuestions) => {
+  const maths = pool.filter((q) => q.category === "Mathematics");
+  const english = pool.filter((q) => q.category === "English Language");
+  const civic = pool.filter((q) => q.category === "Civic Education");
+
+  const pickRandom = (arr, count) => {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy.slice(0, count);
+  };
+
+  const selectedMaths = pickRandom(maths, 5);
+  const selectedEnglish = pickRandom(english, 10);
+  const selectedCivic = pickRandom(civic, 5);
+
+  const combined = [...selectedMaths, ...selectedEnglish, ...selectedCivic];
+  // Shuffle combined so question order is randomized across students
+  for (let i = combined.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [combined[i], combined[j]] = [combined[j], combined[i]];
+  }
+  return combined;
+};
+
 const CognitiveTest = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -33,8 +61,9 @@ const CognitiveTest = () => {
   const [isExpired, setIsExpired] = useState(false);
   const [remainingLinkMins, setRemainingLinkMins] = useState(60);
 
-  // Test Flow States: "form" | "test" | "completed"
+  // Test Flow States: "form" | "rules" | "test" | "completed"
   const [step, setStep] = useState("form");
+  const [agreedToRules, setAgreedToRules] = useState(false);
   const [showReview, setShowReview] = useState(false); // Toggle answer review mode
   const [studentName, setStudentName] = useState("");
   const [schoolName, setSchoolName] = useState("");
@@ -57,9 +86,20 @@ const CognitiveTest = () => {
   const [testRecordId, setTestRecordId] = useState(null);
 
   const containerRef = useRef(null);
+  const answersRef = useRef(answers);
+  const questionsRef = useRef(shuffledQuestions);
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
-  // Check 1-hour token validity upon page mount
+  // Keep refs synchronized synchronously with state
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  useEffect(() => {
+    questionsRef.current = shuffledQuestions;
+  }, [shuffledQuestions]);
+
+  // Check 1-hour token validity upon page mount and restore active session if present
   useEffect(() => {
     const urlToken = searchParams.get("token");
     const storedToken = localStorage.getItem("active_cognitive_test_token");
@@ -85,10 +125,42 @@ const CognitiveTest = () => {
         console.error("Invalid token format", e);
       }
     }
-    
-    // Shuffle questions once on mount
-    const shuffled = [...cognitiveQuestions].sort(() => Math.random() - 0.5);
-    setShuffledQuestions(shuffled);
+
+    // Check if test was already in progress (e.g. mobile rotation or reload)
+    const inProgress = sessionStorage.getItem("cognitive_test_in_progress") === "true";
+    const savedQuestionsRaw = sessionStorage.getItem("cognitive_active_questions");
+    const savedAnswersRaw = sessionStorage.getItem("cognitive_active_answers");
+    const savedStartTime = sessionStorage.getItem("cognitive_test_start_time");
+    const savedRecordId = sessionStorage.getItem("cognitive_test_record_id");
+    const savedStudent = sessionStorage.getItem("cognitive_student_name");
+    const savedSchool = sessionStorage.getItem("cognitive_school_name");
+    const savedContact = sessionStorage.getItem("cognitive_student_contact");
+
+    if (inProgress && savedQuestionsRaw && savedStartTime) {
+      try {
+        const parsedQuestions = JSON.parse(savedQuestionsRaw);
+        const parsedAnswers = savedAnswersRaw ? JSON.parse(savedAnswersRaw) : {};
+        const startTimeNum = parseInt(savedStartTime, 10);
+        const elapsedSecs = Math.floor((Date.now() - startTimeNum) / 1000);
+        const remainingSecs = 600 - elapsedSecs;
+
+        if (remainingSecs > 0 && parsedQuestions.length > 0) {
+          setShuffledQuestions(parsedQuestions);
+          questionsRef.current = parsedQuestions;
+          setAnswers(parsedAnswers);
+          answersRef.current = parsedAnswers;
+          setTimerSeconds(remainingSecs);
+          if (savedStudent) setStudentName(savedStudent);
+          if (savedSchool) setSchoolName(savedSchool);
+          if (savedContact) setContact(savedContact);
+          if (savedRecordId) setTestRecordId(savedRecordId);
+          setStep("test");
+          return;
+        }
+      } catch (e) {
+        console.warn("Failed to restore session", e);
+      }
+    }
   }, [searchParams]);
 
   // Countdown timer when test is active
@@ -98,7 +170,7 @@ const CognitiveTest = () => {
       setTimerSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          handleAutoSubmit();
+          submitResults();
           return 0;
         }
         return prev - 1;
@@ -134,20 +206,47 @@ const CognitiveTest = () => {
     };
   }, [step]);
 
-  const handleStartTest = async (e) => {
+  const handleProceedToRules = (e) => {
     e.preventDefault();
-    if (!studentName.trim() || !schoolName.trim()) return;
+    if (!studentName.trim() || !schoolName.trim()) {
+      setFormError("Please fill in both your school name and full name.");
+      return;
+    }
+
+    // Prevent retakes by the same student from the same school
+    const attemptKey = `cognitive_test_attempt_${schoolName.trim().toLowerCase()}_${studentName.trim().toLowerCase()}`;
+    if (localStorage.getItem(attemptKey)) {
+      setFormError("You have already taken this test. You cannot retake it.");
+      return;
+    }
 
     setFormError("");
+    setStep("rules");
+  };
+
+  const handleStartTest = async () => {
+    if (!studentName.trim() || !schoolName.trim() || !agreedToRules) return;
+
     setIsStarting(true);
+    setFormError("");
 
     // Prevent retakes by the same student from the same school
     const attemptKey = `cognitive_test_attempt_${schoolName.trim().toLowerCase()}_${studentName.trim().toLowerCase()}`;
     if (localStorage.getItem(attemptKey)) {
       setFormError("You have already taken this test. You cannot retake it.");
       setIsStarting(false);
+      setStep("form");
       return;
     }
+
+    // Sample 20 questions JAMB-style (5 Maths, 10 English, 5 Civic)
+    const sampled = sampleJambStyleQuestions(cognitiveQuestions);
+    setShuffledQuestions(sampled);
+    questionsRef.current = sampled;
+    setAnswers({});
+    answersRef.current = {};
+    setCurrentIndex(0);
+    setTimerSeconds(600);
 
     const payload = {
       student_name: studentName.trim(),
@@ -159,14 +258,15 @@ const CognitiveTest = () => {
 
     console.log("🧠 [CognitiveTest] [POST] Starting Test -> /api/cognitive-tests/start", payload);
 
-    // Register the test session with the backend
+    let createdRecordId = null;
     try {
       const res = await axios.post(`${API_BASE_URL}/api/cognitive-tests/start`, payload, {
         headers: { Accept: "application/json", "Content-Type": "application/json" },
       });
       console.log("🧠 [CognitiveTest] Backend record created:", res.data);
       if (res.data?.data?.id) {
-        setTestRecordId(res.data.data.id);
+        createdRecordId = res.data.data.id;
+        setTestRecordId(createdRecordId);
       }
     } catch (err) {
       console.error("🧠 [CognitiveTest] Backend start error:", err.response?.data || err);
@@ -179,11 +279,25 @@ const CognitiveTest = () => {
       if (err.response?.status === 422 && backendMsg) {
         setFormError(backendMsg);
         setIsStarting(false);
+        setStep("form");
         return;
       }
       console.warn("🧠 [CognitiveTest] Backend start failed (continuing offline):", err.message);
     } finally {
       setIsStarting(false);
+    }
+
+    try {
+      sessionStorage.setItem("cognitive_test_in_progress", "true");
+      sessionStorage.setItem("cognitive_test_start_time", Date.now().toString());
+      sessionStorage.setItem("cognitive_active_questions", JSON.stringify(sampled));
+      sessionStorage.setItem("cognitive_active_answers", JSON.stringify({}));
+      sessionStorage.setItem("cognitive_student_name", studentName.trim());
+      sessionStorage.setItem("cognitive_school_name", schoolName.trim());
+      if (contact.trim()) sessionStorage.setItem("cognitive_student_contact", contact.trim());
+      if (createdRecordId) sessionStorage.setItem("cognitive_test_record_id", createdRecordId.toString());
+    } catch (e) {
+      console.warn("SessionStorage caching failed", e);
     }
 
     try {
@@ -198,13 +312,29 @@ const CognitiveTest = () => {
   };
 
   const handleSelectOption = (optIndex) => {
-    setAnswers((prev) => ({ ...prev, [currentIndex]: optIndex }));
+    const currentQList = questionsRef.current || shuffledQuestions;
+    const currentQ = currentQList[currentIndex];
+    if (!currentQ) return;
+    const qId = currentQ.id;
+
+    setAnswers((prev) => {
+      const updated = { ...prev, [qId]: optIndex };
+      answersRef.current = updated;
+      try {
+        sessionStorage.setItem("cognitive_active_answers", JSON.stringify(updated));
+      } catch (e) {
+        console.warn("Storage write failed", e);
+      }
+      return updated;
+    });
   };
 
-  const calculateScore = () => {
+  const calculateScore = (ansMap = answersRef.current, qList = questionsRef.current) => {
     let score = 0;
-    shuffledQuestions.forEach((q, idx) => {
-      if (answers[idx] === q.correctIndex) {
+    const currentMap = ansMap || {};
+    const currentQuestions = qList || [];
+    currentQuestions.forEach((q) => {
+      if (currentMap[q.id] !== undefined && currentMap[q.id] === q.correctIndex) {
         score += 1;
       }
     });
@@ -217,23 +347,35 @@ const CognitiveTest = () => {
     return `${mins}m ${secs}s`;
   };
 
-  const handleAutoSubmit = () => {
-    submitResults();
-  };
-
   const submitResults = async () => {
     if (submitting) return;
     setSubmitting(true);
 
-    const score = calculateScore();
-    const total = shuffledQuestions.length;
+    const currentAns = answersRef.current || answers;
+    const currentQList = questionsRef.current || shuffledQuestions;
+    const score = calculateScore(currentAns, currentQList);
+    const total = currentQList.length || 20;
     const percentage = Math.round((score / total) * 100);
-    const timeSpentSecs = 600 - timerSeconds;
+    const timeSpentSecs = Math.max(0, 600 - timerSeconds);
     const timeTaken = formatTimeSpent(timeSpentSecs);
 
     // Mark as taken in localStorage to prevent retakes
     const attemptKey = `cognitive_test_attempt_${schoolName.trim().toLowerCase()}_${studentName.trim().toLowerCase()}`;
     localStorage.setItem(attemptKey, "completed");
+
+    // Clear active test session from sessionStorage
+    try {
+      sessionStorage.removeItem("cognitive_test_in_progress");
+      sessionStorage.removeItem("cognitive_test_start_time");
+      sessionStorage.removeItem("cognitive_active_questions");
+      sessionStorage.removeItem("cognitive_active_answers");
+      sessionStorage.removeItem("cognitive_student_name");
+      sessionStorage.removeItem("cognitive_school_name");
+      sessionStorage.removeItem("cognitive_student_contact");
+      sessionStorage.removeItem("cognitive_test_record_id");
+    } catch (e) {
+      console.warn("Storage cleanup failed", e);
+    }
 
     const resultObj = {
       id: testRecordId || Date.now(),
@@ -370,7 +512,7 @@ const CognitiveTest = () => {
             </div>
 
             {/* Registration Form */}
-            <form onSubmit={handleStartTest} className="space-y-4">
+            <form onSubmit={handleProceedToRules} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1.5">
                   School Name <span className="text-red-400">*</span>
@@ -442,28 +584,177 @@ const CognitiveTest = () => {
               <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-2.5 text-xs text-blue-200">
                 <Icon icon="lucide:shield-alert" className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                 <span>
-                  <strong>Test Lockdown:</strong> Once you click Start, your test environment will be active. Avoid switching tabs during your attempt.
+                  <strong>Test Lockdown:</strong> Once the test begins, the screen environment will be monitored. You will review the rules next.
                 </span>
               </div>
 
               <button
                 type="submit"
-                disabled={!studentName.trim() || !schoolName.trim() || isStarting}
+                disabled={!studentName.trim() || !schoolName.trim()}
                 className="w-full py-4 bg-gradient-to-r from-[#BB9E7F] to-[#d8b590] hover:opacity-95 text-[#0F2843] font-black uppercase tracking-widest text-sm rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2"
+              >
+                <span>Proceed to Exam Rules</span>
+                <Icon icon="lucide:arrow-right" className="w-5 h-5" />
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 1.5: PRE-EXAM RULES & INSTRUCTIONS POPUP MODAL */}
+      {step === "rules" && (
+        <div className="fixed inset-0 z-40 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-[#0F2843] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-[#BB9E7F]/20 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-[#BB9E7F]/40 shadow-inner">
+                <Icon icon="lucide:clipboard-check" className="w-9 h-9 text-[#BB9E7F]" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white mb-2">
+                Examination Rules & Guidelines 📋
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-300 max-w-md mx-auto">
+                Please review the following rules carefully before your examination begins.
+              </p>
+
+              {/* Candidate Info Badge */}
+              <div className="mt-3 inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300">
+                <span className="flex items-center gap-1 font-semibold text-white">
+                  <Icon icon="lucide:user" className="w-3.5 h-3.5 text-[#BB9E7F]" />
+                  {studentName}
+                </span>
+                <span className="text-gray-500">•</span>
+                <span className="flex items-center gap-1 font-medium text-gray-300">
+                  <Icon icon="lucide:building-2" className="w-3.5 h-3.5 text-blue-400" />
+                  {schoolName}
+                </span>
+              </div>
+            </div>
+
+            {/* Rules Cards */}
+            <div className="space-y-3 mb-6 max-h-[42vh] overflow-y-auto pr-1">
+              <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
+                  <Icon icon="lucide:list-ordered" className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">
+                    20 Randomized Questions
+                  </h4>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    You will be presented with 20 multiple-choice questions sampled across <strong>Mathematics (5)</strong>, <strong>English Language (10)</strong>, and <strong>Civic Education (5)</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
+                  <Icon icon="lucide:timer" className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">
+                    10-Minute Timed Session
+                  </h4>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    You have exactly <strong>10 minutes</strong> to complete the exam. An active countdown timer will run continuously. When time expires, your exam will auto-submit immediately.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-[#BB9E7F] flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
+                  <Icon icon="lucide:award" className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">
+                    Scoring System
+                  </h4>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    Each correct answer is awarded <strong>1 mark</strong> (Total: 20 marks).
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
+                  <Icon icon="lucide:shield-alert" className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">
+                    Strict Anti-Cheat & Screen Monitoring
+                  </h4>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    Switching browser tabs, minimizing the screen, copying text, or leaving the examination window is strictly monitored. Remain on the exam window until you finish.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
+                  <Icon icon="lucide:lock" className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">
+                    Single Attempt Only
+                  </h4>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    You can only take this examination once. Once the exam starts, you cannot pause or restart the session.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {formError && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-xs text-red-300 flex items-center gap-2 animate-in fade-in">
+                <Icon icon="lucide:alert-circle" className="w-4 h-4 text-red-400 flex-shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            {/* Acknowledgment Checkbox */}
+            <label className="flex items-start gap-3 p-3.5 bg-[#BB9E7F]/10 border border-[#BB9E7F]/30 rounded-2xl cursor-pointer mb-6 hover:bg-[#BB9E7F]/15 transition-colors">
+              <input
+                type="checkbox"
+                checked={agreedToRules}
+                onChange={(e) => setAgreedToRules(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded text-[#BB9E7F] focus:ring-[#BB9E7F] accent-[#BB9E7F] cursor-pointer"
+              />
+              <span className="text-xs text-gray-200 font-medium select-none">
+                I have read, understood, and agree to follow all the examination rules and instructions stated above.
+              </span>
+            </label>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setStep("form")}
+                disabled={isStarting}
+                className="py-3.5 px-5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-1.5"
+              >
+                <Icon icon="lucide:arrow-left" className="w-4 h-4" />
+                Back
+              </button>
+
+              <button
+                type="button"
+                onClick={handleStartTest}
+                disabled={!agreedToRules || isStarting}
+                className="flex-1 py-3.5 bg-gradient-to-r from-[#BB9E7F] to-[#d8b590] hover:opacity-95 text-[#0F2843] font-black uppercase tracking-widest text-xs rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.01] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isStarting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-[#0F2843]/30 border-t-[#0F2843] rounded-full animate-spin" />
-                    <span>Starting Test...</span>
+                    <span>Preparing Examination...</span>
                   </>
                 ) : (
                   <>
-                    <span>Start Cognitive Test</span>
-                    <Icon icon="lucide:arrow-right" className="w-5 h-5" />
+                    <span>I Am Ready — Begin Exam</span>
+                    <Icon icon="lucide:play" className="w-4 h-4" />
                   </>
                 )}
               </button>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -516,7 +807,7 @@ const CognitiveTest = () => {
               {/* Options Grid */}
               <div className="space-y-3">
                 {currentQ.options.map((opt, idx) => {
-                  const isSelected = answers[currentIndex] === idx;
+                  const isSelected = answers[currentQ.id] === idx;
                   return (
                     <button
                       key={idx}
@@ -587,12 +878,12 @@ const CognitiveTest = () => {
 
           {/* Quick Palette Jump Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-2">
-            {shuffledQuestions.map((_, idx) => {
-              const isAnswered = answers[idx] !== undefined;
+            {shuffledQuestions.map((q, idx) => {
+              const isAnswered = answers[q.id] !== undefined;
               const isCurrent = currentIndex === idx;
               return (
                 <button
-                  key={idx}
+                  key={q.id || idx}
                   onClick={() => setCurrentIndex(idx)}
                   className={`w-8 h-8 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${
                     isCurrent
@@ -648,7 +939,7 @@ const CognitiveTest = () => {
               {/* Questions Answer Breakdown List */}
               <div className="space-y-6">
                 {shuffledQuestions.map((q, qIdx) => {
-                  const studentAns = answers[qIdx];
+                  const studentAns = answers[q.id];
                   const isCorrect = studentAns === q.correctIndex;
                   const isUnanswered = studentAns === undefined;
 

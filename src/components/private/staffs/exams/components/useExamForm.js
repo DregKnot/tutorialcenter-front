@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { 
@@ -44,6 +44,7 @@ export default function useExamForm() {
       questionNumber: "",
       questionText: "",
       questionType: "true_false",
+      paperType: "",
       marks: 1,
       explanation: "",
       status: "active",
@@ -67,6 +68,16 @@ export default function useExamForm() {
   const [examYears, setExamYears] = useState([]);
   const [filteredYears, setFilteredYears] = useState([]);
 
+  // Selected Exam Year & Paper Type metadata
+  const selectedYear = useMemo(() => {
+    return examYears.find(y => String(y.id) === String(examYearId)) || filteredYears.find(y => String(y.id) === String(examYearId));
+  }, [examYears, filteredYears, examYearId]);
+
+  const hasPaperTypes = Boolean(selectedYear?.has_paper_types);
+  const availablePaperTypes = useMemo(() => {
+    return Array.isArray(selectedYear?.paper_types) ? selectedYear.paper_types : [];
+  }, [selectedYear?.paper_types]);
+
   // Loading States
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(false);
@@ -75,6 +86,7 @@ export default function useExamForm() {
   // Sub-modal visibility
   const [isExamBodyModalOpen, setIsExamBodyModalOpen] = useState(false);
   const [isExamYearModalOpen, setIsExamYearModalOpen] = useState(false);
+  const [editingYear, setEditingYear] = useState(null);
 
   // Batch Submission Tracking
   const [submissionStatus, setSubmissionStatus] = useState({});
@@ -297,6 +309,7 @@ export default function useExamForm() {
           questionNumber: q.question_number || "",
           questionText: q.question || q.question_text || q.text || "",
           questionType: q.question_type || "true_false",
+          paperType: q.paper_type || q.paperType || "",
           marks: q.marks || 1,
           explanation: q.explanation || q.explanation_text || "",
           status: q.status || "active",
@@ -435,9 +448,25 @@ export default function useExamForm() {
       setExamBodies(bodies);
       setExamBodyId(newData.id);
     } else if (type === "exam-year") {
-      // It will auto-refresh via the useEffect when examBodyId/subjectId dependencies are intact
-      // but we can force set the selected id
       setExamYearId(newData.id);
+      setExamYears(prev => {
+        const idx = prev.findIndex(y => String(y.id) === String(newData.id));
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], ...newData };
+          return updated;
+        }
+        return [newData, ...prev];
+      });
+      setFilteredYears(prev => {
+        const idx = prev.findIndex(y => String(y.id) === String(newData.id));
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], ...newData };
+          return updated;
+        }
+        return [newData, ...prev];
+      });
     }
   };
 
@@ -449,6 +478,16 @@ export default function useExamForm() {
     }
   };
 
+  // Synchronize default paperType for questions when an exam year with paper types is chosen
+  useEffect(() => {
+    if (hasPaperTypes && availablePaperTypes.length > 0) {
+      setQuestions(prev => prev.map(q => ({
+        ...q,
+        paperType: q.paperType || availablePaperTypes[0]
+      })));
+    }
+  }, [hasPaperTypes, availablePaperTypes]);
+
   // Questions Batch Logic
   const addQuestion = () => {
     const newQuestion = {
@@ -456,6 +495,7 @@ export default function useExamForm() {
       questionNumber: "",
       questionText: "",
       questionType: "true_false",
+      paperType: hasPaperTypes && availablePaperTypes.length > 0 ? availablePaperTypes[0] : "",
       marks: 1,
       explanation: "",
       status: "active",
@@ -504,13 +544,22 @@ export default function useExamForm() {
   // Check duplicate within the current batch
   const isDuplicateBatchNumber = (qIdx, num) => {
     if (!num) return false;
-    return questions.some((q, i) => i !== qIdx && String(q.questionNumber) === String(num));
+    const currentPaperType = questions[qIdx]?.paperType || "";
+    return questions.some((q, i) => {
+      if (i === qIdx) return false;
+      if (String(q.questionNumber) !== String(num)) return false;
+      if (hasPaperTypes) {
+        return (q.paperType || "") === currentPaperType;
+      }
+      return true;
+    });
   };
 
   // Check duplicate against existing DB questions (skip the question being edited)
-  const isDuplicateDbNumber = (num, targetQId, originalQNum) => {
+  const isDuplicateDbNumber = (num, targetQId, originalQNum, qIdx) => {
     if (!num) return false;
     const numInt = parseInt(num, 10);
+    const currentPaperType = qIdx !== undefined ? (questions[qIdx]?.paperType || "") : "";
     return existingQuestions.some(eq => {
       const eqId = eq?.id ? String(eq.id) : null;
       const eqNum = parseInt(eq.question_number || eq.questionNumber, 10);
@@ -521,14 +570,20 @@ export default function useExamForm() {
         if (targetQId && eqId && String(eqId) === String(targetQId)) return false;
         if (originalQNum && eqNum === parseInt(originalQNum, 10)) return false;
       }
-      return eqNum === numInt || String(eq.question_number) === String(num);
+
+      if (eqNum !== numInt && String(eq.question_number) !== String(num)) return false;
+
+      if (hasPaperTypes) {
+        return (eq.paper_type || eq.paperType || "") === currentPaperType;
+      }
+      return true;
     });
   };
 
   // Combined check: batch + DB
   const isDuplicateNumber = (qIdx, num) => {
     const q = questions[qIdx];
-    return isDuplicateBatchNumber(qIdx, num) || isDuplicateDbNumber(num, q?.id || q?.question_id, q?.originalQuestionNumber || q?.questionNumber);
+    return isDuplicateBatchNumber(qIdx, num) || isDuplicateDbNumber(num, q?.id || q?.question_id, q?.originalQuestionNumber || q?.questionNumber, qIdx);
   };
 
   // Option Handlers
@@ -831,6 +886,9 @@ export default function useExamForm() {
           questionFormData.append("question_number", String(q.questionNumber || "").trim());
           questionFormData.append("question", sanitizeExamHtml(String(q.questionText || "").trim()));
           questionFormData.append("question_type", q.questionType);
+          if (hasPaperTypes && q.paperType) {
+            questionFormData.append("paper_type", q.paperType);
+          }
           questionFormData.append("marks", q.marks);
           questionFormData.append("explanation", sanitizeExamHtml(q.explanation || ""));
           questionFormData.append("status", q.status);
@@ -918,6 +976,9 @@ export default function useExamForm() {
         questionFormData.append("question_number", String(q.questionNumber || "").trim());
         questionFormData.append("question", sanitizeExamHtml(String(q.questionText || "").trim()));
         questionFormData.append("question_type", q.questionType);
+        if (hasPaperTypes && q.paperType) {
+          questionFormData.append("paper_type", q.paperType);
+        }
         questionFormData.append("marks", q.marks);
         questionFormData.append("explanation", sanitizeExamHtml(q.explanation || ""));
         questionFormData.append("status", q.status);
@@ -1086,6 +1147,11 @@ export default function useExamForm() {
     deleting,
     editQuestionId,
     existingQuestions,
-    setExistingQuestions
+    setExistingQuestions,
+    selectedYear,
+    hasPaperTypes,
+    availablePaperTypes,
+    editingYear,
+    setEditingYear
   };
 }

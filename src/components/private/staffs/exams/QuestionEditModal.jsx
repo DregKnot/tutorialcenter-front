@@ -85,6 +85,9 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
   const [questionText, setQuestionText] = useState(() => question ? (question.question || question.question_text || question.text || "") : "");
   const [questionNumber, setQuestionNumber] = useState(() => question ? (question.question_number || question.questionNumber || "") : "");
   const [questionType, setQuestionType] = useState(() => question ? (question.question_type || "true_false") : "true_false");
+  const hasPaperTypes = Boolean(question?.exam_year?.has_paper_types || question?.examYear?.has_paper_types);
+  const availablePaperTypes = question?.exam_year?.paper_types || question?.examYear?.paper_types || [];
+  const [paperType, setPaperType] = useState(() => question ? (question.paper_type || question.paperType || "") : "");
   const [marks, setMarks] = useState(() => question ? (question.marks || 1) : 1);
   const [options, setOptions] = useState(() => question ? (question.options || []) : []);
   const initialParsedExp = extractExplanationTextAndImage(question ? (question.explanation || question.explanation_text || "") : "");
@@ -162,6 +165,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       setQuestionText(text);
       setQuestionNumber(question.question_number || question.questionNumber || "");
       setQuestionType(question.question_type || "true_false");
+      setPaperType(question.paper_type || question.paperType || "");
       setMarks(question.marks || 1);
       setOptions(question.options || []);
       const rawExp = question.explanation || question.explanation_text || "";
@@ -445,6 +449,9 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
       questionFormData.append("question_number", String(questionNumber));
       questionFormData.append("question", plainQuestion);
       questionFormData.append("question_type", questionType);
+      if (hasPaperTypes && paperType) {
+        questionFormData.append("paper_type", paperType);
+      }
       questionFormData.append("marks", marks);
       questionFormData.append("explanation", plainExplanation);
       questionFormData.append("status", question.status || "active");
@@ -775,7 +782,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className={`grid grid-cols-1 ${hasPaperTypes ? 'sm:grid-cols-2 md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
             <div className="space-y-3">
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Number</label>
               <input 
@@ -786,8 +793,26 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-inner"
               />
             </div>
+
+            {hasPaperTypes && (
+              <div className="space-y-3">
+                <label className="text-[11px] font-black text-[#BB9E7F] uppercase tracking-widest px-1">Paper Type</label>
+                <select 
+                  value={paperType || (availablePaperTypes[0] || "")}
+                  onChange={(e) => setPaperType(e.target.value)}
+                  className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-[#BB9E7F]/30 focus:border-[#BB9E7F] rounded-2xl font-black text-[#0F2843] dark:text-white outline-none appearance-none"
+                >
+                  {availablePaperTypes.map((pt, pIdx) => (
+                    <option key={pIdx} value={pt} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                      {pt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="space-y-3">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Type</label>
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Format</label>
               <select 
                 value={questionType}
                 onChange={(e) => setQuestionType(e.target.value)}

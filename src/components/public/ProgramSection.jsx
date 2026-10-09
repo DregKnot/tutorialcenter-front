@@ -51,8 +51,8 @@ const ProgramSection = () => {
     const jambCourse = rawCourses.find(c => Number(c.id) === 1 || c.title?.toLowerCase().includes("jamb") || c.title?.toLowerCase().includes("utme"))
         || rawCourses[0];
 
-    const olevelBasePrice = Number(olevelCourse?.price) || 25000;
-    const jambBasePrice = Number(jambCourse?.price) || 25000;
+    const olevelBasePrice = Number(olevelCourse?.price) || 8000;
+    const jambBasePrice = Number(jambCourse?.price) || 5000;
 
     const programDatas = [
         {

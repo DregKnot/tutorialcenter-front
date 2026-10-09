@@ -61,19 +61,27 @@ export const StudentTrainingDuration = () => {
         const activeCourses = allCourses
           .filter((c) => selectedIds.has(String(c.id)))
           .map((c) => {
+            const isJamb = Number(c.id) === 1 || c.title?.toUpperCase().includes("JAMB");
+            const fallbackPrice = isJamb ? 5000 : 8000;
+            const price = Number(c.price) || fallbackPrice;
             if ([2, 3, 4].includes(Number(c.id))) {
               return {
                 ...c,
+                price,
                 title: chosenTrack,
               };
             }
-            if (Number(c.id) === 1 || c.title?.toUpperCase().includes("JAMB")) {
+            if (isJamb) {
               return {
                 ...c,
+                price,
                 title: "JAMB",
               };
             }
-            return c;
+            return {
+              ...c,
+              price,
+            };
           });
 
         if (activeCourses.length === 0) {

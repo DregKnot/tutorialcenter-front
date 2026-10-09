@@ -239,7 +239,9 @@ export default function QuestionItem({
   removeOption,
   isScienceSubject,
   insertSymbol,
-  validationErrors = []
+  validationErrors = [],
+  hasPaperTypes = false,
+  availablePaperTypes = []
 }) {
   return (
     <div className="border-t border-gray-100 dark:border-gray-700 first:border-t-0">
@@ -271,6 +273,14 @@ export default function QuestionItem({
               )}
               <span className="opacity-30">•</span>
               <span>{q.questionType.replace('_', ' ')}</span>
+              {hasPaperTypes && q.paperType && (
+                <>
+                  <span className="opacity-30">•</span>
+                  <span className="px-2.5 py-0.5 rounded-lg bg-[#BB9E7F]/15 text-[#BB9E7F] font-black text-[9px] uppercase tracking-wider border border-[#BB9E7F]/30">
+                    {q.paperType}
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -305,8 +315,8 @@ export default function QuestionItem({
               ))}
             </div>
           )}
-          {/* Question Header: Number & Type & Marks */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Question Header: Number & Paper Type & Format & Marks */}
+          <div className={`grid grid-cols-1 ${hasPaperTypes ? 'sm:grid-cols-2 md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
             <div className="space-y-3">
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Q. Number</label>
               <div className="relative">
@@ -324,8 +334,26 @@ export default function QuestionItem({
                 )}
               </div>
             </div>
+
+            {hasPaperTypes && (
+              <div className="space-y-3">
+                <label className="text-[11px] font-black text-[#BB9E7F] uppercase tracking-widest px-1">Paper Type</label>
+                <select 
+                  value={q.paperType || (availablePaperTypes[0] || "")}
+                  onChange={(e) => updateQuestionField(qIdx, "paperType", e.target.value)}
+                  className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-900 border-2 border-[#BB9E7F]/30 focus:border-[#BB9E7F] rounded-[24px] font-black text-[#0F2843] dark:text-white outline-none shadow-inner appearance-none"
+                >
+                  {availablePaperTypes.map((pt, pIdx) => (
+                    <option key={pIdx} value={pt} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+                      {pt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="space-y-3">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Type</label>
+              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Format</label>
               <select 
                 value={q.questionType}
                 onChange={(e) => updateQuestionField(qIdx, "questionType", e.target.value)}

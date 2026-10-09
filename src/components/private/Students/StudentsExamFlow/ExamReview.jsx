@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import { stripHtmlAndDecode } from "../../../../utils/textUtils";
@@ -15,6 +15,47 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reviewLightboxImg, setReviewLightboxImg] = useState(null);
+  const reviewContainerRef = useRef(null);
+
+  const handleScrollToTop = () => {
+    // 1. Check for explicit designated scroll container first
+    const explicitContainer = document.querySelector(".exam-scroll-container");
+    if (explicitContainer) {
+      if (typeof explicitContainer.scrollTo === "function") {
+        explicitContainer.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        explicitContainer.scrollTop = 0;
+      }
+      return;
+    }
+
+    // 2. Dynamic ancestor traversal if mounted in another modal/drawer
+    let el = reviewContainerRef.current?.parentElement;
+    let scrollTarget = null;
+
+    while (el && el !== document.body && el !== document.documentElement) {
+      const style = window.getComputedStyle(el);
+      const overflowY = style.overflowY;
+      if (
+        (overflowY === "auto" || overflowY === "scroll") &&
+        (el.scrollHeight > el.clientHeight || el.scrollTop > 0)
+      ) {
+        scrollTarget = el;
+        break;
+      }
+      el = el.parentElement;
+    }
+
+    if (scrollTarget) {
+      if (typeof scrollTarget.scrollTo === "function") {
+        scrollTarget.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        scrollTarget.scrollTop = 0;
+      }
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   const fetchReviewData = useCallback(async () => {
     if (!attemptId) return;
@@ -58,7 +99,7 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
   };
 
   return (
-    <div className="w-full animate-in fade-in duration-500 p-0 md:p-2">
+    <div ref={reviewContainerRef} className="w-full animate-in fade-in duration-500 p-0 md:p-2">
       {/* Top Header Row */}
       {!hideHeader && (
         <div className="flex items-center justify-between mb-8">
@@ -384,13 +425,7 @@ export default function ExamReview({ attemptId, onBack, hideHeader = false }) {
 
       {/* Back to Top Button */}
       <button
-        onClick={() => {
-          // If rendered inside a modal/scrollable container, we might want to scroll that container.
-          // But usually window.scrollTo works for full page. Let's scroll both window and the closest scrollable parent if necessary.
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          const scrollableParent = document.querySelector('.exam-scroll-container') || document.querySelector('.sidebar-scroll');
-          if (scrollableParent) scrollableParent.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onClick={handleScrollToTop}
         className="fixed bottom-6 right-6 md:bottom-10 md:right-10 bg-[#09314F] text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:bg-[#E83831] hover:-translate-y-1 transition-all z-50 group border-2 border-white/20"
         title="Back to Top"
       >

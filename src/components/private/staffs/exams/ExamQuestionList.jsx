@@ -36,6 +36,7 @@ export default function ExamQuestionList() {
   // Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [selectedPaperTypeFilter, setSelectedPaperTypeFilter] = useState("all");
 
   const renderPagination = (className = "") => {
     if (!(totalPages > 1 || page > 1 || questions.length > 0)) return null;
@@ -96,9 +97,14 @@ export default function ExamQuestionList() {
         image: subjectImage || currentBody?.image
       });
 
-      // Fetch Questions via new drilldown API
-      console.log("[ExamQuestionList] Fetching Past Questions:", `${API_BASE_URL}${examApiBase}/exam-data/questions?exam_year_id=${yearId}&page=${page}`);
-      const questionsRes = await axios.get(`${API_BASE_URL}${examApiBase}/exam-data/questions?exam_year_id=${yearId}&page=${page}`, config);
+      // Fetch Questions via drilldown API with optional paper_type filter
+      let questionsUrl = `${API_BASE_URL}${examApiBase}/exam-data/questions?exam_year_id=${yearId}&page=${page}`;
+      if (selectedPaperTypeFilter && selectedPaperTypeFilter !== "all") {
+        questionsUrl += `&paper_type=${encodeURIComponent(selectedPaperTypeFilter)}`;
+      }
+
+      console.log("[ExamQuestionList] Fetching Past Questions:", questionsUrl);
+      const questionsRes = await axios.get(questionsUrl, config);
       console.log("[ExamQuestionList] Past Questions Response:", questionsRes.data);
       
       const allQuestions = questionsRes.data?.data || questionsRes.data?.questions?.data || [];
@@ -114,7 +120,7 @@ export default function ExamQuestionList() {
     } finally {
       setLoading(false);
     }
-  }, [bodyId, subjectId, yearId, page, API_BASE_URL, token, examApiBase]);
+  }, [bodyId, subjectId, yearId, page, selectedPaperTypeFilter, API_BASE_URL, token, examApiBase]);
 
   useEffect(() => {
     fetchData();
@@ -167,9 +173,19 @@ export default function ExamQuestionList() {
               </div>
             </div>
           </div>
-          <div className="px-8 py-4 bg-gray-50/50 dark:bg-gray-900/50 flex items-center gap-3">
-             <span className="px-2 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[8px] font-black uppercase rounded-md tracking-tighter">YEAR</span>
-             <span className="text-[#0F2843] dark:text-white font-black text-xs">{year?.year}</span>
+          <div className="px-8 py-4 bg-gray-50/50 dark:bg-gray-900/50 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="px-2 py-1 bg-[#BB9E7F]/10 text-[#BB9E7F] text-[8px] font-black uppercase rounded-md tracking-tighter">YEAR</span>
+              <span className="text-[#0F2843] dark:text-white font-black text-xs">{year?.year}</span>
+            </div>
+            {year?.has_paper_types && year?.paper_types?.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-black text-[#BB9E7F] uppercase tracking-wider">Variants:</span>
+                <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                  {year.paper_types.join(", ")}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -181,13 +197,53 @@ export default function ExamQuestionList() {
           </div>
         ) : (
           <div className="space-y-10">
+            {year?.has_paper_types && year?.paper_types?.length > 0 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 p-1">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-2 shrink-0">Filter Variant:</span>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedPaperTypeFilter("all"); setPage(1); }}
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                    selectedPaperTypeFilter === "all"
+                      ? "bg-[#0F2843] text-white shadow-md shadow-[#0F2843]/20"
+                      : "bg-white dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700"
+                  }`}
+                >
+                  All Variants
+                </button>
+                {year.paper_types.map((pt, pIdx) => (
+                  <button
+                    key={pIdx}
+                    type="button"
+                    onClick={() => { setSelectedPaperTypeFilter(pt); setPage(1); }}
+                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                      selectedPaperTypeFilter === pt
+                        ? "bg-[#0F2843] text-white shadow-md shadow-[#0F2843]/20"
+                        : "bg-white dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700"
+                    }`}
+                  >
+                    {pt}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {renderPagination("pb-4 border-b border-gray-200 dark:border-gray-800")}
             
             {questions.map((q, idx) => (
               <div key={q.id} className="bg-[#EDF0F3] dark:bg-gray-800/40 rounded-[32px] p-6 border border-transparent shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
                 {/* Question Card Header */}
                 <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-300 dark:border-gray-700">
-                  <h3 className="text-xs font-black text-[#0F2843] dark:text-white uppercase tracking-[0.2em]">Question {(page - 1) * perPage + idx + 1}</h3>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-xs font-black text-[#0F2843] dark:text-white uppercase tracking-[0.2em]">
+                      Question {q.question_number || (page - 1) * perPage + idx + 1}
+                    </h3>
+                    {q.paper_type && (
+                      <span className="px-2.5 py-0.5 rounded-lg bg-[#BB9E7F]/20 text-[#BB9E7F] font-black text-[9px] uppercase tracking-wider border border-[#BB9E7F]/30">
+                        {q.paper_type}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-6">
                     <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest opacity-80">
                       Answer: <span className="font-black text-[#0F2843] dark:text-white">{q.options?.find(o => o.is_correct)?.label || "N/A"}</span>
@@ -347,7 +403,7 @@ export default function ExamQuestionList() {
             setIsEditModalOpen(false);
             setSelectedQuestion(null);
           }}
-          question={selectedQuestion}
+          question={selectedQuestion ? { ...selectedQuestion, exam_year: year } : null}
           onSuccess={fetchData}
           existingQuestions={questions}
         />

@@ -21,11 +21,12 @@ const CourseDetails = () => {
   const [course, setCourse] = useState(() => {
     if (initialCourse) return initialCourse;
     if (staticProgram) {
+      const isJamb = staticProgram.slug === "jamb";
       return {
         id: staticProgram.backendCourseId || OLEVEL_COURSE_ID,
         title: staticProgram.title,
         description: staticProgram.description,
-        price: 25000,
+        price: isJamb ? 5000 : 8000,
         banner: staticProgram.banner,
         isStaticProgram: true,
       };
@@ -55,7 +56,7 @@ const CourseDetails = () => {
             : (fetchedCourses.find((c) => Number(c.id) === OLEVEL_COURSE_ID || c.title?.toLowerCase().includes("level") || c.title?.toLowerCase().includes("gce")) || fetchedCourses[0]);
 
           setCourse((prev) => {
-            const nextPrice = targetCourse?.price ? Number(targetCourse.price) : (isJamb ? 8000 : 25000);
+            const nextPrice = targetCourse?.price ? Number(targetCourse.price) : (isJamb ? 5000 : 8000);
             const nextId = targetCourse?.id || (isJamb ? 1 : OLEVEL_COURSE_ID);
             if (prev && prev.id === nextId && prev.price === nextPrice) {
               return prev; // Preserve identity to prevent triggering downstream effects
@@ -152,7 +153,9 @@ const CourseDetails = () => {
         : course.banner)
     : null;
 
-  const basePrice = Number(course.price) || 25000;
+  const isJambCourse = course.title?.toLowerCase().includes("jamb") || staticProgram?.slug === "jamb";
+  const defaultFallback = isJambCourse ? 5000 : 8000;
+  const basePrice = Number(course.price) || defaultFallback;
   const monthly = basePrice;
   const quarterly = Math.round(basePrice * 3 * 0.95);
   const semiAnnually = Math.round(basePrice * 6 * 0.95);

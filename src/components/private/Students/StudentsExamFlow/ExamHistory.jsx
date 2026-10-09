@@ -44,6 +44,17 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
     return () => clearInterval(interval);
   }, [attempts]);
 
+  // Lock body scroll when full-screen review overlay is active
+  useEffect(() => {
+    if (expandedAttemptId) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [expandedAttemptId]);
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -900,7 +911,7 @@ export default function ExamHistory({ availableExams = [], initialExpandedAttemp
         return (
           <div className="fixed inset-0 z-[999] flex flex-col bg-slate-900/50 backdrop-blur-xl animate-in fade-in duration-300">
             {/* Scrollable page content */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto exam-scroll-container">
               <div className="max-w-5xl mx-auto w-full px-4 md:px-8 pt-4 md:pt-6 pb-20">
                 
                 {/* Close button row */}

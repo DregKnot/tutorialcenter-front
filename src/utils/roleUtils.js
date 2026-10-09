@@ -132,3 +132,19 @@ export const isTutorStaff = (role) => {
     .trim();
   return targetRole === "tutor";
 };
+
+/**
+ * Checks if a staff role is authorized to edit exam years and paper types.
+ * Strictly restricted to admin and moderator roles.
+ *
+ * @param {string} [role] - Optional role string. If omitted, reads from localStorage.
+ * @returns {boolean}
+ */
+export const canEditExamYear = (role) => {
+  const targetRole = (role !== undefined && role !== null ? role : localStorage.getItem("staff_role") || "")
+    .toLowerCase()
+    .trim();
+  if (!targetRole) return false;
+  return ["admin", "super_admin", "superadmin", "moderator"].includes(targetRole);
+};
+

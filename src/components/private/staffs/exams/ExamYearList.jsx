@@ -2,13 +2,15 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import StaffDashboardLayout from "../DashboardLayout.jsx";
-import { getExamApiBase, getExamBasePath } from "../../../../utils/examAccess";
+import { getExamApiBase, getExamBasePath, canEditExamYear } from "../../../../utils/examAccess";
 import { 
   // ArrowLeftIcon,
   // BookOpenIcon,
   ClockIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  PencilSquareIcon
 } from "@heroicons/react/24/outline";
+import ExamYearCreateModal from "./ExamYearCreateModal";
 
 export default function ExamYearList() {
   const { bodyId, subjectId } = useParams();
@@ -22,6 +24,8 @@ export default function ExamYearList() {
   const [examBody, setExamBody] = useState(null);
   const [subject, setSubject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingYear, setEditingYear] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -171,12 +175,43 @@ export default function ExamYearList() {
                 </div>
 
                 <div className="p-6 flex flex-col flex-1">
-                  <div className="mb-4">
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-gray-900 text-gray-400 text-[9px] font-black uppercase tracking-widest rounded-lg">YEAR</span>
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 bg-gray-100 dark:bg-gray-900 text-gray-400 text-[9px] font-black uppercase tracking-widest rounded-lg">YEAR</span>
+                      {canEditExamYear() && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingYear(year);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="p-1 text-gray-400 hover:text-[#BB9E7F] hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
+                          title="Edit exam year (Admin & Moderators only)"
+                        >
+                          <PencilSquareIcon className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    {year.has_paper_types && (
+                      <span className="px-2.5 py-1 bg-[#BB9E7F]/15 text-[#BB9E7F] text-[9px] font-black uppercase tracking-wider rounded-lg border border-[#BB9E7F]/30">
+                        {year.paper_types?.length ? `${year.paper_types.length} Variants` : 'Variants'}
+                      </span>
+                    )}
                   </div>
-                  <h3 className="text-2xl font-black text-[#0F2843] dark:text-white uppercase tracking-tight mb-6 group-hover:text-[#BB9E7F] transition-colors">
+                  <h3 className="text-2xl font-black text-[#0F2843] dark:text-white uppercase tracking-tight mb-2 group-hover:text-[#BB9E7F] transition-colors">
                     {year.year}
                   </h3>
+
+                  {year.has_paper_types && year.paper_types?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {year.paper_types.map((pt, pIdx) => (
+                        <span key={pIdx} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 text-[9px] font-bold rounded-md">
+                          {pt}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="mt-auto pt-6 border-t border-gray-50 dark:border-gray-700 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -191,6 +226,24 @@ export default function ExamYearList() {
           </div>
         )}
       </div>
+
+      {isEditModalOpen && (
+        <ExamYearCreateModal 
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingYear(null);
+          }}
+          onSuccess={() => {
+            setIsEditModalOpen(false);
+            setEditingYear(null);
+            fetchData();
+          }}
+          examBodies={examBody ? [examBody] : []}
+          selectedExamBodyId={bodyId}
+          yearToEdit={editingYear}
+        />
+      )}
     </StaffDashboardLayout>
   );
 }

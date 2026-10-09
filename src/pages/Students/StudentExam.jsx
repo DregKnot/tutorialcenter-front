@@ -82,6 +82,10 @@ export default function StudentExam() {
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
   const [warningMessage, setWarningMessage] = useState("");
 
+  // Paper Type modal state
+  const [isPaperTypeModalOpen, setIsPaperTypeModalOpen] = useState(false);
+  const [selectedPaperType, setSelectedPaperType] = useState("");
+
   // Sync modal controls when modal is opened
   useEffect(() => {
     if (isClockModalOpen) {
@@ -390,6 +394,8 @@ export default function StudentExam() {
       return {
         exam_year_id: yearId,
         year: yearValue,
+        has_paper_types: Boolean(exam.has_paper_types ?? exam.exam_year?.has_paper_types),
+        paper_types: exam.paper_types || exam.exam_year?.paper_types || [],
       };
     });
 
@@ -562,6 +568,7 @@ export default function StudentExam() {
     const yearId = e.target.value;
     if (!yearId) {
       setSelectedYear(null);
+      setSelectedPaperType("");
       return;
     }
     const yearsList = getAvailableYearsForSubject(selectedSubject?.id);
@@ -569,6 +576,11 @@ export default function StudentExam() {
     
     if (foundYear) {
       setSelectedYear(foundYear);
+      if (foundYear.has_paper_types && Array.isArray(foundYear.paper_types) && foundYear.paper_types.length > 0) {
+        setSelectedPaperType(foundYear.paper_types[0]);
+      } else {
+        setSelectedPaperType("");
+      }
     }
   };
 
@@ -695,9 +707,13 @@ export default function StudentExam() {
         Accept: "application/json",
       };
 
+      const resolvedPaperType = selectedPaperType || matchingExam?.paper_types?.[0] || null;
       const response = await axios.post(
         `${API_BASE_URL}/api/students/exams/start/${examYearId}`,
-        { timer: parseInt(timer, 10) },
+        {
+          timer: parseInt(timer, 10),
+          ...(resolvedPaperType ? { paper_type: resolvedPaperType } : {}),
+        },
         { headers }
       );
 
@@ -1947,6 +1963,14 @@ export default function StudentExam() {
                           {selectedYear.year}
                         </span>
                       </p>
+                      {selectedYear.has_paper_types && (
+                        <p>
+                          Paper Type:{" "}
+                          <span className="text-amber-500 dark:text-amber-400 font-black ml-1 uppercase">
+                            {selectedPaperType || selectedYear.paper_types?.[0] || "Type A"}
+                          </span>
+                        </p>
+                      )}
                       <p>
                         Timer:{" "}
                         <span className="text-[#09314F] dark:text-white font-black ml-1">
@@ -1959,9 +1983,23 @@ export default function StudentExam() {
                   {/* Start Exam Button */}
                   <div className="w-full md:w-auto">
                     <button
-                      onClick={() => setIsWarningModalOpen(true)}
+                      onClick={() => {
+                        const hasPaperTypes = Boolean(
+                          selectedYear?.has_paper_types &&
+                          Array.isArray(selectedYear?.paper_types) &&
+                          selectedYear.paper_types.length > 0
+                        );
+                        if (hasPaperTypes) {
+                          if (!selectedPaperType) {
+                            setSelectedPaperType(selectedYear.paper_types[0]);
+                          }
+                          setIsPaperTypeModalOpen(true);
+                        } else {
+                          setIsWarningModalOpen(true);
+                        }
+                      }}
                       disabled={startingExam}
-                      className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all shrink-0"
+                      className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all shrink-0 cursor-pointer"
                     >
                       <span>Start Practice Session</span>
                       <Icon icon="lucide:arrow-right" className="w-4 h-4" />
@@ -2141,6 +2179,108 @@ export default function StudentExam() {
                 className="w-full xs:flex-1 py-2.5 sm:py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-98 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md order-1 xs:order-2"
               >
                 Apply Time
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Paper Type Notification Modal */}
+      {isPaperTypeModalOpen && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsPaperTypeModalOpen(false)} />
+          <div className="relative bg-white dark:bg-[#09314F] border border-[#C5A97A]/40 rounded-2xl sm:rounded-[28px] md:rounded-[32px] p-5 sm:p-7 md:p-8 w-full max-w-lg max-h-[94vh] flex flex-col shadow-2xl z-10 animate-scale-in text-[#09314F] dark:text-white my-auto">
+            {/* Modal Header */}
+            <div className="text-center shrink-0 mb-4">
+              <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-amber-500/10 to-[#C5A97A]/20 dark:bg-amber-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-[#C5A97A]/40 shadow-inner">
+                <Icon icon="lucide:file-text" className="w-7 h-7 md:w-8 md:h-8 text-[#C5A97A]" />
+              </div>
+              <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[#C5A97A] block mb-1">
+                Question Paper Notice
+              </span>
+              <h3 className="text-lg md:text-2xl font-black uppercase tracking-wide text-[#09314F] dark:text-white">
+                Exam Paper Classification
+              </h3>
+              <div className="h-[2px] w-20 bg-gradient-to-r from-transparent via-[#C5A97A] to-transparent mx-auto mt-2" />
+            </div>
+
+            {/* Prominent Announcement Banner */}
+            <div className="overflow-y-auto pr-1 space-y-4 text-xs md:text-sm leading-relaxed text-gray-600 dark:text-gray-300 font-medium flex-1 min-h-0 my-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
+              <div className="p-4 md:p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-[#09314F]/5 to-transparent dark:from-amber-500/15 dark:via-white/5 border border-amber-500/30 text-center">
+                <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block mb-1">
+                  Assigned Question Variant
+                </span>
+                <p className="text-xl md:text-2xl font-black text-[#09314F] dark:text-white tracking-tight">
+                  This is a{" "}
+                  <span className="text-amber-500 dark:text-amber-400 underline decoration-2 underline-offset-4">
+                    {selectedPaperType || selectedYear?.paper_types?.[0] || "Type A"}
+                  </span>{" "}
+                  question.
+                </p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-2">
+                  Subject: <span className="font-bold text-[#09314F] dark:text-white uppercase">{selectedSubject?.name || selectedSubject?.title}</span> • Year: <span className="font-bold text-[#09314F] dark:text-white">{selectedYear?.year}</span>
+                </p>
+              </div>
+
+              {/* If multiple paper types are available for this exam year, allow selecting */}
+              {Array.isArray(selectedYear?.paper_types) && selectedYear.paper_types.length > 1 && (
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+                    Assigned a different paper type? Switch variant:
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {selectedYear.paper_types.map((type) => {
+                      const isActive = (selectedPaperType || selectedYear.paper_types[0]) === type;
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setSelectedPaperType(type)}
+                          className={`py-2 px-3 rounded-xl text-xs font-black uppercase transition-all duration-150 border cursor-pointer ${
+                            isActive
+                              ? "bg-gradient-to-r from-[#C5A97A] to-[#E83831] text-white border-transparent shadow-md scale-[1.02]"
+                              : "bg-gray-50 dark:bg-[#06243A] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-[#C5A97A]"
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-gray-50 dark:bg-[#06243A]/60 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 space-y-2.5 text-xs text-gray-600 dark:text-gray-300">
+                <div className="flex gap-2.5 items-start">
+                  <Icon icon="lucide:check-circle-2" className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>Your questions will strictly follow this paper format and order.</span>
+                </div>
+                <div className="flex gap-2.5 items-start">
+                  <Icon icon="lucide:info" className="w-4 h-4 text-[#C5A97A] shrink-0 mt-0.5" />
+                  <span>Ensure your booklet or physical instructions correspond to this question type.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="shrink-0 pt-3 flex gap-3 sm:gap-4 border-t border-gray-100 dark:border-gray-800">
+              <button
+                type="button"
+                onClick={() => setIsPaperTypeModalOpen(false)}
+                className="flex-1 py-3 md:py-3.5 border border-gray-200 dark:border-[#1a4a75] hover:bg-gray-50 dark:hover:bg-[#06243A] rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest transition-all cursor-pointer"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPaperTypeModalOpen(false);
+                  setIsWarningModalOpen(true);
+                }}
+                className="flex-1 py-3 md:py-3.5 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>Proceed</span>
+                <Icon icon="lucide:arrow-right" className="w-4 h-4" />
               </button>
             </div>
           </div>
