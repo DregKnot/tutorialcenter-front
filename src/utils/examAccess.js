@@ -14,3 +14,6 @@ export const getExamApiBase = () => "/api/admin";
 export const getExamBasePath = () =>
   isAdvisor() ? "/staffs/course-advisor/exams" : "/staffs/manage-exams";
 
+export { canEditExamYear } from "./roleUtils";
+
+

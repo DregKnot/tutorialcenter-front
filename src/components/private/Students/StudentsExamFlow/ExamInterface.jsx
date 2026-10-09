@@ -50,6 +50,7 @@ export default function ExamInterface({
   const [resultSummary, setResultSummary] = useState(null);
   const [isJambAttempt, setIsJambAttempt] = useState(false);
   const [jambSubjects, setJambSubjects] = useState([]);
+  const [paperType, setPaperType] = useState(null);
 
   // Feedback States (Shown before congratulations)
   const [showFeedback, setShowFeedback] = useState(true);
@@ -150,6 +151,9 @@ export default function ExamInterface({
       if (response.data?.subjects && Array.isArray(response.data.subjects)) {
         setJambSubjects(response.data.subjects);
       }
+
+      const pType = response.data?.paper_type || response.data?.attempt?.paper_type || null;
+      setPaperType(pType);
 
       // Pre-populate already answered questions from the questions payload or server answers map
       const initialSelected = {};
@@ -592,6 +596,19 @@ export default function ExamInterface({
             {selectedCourse?.course?.title || selectedCourse?.title || "JAMB"}
           </span>
         </div>
+
+        {/* Paper Type if configured */}
+        {paperType && (
+          <div className="text-center shrink-0">
+            <span className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest block">
+              PAPER TYPE
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 dark:text-amber-400 text-xs font-black uppercase">
+              <Icon icon="lucide:file-text" className="w-3 h-3" />
+              {paperType}
+            </span>
+          </div>
+        )}
 
         {/* Middle: Total Questions Count */}
         <div className="text-center shrink-0">

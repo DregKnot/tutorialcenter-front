@@ -1,15 +1,26 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { XMarkIcon, CheckIcon, PlusIcon, CalendarIcon, AcademicCapIcon } from "@heroicons/react/24/outline";
+import { 
+  XMarkIcon, 
+  CheckIcon, 
+  PlusIcon, 
+  CalendarIcon, 
+  AcademicCapIcon,
+  DocumentDuplicateIcon,
+  TagIcon,
+  PencilSquareIcon
+} from "@heroicons/react/24/outline";
 
 export default function ExamYearCreateModal({ 
   isOpen, 
   onClose, 
   onSuccess, 
   examBodies = [], 
-  courseId,
-  selectedExamBodyId 
+  courseId, 
+  selectedExamBodyId,
+  yearToEdit = null
 }) {
+  const isEditMode = Boolean(yearToEdit);
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
 
@@ -17,10 +28,36 @@ export default function ExamYearCreateModal({
   const [subjectId, setSubjectId] = useState("");
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [status, setStatus] = useState("active");
+  const [hasPaperTypes, setHasPaperTypes] = useState(false);
+  const [paperTypes, setPaperTypes] = useState(["Type A", "Type B", "Type C", "Type D"]);
+  const [customTypeInput, setCustomTypeInput] = useState("");
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetchingSubjects, setFetchingSubjects] = useState(false);
   const [toast, setToast] = useState(null);
+
+  const PRESET_TYPES = [
+    { label: "Types A - D", values: ["Type A", "Type B", "Type C", "Type D"] },
+    { label: "Colors (Green, Yellow...)", values: ["Type Green", "Type Purple", "Type Red", "Type Yellow"] },
+    { label: "Codes (F, E, L, S)", values: ["Type F", "Type E", "Type L", "Type S"] },
+    { label: "Codes (D, I, B, U)", values: ["Type D", "Type I", "Type B", "Type U"] },
+  ];
+
+  const handleAddCustomType = (e) => {
+    e?.preventDefault();
+    const trimmed = customTypeInput.trim();
+    if (!trimmed) return;
+    if (paperTypes.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+      setCustomTypeInput("");
+      return;
+    }
+    setPaperTypes(prev => [...prev, trimmed]);
+    setCustomTypeInput("");
+  };
+
+  const handleRemoveType = (typeToRemove) => {
+    setPaperTypes(prev => prev.filter(t => t !== typeToRemove));
+  };
 
   const fetchSubjects = useCallback(async (cid) => {
     setFetchingSubjects(true);
@@ -48,20 +85,63 @@ export default function ExamYearCreateModal({
     }
   }, [toast]);
 
+  // Synchronize state when editing or opening
   useEffect(() => {
-    if (selectedExamBodyId) {
-      setExamBodyId(selectedExamBodyId);
+    if (yearToEdit && isOpen) {
+      setExamBodyId(yearToEdit.exam_body_id?.toString() || yearToEdit.exam_body?.id?.toString() || selectedExamBodyId || "");
+      setSubjectId(yearToEdit.subject_id?.toString() || yearToEdit.subject?.id?.toString() || "");
+      setYear(yearToEdit.year ? yearToEdit.year.toString() : new Date().getFullYear().toString());
+      setStatus(yearToEdit.status || "active");
+      setHasPaperTypes(Boolean(yearToEdit.has_paper_types));
+      setPaperTypes(
+        Array.isArray(yearToEdit.paper_types) && yearToEdit.paper_types.length > 0 
+          ? yearToEdit.paper_types 
+          : ["Type A", "Type B", "Type C", "Type D"]
+      );
+      if (yearToEdit.subject) {
+        setSubjects(prev => {
+          if (!prev.some(s => String(s.id) === String(yearToEdit.subject.id))) {
+            return [yearToEdit.subject, ...prev];
+          }
+          return prev;
+        });
+      }
+    } else if (!yearToEdit && isOpen) {
+      if (selectedExamBodyId) {
+        setExamBodyId(selectedExamBodyId);
+      }
     }
-  }, [selectedExamBodyId]);
+  }, [yearToEdit, isOpen, selectedExamBodyId]);
 
   useEffect(() => {
-    if (courseId && isOpen) {
-      fetchSubjects(courseId);
+    const targetCourseId = courseId || yearToEdit?.exam_body?.course_id || yearToEdit?.course_id;
+    if (targetCourseId && isOpen) {
+      fetchSubjects(targetCourseId);
     }
-  }, [courseId, isOpen, fetchSubjects]);
+  }, [courseId, yearToEdit, isOpen, fetchSubjects]);
+
+  const resetForm = () => {
+    if (!yearToEdit) {
+      setSubjectId("");
+      setHasPaperTypes(false);
+      setPaperTypes(["Type A", "Type B", "Type C", "Type D"]);
+      setCustomTypeInput("");
+    }
+    setToast(null);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (hasPaperTypes && paperTypes.length === 0) {
+      setToast({ type: "error", message: "Please specify at least one paper type or disable Question Types." });
+      return;
+    }
+
     setLoading(true);
     try {
       const config = {
@@ -76,24 +156,36 @@ export default function ExamYearCreateModal({
         exam_body_id: examBodyId,
         subject_id: subjectId,
         year: parseInt(year),
-        status
+        status,
+        has_paper_types: hasPaperTypes,
+        paper_types: hasPaperTypes ? paperTypes : []
       };
 
-      console.log("[ExamYearCreateModal] Creating Exam Year:", `${API_BASE_URL}/api/admin/exam-years`);
-      const res = await axios.post(`${API_BASE_URL}/api/admin/exam-years`, payload, config);
-      console.log("[ExamYearCreateModal] Response:", res.data);
-      
-      setToast({ type: "success", message: "Exam Year created successfully!" });
-      setTimeout(() => {
-        onSuccess?.(res.data?.data || res.data);
-        onClose();
-        setSubjectId("");
-        setToast(null);
-      }, 1500);
+      if (isEditMode) {
+        console.log("[ExamYearCreateModal] Updating Exam Year:", `${API_BASE_URL}/api/admin/exam-years/update/${yearToEdit.id}`, payload);
+        const res = await axios.put(`${API_BASE_URL}/api/admin/exam-years/update/${yearToEdit.id}`, payload, config);
+        console.log("[ExamYearCreateModal] Update Response:", res.data);
+        
+        setToast({ type: "success", message: "Exam Year updated successfully!" });
+        setTimeout(() => {
+          onSuccess?.(res.data?.data || res.data || { ...yearToEdit, ...payload });
+          handleClose();
+        }, 1500);
+      } else {
+        console.log("[ExamYearCreateModal] Creating Exam Year:", `${API_BASE_URL}/api/admin/exam-years`, payload);
+        const res = await axios.post(`${API_BASE_URL}/api/admin/exam-years`, payload, config);
+        console.log("[ExamYearCreateModal] Response:", res.data);
+        
+        setToast({ type: "success", message: "Exam Year created successfully!" });
+        setTimeout(() => {
+          onSuccess?.(res.data?.data || res.data);
+          handleClose();
+        }, 1500);
+      }
     } catch (error) {
       setToast({ 
         type: "error", 
-        message: error.response?.data?.message || "Failed to create exam year." 
+        message: error.response?.data?.message || (isEditMode ? "Failed to update exam year." : "Failed to create exam year.") 
       });
       setTimeout(() => setToast(null), 3000);
     } finally {
@@ -118,24 +210,32 @@ export default function ExamYearCreateModal({
         </div>
       )}
 
-      <div className="exam-scope bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
+      <div className="exam-scope bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
         
-        <div className="p-6 bg-[#0F2843] text-white flex justify-between items-center">
+        <div className="p-6 bg-[#0F2843] text-white flex justify-between items-center shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-              <PlusIcon className="w-6 h-6 text-[#BB9E7F]" />
+              {isEditMode ? (
+                <PencilSquareIcon className="w-6 h-6 text-[#BB9E7F]" />
+              ) : (
+                <PlusIcon className="w-6 h-6 text-[#BB9E7F]" />
+              )}
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tight">NEW EXAM YEAR</h2>
-              <p className="text-[#BB9E7F] text-[9px] font-black uppercase tracking-widest">Temporal Unit</p>
+              <h2 className="text-xl font-black tracking-tight">
+                {isEditMode ? `EDIT EXAM YEAR ${yearToEdit?.year || ""}` : "NEW EXAM YEAR"}
+              </h2>
+              <p className="text-[#BB9E7F] text-[9px] font-black uppercase tracking-widest">
+                {isEditMode ? "Manage question variants & status" : "Temporal Unit"}
+              </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all">
+          <button onClick={handleClose} className="p-2 hover:bg-white/10 rounded-xl transition-all">
             <XMarkIcon className="w-5 h-5 text-gray-400 hover:text-white" />
           </button>
         </div>
 
-        <div className="p-8">
+        <div className="p-8 overflow-y-auto custom-scrollbar">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Exam Body</label>
@@ -206,10 +306,112 @@ export default function ExamYearCreateModal({
               </div>
             </div>
 
+            {/* Question / Paper Types Toggle & Configuration */}
+            <div className="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/60 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <DocumentDuplicateIcon className="w-4 h-4 text-[#BB9E7F]" />
+                    <span className="text-xs font-black uppercase tracking-wider text-[#0F2843] dark:text-white">
+                      Paper / Question Types
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    Does this exam year have question paper variants (e.g. Type A, B, C, D)?
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Toggle paper types"
+                  onClick={() => setHasPaperTypes(!hasPaperTypes)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    hasPaperTypes ? "bg-[#0F2843] dark:bg-blue-600" : "bg-gray-300 dark:bg-gray-700"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      hasPaperTypes ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {hasPaperTypes && (
+                <div className="p-4 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-[#BB9E7F]/20 space-y-4 animate-in fade-in duration-200">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Quick Presets</span>
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_TYPES.map((preset, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setPaperTypes(preset.values)}
+                          className="px-3 py-1.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-[#0F2843] dark:text-white hover:border-[#BB9E7F] hover:bg-[#BB9E7F]/10 transition-all"
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Paper Types</span>
+                    <div className="flex flex-wrap gap-2 min-h-[36px] p-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                      {paperTypes.length === 0 ? (
+                        <span className="text-xs text-red-400 italic py-1">No paper types added. Please add at least one.</span>
+                      ) : (
+                        paperTypes.map((t, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0F2843]/10 dark:bg-blue-900/40 text-[#0F2843] dark:text-blue-300 font-black text-xs"
+                          >
+                            <TagIcon className="w-3.5 h-3.5 opacity-60" />
+                            {t}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveType(t)}
+                              className="hover:text-red-500 rounded-full p-0.5 ml-1 transition-colors"
+                            >
+                              <XMarkIcon className="w-3.5 h-3.5" />
+                            </button>
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Add Custom Type Input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={customTypeInput}
+                      onChange={(e) => setCustomTypeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddCustomType();
+                        }
+                      }}
+                      placeholder="Add custom type (e.g. Type E, Yellow)..."
+                      className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-[#0F2843] dark:text-white outline-none focus:border-[#BB9E7F]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomType}
+                      disabled={!customTypeInput.trim()}
+                      className="px-4 py-2.5 bg-[#0F2843] dark:bg-blue-600 disabled:opacity-40 text-white font-bold text-xs rounded-xl hover:bg-[#1a3d60] transition-all flex items-center gap-1"
+                    >
+                      <PlusIcon className="w-4 h-4" /> Add
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-4 pt-4">
               <button 
                 type="button" 
-                onClick={onClose}
+                onClick={handleClose}
                 className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all text-xs uppercase tracking-widest border border-transparent dark:border-gray-700"
               >
                 Cancel
@@ -220,7 +422,7 @@ export default function ExamYearCreateModal({
                 className="flex-[2] py-4 bg-[#0F2843] dark:bg-blue-600 hover:bg-[#1a3d60] dark:hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-[#0F2843]/20 dark:shadow-blue-900/30 hover:scale-[1.02] active:scale-98 transition-all disabled:opacity-50 text-xs uppercase tracking-widest flex items-center justify-center gap-2"
               >
                 {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <CheckIcon className="w-4 h-4" />}
-                {loading ? "Creating..." : "Save Exam Year"}
+                {loading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update Exam Year" : "Save Exam Year")}
               </button>
             </div>
           </form>

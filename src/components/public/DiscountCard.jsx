@@ -28,11 +28,15 @@ const DiscountCard = ({
 
   const monthlyBreakdown = Math.round(actualPrice / months);
 
+  const discountPercent = slashedPrice && slashedPrice > actualPrice 
+    ? Math.round(((slashedPrice - actualPrice) / slashedPrice) * 100) 
+    : null;
+
   return (
     <div 
-      className={`relative w-full rounded-3xl overflow-hidden transition-all duration-300 transform hover:-translate-y-1 flex flex-col ${
+      className={`relative w-full rounded-3xl overflow-hidden transition-all duration-300 flex flex-col ${
         isTargetPlan 
-          ? "border-2 border-emerald-500 shadow-[0_16px_40px_rgba(5,150,105,0.22)] scale-[1.02] bg-[#06243A]" 
+          ? "border-2 border-emerald-500 shadow-[0_16px_40px_rgba(5,150,105,0.22)] bg-[#06243A]" 
           : "border border-gray-100 dark:border-gray-800 shadow-lg bg-white dark:bg-[#06243A]/90 hover:shadow-xl"
       }`}
     >
@@ -49,7 +53,7 @@ const DiscountCard = ({
 
       {/* ── TOP SECTION: EMERALD PROMO HEADER ── */}
       <div 
-        className={`relative pt-7 pb-6 px-6 flex-grow overflow-hidden flex flex-col justify-center text-white ${
+        className={`relative pt-6 pb-5 px-5 sm:px-6 flex-grow overflow-hidden flex flex-col justify-center text-white ${
           isTargetPlan 
             ? "bg-gradient-to-br from-[#064E3B] via-[#059669] to-[#10B981]" 
             : "bg-gradient-to-br from-[#065F46] to-[#047857]"
@@ -59,15 +63,17 @@ const DiscountCard = ({
         <div className="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* Header Row: Title + Discount Tag */}
-        <div className="flex items-center justify-between gap-2 mb-3 relative z-10">
-          <h4 className="text-white font-black text-sm uppercase tracking-wider">
+        <div className="flex items-center justify-between gap-2 mb-3 relative z-10 flex-wrap">
+          <h4 className="text-white font-black text-xs sm:text-sm uppercase tracking-wider">
             {title}
           </h4>
 
-          <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider border border-white/30 shadow-sm">
-            <TagIcon className="w-3 h-3 text-emerald-200" />
-            <span>80% OFF</span>
-          </div>
+          {discountPercent && (
+            <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider border border-white/30 shadow-sm shrink-0">
+              <TagIcon className="w-3 h-3 text-emerald-200" />
+              <span>{discountPercent}% OFF</span>
+            </div>
+          )}
         </div>
 
         {/* Slashed Pill Badge if Extra Savings */}
@@ -79,15 +85,15 @@ const DiscountCard = ({
         )}
 
         {/* Main Actual Price */}
-        <div className="relative z-10 mt-1 flex items-baseline">
-          <span className="text-2xl mr-1 font-black text-emerald-200">₦</span>
-          <span className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-sm">
-            {actualPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        <div className="relative z-10 mt-1 flex items-baseline flex-wrap">
+          <span className="text-xl sm:text-2xl mr-1 font-black text-emerald-200">₦</span>
+          <span className="text-2xl sm:text-3xl xl:text-4xl font-black text-white tracking-tight drop-shadow-sm">
+            {Math.round(actualPrice).toLocaleString()}
           </span>
         </div>
 
         {/* Monthly Breakdown Anchor */}
-        <p className="text-xs font-bold text-emerald-100 mt-1 relative z-10 flex items-center gap-1">
+        <p className="text-xs font-bold text-emerald-100 mt-1 relative z-10 flex items-center gap-1 flex-wrap">
           <span>≈ ₦{monthlyBreakdown.toLocaleString()} / month</span>
           {months > 1 && <span className="text-[10px] opacity-75 font-normal">({months} months total)</span>}
         </p>
@@ -112,14 +118,14 @@ const DiscountCard = ({
       </div>
 
       {/* ── BOTTOM SECTION: OBSIDIAN ORIGINAL PRICE ── */}
-      <div className="bg-[#09314F] px-6 py-4 relative z-10 flex items-center justify-between border-t border-[#09314F]">
+      <div className="bg-[#09314F] px-5 sm:px-6 py-4 relative z-10 flex items-center justify-between border-t border-[#09314F] flex-wrap gap-2">
         <div>
           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
             Original Value
           </p>
-          <div className="text-lg font-black text-gray-400 line-through tracking-tight flex items-baseline mt-0.5">
+          <div className="text-base sm:text-lg font-black text-gray-400 line-through tracking-tight flex items-baseline mt-0.5">
             <span className="text-xs mr-0.5 font-bold">₦</span>
-            {slashedPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {Math.round(slashedPrice).toLocaleString()}
           </div>
         </div>
 
@@ -127,8 +133,8 @@ const DiscountCard = ({
           <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest block">
             You Save
           </span>
-          <span className="text-xs font-black text-white">
-            ₦{(slashedPrice - actualPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span className="text-xs sm:text-sm font-black text-white">
+            ₦{Math.round(slashedPrice - actualPrice).toLocaleString()}
           </span>
         </div>
       </div>

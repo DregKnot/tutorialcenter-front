@@ -81,10 +81,10 @@ export const cognitiveQuestions = [
   {
     id: 10,
     category: "English Language",
-    question: "Choose the correct pronoun: 'This confidential matter must remain strictly between you and _____.'",
+    question: "Choose the correct pronoun: 'The principal invited both my brother and _____ to the award ceremony.'",
     options: ["I", "me", "myself", "we"],
     correctIndex: 1,
-    explanation: "'Between' is a preposition, so it takes the objective case pronoun 'me' (not 'I')."
+    explanation: "'Me' is the objective case pronoun required as the direct object of the verb 'invited' (test by removing 'my brother and': 'The principal invited me')."
   },
   {
     id: 11,
@@ -194,5 +194,203 @@ export const cognitiveQuestions = [
     ],
     correctIndex: 2,
     explanation: "The President appoints the Chief Justice of Nigeria on the recommendation of the NJC, subject to confirmation by the Senate."
+  },
+
+  // ==========================================
+  // SECTION 4: ADVANCED MATHEMATICS (5 Questions)
+  // ==========================================
+  {
+    id: 21,
+    category: "Mathematics",
+    question: "A car travels at 60 km/h for the first 2 hours and at 90 km/h for the next 3 hours. What is its average speed for the entire journey?",
+    options: ["72 km/h", "75 km/h", "78 km/h", "80 km/h"],
+    correctIndex: 2,
+    explanation: "Total Distance = (60 × 2) + (90 × 3) = 120 + 270 = 390 km. Total Time = 2 + 3 = 5 hours. Average Speed = 390 / 5 = 78 km/h."
+  },
+  {
+    id: 22,
+    category: "Mathematics",
+    question: "Solve for x in the exponential equation: 3^(x + 1) = 81.",
+    options: ["2", "3", "4", "5"],
+    correctIndex: 1,
+    explanation: "Since 81 = 3^4, we have x + 1 = 4, which gives x = 3."
+  },
+  {
+    id: 23,
+    category: "Mathematics",
+    question: "The sum of the interior angles of a regular polygon is 1080°. How many sides does the polygon possess?",
+    options: ["6", "7", "8", "10"],
+    correctIndex: 2,
+    explanation: "Sum of interior angles = (n - 2) × 180°. Setting (n - 2) × 180 = 1080 gives n - 2 = 6, so n = 8 (an octagon)."
+  },
+  {
+    id: 24,
+    category: "Mathematics",
+    question: "A merchant sells a generator for ₦45,000, incurring a 10% loss on cost price. What was the original cost price?",
+    options: ["₦48,000", "₦50,000", "₦52,000", "₦55,000"],
+    correctIndex: 1,
+    explanation: "Selling Price = 90% of Cost Price. Cost Price = ₦45,000 / 0.90 = ₦50,000."
+  },
+  {
+    id: 25,
+    category: "Mathematics",
+    question: "Two fair six-sided dice are tossed simultaneously. What is the probability that the sum of the numbers thrown is 8?",
+    options: ["5/36", "1/6", "7/36", "1/9"],
+    correctIndex: 0,
+    explanation: "Outcomes that sum to 8: (2,6), (3,5), (4,4), (5,3), (6,2). Total favourable outcomes = 5 out of 36 possible outcomes (5/36)."
+  },
+
+  // ==========================================
+  // SECTION 5: ADVANCED ENGLISH LANGUAGE (10 Questions)
+  // ==========================================
+  {
+    id: 26,
+    category: "English Language",
+    question: "Choose the correct concord: 'Neither the football coach nor the players _____ satisfied with the referee's verdict.'",
+    options: ["was", "were", "is", "has been"],
+    correctIndex: 1,
+    explanation: "In 'Neither... nor' constructions, the verb agrees with the closer subject ('the players', plural), requiring 'were'."
+  },
+  {
+    id: 27,
+    category: "English Language",
+    question: "Select the correct pronoun: 'The scholarship screening committee granted the award to Ada and _____.'",
+    options: ["I", "her", "she", "they"],
+    correctIndex: 1,
+    explanation: "Prepositions ('to') govern the objective case, so the objective pronoun 'her' is required."
+  },
+  {
+    id: 28,
+    category: "English Language",
+    question: "Select the nearest in meaning (synonym) to <u>METICULOUS</u>: 'The research assistant maintained meticulous experimental records.'",
+    options: ["Careless", "Thorough and precise", "Hurried", "Vague"],
+    correctIndex: 1,
+    explanation: "'Meticulous' means showing great attention to detail; very careful and precise."
+  },
+  {
+    id: 29,
+    category: "English Language",
+    question: "Choose the opposite in meaning (antonym) to <u>EPHEMERAL</u>: 'Her popularity on the music charts proved to be ephemeral.'",
+    options: ["Transient", "Permanent", "Fleeting", "Short-lived"],
+    correctIndex: 1,
+    explanation: "'Ephemeral' means lasting for a very short duration. Its direct opposite is 'Permanent'."
+  },
+  {
+    id: 30,
+    category: "English Language",
+    question: "Complete the conditional clause: 'If the student had studied consistently, he _____ passed the examination effortlessly.'",
+    options: ["will have", "would have", "shall have", "can have"],
+    correctIndex: 1,
+    explanation: "Third conditional structures ('If + past perfect') require 'would have + past participle'."
+  },
+  {
+    id: 31,
+    category: "English Language",
+    question: "Select the appropriate collocation: 'The federal panel was inaugurated to _____ an inquiry into the election crisis.'",
+    options: ["conduct", "make", "create", "execute"],
+    correctIndex: 0,
+    explanation: "The standard idiomatic collocation in English is to 'conduct an inquiry'."
+  },
+  {
+    id: 32,
+    category: "English Language",
+    question: "Choose the correct question tag: 'You rarely visit the campus library on Sundays, _____?'",
+    options: ["don't you", "do you", "isn't it", "did you"],
+    correctIndex: 1,
+    explanation: "'Rarely' is a negative adverb, which requires a positive question tag: 'do you?'."
+  },
+  {
+    id: 33,
+    category: "English Language",
+    question: "Identify the word that is correctly spelled:",
+    options: ["Accomodation", "Accommodation", "Acommodation", "Accomadation"],
+    correctIndex: 1,
+    explanation: "'Accommodation' contains double 'c' and double 'm'."
+  },
+  {
+    id: 34,
+    category: "English Language",
+    question: "What is the meaning of the idiom 'to hit the nail on the head'?",
+    options: [
+      "To describe a situation with exact precision",
+      "To cause accidental injury with tools",
+      "To build something durable",
+      "To argue passionately in public"
+    ],
+    correctIndex: 0,
+    explanation: "'To hit the nail on the head' means to say something that is exactly correct or identify the exact heart of an issue."
+  },
+  {
+    id: 35,
+    category: "English Language",
+    question: "Choose the sentence with correct punctuation and apostrophe usage:",
+    options: [
+      "The golden retriever wagged it's tail playfully.",
+      "The golden retriever wagged its tail playfully.",
+      "The golden retriever wagged its' tail playfully.",
+      "The golden retriever wagged it tail playfully."
+    ],
+    correctIndex: 1,
+    explanation: "'Its' is the possessive form of 'it'. 'It's' is a contraction for 'it is' or 'it has'."
+  },
+
+  // ==========================================
+  // SECTION 6: NIGERIAN HISTORY & CIVIC GOVERNANCE (5 Questions)
+  // ==========================================
+  {
+    id: 36,
+    category: "Civic Education",
+    question: "In what year were the Northern and Southern Protectorates amalgamated to create modern Nigeria?",
+    options: ["1900", "1914", "1922", "1960"],
+    correctIndex: 1,
+    explanation: "Lord Frederick Lugard amalgamated the Northern and Southern Protectorates on January 1, 1914."
+  },
+  {
+    id: 37,
+    category: "Civic Education",
+    question: "Under the Nigerian Constitution, which arm of government is vested with the exclusive power to make laws for the Federation?",
+    options: [
+      "The Judiciary",
+      "The National Assembly (Legislature)",
+      "The Federal Executive Council",
+      "The National Council of State"
+    ],
+    correctIndex: 1,
+    explanation: "The Legislature (The National Assembly, comprising the Senate and the House of Representatives) makes laws."
+  },
+  {
+    id: 38,
+    category: "Civic Education",
+    question: "Which of the following is guaranteed as a Fundamental Human Right under Chapter IV of the 1999 Constitution of Nigeria?",
+    options: [
+      "Right to free tertiary education",
+      "Right to personal liberty",
+      "Right to automatic government employment",
+      "Right to a free automobile"
+    ],
+    correctIndex: 1,
+    explanation: "Section 35 of the 1999 Constitution guarantees every citizen the Right to Personal Liberty."
+  },
+  {
+    id: 39,
+    category: "Civic Education",
+    question: "Whose portrait is honored on Nigeria's ₦100 commemorative centenary banknote?",
+    options: [
+      "Sir Ahmadu Bello",
+      "Chief Obafemi Awolowo",
+      "Dr. Nnamdi Azikiwe",
+      "General Murtala Muhammed"
+    ],
+    correctIndex: 1,
+    explanation: "Chief Obafemi Awolowo's portrait is featured prominently on the Nigerian ₦100 banknote."
+  },
+  {
+    id: 40,
+    category: "Civic Education",
+    question: "Which government body is constitutionally mandated to organize and oversee presidential and parliamentary elections in Nigeria?",
+    options: ["EFCC", "ICPC", "INEC", "NYSC"],
+    correctIndex: 2,
+    explanation: "The Independent National Electoral Commission (INEC) is responsible for organizing national and state elections in Nigeria."
   }
 ];
+

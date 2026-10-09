@@ -7,7 +7,8 @@ import {
   ArrowLeftIcon,
   CheckCircleIcon,
   XMarkIcon,
-  TrashIcon
+  TrashIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import ExamBodyCreateModal from './ExamBodyCreateModal';
 import ExamYearCreateModal from './ExamYearCreateModal';
@@ -15,7 +16,7 @@ import ExamGroupSection from './components/ExamGroupSection';
 import QuestionItem from './components/QuestionItem';
 import BatchSubmissionOverlay from './components/BatchSubmissionOverlay';
 import useExamForm from './components/useExamForm';
-import { canManageExams, getExamBasePath } from '../../../../utils/examAccess';
+import { canManageExams, getExamBasePath, canEditExamYear } from '../../../../utils/examAccess';
 
 export default function ExamQuestion() {
   const {
@@ -23,6 +24,8 @@ export default function ExamQuestion() {
     courseId,
     subjectId,
     examYearId,
+    selectedYear,
+    editingYear, setEditingYear,
     groupType, setGroupType,
     groupTitle, setGroupTitle,
     groupContent, setGroupContent,
@@ -76,7 +79,9 @@ export default function ExamQuestion() {
     // Delete question (edit mode)
     handleDeleteQuestion,
     deleting,
-    existingQuestions
+    existingQuestions,
+    hasPaperTypes,
+    availablePaperTypes
   } = useExamForm();
 
   useEffect(() => {
@@ -190,14 +195,33 @@ export default function ExamQuestion() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center px-1">
                   <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Exam Year</label>
-                  <button 
-                    type="button" 
-                    onClick={() => setIsExamYearModalOpen(true)}
-                    disabled={!examBodyId || !subjectId}
-                    className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] dark:hover:text-white flex items-center gap-1 transition-colors uppercase disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    <PlusIcon className="w-3 h-3" /> New Year
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {canEditExamYear() && examYearId && (
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          const currentYearObj = selectedYear || filteredYears.find(y => String(y.id) === String(examYearId)) || examBodies.find(b => b.id === examBodyId);
+                          setEditingYear(currentYearObj);
+                          setIsExamYearModalOpen(true);
+                        }}
+                        className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] dark:hover:text-white flex items-center gap-1 transition-colors uppercase"
+                        title="Edit selected exam year (Admin & Moderators only)"
+                      >
+                        <PencilSquareIcon className="w-3 h-3" /> Edit Year
+                      </button>
+                    )}
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setEditingYear(null);
+                        setIsExamYearModalOpen(true);
+                      }}
+                      disabled={!examBodyId || !subjectId}
+                      className="text-[10px] font-black text-[#BB9E7F] hover:text-[#0F2843] dark:hover:text-white flex items-center gap-1 transition-colors uppercase disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <PlusIcon className="w-3 h-3" /> New Year
+                    </button>
+                  </div>
                 </div>
                 <div className="relative group">
                   <select 
@@ -373,6 +397,8 @@ export default function ExamQuestion() {
                     isScienceSubject={isScienceSubject}
                     insertSymbol={insertSymbol}
                     validationErrors={validationErrors[q.tempId] || []}
+                    hasPaperTypes={hasPaperTypes}
+                    availablePaperTypes={availablePaperTypes}
                   />
                 ))}
               </div>
@@ -434,11 +460,18 @@ export default function ExamQuestion() {
 
       <ExamYearCreateModal 
         isOpen={isExamYearModalOpen}
-        onClose={() => setIsExamYearModalOpen(false)}
-        onSuccess={(data) => handleCreateSuccess("exam-year", data)}
+        onClose={() => {
+          setIsExamYearModalOpen(false);
+          setEditingYear(null);
+        }}
+        onSuccess={(data) => {
+          handleCreateSuccess("exam-year", data);
+          setEditingYear(null);
+        }}
         examBodies={examBodies}
         courseId={courseId}
         selectedExamBodyId={examBodyId}
+        yearToEdit={editingYear}
       />
 
       {/* Batch Submission Overlay */}

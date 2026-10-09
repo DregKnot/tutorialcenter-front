@@ -587,7 +587,9 @@ export default function StudentPaymentDisplay() {
   const DurationModal = () => {
     const courseId = selectedPayment?.course_id || selectedPayment?.course?.id || selectedPayment?.id;
     const courseInfo = allCourses.find(c => Number(c.id) === Number(courseId));
-    const basePrice = courseInfo?.price || selectedPayment?.course?.price || selectedPayment?.amount || 0;
+    const isJamb = Number(courseId) === 1 || courseInfo?.title?.toLowerCase().includes("jamb") || selectedPayment?.course?.title?.toLowerCase().includes("jamb");
+    const fallbackPrice = isJamb ? 5000 : 8000;
+    const basePrice = courseInfo?.price || selectedPayment?.course?.price || selectedPayment?.amount || fallbackPrice;
     
     const handleSelect = (key) => {
       setSelectedDuration(key);
