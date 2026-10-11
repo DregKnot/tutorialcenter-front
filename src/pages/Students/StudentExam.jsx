@@ -1370,7 +1370,7 @@ export default function StudentExam() {
                       Enrollment Pending Approval
                     </h4>
                     <p className="text-xs text-amber-800/90 dark:text-amber-300/80 max-w-md mx-auto leading-relaxed">
-                      Your temporary ID <strong className="font-mono font-bold text-amber-900 dark:text-amber-100">{pendingEnrollment?.enrollment_code}</strong> is awaiting bank transfer approval. CBT questions and timed practice will unlock as soon as your payment is approved.
+                      Your enrollment application is awaiting bank transfer approval. CBT questions and timed practice will unlock as soon as your payment is approved.
                     </p>
                     <a
                       href="/student/dashboard"
