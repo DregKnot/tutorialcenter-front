@@ -144,9 +144,21 @@ export default function CourseCardGrid({ courses = [], loading = false }) {
 
   if (courses.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 bg-white dark:bg-[#09314F]/20 rounded-2xl border border-dashed border-gray-200 dark:border-[#09314F]/40">
-        <Icon icon="lucide:book-x" className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3" />
-        <p className="text-sm font-bold text-gray-400 dark:text-gray-500">No courses enrolled</p>
+      <div className="flex flex-col items-center justify-center py-10 px-6 bg-white dark:bg-[#09314F]/20 rounded-2xl border border-dashed border-gray-200 dark:border-[#09314F]/40 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3">
+          <Icon icon="solar:lock-bold" className="w-6 h-6" />
+        </div>
+        <p className="text-sm font-black text-gray-800 dark:text-gray-200 mb-1">No Active Course Enrollment</p>
+        <p className="text-xs text-gray-400 dark:text-gray-400 max-w-sm mb-4 leading-relaxed">
+          Your training subscription may have expired or is awaiting payment. Renew or enroll in a course to access live masterclasses and exam prep.
+        </p>
+        <button
+          onClick={() => { window.location.href = "/student/payments"; }}
+          className="px-5 py-2.5 bg-[#E83831] hover:bg-red-600 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+        >
+          <Icon icon="solar:card-recive-bold" className="w-4 h-4" />
+          Enroll or Renew Training
+        </button>
       </div>
     );
   }

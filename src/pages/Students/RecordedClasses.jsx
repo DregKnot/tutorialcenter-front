@@ -81,6 +81,8 @@ const RecordedClasses = () => {
   const [recordedClasses, setRecordedClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
+  const [subscriptionExpiredMessage, setSubscriptionExpiredMessage] = useState("");
   const [activeAnalyticsSession, setActiveAnalyticsSession] = useState(null);
   const [analyticsSearchQuery, setAnalyticsSearchQuery] = useState("");
   const [analyticsFilter, setAnalyticsFilter] = useState("all"); // "all" | "repeat"
@@ -125,18 +127,34 @@ const RecordedClasses = () => {
     const fetchClasses = async () => {
       try {
         setLoading(true);
+        setError(null);
+        setIsSubscriptionExpired(false);
         const headers = {
           Authorization: `Bearer ${activeToken}`,
           Accept: "application/json"
         };
         const response = await axios.get(`${API_BASE_URL}/api/students/recorded-classes`, { headers });
+        if (response.data?.subscription_expired) {
+          setIsSubscriptionExpired(true);
+          setSubscriptionExpiredMessage(response.data.message || "Your course enrollment has expired.");
+          setRecordedClasses([]);
+          return;
+        }
         if (response.data?.success) {
           setRecordedClasses(response.data.data || []);
         }
       } catch (err) {
         console.error("Failed to fetch recorded classes", err);
-        const errorMsg = err?.response?.data?.message || err?.response?.data?.error || err.message || "Could not load recorded classes.";
-        setError(errorMsg);
+        if (err?.response?.status === 403 || err?.response?.data?.subscription_expired) {
+          setIsSubscriptionExpired(true);
+          setSubscriptionExpiredMessage(
+            err?.response?.data?.message || "Your course enrollment has expired. Please renew your subscription to access recorded masterclasses."
+          );
+          setRecordedClasses([]);
+        } else {
+          const errorMsg = err?.response?.data?.message || err?.response?.data?.error || err.message || "Could not load recorded classes.";
+          setError(errorMsg);
+        }
       } finally {
         setLoading(false);
       }
@@ -193,6 +211,10 @@ const RecordedClasses = () => {
   }, [activeAnalyticsSession, isAdminOrStaff, activeToken, API_BASE_URL]);
 
   const handleSelectVideo = async (cls) => {
+    if (isSubscriptionExpired) {
+      navigate('/student/payments');
+      return;
+    }
     setSelectedVideo(cls);
 
     // Optimistically increment view count in UI
@@ -359,65 +381,133 @@ const RecordedClasses = () => {
           )}
         </div>
 
-        {/* Search & Filter Bar */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full max-w-md">
-            <Icon icon="lucide:search" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search classes by title or subject..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E83831]/20 focus:border-[#E83831] transition-all text-sm font-medium text-gray-700 dark:text-gray-200"
-            />
-          </div>
-          
-          <div className="flex gap-2 w-full sm:w-auto">
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm font-bold text-gray-600 dark:text-gray-300">
-              <Icon icon="lucide:filter" className="w-4 h-4" />
-              Filter
-            </button>
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm font-bold text-gray-600 dark:text-gray-300">
-              <Icon icon="lucide:arrow-down-up" className="w-4 h-4" />
-              Sort
-            </button>
-          </div>
-        </div>
+        {isSubscriptionExpired ? (
+          <div className="w-full max-w-3xl mx-auto my-12 bg-white dark:bg-[#09314F]/40 dark:backdrop-blur-xl border border-gray-100 dark:border-white/10 rounded-3xl p-8 sm:p-12 shadow-2xl text-center relative overflow-hidden">
+            {/* Decorative background glow */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none" />
 
-        {/* Program / Course Filter Tabs */}
-        {availableCourses.length > 1 && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 custom-scrollbar">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-1">Program:</span>
-            <button
-              type="button"
-              onClick={() => setSelectedCourseFilter("all")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                selectedCourseFilter === "all"
-                  ? "bg-[#09314F] text-white shadow-sm"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-              }`}
-            >
-              All Programs ({recordedClasses.length})
-            </button>
-            {availableCourses.map((cName) => {
-              const count = recordedClasses.filter(c => (c.course_name || c.course?.title || "").toLowerCase() === cName.toLowerCase()).length;
-              return (
+            <div className="relative z-10 flex flex-col items-center">
+              {/* Lock Icon Badge */}
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-500/20 to-red-500/20 border-2 border-amber-500/30 flex items-center justify-center mb-6 shadow-inner">
+                <Icon icon="solar:lock-password-bold-duotone" className="w-10 h-10 text-amber-500" />
+              </div>
+
+              <span className="px-3.5 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-full text-xs font-black uppercase tracking-widest mb-3">
+                Subscription Required • Access Locked
+              </span>
+
+              <h2 className="text-2xl sm:text-3xl font-black text-[#09314F] dark:text-white tracking-tight mb-3">
+                Recorded Masterclasses Locked
+              </h2>
+
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 max-w-lg mb-8 leading-relaxed font-medium">
+                {subscriptionExpiredMessage || "Your course enrollment period has ended. Access to our masterclass video vault, topic revisions, and past session recordings requires an active training subscription."}
+              </p>
+
+              {/* Feature perks strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full mb-8 text-left">
+                <div className="p-3.5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 flex items-center gap-3">
+                  <Icon icon="solar:video-library-bold" className="w-5 h-5 text-blue-500 shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-bold text-gray-800 dark:text-gray-200">Full Video Vault</p>
+                    <p className="text-gray-400 text-[11px]">All archived lessons</p>
+                  </div>
+                </div>
+                <div className="p-3.5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 flex items-center gap-3">
+                  <Icon icon="solar:diploma-verified-bold" className="w-5 h-5 text-emerald-500 shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-bold text-gray-800 dark:text-gray-200">Tutor Solutions</p>
+                    <p className="text-gray-400 text-[11px]">Exam walkthroughs</p>
+                  </div>
+                </div>
+                <div className="p-3.5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 flex items-center gap-3">
+                  <Icon icon="solar:lightning-bold" className="w-5 h-5 text-amber-500 shrink-0" />
+                  <div className="text-xs">
+                    <p className="font-bold text-gray-800 dark:text-gray-200">Instant Unlock</p>
+                    <p className="text-gray-400 text-[11px]">Immediate renewal</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                 <button
-                  key={cName}
+                  onClick={() => navigate('/student/payments')}
+                  className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#E83831] to-red-600 hover:from-red-600 hover:to-[#E83831] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-2.5"
+                >
+                  <Icon icon="solar:card-recive-bold" className="w-4 h-4" />
+                  Renew Training Subscription
+                </button>
+                <button
+                  onClick={() => navigate('/student/payments')}
+                  className="w-full sm:w-auto px-6 py-4 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 font-bold text-xs uppercase tracking-wider rounded-2xl transition-all"
+                >
+                  View Payments & Plans
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Search & Filter Bar */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <div className="relative w-full max-w-md">
+                <Icon icon="lucide:search" className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search classes by title or subject..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E83831]/20 focus:border-[#E83831] transition-all text-sm font-medium text-gray-700 dark:text-gray-200"
+                />
+              </div>
+              
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm font-bold text-gray-600 dark:text-gray-300">
+                  <Icon icon="lucide:filter" className="w-4 h-4" />
+                  Filter
+                </button>
+                <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm font-bold text-gray-600 dark:text-gray-300">
+                  <Icon icon="lucide:arrow-down-up" className="w-4 h-4" />
+                  Sort
+                </button>
+              </div>
+            </div>
+
+            {/* Program / Course Filter Tabs */}
+            {availableCourses.length > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 custom-scrollbar">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-1">Program:</span>
+                <button
                   type="button"
-                  onClick={() => setSelectedCourseFilter(cName)}
+                  onClick={() => setSelectedCourseFilter("all")}
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    selectedCourseFilter.toLowerCase() === cName.toLowerCase()
+                    selectedCourseFilter === "all"
                       ? "bg-[#09314F] text-white shadow-sm"
                       : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}
                 >
-                  {cName} ({count})
+                  All Programs ({recordedClasses.length})
                 </button>
-              );
-            })}
-          </div>
-        )}
+                {availableCourses.map((cName) => {
+                  const count = recordedClasses.filter(c => (c.course_name || c.course?.title || "").toLowerCase() === cName.toLowerCase()).length;
+                  return (
+                    <button
+                      key={cName}
+                      type="button"
+                      onClick={() => setSelectedCourseFilter(cName)}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                        selectedCourseFilter.toLowerCase() === cName.toLowerCase()
+                          ? "bg-[#09314F] text-white shadow-sm"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      }`}
+                    >
+                      {cName} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
         {/* Classes Grid */}
         {loading ? (
@@ -562,6 +652,8 @@ const RecordedClasses = () => {
                   : "No recordings found for the selected program or filters."}
             </p>
           </div>
+        )}
+          </>
         )}
 
       </div>

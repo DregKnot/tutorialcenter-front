@@ -178,4 +178,28 @@ describe("StudentCalendar Component", () => {
       expect(screen.queryByText("Physics")).not.toBeInTheDocument();
     });
   });
+
+  test("displays subscription expired banner and navigates to payments when subscription is expired", async () => {
+    axios.get.mockImplementationOnce(() =>
+      Promise.resolve({
+        data: {
+          success: true,
+          subscription_expired: true,
+          message: "Your course subscription has expired. Masterclasses and recorded sessions are locked.",
+          sessions: [],
+        },
+      })
+    );
+
+    render(<StudentCalendar />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Course Subscription Expired • Masterclasses Locked")).toBeInTheDocument();
+    });
+
+    const renewBtn = screen.getByText("Renew Subscription");
+    fireEvent.click(renewBtn);
+
+    expect(mockNavigate).toHaveBeenCalledWith("/student/payments");
+  });
 });
