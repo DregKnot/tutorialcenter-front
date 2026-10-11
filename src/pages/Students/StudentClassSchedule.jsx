@@ -36,6 +36,8 @@ export default function StudentClassSchedule() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
+  const [subscriptionExpiredMessage, setSubscriptionExpiredMessage] = useState("");
   
   // State
   const [expandedSessionId, setExpandedSessionId] = useState(null);
@@ -67,12 +69,22 @@ export default function StudentClassSchedule() {
     setLoading(true);
     try {
       console.group("DEBUG: Student Class Schedule Fetching");
+      setError(null);
+      setIsSubscriptionExpired(false);
       const res = await axios.get(`${API_BASE_URL}/api/students/class/schedule`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",
         },
       });
+
+      const isExpired = Boolean(res.data?.subscription_expired);
+      if (isExpired) {
+        setIsSubscriptionExpired(true);
+        setSubscriptionExpiredMessage(
+          res.data?.message || "Your course subscription has expired. Please renew your training to access live masterclasses."
+        );
+      }
 
       const data = res.data?.data || res.data;
       const nextClasses = Array.isArray(data.next_classes) && data.next_classes.length > 0
@@ -91,7 +103,14 @@ export default function StudentClassSchedule() {
       console.groupEnd();
     } catch (err) {
       console.error("DEBUG: Failed to fetch student schedule", err);
-      setError(err.response?.data?.message || "Unable to load schedule at the moment.");
+      if (err.response?.status === 403 || err.response?.data?.subscription_expired) {
+        setIsSubscriptionExpired(true);
+        setSubscriptionExpiredMessage(
+          err.response?.data?.message || "Your course subscription has expired. Please renew your training to access live masterclasses."
+        );
+      } else {
+        setError(err.response?.data?.message || "Unable to load schedule at the moment.");
+      }
     } finally {
       setLoading(false);
     }
@@ -191,6 +210,10 @@ export default function StudentClassSchedule() {
   const handleJoinClass = (e, sessionObj) => {
     e.stopPropagation();
     e.preventDefault();
+    if (isSubscriptionExpired) {
+      navigate('/student/payments');
+      return;
+    }
     if (!sessionObj || !sessionObj.id) return;
 
     // Always join in the web classroom — no external redirects or option prompts
@@ -345,6 +368,18 @@ export default function StudentClassSchedule() {
               <span className="inline-flex items-center px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 text-[11px] font-black rounded-lg uppercase tracking-wider">
                 Cancelled
               </span>
+            ) : isSubscriptionExpired ? (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/student/payments');
+                }}
+                className="inline-flex items-center gap-1 px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-xs active:scale-95"
+                title="Subscription expired. Click to renew."
+              >
+                <Icon icon="solar:lock-bold" className="w-3.5 h-3.5" />
+                <span>Renew</span>
+              </button>
             ) : (session.recording_link || hasSessionRecording(session)) ? (
               <button 
                 onClick={(e) => {
@@ -457,6 +492,17 @@ export default function StudentClassSchedule() {
                     <div className="flex-1 px-10 py-5 bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-black rounded-2xl border border-rose-200 dark:border-rose-900 uppercase tracking-widest text-[11px] text-center">
                       Session Cancelled by Academy
                     </div>
+                  ) : isSubscriptionExpired ? (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/student/payments');
+                      }}
+                      className="flex-1 px-10 py-5 bg-gradient-to-r from-[#E83831] to-red-600 text-white font-black rounded-2xl transition-all shadow-xl active:scale-95 uppercase tracking-widest text-[11px] text-center flex items-center justify-center gap-2"
+                    >
+                      <Icon icon="solar:lock-bold" className="w-4 h-4" />
+                      Subscription Expired — Renew Training
+                    </button>
                   ) : (
                     <button 
                       onClick={(e) => handleJoinClass(e, session)}
@@ -495,7 +541,38 @@ export default function StudentClassSchedule() {
       hideRightPanel={true}
     >
       <div className="max-w-[1600px] xl:px-10 mx-auto w-full min-h-screen">
-        
+
+        {/* ========= Subscription Expired Paywall Banner ========= */}
+        {isSubscriptionExpired && (
+          <div className="mb-8 p-6 sm:p-8 bg-gradient-to-br from-amber-500/10 via-red-500/10 to-amber-500/5 dark:from-red-950/40 dark:via-[#09314F]/60 dark:to-amber-950/30 border-2 border-amber-500/30 dark:border-red-500/30 rounded-3xl sm:rounded-[36px] shadow-xl relative overflow-hidden">
+            <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 text-center md:text-left relative z-10">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-[#E83831] text-white flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
+                  <Icon icon="solar:lock-bold" className="w-8 h-8" />
+                </div>
+                <div>
+                  <span className="px-3 py-1 bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-full text-[10px] font-black uppercase tracking-widest inline-block mb-2">
+                    Course Enrollment Expired
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-black text-[#09314F] dark:text-white tracking-tight">
+                    Live Masterclasses Locked
+                  </h2>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium mt-1 max-w-xl leading-relaxed">
+                    {subscriptionExpiredMessage || "Your active training period has concluded. Upcoming live classes, live tutor interactions, and meeting rooms are paused until you renew your subscription."}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => navigate('/student/payments')}
+                className="shrink-0 px-8 py-4 bg-gradient-to-r from-[#E83831] to-red-600 hover:from-red-600 hover:to-[#E83831] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-red-500/20 active:scale-95 transition-all flex items-center gap-2"
+              >
+                <Icon icon="solar:card-recive-bold" className="w-4 h-4" />
+                Renew Training Plan
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ========= Featured Next Class(es) ========= */}
         {scheduleData.next_classes && scheduleData.next_classes.length > 0 && (

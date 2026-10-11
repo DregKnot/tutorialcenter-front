@@ -26,6 +26,7 @@ export default function StudentPaymentDisplay() {
   const [allCourses, setAllCourses] = useState([]); // Base prices
   const [selectedMethod, setSelectedMethod] = useState("");
   const [renewLoading, setRenewLoading] = useState(false);
+  const [bankEnrollments, setBankEnrollments] = useState([]);
 
   const DURATION_OPTIONS = [
     { key: "monthly", label: "Monthly", months: 1 },
@@ -133,13 +134,110 @@ export default function StudentPaymentDisplay() {
     setShowDurationModal(true);
   };
 
-  const handleDurationContinue = () => {
+  const handleDurationContinue = async () => {
     if (!selectedDuration) {
       setToast({ type: "error", message: "Please select a duration." });
       return;
     }
-    setShowDurationModal(false);
-    setShowPaymentModal(true);
+
+    const courseId = Number(
+      selectedPayment?.enrollment?.course_id ||
+      selectedPayment?.course_id ||
+      selectedPayment?.course?.id ||
+      selectedPayment?.id
+    );
+
+    const cName =
+      selectedPayment?.course?.title ||
+      selectedPayment?.course_name ||
+      selectedPayment?.title ||
+      `Course #${courseId}`;
+
+    setRenewLoading(true);
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/api/course/enrollment`,
+        {
+          student_id: student?.id,
+          course_id: courseId,
+          billing_cycle: selectedDuration,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+          timeout: 30000,
+        }
+      );
+
+      const enr = res.data?.enrollment;
+      const enrId =
+        enr?.id ||
+        selectedPayment?.enrollment_id ||
+        selectedPayment?.course_enrollment_id ||
+        selectedPayment?.id;
+
+      setBankEnrollments([
+        {
+          enrollmentId: Number(enrId),
+          courseName: cName,
+          amount: Number(calculatedPrice),
+          billingCycle: selectedDuration,
+        },
+      ]);
+      setShowDurationModal(false);
+      setShowPaymentModal(true);
+    } catch (err) {
+      console.warn("Could not pre-register renewal enrollment, using fallback enrollment ID:", err);
+      const enrId =
+        selectedPayment?.enrollment_id ||
+        selectedPayment?.course_enrollment_id ||
+        selectedPayment?.id;
+
+      setBankEnrollments([
+        {
+          enrollmentId: Number(enrId),
+          courseName: cName,
+          amount: Number(calculatedPrice),
+          billingCycle: selectedDuration,
+        },
+      ]);
+      setShowDurationModal(false);
+      setShowPaymentModal(true);
+    } finally {
+      setRenewLoading(false);
+    }
+  };
+
+  const handleBankSettled = () => {
+    if (student?.id) clearDashboardCache(student.id);
+    setToast({ type: "success", message: "Bank transfer confirmed! Your training is now active." });
+    setShowPaymentModal(false);
+    fetchData();
+  };
+
+  const handleBankPending = () => {
+    const courseId = Number(
+      selectedPayment?.enrollment?.course_id ||
+      selectedPayment?.course_id ||
+      selectedPayment?.course?.id ||
+      selectedPayment?.id
+    );
+    if (courseId) {
+      try {
+        const stored = JSON.parse(localStorage.getItem("pendingBankTransferCourseIds") || "[]");
+        const merged = Array.from(new Set([...stored, courseId]));
+        localStorage.setItem("pendingBankTransferCourseIds", JSON.stringify(merged));
+      } catch {}
+    }
+    if (student?.id) clearDashboardCache(student.id);
+    setToast({
+      type: "success",
+      message: "Bank transfer claim submitted! An administrator will review your transfer to activate your plan.",
+    });
+    setShowPaymentModal(false);
+    fetchData();
   };
 
   const handleRenewContinue = async (response) => {
@@ -679,6 +777,10 @@ export default function StudentPaymentDisplay() {
             billing_cycle: selectedDuration,
             price: calculatedPrice,
           }}
+          bankEnrollments={bankEnrollments}
+          studentId={student?.id}
+          onBankSettled={handleBankSettled}
+          onPendingSubmitted={handleBankPending}
           selectedMethod={selectedMethod}
           setSelectedMethod={setSelectedMethod}
           onContinue={handleRenewContinue}

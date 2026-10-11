@@ -6,6 +6,8 @@ import { isAdvisorStaff, isTutorStaff } from "../../../utils/roleUtils";
 const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
+    const [subscriptionExpiredMessage, setSubscriptionExpiredMessage] = useState("");
     const [sdkReady, setSdkReady] = useState(false);
 
     const isJoiningRef = useRef(false);
@@ -237,6 +239,18 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
                 console.error("Zoom SDK Error:", err);
                 isJoiningRef.current = false;
                 if (isMounted) {
+                    const isExpired = Boolean(
+                        err.response?.status === 403 ||
+                        err.response?.data?.subscription_expired ||
+                        errMsg.toLowerCase().includes("subscription") ||
+                        errMsg.toLowerCase().includes("expired")
+                    );
+                    if (isExpired) {
+                        setIsSubscriptionExpired(true);
+                        setSubscriptionExpiredMessage(
+                            err.response?.data?.message || "Your subscription has expired. Please renew your training plan to join live sessions."
+                        );
+                    }
                     setError(errMsg || "Could not launch Zoom classroom.");
                     setLoading(false);
                 }
@@ -322,8 +336,104 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
                 </div>
             )}
 
-            {/* Error Overlay */}
-            {error && (
+            {/* Subscription Expired Overlay */}
+            {isSubscriptionExpired ? (
+                <div style={{
+                    position: "fixed",
+                    inset: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#030712",
+                    zIndex: 99999,
+                    padding: 24,
+                    textAlign: "center"
+                }}>
+                    <div style={{
+                        width: 72,
+                        height: 72,
+                        borderRadius: 20,
+                        backgroundColor: "rgba(245,158,11,0.15)",
+                        border: "1px solid rgba(245,158,11,0.3)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 20
+                    }}>
+                        <Icon icon="solar:lock-bold" style={{ width: 36, height: 36, color: "#f59e0b" }} />
+                    </div>
+                    <span style={{
+                        padding: "4px 14px",
+                        backgroundColor: "rgba(245,158,11,0.15)",
+                        color: "#fbbf24",
+                        border: "1px solid rgba(245,158,11,0.3)",
+                        borderRadius: 9999,
+                        fontSize: 11,
+                        fontWeight: 900,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.15em",
+                        marginBottom: 12
+                    }}>
+                        Subscription Expired
+                    </span>
+                    <h3 style={{
+                        fontSize: 22,
+                        fontWeight: 900,
+                        color: "white",
+                        letterSpacing: "-0.02em",
+                        marginBottom: 10
+                    }}>Live Masterclass Locked</h3>
+                    <p style={{
+                        color: "#9ca3af",
+                        fontSize: 14,
+                        maxWidth: 440,
+                        lineHeight: 1.6,
+                        marginBottom: 28
+                    }}>{subscriptionExpiredMessage || "Your course enrollment period has ended. Please renew your training plan on the Payments page to join live masterclass sessions."}</p>
+                    <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+                        <button
+                            onClick={() => {
+                                window.location.href = `${window.location.origin}/student/payments`;
+                            }}
+                            style={{
+                                padding: "12px 28px",
+                                backgroundColor: "#E83831",
+                                color: "white",
+                                fontWeight: 900,
+                                borderRadius: 14,
+                                border: "none",
+                                cursor: "pointer",
+                                fontSize: 12,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.1em",
+                                boxShadow: "0 10px 25px rgba(232,56,49,0.3)"
+                            }}
+                        >
+                            Renew Subscription Now
+                        </button>
+                        <button
+                            onClick={() => {
+                                window.location.href = `${window.location.origin}/student/dashboard`;
+                            }}
+                            style={{
+                                padding: "12px 24px",
+                                backgroundColor: "rgba(255,255,255,0.08)",
+                                color: "#d1d5db",
+                                fontWeight: 700,
+                                borderRadius: 14,
+                                border: "1px solid rgba(255,255,255,0.15)",
+                                cursor: "pointer",
+                                fontSize: 12,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.1em"
+                            }}
+                        >
+                            Return to Dashboard
+                        </button>
+                    </div>
+                </div>
+            ) : error ? (
                 <div style={{
                     position: "fixed",
                     inset: 0,
@@ -404,7 +514,7 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
                         </button>
                     </div>
                 </div>
-            )}
+            ) : null}
         </>
     );
 });

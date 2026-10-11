@@ -77,8 +77,17 @@ export default function StudentCalendar() {
   const { token } = useAuth();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
+  const [subscriptionExpiredMessage, setSubscriptionExpiredMessage] = useState("");
+
   const handleJoinClass = useCallback((s) => {
     if (!s) return;
+    if (isSubscriptionExpired) {
+      navigate('/student/payments');
+      return;
+    }
     if (s.id) {
       if (token) {
         axios.post(
@@ -94,10 +103,7 @@ export default function StudentCalendar() {
     if (link && typeof link === "string" && (link.startsWith("http://") || link.startsWith("https://"))) {
       window.open(link, "_blank", "noopener,noreferrer");
     }
-  }, [API_BASE_URL, navigate, token]);
-
-  const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  }, [API_BASE_URL, navigate, token, isSubscriptionExpired]);
   const [viewMode, setViewMode] = useState("month"); // "month", "week", "day"
   const [currentDate, setCurrentDate] = useState(() => {
     const d = new Date();
@@ -113,6 +119,10 @@ export default function StudentCalendar() {
   const [watchingVideoId, setWatchingVideoId] = useState(null);
 
   const handleWatchVideo = (url) => {
+    if (isSubscriptionExpired) {
+      navigate('/student/payments');
+      return;
+    }
     let videoId = null;
     if (url && (url.includes('youtube.com') || url.includes('youtu.be'))) {
        const match = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/i);
@@ -177,9 +187,16 @@ export default function StudentCalendar() {
   const fetchSchedule = useCallback(async () => {
     setLoading(true);
     try {
+      setIsSubscriptionExpired(false);
       const res = await axios.get(`${API_BASE_URL}/api/students/class/schedule?all=true`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
+      if (res.data?.subscription_expired) {
+        setIsSubscriptionExpired(true);
+        setSubscriptionExpiredMessage(
+          res.data?.message || "Your course subscription has expired. Masterclasses and recorded sessions are locked."
+        );
+      }
       console.log("📅 [StudentCalendar] Raw Class Schedule API Response:", res.data);
       const data = res.data?.data || res.data?.sessions || res.data?.schedule || res.data || [];
       console.log("📅 [StudentCalendar] Extracted Calendar Data Structure:", data);
@@ -188,6 +205,12 @@ export default function StudentCalendar() {
       setSessions(flatList);
     } catch (error) {
       console.error("Failed to fetch class schedule for calendar:", error);
+      if (error.response?.status === 403 || error.response?.data?.subscription_expired) {
+        setIsSubscriptionExpired(true);
+        setSubscriptionExpiredMessage(
+          error.response?.data?.message || "Your course subscription has expired. Masterclasses and recorded sessions are locked."
+        );
+      }
       setSessions([]);
     } finally {
       setLoading(false);
@@ -372,6 +395,33 @@ export default function StudentCalendar() {
       hideRightPanel={true}
     >
       <div className="max-w-7xl mx-auto w-full min-h-screen px-4 md:px-0 py-6">
+
+        {/* ====== SUBSCRIPTION EXPIRED BANNER ====== */}
+        {isSubscriptionExpired && (
+          <div className="mb-6 p-4 sm:p-5 bg-gradient-to-r from-amber-500/10 via-red-500/10 to-amber-500/5 dark:from-red-950/40 dark:to-amber-950/30 border border-amber-500/30 dark:border-red-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3 text-center sm:text-left">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Icon icon="solar:lock-bold" className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs sm:text-sm font-black text-amber-900 dark:text-amber-200">
+                  Course Subscription Expired • Masterclasses Locked
+                </p>
+                <p className="text-[11px] sm:text-xs text-amber-800/80 dark:text-amber-300/80 font-medium">
+                  {subscriptionExpiredMessage || "Live sessions and class recordings on your calendar are currently locked. Renew your training to restore access."}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/student/payments')}
+              className="px-5 py-2.5 bg-[#E83831] hover:bg-red-600 text-white font-black text-xs uppercase tracking-wider rounded-xl shrink-0 shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+            >
+              <Icon icon="solar:card-recive-bold" className="w-4 h-4" />
+              Renew Subscription
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           
           {/* ====== MAIN CALENDAR CONTAINER ====== */}
@@ -1061,12 +1111,23 @@ export default function StudentCalendar() {
               </div>
             </div>
 
-            {/* Action button: Cancelled, Recorded Class if past, else Join Class */}
+            {/* Action button: Cancelled, Expired, Recorded Class if past, else Join Class */}
             <div className="mt-6">
               {isSessionCancelled(selectedSession) ? (
                 <div className="w-full py-3.5 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-extrabold rounded-xl text-center text-xs uppercase tracking-wider border border-rose-200 dark:border-rose-900">
                   Session Cancelled
                 </div>
+              ) : isSubscriptionExpired ? (
+                <button
+                  onClick={() => {
+                    setSelectedSession(null);
+                    navigate('/student/payments');
+                  }}
+                  className="w-full py-3.5 bg-gradient-to-r from-[#E83831] to-red-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
+                >
+                  <Icon icon="solar:lock-bold" className="w-4 h-4" />
+                  Subscription Expired — Renew to Join
+                </button>
               ) : isPastSession(selectedSession) ? (
                 selectedSession.recording_link || selectedSession.recording_url ? (
                   <button

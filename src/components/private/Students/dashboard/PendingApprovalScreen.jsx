@@ -8,31 +8,9 @@ export default function PendingApprovalScreen({
   onRefresh, 
   refreshing = false 
 }) {
-  const [copied, setCopied] = useState(false);
-
-
-  const enrollmentCode = pendingEnrollment?.enrollment_code || student?.enrollment_code || "TMP-ENR-PENDING";
   const courseTitle = pendingEnrollment?.course_title || pendingEnrollment?.course?.title || "Course Enrollment";
   const pendingSubjects = pendingEnrollment?.pending_subjects || [];
   const paymentRef = pendingEnrollment?.payment_reference || "Pending Review";
-  const expiresAt = pendingEnrollment?.expires_at;
-
-  const handleCopyCode = () => {
-    if (!enrollmentCode) return;
-    navigator.clipboard.writeText(enrollmentCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
-  const formattedExpiry = expiresAt 
-    ? new Date(expiresAt).toLocaleDateString(undefined, { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
-    : null;
 
   return (
     <div className="w-full max-w-4xl mx-auto py-6 px-4 space-y-8 animate-in fade-in duration-500 font-sans">
@@ -52,8 +30,7 @@ export default function PendingApprovalScreen({
               Welcome, {student?.firstname || "Student"}! 👋
             </h1>
             <p className="text-sm text-gray-300 max-w-xl leading-relaxed">
-              Your application has been received and is waiting for administrator approval. You have been assigned a 
-              <strong className="text-amber-300 font-semibold"> 48-hour temporary enrollment ID</strong>. Once payment is confirmed, your chosen subjects will be fully registered and learning materials will unlock.
+              Your application has been received and is waiting for administrator approval. Once payment is confirmed, your chosen subjects will be fully registered and learning materials will unlock.
             </p>
           </div>
 
@@ -71,45 +48,9 @@ export default function PendingApprovalScreen({
         </div>
       </div>
 
-      {/* ── TEMPORARY ENROLLMENT ID CARD ── */}
+      {/* ── COURSE & SUBJECTS DETAILS ── */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-100 dark:border-gray-700/70 shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-gray-700/60">
-          <div>
-            <span className="text-[11px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-wider">
-              Temporary Enrollment Code
-            </span>
-            <div className="flex items-center gap-3 mt-1.5">
-              <span className="font-mono text-xl sm:text-2xl font-black text-[#0F2843] dark:text-white tracking-wider bg-amber-50 dark:bg-amber-950/40 px-3.5 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800/80">
-                {enrollmentCode}
-              </span>
-              <button
-                onClick={handleCopyCode}
-                className="p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-all active:scale-95"
-                title="Copy Temporary ID"
-              >
-                <Icon icon={copied ? "lucide:check" : "lucide:copy"} className={`w-4 h-4 ${copied ? "text-emerald-500" : ""}`} />
-              </button>
-              {copied && (
-                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-in fade-in">
-                  Copied!
-                </span>
-              )}
-            </div>
-          </div>
-
-          {formattedExpiry && (
-            <div className="flex items-center gap-3 bg-amber-50/70 dark:bg-amber-950/30 p-3 rounded-2xl border border-amber-200/70 dark:border-amber-900/60">
-              <Icon icon="lucide:alarm-clock" className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0" />
-              <div className="text-xs">
-                <p className="font-bold text-amber-900 dark:text-amber-200">48-Hour Validity Window</p>
-                <p className="text-amber-700 dark:text-amber-400 font-medium">Valid until: {formattedExpiry}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── COURSE & SUBJECTS DETAILS ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           {/* Program Card */}
           <div className="p-5 rounded-2xl bg-gray-50/70 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-800 space-y-2">
@@ -242,7 +183,7 @@ export default function PendingApprovalScreen({
             Submit Inquiry
           </Link>
           <a
-            href="https://wa.me/2348000000000?text=Hello%20Tutorial%20Center,%20I%20have%20submitted%20a%20bank%20transfer%20with%20temporary%20ID%20"
+            href={`https://wa.me/2348000000000?text=${encodeURIComponent(`Hello Tutorial Center, I have submitted a bank transfer with payment reference: ${paymentRef}`)}`}
             target="_blank"
             rel="noreferrer"
             className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-600/20"
