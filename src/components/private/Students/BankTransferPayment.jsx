@@ -144,7 +144,10 @@ export default function BankTransferPayment({
 
   /* ================= INIT: start or resume a transfer per enrollment ================= */
   useEffect(() => {
-    if (!enrollments.length) return;
+    if (!enrollments.length) {
+      setLoading(false);
+      return;
+    }
     let active = true;
 
     const run = async () => {
@@ -178,7 +181,11 @@ export default function BankTransferPayment({
         try {
           const response = await axios.post(
             `${API_BASE_URL}/api/payments/bank-transfer`,
-            { student_id: Number(studentId), course_enrollment_id: Number(item.enrollmentId) },
+            { 
+              student_id: Number(studentId), 
+              course_enrollment_id: Number(item.enrollmentId),
+              billing_cycle: item.billingCycle || undefined
+            },
             {
               headers: { "Content-Type": "application/json", Accept: "application/json" },
               timeout: 30000,
@@ -498,6 +505,12 @@ export default function BankTransferPayment({
   return (
     <div className="space-y-4 text-left">
       {loading && <p className="text-sm text-gray-600">Preparing bank transfer details...</p>}
+
+      {!loading && !enrollments.length && (
+        <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+          No training enrollment selected. Please select a duration plan and try again.
+        </div>
+      )}
 
       {!loading && pendingCount > 0 && (
         <div className="rounded-xl bg-blue-50 p-4 text-sm text-[#09314F]">
