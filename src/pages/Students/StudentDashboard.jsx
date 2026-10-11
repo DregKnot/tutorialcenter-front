@@ -413,19 +413,28 @@ export default function StudentDashboard({ blogs = [] }) {
   });
 
   // 3. Live class & Merit info updates to load up the slot machine
-  highlights.push({
-    type: "liveclass",
-    text: "Live Class: Master Mathematics begins in 190 minutes!",
-    actionLabel: "Join",
-    actionUrl: "/student/class-schedule"
-  });
+  if (courses && courses.length > 0) {
+    highlights.push({
+      type: "liveclass",
+      text: "Live masterclasses are active. Check your schedule for upcoming sessions!",
+      actionLabel: "Join",
+      actionUrl: "/student/class-schedule"
+    });
 
-  highlights.push({
-    type: "recorded",
-    text: "Missed a session? Catch up on Recorded Masterclasses!",
-    actionLabel: "Watch",
-    actionUrl: "/student/recorded-classes"
-  });
+    highlights.push({
+      type: "recorded",
+      text: "Catch up on recorded masterclasses in the Video Vault!",
+      actionLabel: "Watch",
+      actionUrl: "/student/recorded-classes"
+    });
+  } else {
+    highlights.push({
+      type: "payment",
+      text: "Your course subscription is inactive or expired. Renew your plan to access live classes.",
+      actionLabel: "Renew",
+      actionUrl: "/student/payments"
+    });
+  }
 
   highlights.push({
     type: "merit",
