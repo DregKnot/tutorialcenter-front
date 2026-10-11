@@ -119,6 +119,7 @@ export default function BankTransferPayment({
   const transfersRef = useRef(transfers);
   const claimLock = useRef(false);
   const settledNotified = useRef(false);
+  const inFlightRef = useRef({});
 
   const enrollmentKey = useMemo(
     () => enrollments.map((item) => String(item.enrollmentId)).join(","),
@@ -178,6 +179,11 @@ export default function BankTransferPayment({
           }
         }
 
+        if (inFlightRef.current[key]) {
+          continue;
+        }
+        inFlightRef.current[key] = true;
+
         try {
           const response = await axios.post(
             `${API_BASE_URL}/api/payments/bank-transfer`,
@@ -228,6 +234,8 @@ export default function BankTransferPayment({
                 "Unable to prepare bank transfer.",
             });
           }
+        } finally {
+          delete inFlightRef.current[key];
         }
       }
       if (active) setLoading(false);
@@ -462,15 +470,6 @@ export default function BankTransferPayment({
 
     const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
     window.open(waUrl, "_blank");
-
-    if (onPendingSubmitted) {
-      onPendingSubmitted({
-        references: referenceRows,
-        courses: enrollments,
-        totalAmount,
-        whatsappMessage,
-      });
-    }
   };
 
   const retrySetup = () => {

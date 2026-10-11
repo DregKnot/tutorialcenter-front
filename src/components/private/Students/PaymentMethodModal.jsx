@@ -41,12 +41,19 @@ export default function PaymentMethodModal({
           return t && (t.state === "awaiting_confirmation" || t.status === "pending");
         });
         if (allAwaiting) {
-          const refRows = bankEnrollments.map((e) => ({
+          const seen = new Set();
+          const uniqueEnrollments = bankEnrollments.filter((e) => {
+            const k = String(e.enrollmentId);
+            if (seen.has(k)) return false;
+            seen.add(k);
+            return true;
+          });
+          const refRows = uniqueEnrollments.map((e) => ({
             id: e.enrollmentId,
             courseName: e.courseName,
             transfer: store[e.enrollmentId],
           }));
-          const totalAmt = bankEnrollments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+          const totalAmt = uniqueEnrollments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
           const waMsg = [
             `Hello Tutorial Center, I have paid NGN ${totalAmt.toLocaleString()} for ${refRows.length} course${
               refRows.length === 1 ? "" : "s"
