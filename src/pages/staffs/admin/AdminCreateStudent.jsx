@@ -873,27 +873,36 @@ export default function AdminCreateStudent() {
         const payments = res.data?.payments || [];
         const incompleteStudentsFromApi = res.data?.incomplete_students || [];
 
-        // Normalize results into tagged items
+        // Normalize results into tagged items, excluding payments rejected or cancelled by staff
         let results = [
-          ...payments.map((p) => {
-            const hasCompleteEnrollment =
-              p.enrollment &&
-              p.enrollment.course &&
-              Array.isArray(p.enrollment.subjects) &&
-              p.enrollment.subjects.length > 0;
+          ...payments
+            .filter((p) => {
+              if (p.payment_method === "bank_transfer") {
+                if (["failed", "cancelled", "refunded"].includes(p.status?.toLowerCase())) return false;
+                const revAction = p.meta?.bank_transfer?.review?.action || p.meta?.review?.action;
+                if (revAction === "rejected" || revAction === "superseded") return false;
+              }
+              return !["cancelled", "refunded"].includes(p.status?.toLowerCase());
+            })
+            .map((p) => {
+              const hasCompleteEnrollment =
+                p.enrollment &&
+                p.enrollment.course &&
+                Array.isArray(p.enrollment.subjects) &&
+                p.enrollment.subjects.length > 0;
 
-            return {
-              recordType: hasCompleteEnrollment ? "recoverable_payment" : "payment_missing_enrollment",
-              id: `pay-${p.id}`,
-              student: p.student,
-              enrollment: p.enrollment,
-              amount: p.amount,
-              status: p.status,
-              gateway_reference: p.gateway_reference,
-              created_at: p.created_at,
-              rawPayment: p,
-            };
-          }),
+              return {
+                recordType: hasCompleteEnrollment ? "recoverable_payment" : "payment_missing_enrollment",
+                id: `pay-${p.id}`,
+                student: p.student,
+                enrollment: p.enrollment,
+                amount: p.amount,
+                status: p.status,
+                gateway_reference: p.gateway_reference,
+                created_at: p.created_at,
+                rawPayment: p,
+              };
+            }),
           ...incompleteStudentsFromApi.map((s) => ({
             recordType: "incomplete_registration",
             id: `stud-${s.id}`,
