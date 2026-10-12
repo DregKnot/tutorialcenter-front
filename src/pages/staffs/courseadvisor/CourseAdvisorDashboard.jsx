@@ -303,6 +303,19 @@ export default function CourseAdvisorDashboard() {
 
   const advisorName = staff?.firstname || staff?.first_name || staff?.name?.split(" ")[0] || "Advisor";
 
+  const assignedStudentsCount = useMemo(() => {
+    if (!staff?.id && !staff?.staff_id && !staff?.email) return 0;
+    return students.filter((s) => {
+      if (!s.advisors || !Array.isArray(s.advisors)) return false;
+      return s.advisors.some(
+        (a) =>
+          (staff?.id && Number(a.id) === Number(staff.id)) ||
+          (staff?.staff_id && a.staff_id === staff.staff_id) ||
+          (staff?.email && a.email && a.email.toLowerCase() === staff.email.toLowerCase())
+      );
+    }).length;
+  }, [students, staff]);
+
   return (
     <StaffDashboardLayout pagetitle="Overview" hideHeader={false}>
       <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
@@ -340,7 +353,18 @@ export default function CourseAdvisorDashboard() {
                 className="px-4 py-2.5 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 shadow-sm"
               >
                 <Icon icon="lucide:users" className="w-4 h-4 text-[#C5A97A]" />
-                <span>Students</span>
+                <span>All Students</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/staffs/course-advisor/students?filter=assigned")}
+                className="px-4 py-2.5 bg-gradient-to-r from-[#09314F] to-[#BB9E7F] hover:opacity-95 active:scale-95 border border-[#BB9E7F]/40 rounded-xl text-xs font-black uppercase tracking-wider text-white transition-all flex items-center gap-2 shadow-lg"
+              >
+                <Icon icon="lucide:user-check" className="w-4 h-4 text-[#C5A97A]" />
+                <span>Assigned Students</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-white/20 font-black">
+                  {assignedStudentsCount}
+                </span>
               </button>
               <button
                 type="button"
