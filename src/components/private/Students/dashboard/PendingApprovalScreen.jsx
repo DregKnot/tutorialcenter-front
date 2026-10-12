@@ -12,29 +12,67 @@ export default function PendingApprovalScreen({
   const pendingSubjects = pendingEnrollment?.pending_subjects || [];
   const paymentRef = pendingEnrollment?.payment_reference || "Pending Review";
 
+  const isCancelled = pendingEnrollment?.payment_status === "cancelled" || 
+                      pendingEnrollment?.payment_status === "failed" || 
+                      pendingEnrollment?.review_action === "rejected" ||
+                      pendingEnrollment?.review_action === "superseded";
+
+  const isRejected = pendingEnrollment?.payment_status === "failed" ||
+                     pendingEnrollment?.review_action === "rejected";
+
+  const rejectionReason = pendingEnrollment?.review_reason || 
+                          (isRejected ? "Your transfer verification was rejected by administrator." : "Payment attempt was cancelled.");
+
   return (
     <div className="w-full max-w-4xl mx-auto py-6 px-4 space-y-8 animate-in fade-in duration-500 font-sans">
       
       {/* ── TOP HERO CARD ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F2843] via-[#14375d] to-[#0a1e33] text-white p-6 sm:p-10 shadow-2xl border border-white/10">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-blue-500/10 rounded-full blur-2xl pointer-events-none -ml-20 -mb-20"></div>
+      <div className={`relative overflow-hidden rounded-3xl text-white p-6 sm:p-10 shadow-2xl border ${
+        isCancelled 
+          ? "bg-gradient-to-br from-[#3b1219] via-[#4c1d24] to-[#1f0a0e] border-rose-500/30" 
+          : "bg-gradient-to-br from-[#0F2843] via-[#14375d] to-[#0a1e33] border-white/10"
+      }`}>
+        <div className={`absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20 ${
+          isCancelled ? "bg-rose-500/10" : "bg-amber-500/10"
+        }`}></div>
+        <div className={`absolute bottom-0 left-0 w-60 h-60 rounded-full blur-2xl pointer-events-none -ml-20 -mb-20 ${
+          isCancelled ? "bg-red-500/10" : "bg-blue-500/10"
+        }`}></div>
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-              Payment Verification Under Review
-            </div>
+            {isCancelled ? (
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 text-xs font-black uppercase tracking-wider">
+                <Icon icon="lucide:alert-circle" className="w-4 h-4 text-rose-400" />
+                {isRejected ? "Transfer Verification Rejected" : "Payment Cancelled"}
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                Payment Verification Under Review
+              </div>
+            )}
+            
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-              Welcome, {student?.firstname || "Student"}! 👋
+              {isCancelled ? `Action Required, ${student?.firstname || "Student"}! ⚠️` : `Welcome, ${student?.firstname || "Student"}! 👋`}
             </h1>
             <p className="text-sm text-gray-300 max-w-xl leading-relaxed">
-              Your application has been received and is waiting for administrator approval. Once payment is confirmed, your chosen subjects will be fully registered and learning materials will unlock.
+              {isCancelled
+                ? "Your previous bank transfer payment was not approved or was cancelled. Please check the reason below and retry your payment to activate your learning portal."
+                : "Your application has been received and is waiting for administrator approval. Once payment is confirmed, your chosen subjects will be fully registered and learning materials will unlock."}
             </p>
           </div>
 
           <div className="flex sm:flex-col items-center sm:items-end justify-between gap-3">
+            {isCancelled && (
+              <Link
+                to="/student/payments?action=renew"
+                className="px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-[#0F2843] font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-xl shadow-amber-500/20"
+              >
+                <Icon icon="lucide:rotate-ccw" className="w-4 h-4" />
+                Retry Payment
+              </Link>
+            )}
             <button
               onClick={onRefresh}
               disabled={refreshing}
@@ -47,6 +85,31 @@ export default function PendingApprovalScreen({
           </div>
         </div>
       </div>
+
+      {/* ── CANCELLATION / REJECTION REASON CARD ── */}
+      {isCancelled && (
+        <div className="p-5 sm:p-6 rounded-3xl bg-rose-50 dark:bg-rose-950/30 border-2 border-rose-200 dark:border-rose-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-in zoom-in-95 duration-300">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20">
+              <Icon icon="lucide:alert-triangle" className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-rose-900 dark:text-rose-200 uppercase tracking-wide">
+                {isRejected ? "Reason for Rejection" : "Payment Cancelled"}
+              </h3>
+              <p className="text-xs text-rose-700 dark:text-rose-300 leading-relaxed font-semibold">
+                {rejectionReason}
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/student/payments?action=renew"
+            className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider shrink-0 text-center transition-all shadow-md"
+          >
+            Retry Payment Now →
+          </Link>
+        </div>
+      )}
 
       {/* ── COURSE & SUBJECTS DETAILS ── */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 border border-gray-100 dark:border-gray-700/70 shadow-sm space-y-6">
@@ -82,7 +145,9 @@ export default function PendingApprovalScreen({
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-500">Status:</span>
-              <span className="font-bold text-amber-600 dark:text-amber-400">Awaiting Verification</span>
+              <span className={`font-bold ${isCancelled ? "text-rose-600 dark:text-rose-400" : "text-amber-600 dark:text-amber-400"}`}>
+                {isRejected ? "Rejected" : isCancelled ? "Cancelled" : "Awaiting Verification"}
+              </span>
             </div>
           </div>
         </div>
@@ -101,8 +166,12 @@ export default function PendingApprovalScreen({
                 >
                   <Icon icon="heroicons:book-open-solid" className="w-3.5 h-3.5 text-[#BB9E7F]" />
                   <span>{sub.name || sub.title || `Subject #${sub.id || idx + 1}`}</span>
-                  <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded">
-                    Pending
+                  <span className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded ${
+                    isCancelled 
+                      ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60"
+                      : "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60"
+                  }`}>
+                    {isCancelled ? "Action Needed" : "Pending"}
                   </span>
                 </div>
               ))}
@@ -144,16 +213,28 @@ export default function PendingApprovalScreen({
             </div>
           </div>
 
-          {/* Step 3 - Active */}
-          <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-600 flex items-start gap-3 shadow-md shadow-amber-500/10">
-            <div className="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 text-xs font-bold animate-pulse">
-              3
+          {/* Step 3 */}
+          {isCancelled ? (
+            <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-400 dark:border-rose-600 flex items-start gap-3 shadow-md shadow-rose-500/10">
+              <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0 text-xs font-bold">
+                ✕
+              </div>
+              <div>
+                <p className="text-xs font-black text-rose-950 dark:text-rose-200">3. {isRejected ? "Payment Rejected" : "Payment Cancelled"}</p>
+                <p className="text-[11px] text-rose-700 dark:text-rose-400 font-semibold mt-0.5">Please retry payment</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-black text-amber-950 dark:text-amber-200">3. Admin Review</p>
-              <p className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold mt-0.5">Verifying bank transfer</p>
+          ) : (
+            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-600 flex items-start gap-3 shadow-md shadow-amber-500/10">
+              <div className="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 text-xs font-bold animate-pulse">
+                3
+              </div>
+              <div>
+                <p className="text-xs font-black text-amber-950 dark:text-amber-200">3. Admin Review</p>
+                <p className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold mt-0.5">Verifying bank transfer</p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Step 4 - Locked */}
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/30 border border-gray-200 dark:border-gray-800 flex items-start gap-3 opacity-60">

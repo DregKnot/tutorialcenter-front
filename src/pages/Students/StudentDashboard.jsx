@@ -402,6 +402,23 @@ export default function StudentDashboard({ blogs = [] }) {
     }
   });
 
+  // Highlight cancelled/rejected renewal or enrollment payments
+  if (pendingEnrollmentData && (
+    pendingEnrollmentData.payment_status === 'failed' || 
+    pendingEnrollmentData.payment_status === 'cancelled' || 
+    pendingEnrollmentData.review_action === 'rejected' ||
+    pendingEnrollmentData.review_action === 'superseded'
+  )) {
+    const pCourseTitle = pendingEnrollmentData.course_title || "your course";
+    const pReason = pendingEnrollmentData.review_reason ? ` (${pendingEnrollmentData.review_reason})` : "";
+    highlights.unshift({
+      type: "payment",
+      text: `Payment for ${pCourseTitle} was cancelled or rejected${pReason}. Please retry your payment.`,
+      actionLabel: "Retry Now",
+      actionUrl: "/student/payments?action=renew"
+    });
+  }
+
   // 2. Add blogs
   blogs.forEach(blog => {
     highlights.push({
