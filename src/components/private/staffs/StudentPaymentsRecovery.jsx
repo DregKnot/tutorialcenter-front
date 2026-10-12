@@ -2,12 +2,26 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 
+function toDatetimeLocal(dateInput) {
+  if (!dateInput) return "";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export default function StudentPaymentsRecovery({ studentEmail, studentId, API_BASE_URL, token, apiPrefix, isPreview }) {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recoveringId, setRecoveringId] = useState(null);
   const [gatewayRef, setGatewayRef] = useState("");
   const [reason, setReason] = useState("");
+  const [paidAt, setPaidAt] = useState("");
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
@@ -46,7 +60,11 @@ export default function StudentPaymentsRecovery({ studentEmail, studentId, API_B
     try {
       const res = await axios.post(
         `${API_BASE_URL}/api/${apiPrefix}/payments/${paymentId}/registration-recovery`,
-        { gateway_reference: gatewayRef, reason },
+        { 
+          gateway_reference: gatewayRef, 
+          reason,
+          paid_at: paidAt ? new Date(paidAt).toISOString() : null,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setSuccess(res.data?.message || "Recovery successful");
@@ -90,31 +108,64 @@ export default function StudentPaymentsRecovery({ studentEmail, studentId, API_B
           {!isPreview && payment.status !== 'successful' && apiPrefix === 'admin' && (
             <div className="mt-2 pt-3 border-t border-gray-200 dark:border-gray-700">
               {recoveringId === payment.id ? (
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter Gateway Reference (e.g. from Paystack)"
-                    value={gatewayRef}
-                    onChange={e => setGatewayRef(e.target.value)}
-                    className="w-full text-xs p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Reason for manual recovery (e.g. Confirmed on Paystack dashboard)"
-                    value={reason}
-                    onChange={e => setReason(e.target.value)}
-                    className="w-full text-xs p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white"
-                  />
-                  <div className="flex gap-2">
+                <div className="flex flex-col gap-2.5 p-3 bg-white dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase text-[#0F2843] dark:text-white">
+                      Confirm Recovery & Timestamps
+                    </span>
+                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      Verified at: {new Date().toLocaleTimeString()}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                      Student Payment Date & Time (When Student Paid)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={paidAt}
+                      onChange={e => setPaidAt(e.target.value)}
+                      className="w-full text-xs p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                      Gateway Reference
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter Gateway Reference (e.g. from Paystack)"
+                      value={gatewayRef}
+                      onChange={e => setGatewayRef(e.target.value)}
+                      className="w-full text-xs p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                      Reason for Recovery
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Reason for manual recovery (e.g. Confirmed on Paystack dashboard)"
+                      value={reason}
+                      onChange={e => setReason(e.target.value)}
+                      className="w-full text-xs p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
                     <button 
                       onClick={() => handleRecover(payment.id)}
-                      className="px-3 py-1.5 bg-[#0F2843] text-white text-xs font-bold rounded"
+                      className="px-3 py-1.5 bg-[#0F2843] text-white text-xs font-bold rounded-lg hover:opacity-90 transition-all"
                     >
                       Confirm Recovery
                     </button>
                     <button 
                       onClick={() => { setRecoveringId(null); setError(null); }}
-                      className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-bold rounded"
+                      className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-300 transition-all"
                     >
                       Cancel
                     </button>
@@ -122,7 +173,13 @@ export default function StudentPaymentsRecovery({ studentEmail, studentId, API_B
                 </div>
               ) : (
                 <button 
-                  onClick={() => { setRecoveringId(payment.id); setGatewayRef(payment.gateway_reference || ""); setReason(""); setError(null); }}
+                  onClick={() => {
+                    setRecoveringId(payment.id);
+                    setGatewayRef(payment.gateway_reference || "");
+                    setReason("");
+                    setError(null);
+                    setPaidAt(toDatetimeLocal(payment.paid_at || payment.meta?.bank_transfer?.claimed_paid_at || payment.created_at || new Date()));
+                  }}
                   className="text-[11px] font-black uppercase text-[#BB9E7F] hover:text-[#0F2843] transition-colors flex items-center gap-1"
                 >
                   <Icon icon="heroicons:arrow-path" className="w-3.5 h-3.5" />

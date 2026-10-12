@@ -63,9 +63,12 @@ export default function StudentPaymentDisplay() {
   const location = useLocation();
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get("action") === "add") {
+    const action = params.get("action");
+    if (action === "add") {
       setActiveView("add");
-      // Clean up the URL after reading it
+      window.history.replaceState({}, '', '/student/payments');
+    } else if (action === "renew" || action === "retry") {
+      setActiveView("renew");
       window.history.replaceState({}, '', '/student/payments');
     }
   }, [location.search]);
@@ -401,9 +404,18 @@ export default function StudentPaymentDisplay() {
                 );
                 
                 const displayTitle = payment.course?.title || payment.course_title || payment.course_name || relatedCourse?.course?.title || payment.name || `Payment #${payment.id}`;
-                const isCancelled = payment.status === 'cancelled' || payment.status === 'removed';
+                const isRejected = payment.status === 'failed' || 
+                                   payment.meta?.bank_transfer?.review?.action === 'rejected' ||
+                                   payment.meta?.review?.action === 'rejected';
+                const isCancelled = payment.status === 'cancelled' || payment.status === 'removed' || isRejected;
                 const isSuccessful = payment.status === 'successful' || payment.status === 'paid';
                 const isPending = !isSuccessful && !isCancelled;
+
+                const rejectionReason = payment.meta?.bank_transfer?.review?.reason || 
+                                        payment.meta?.review?.reason || 
+                                        payment.termination_reason || 
+                                        payment.reason ||
+                                        (isRejected ? 'Rejected by admin' : isCancelled ? 'Payment cancelled' : null);
 
                 const startDate = payment.start_date || payment.paid_at || payment.created_at;
                 const computedExpiry = calculateExpiryDate(startDate, payment.billing_cycle);
@@ -460,7 +472,12 @@ export default function StudentPaymentDisplay() {
                             Paid
                           </span>
                         )}
-                        {isCancelled && (
+                        {isRejected && (
+                          <span className="px-3 py-1.5 bg-red-500/10 text-red-600 dark:text-red-400 rounded-full text-[9px] font-black uppercase tracking-wider border border-red-500/20">
+                            Rejected
+                          </span>
+                        )}
+                        {!isRejected && isCancelled && (
                           <span className="px-3 py-1.5 bg-red-500/10 text-red-600 dark:text-red-400 rounded-full text-[9px] font-black uppercase tracking-wider border border-red-500/20">
                             Cancelled
                           </span>
@@ -472,11 +489,20 @@ export default function StudentPaymentDisplay() {
                         )}
                       </div>
 
-                      {/* Expiry */}
+                      {/* Expiry / Reason */}
                       <div className="col-span-2 text-right">
-                        <span className={`text-[11px] font-bold ${isCancelled ? 'text-red-400 line-through' : 'text-gray-500 dark:text-gray-400'}`}>
-                          {isCancelled ? 'Expired' : expiryDisplay}
-                        </span>
+                        {isCancelled ? (
+                          <span 
+                            className="text-[11px] font-bold text-rose-500 dark:text-rose-400 truncate block max-w-[150px] ml-auto cursor-help"
+                            title={rejectionReason || (isRejected ? "Rejected by administrator" : "Payment was cancelled")}
+                          >
+                            {rejectionReason ? (rejectionReason.length > 22 ? `${rejectionReason.slice(0, 20)}...` : rejectionReason) : (isRejected ? "Rejected" : "Cancelled")}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400">
+                            {expiryDisplay}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -508,13 +534,21 @@ export default function StudentPaymentDisplay() {
                         {isSuccessful && (
                           <span className="px-2.5 py-1 bg-green-500/10 text-green-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-green-500/20 block mb-1">Paid</span>
                         )}
-                        {isCancelled && (
+                        {isRejected && (
+                          <span className="px-2.5 py-1 bg-red-500/10 text-red-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-red-500/20 block mb-1">Rejected</span>
+                        )}
+                        {!isRejected && isCancelled && (
                           <span className="px-2.5 py-1 bg-red-500/10 text-red-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-red-500/20 block mb-1">Cancelled</span>
                         )}
                         {isPending && (
                           <span className="px-2.5 py-1 bg-yellow-500/10 text-yellow-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-yellow-500/20 block mb-1">Pending</span>
                         )}
-                        <span className="text-[10px] text-gray-400 font-bold">{isCancelled ? 'Expired' : expiryDisplay}</span>
+                        <span 
+                          className={`text-[10px] font-bold block max-w-[120px] truncate ${isCancelled ? 'text-rose-500 dark:text-rose-400' : 'text-gray-400'}`} 
+                          title={isCancelled ? (rejectionReason || (isRejected ? 'Rejected by administrator' : 'Payment was cancelled')) : undefined}
+                        >
+                          {isCancelled ? (rejectionReason ? (rejectionReason.length > 18 ? `${rejectionReason.slice(0, 16)}...` : rejectionReason) : (isRejected ? 'Rejected' : 'Cancelled')) : expiryDisplay}
+                        </span>
                       </div>
                     </div>
                   </div>

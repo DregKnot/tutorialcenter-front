@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 export default function AdminSurveyAnalytics() {
-  const { staffToken } = useStaffAuth();
+  const { token, staffToken } = useStaffAuth() || {};
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -35,33 +35,66 @@ export default function AdminSurveyAnalytics() {
     "http://tutorialcenter-back.test" ||
     "http://localhost:8000";
 
-  const fetchSummary = useCallback(async () => {
+  const fetchSummary = useCallback(async (tokenOverride) => {
+    const effectiveToken =
+      tokenOverride ||
+      token ||
+      staffToken ||
+      localStorage.getItem("staff_token");
+
+    if (!effectiveToken) {
+      setLoading(false);
+      setError("Please log in to view survey analytics.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
       const res = await axios.get(`${API_BASE_URL}/api/admin/surveys/summary`, {
-        headers: { Authorization: `Bearer ${staffToken}` },
+        headers: { Authorization: `Bearer ${effectiveToken}` },
       });
       setData(res.data?.data || null);
     } catch (err) {
       console.error("Failed to load survey summary", err);
-      setError("Failed to load survey analytics. Please verify permissions.");
+      setError(
+        err.response?.data?.message ||
+        "Failed to load survey analytics. Please verify permissions."
+      );
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, staffToken]);
+  }, [API_BASE_URL, token, staffToken]);
 
   useEffect(() => {
-    if (staffToken) {
-      fetchSummary();
+    const effectiveToken =
+      token ||
+      staffToken ||
+      localStorage.getItem("staff_token");
+
+    if (effectiveToken) {
+      fetchSummary(effectiveToken);
+    } else {
+      setLoading(false);
+      setError("Please log in to view survey analytics.");
     }
-  }, [staffToken, fetchSummary]);
+  }, [token, staffToken, fetchSummary]);
 
   const handleExportCSV = async () => {
+    const effectiveToken =
+      token ||
+      staffToken ||
+      localStorage.getItem("staff_token");
+
+    if (!effectiveToken) {
+      alert("Authentication token not found.");
+      return;
+    }
+
     setExporting(true);
     try {
       const response = await axios.get(`${API_BASE_URL}/api/admin/surveys/export`, {
-        headers: { Authorization: `Bearer ${staffToken}` },
+        headers: { Authorization: `Bearer ${effectiveToken}` },
         responseType: "blob",
       });
 
@@ -84,10 +117,17 @@ export default function AdminSurveyAnalytics() {
   };
 
   const openSurveyDetails = async (id) => {
+    const effectiveToken =
+      token ||
+      staffToken ||
+      localStorage.getItem("staff_token");
+
+    if (!effectiveToken) return;
+
     setLoadingDetail(true);
     try {
       const res = await axios.get(`${API_BASE_URL}/api/admin/surveys/${id}`, {
-        headers: { Authorization: `Bearer ${staffToken}` },
+        headers: { Authorization: `Bearer ${effectiveToken}` },
       });
       setActiveModalSurvey(res.data?.data || null);
     } catch (err) {

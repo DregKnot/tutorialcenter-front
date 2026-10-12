@@ -1508,11 +1508,31 @@ export default function AdminPaymentHistory() {
                   <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
                     selectedPayment.status?.toLowerCase() === "successful"
                       ? "bg-emerald-100 text-emerald-800"
+                      : ["failed", "cancelled", "refunded"].includes(selectedPayment.status?.toLowerCase())
+                      ? "bg-rose-100 text-rose-800"
                       : "bg-amber-100 text-amber-800"
                   }`}>
                     {selectedPayment.status || "Pending"}
                   </span>
                 </div>
+
+                {/* Rejection / Cancellation Reason Banner */}
+                {["failed", "cancelled"].includes(selectedPayment.status?.toLowerCase()) && (
+                  <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 flex items-start gap-3">
+                    <ExclamationTriangleIcon className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-black text-rose-900 dark:text-rose-200 uppercase tracking-wider text-[10px] block">
+                        {selectedPayment.status?.toLowerCase() === "failed" ? "Rejection Reason / Audit Note" : "Cancellation Reason"}
+                      </span>
+                      <p className="text-xs text-rose-700 dark:text-rose-300 font-semibold mt-0.5">
+                        {selectedPayment.meta?.bank_transfer?.review?.reason ||
+                         selectedPayment.meta?.review?.reason ||
+                         selectedPayment.termination_reason ||
+                         "Transaction was cancelled or rejected by administrator."}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Student Profile Block */}
                 <div className="space-y-2">

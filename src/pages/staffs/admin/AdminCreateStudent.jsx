@@ -265,17 +265,57 @@ function VerificationModal({ student, onClose, onVerified }) {
 }
 
 /* ======================================================
+   HELPER: FORMAT DATE FOR DATETIME-LOCAL INPUT
+====================================================== */
+function toDatetimeLocal(dateInput) {
+  if (!dateInput) return "";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+/* ======================================================
    RECOVERY CONFIRMATION MODAL
 ====================================================== */
 function RecoveryModal({ payment, onClose, onConfirm, loading }) {
   const [reason, setReason] = useState("");
   const [gwRef, setGwRef] = useState(payment?.gateway_reference || "");
 
+  // Initial student payment date & time (default to payment claimed time, paid_at, or creation time)
+  const initialPaidAt = useMemo(() => {
+    const raw =
+      payment?.paid_at ||
+      payment?.meta?.bank_transfer?.claimed_paid_at ||
+      payment?.created_at;
+    return raw ? toDatetimeLocal(raw) : toDatetimeLocal(new Date());
+  }, [payment]);
+
+  const [paidAt, setPaidAt] = useState(initialPaidAt);
+  const [accessStart, setAccessStart] = useState("today"); // "today" | "payment_date"
+
+  // Current verification timestamp (when staff saw/verified it)
+  const nowDisplay = useMemo(() => {
+    return new Date().toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, []);
+
+  const studentName = `${payment?.student?.firstname || ""} ${payment?.student?.surname || ""}`.trim() || "Student";
+  const courseName = payment?.enrollment?.course?.course_name || "Enrolled Course";
+  const amountFormatted = parseFloat(payment?.amount || 0).toLocaleString();
+
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#09314F] to-[#0F4068]">
+        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#09314F] to-[#0F4068] flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
@@ -286,8 +326,7 @@ function RecoveryModal({ payment, onClose, onConfirm, loading }) {
                   Confirm Registration Recovery
                 </h3>
                 <p className="text-white/60 text-xs font-medium mt-0.5">
-                  Payment #{payment?.id} —{" "}
-                  {payment?.student?.firstname} {payment?.student?.surname}
+                  Payment #{payment?.id} — {studentName}
                 </p>
               </div>
             </div>
@@ -300,27 +339,128 @@ function RecoveryModal({ payment, onClose, onConfirm, loading }) {
           </div>
         </div>
 
-        <div className="p-6 space-y-5">
+        {/* Scrollable Content */}
+        <div className="p-6 space-y-5 overflow-y-auto">
           {/* Warning */}
           <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-4 border border-amber-100 dark:border-amber-900/40 flex items-start gap-3">
             <ExclamationTriangleIcon className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs font-bold text-amber-700 dark:text-amber-300 leading-relaxed">
-              This action will mark the payment as <strong>successful</strong>{" "}
-              and activate the student's enrollment. Ensure payment was confirmed
-              on the gateway dashboard before proceeding.
+              This action will mark the payment as <strong>successful</strong> and activate the student's enrollment in <strong>{courseName}</strong>. Ensure payment was confirmed on the gateway dashboard or bank statement before proceeding.
+            </p>
+          </div>
+
+          {/* Quick Info Grid */}
+          <div className="grid grid-cols-3 gap-2 p-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl border border-gray-100 dark:border-gray-800 text-center">
+            <div>
+              <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">Amount</span>
+              <span className="text-xs font-black text-[#09314F] dark:text-white">₦{amountFormatted}</span>
+            </div>
+            <div>
+              <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">Method</span>
+              <span className="text-xs font-black capitalize text-purple-600 dark:text-purple-400">
+                {payment?.payment_method?.replace("_", " ") || "Online"}
+              </span>
+            </div>
+            <div>
+              <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">Initiated</span>
+              <span className="text-xs font-bold text-gray-600 dark:text-gray-300">
+                {payment?.created_at ? new Date(payment.created_at).toLocaleDateString() : "N/A"}
+              </span>
+            </div>
+          </div>
+
+          {/* AUDIT & TIMESTAMPS: PAYMENT TIME VS VERIFICATION TIME */}
+          <div className="space-y-3 p-4 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-100 dark:border-blue-900/40">
+            <div className="flex items-center gap-2 mb-1">
+              <ClockIcon className="w-4 h-4 text-[#09314F] dark:text-[#C5A97A]" />
+              <h4 className="text-xs font-black uppercase tracking-wider text-[#09314F] dark:text-[#C5A97A]">
+                Audit Timestamps (Payment Time vs. Verification Time)
+              </h4>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Actual Payment Date/Time (When student paid) */}
+              <div>
+                <label className="block text-[10px] font-black text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-1">
+                  1. When Student Paid <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={paidAt}
+                  onChange={(e) => setPaidAt(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#06243A] py-2.5 px-3 text-xs font-bold text-gray-800 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all"
+                />
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 leading-tight">
+                  Timestamp from student's bank alert or payment gateway receipt.
+                </p>
+              </div>
+
+              {/* Verification Time (When staff verified) */}
+              <div>
+                <label className="block text-[10px] font-black text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-1">
+                  2. When We Verified It
+                </label>
+                <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-[#06243A]/70 py-2.5 px-3 flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    {nowDisplay}
+                  </span>
+                  <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
+                    Current Audit
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 leading-tight">
+                  Permanent log of when staff reviewed and recovered this student.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Access Start Option */}
+          <div className="bg-gray-50 dark:bg-[#06243A] p-3.5 rounded-2xl border border-gray-100 dark:border-gray-800">
+            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+              Course Access Validity Starts From
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setAccessStart("today")}
+                className={`py-2 px-3 rounded-xl text-xs font-bold text-center transition-all ${
+                  accessStart === "today"
+                    ? "bg-[#09314F] text-white shadow-sm"
+                    : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Today (Recommended)
+              </button>
+              <button
+                type="button"
+                onClick={() => setAccessStart("payment_date")}
+                className={`py-2 px-3 rounded-xl text-xs font-bold text-center transition-all ${
+                  accessStart === "payment_date"
+                    ? "bg-[#09314F] text-white shadow-sm"
+                    : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Payment Date (Backdated)
+              </button>
+            </div>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1.5 leading-tight">
+              {accessStart === "today"
+                ? "Student gets their full duration starting today so they do not lose learning time while waiting for verification."
+                : "Course duration will expire calculated from the original student payment date."}
             </p>
           </div>
 
           {/* Gateway Ref */}
           <div>
             <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
-              Gateway Reference
+              Gateway / Bank Reference <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               value={gwRef}
               onChange={(e) => setGwRef(e.target.value)}
-              placeholder="e.g. PAYSTACK-REF-12345"
+              placeholder="e.g. PAYSTACK-REF-12345 or Bank Transfer Ref"
               className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all"
             />
           </div>
@@ -328,46 +468,48 @@ function RecoveryModal({ payment, onClose, onConfirm, loading }) {
           {/* Reason */}
           <div>
             <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
-              Recovery Reason <span className="text-red-400">*</span>
+              Recovery Reason / Verification Note <span className="text-red-400">*</span>
             </label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              rows={3}
-              placeholder="e.g. Student reported a failed registration and the payment was confirmed on the Paystack dashboard."
-              className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all resize-none"
+              rows={2}
+              placeholder="e.g. Verified student credit on Paystack/Bank statement. Payment completed on specified date."
+              className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all resize-none"
             />
           </div>
+        </div>
 
-          {/* Buttons */}
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 py-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-black text-xs uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() =>
-                onConfirm({
-                  payment_id: payment.id,
-                  gateway_reference: gwRef.trim(),
-                  reason: reason.trim(),
-                })
-              }
-              disabled={loading || !reason.trim()}
-              className={`flex-1 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                loading || !reason.trim()
-                  ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
-                  : "bg-gradient-to-r from-[#09314F] to-[#E83831] text-white hover:opacity-90 active:scale-[0.98] shadow-lg"
-              }`}
-            >
-              {loading && (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              )}
-              {loading ? "Recovering..." : "Recover Registration"}
-            </button>
-          </div>
+        {/* Footer Buttons */}
+        <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#09314F]/20 flex gap-3 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3.5 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-black text-xs uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() =>
+              onConfirm({
+                payment_id: payment.id,
+                gateway_reference: gwRef.trim(),
+                reason: reason.trim(),
+                paid_at: paidAt ? new Date(paidAt).toISOString() : null,
+                access_start: accessStart,
+              })
+            }
+            disabled={loading || !reason.trim() || !gwRef.trim()}
+            className={`flex-1 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+              loading || !reason.trim() || !gwRef.trim()
+                ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-[#09314F] to-[#E83831] text-white hover:opacity-90 active:scale-[0.98] shadow-lg"
+            }`}
+          >
+            {loading && (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            )}
+            {loading ? "Recovering..." : "Confirm & Recover"}
+          </button>
         </div>
       </div>
     </div>
@@ -873,27 +1015,36 @@ export default function AdminCreateStudent() {
         const payments = res.data?.payments || [];
         const incompleteStudentsFromApi = res.data?.incomplete_students || [];
 
-        // Normalize results into tagged items
+        // Normalize results into tagged items, excluding payments rejected or cancelled by staff
         let results = [
-          ...payments.map((p) => {
-            const hasCompleteEnrollment =
-              p.enrollment &&
-              p.enrollment.course &&
-              Array.isArray(p.enrollment.subjects) &&
-              p.enrollment.subjects.length > 0;
+          ...payments
+            .filter((p) => {
+              if (p.payment_method === "bank_transfer") {
+                if (["failed", "cancelled", "refunded"].includes(p.status?.toLowerCase())) return false;
+                const revAction = p.meta?.bank_transfer?.review?.action || p.meta?.review?.action;
+                if (revAction === "rejected" || revAction === "superseded") return false;
+              }
+              return !["cancelled", "refunded"].includes(p.status?.toLowerCase());
+            })
+            .map((p) => {
+              const hasCompleteEnrollment =
+                p.enrollment &&
+                p.enrollment.course &&
+                Array.isArray(p.enrollment.subjects) &&
+                p.enrollment.subjects.length > 0;
 
-            return {
-              recordType: hasCompleteEnrollment ? "recoverable_payment" : "payment_missing_enrollment",
-              id: `pay-${p.id}`,
-              student: p.student,
-              enrollment: p.enrollment,
-              amount: p.amount,
-              status: p.status,
-              gateway_reference: p.gateway_reference,
-              created_at: p.created_at,
-              rawPayment: p,
-            };
-          }),
+              return {
+                recordType: hasCompleteEnrollment ? "recoverable_payment" : "payment_missing_enrollment",
+                id: `pay-${p.id}`,
+                student: p.student,
+                enrollment: p.enrollment,
+                amount: p.amount,
+                status: p.status,
+                gateway_reference: p.gateway_reference,
+                created_at: p.created_at,
+                rawPayment: p,
+              };
+            }),
           ...incompleteStudentsFromApi.map((s) => ({
             recordType: "incomplete_registration",
             id: `stud-${s.id}`,
@@ -997,10 +1148,21 @@ export default function AdminCreateStudent() {
     };
   }, [searchResults]);
 
-  const handleRecoveryConfirm = async ({ payment_id, gateway_reference, reason }) => {
+  const handleRecoveryConfirm = async ({
+    payment_id,
+    gateway_reference,
+    reason,
+    paid_at,
+    access_start,
+  }) => {
     setRecovering(true);
     const endpoint = `${API_BASE_URL}/api/admin/payments/${payment_id}/registration-recovery`;
-    const payload = { gateway_reference, reason };
+    const payload = {
+      gateway_reference,
+      reason,
+      paid_at,
+      access_start,
+    };
     console.log(`[AdminCreateStudent] [POST] Executing Registration Recovery -> ${endpoint}`, payload);
 
     try {

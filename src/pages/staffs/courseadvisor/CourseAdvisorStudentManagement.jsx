@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import AdminStudentViewModal from "../../../components/private/staffs/AdminStudentViewModal.jsx";
 import axios from "axios";
@@ -12,10 +13,16 @@ import {
   EyeIcon,
   AdjustmentsHorizontalIcon,
   ChevronDownIcon,
-  UserPlusIcon
+  UserPlusIcon,
+  XMarkIcon
 } from "@heroicons/react/24/outline";
 
 export default function CourseAdvisorStudentManagement() {
+  const location = useLocation();
+
+  const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const initialAssignedFilter = queryParams.get("filter") === "assigned";
+
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [students, setStudents] = useState([]);
@@ -23,6 +30,22 @@ export default function CourseAdvisorStudentManagement() {
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("All");
+  const [isAssignedOnly, setIsAssignedOnly] = useState(initialAssignedFilter);
+
+  // Extract logged-in staff information
+  const storedStaff = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("staff_info")) || {};
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const currentStaffId = storedStaff.id;
+  const currentStaffDisplayId = storedStaff.staff_id; // e.g. "TC26070009"
+  const advisorName = (storedStaff.firstname && storedStaff.surname)
+    ? `${storedStaff.firstname} ${storedStaff.surname}`.trim()
+    : storedStaff.name || "Advisor";
 
   const [stats, setStats] = useState([
     { 
@@ -65,6 +88,17 @@ export default function CourseAdvisorStudentManagement() {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
+
+  // Check if a student is assigned to the currently logged in advisor
+  const isStudentAssignedToMe = useCallback((student) => {
+    if (!student || !student.advisors || !Array.isArray(student.advisors)) return false;
+    return student.advisors.some(adv => {
+      if (currentStaffId && Number(adv.id) === Number(currentStaffId)) return true;
+      if (currentStaffDisplayId && adv.staff_id === currentStaffDisplayId) return true;
+      if (storedStaff.email && adv.email && adv.email.toLowerCase() === storedStaff.email.toLowerCase()) return true;
+      return false;
+    });
+  }, [currentStaffId, currentStaffDisplayId, storedStaff.email]);
 
   const getLatestCourse = useCallback((student) => {
     const payments = student.payments || [];
@@ -144,28 +178,73 @@ export default function CourseAdvisorStudentManagement() {
     return { label: "Inactive", badgeClass: "text-gray-500" };
   }, [isStudentSuspended, isStudentActive]);
 
-  const calculateStats = useCallback((allStudents) => {
+  // Count assigned students
+  const assignedCount = useMemo(() => {
+    return students.filter(s => isStudentAssignedToMe(s)).length;
+  }, [students, isStudentAssignedToMe]);
+
+  const calculateStats = useCallback((allStudents, assignedOnly = false) => {
+    const targetPool = assignedOnly 
+      ? allStudents.filter(s => isStudentAssignedToMe(s)) 
+      : allStudents;
+
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    const newStudentsThisMonth = allStudents.filter(s => {
+    const newStudentsThisMonth = targetPool.filter(s => {
       if (!s.created_at) return false;
       const date = new Date(s.created_at);
       return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
     });
 
-    const suspendedCount = allStudents.filter(s => isStudentSuspended(s)).length;
-    const activeCount = allStudents.filter(s => isStudentActive(s) && !isStudentSuspended(s)).length;
-    const inactiveCount = allStudents.filter(s => !isStudentActive(s) && !isStudentSuspended(s)).length;
+    const suspendedCount = targetPool.filter(s => isStudentSuspended(s)).length;
+    const activeCount = targetPool.filter(s => isStudentActive(s) && !isStudentSuspended(s)).length;
+    const inactiveCount = targetPool.filter(s => !isStudentActive(s) && !isStudentSuspended(s)).length;
 
-    setStats(prev => [
-      { ...prev[0], value: allStudents.length, subLabel: `+${newStudentsThisMonth.length} new` },
-      { ...prev[1], value: activeCount, subLabel: "Active" }, 
-      { ...prev[2], value: inactiveCount, subLabel: "Inactive" },
-      { ...prev[3], value: suspendedCount, subLabel: `Suspended` },
+    const myAssignedCount = allStudents.filter(s => isStudentAssignedToMe(s)).length;
+
+    setStats([
+      { 
+        label: assignedOnly ? "Assigned Students" : "Total Students", 
+        value: targetPool.length, 
+        subLabel: assignedOnly 
+          ? `${targetPool.length} to you` 
+          : `+${newStudentsThisMonth.length} new • ${myAssignedCount} assigned`,
+        icon: UserGroupOutline, 
+        color: "text-[#0F2843]", 
+        bg: "bg-blue-50/50",
+        counterColor: "bg-white border-gray-100 text-gray-400"
+      },
+      { 
+        label: "Active Students", 
+        value: activeCount, 
+        subLabel: "Active",
+        icon: CheckCircleIcon, 
+        color: "text-[#22C55E]", 
+        bg: "bg-green-50/50",
+        counterColor: "bg-white border-green-100 text-[#22C55E]"
+      },
+      { 
+        label: "Inactive Students", 
+        value: inactiveCount, 
+        subLabel: "Inactive",
+        icon: UserGroupOutline, 
+        color: "text-[#EF4444]", 
+        bg: "bg-red-50/50",
+        counterColor: "bg-white border-red-100 text-[#EF4444]"
+      },
+      { 
+        label: "Suspended", 
+        value: suspendedCount, 
+        subLabel: "Suspended",
+        icon: NoSymbolIcon, 
+        color: "text-[#F59E0B]", 
+        bg: "bg-orange-50/50",
+        counterColor: "bg-white border-orange-100 text-[#F59E0B]"
+      },
     ]);
-  }, [isStudentActive, isStudentSuspended]);
+  }, [isStudentActive, isStudentSuspended, isStudentAssignedToMe]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -185,7 +264,6 @@ export default function CourseAdvisorStudentManagement() {
         })
       ]);
 
-      console.log("[CourseAdvisorStudentManagement] Fetch results:", studentsRes.data);
       const fetchedStudents = studentsRes.data?.students || studentsRes.data?.data || [];
       let studentsArray = Array.isArray(fetchedStudents) ? fetchedStudents : [];
       
@@ -214,18 +292,25 @@ export default function CourseAdvisorStudentManagement() {
       });
       
       setStudents(studentsArray);
-      calculateStats(studentsArray);
+      calculateStats(studentsArray, isAssignedOnly);
     } catch (error) {
       console.error("Failed to fetch students:", error);
       setStudents([]);
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, token, calculateStats]);
+  }, [API_BASE_URL, token, calculateStats, isAssignedOnly]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Recalculate stats when toggle changes
+  useEffect(() => {
+    if (students.length > 0) {
+      calculateStats(students, isAssignedOnly);
+    }
+  }, [isAssignedOnly, students, calculateStats]);
 
   const handleOpenModal = (studentId) => {
     setSelectedStudentId(studentId);
@@ -237,8 +322,12 @@ export default function CourseAdvisorStudentManagement() {
     setSelectedStudentId(null);
   };
 
-  // Filter students
+  // Filter students based on Assigned toggle, active status tab, and search query
   const filteredStudents = students.filter(student => {
+    if (isAssignedOnly && !isStudentAssignedToMe(student)) {
+      return false;
+    }
+
     const suspended = isStudentSuspended(student);
     const active = isStudentActive(student);
 
@@ -255,7 +344,10 @@ export default function CourseAdvisorStudentManagement() {
 
     const fullName = `${student.firstname || ''} ${student.surname || ''}`.toLowerCase();
     const query = searchQuery.toLowerCase();
-    return fullName.includes(query) || (student.email && student.email.toLowerCase().includes(query));
+    const enrollmentCode = (student.enrollment_code || '').toLowerCase();
+    return fullName.includes(query) || 
+      (student.email && student.email.toLowerCase().includes(query)) ||
+      enrollmentCode.includes(query);
   });
 
   // Pagination
@@ -308,8 +400,20 @@ export default function CourseAdvisorStudentManagement() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
            {/* Search and Filters */}
            <div className="flex items-center gap-4 w-full md:w-auto flex-1">
-              <button className="p-3.5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
-                 <AdjustmentsHorizontalIcon className="w-6 h-6 text-gray-600" />
+              <button 
+                onClick={() => {
+                  // Toggle assigned filter on icon click
+                  setIsAssignedOnly(prev => !prev);
+                  setCurrentPage(1);
+                }}
+                title={isAssignedOnly ? "Show All Students" : "Show Assigned Students"}
+                className={`p-3.5 rounded-2xl shadow-sm border transition-all ${
+                  isAssignedOnly
+                    ? "bg-[#09314F] text-[#BB9E7F] border-[#BB9E7F]/40"
+                    : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                }`}
+              >
+                 <AdjustmentsHorizontalIcon className="w-6 h-6" />
               </button>
               <div className="relative flex-1 max-w-lg">
                  <MagnifyingGlassIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -317,11 +421,40 @@ export default function CourseAdvisorStudentManagement() {
                    type="text" 
                    value={searchQuery}
                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                   placeholder="Search by name, email..." 
+                   placeholder={isAssignedOnly ? "Search your assigned advisees..." : "Search by name, email, code..."}
                    className="w-full pl-14 pr-6 py-4 bg-white dark:bg-gray-800 rounded-2xl border-none shadow-[0_4px_15px_rgba(0,0,0,0.02)] focus:ring-2 focus:ring-[#BB9E7F] text-sm font-medium text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-500" 
                  />
               </div>
            </div>
+
+           {/* ASSIGNED STUDENTS ACTION BUTTON (Mirrors the Admin "Create Student" button position) */}
+           <button
+             type="button"
+             onClick={() => {
+               setIsAssignedOnly(prev => !prev);
+               setCurrentPage(1);
+             }}
+             className={`flex items-center gap-2.5 px-5 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex-shrink-0 active:scale-[0.98] ${
+               isAssignedOnly
+                 ? "bg-gradient-to-r from-[#09314F] to-[#BB9E7F] text-white ring-2 ring-[#BB9E7F] shadow-[0_4px_20px_rgba(187,158,127,0.35)]"
+                 : "bg-gradient-to-r from-[#09314F] to-[#BB9E7F] text-white hover:opacity-95"
+             }`}
+           >
+             <UserGroupOutline className={`w-5 h-5 ${isAssignedOnly ? "text-[#BB9E7F]" : "text-white"}`} />
+             <span>Assigned Students</span>
+             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-normal transition-all ${
+               isAssignedOnly
+                 ? "bg-[#BB9E7F] text-white shadow-inner"
+                 : "bg-white/20 text-white"
+             }`}>
+               {assignedCount}
+             </span>
+             {isAssignedOnly && (
+               <span className="text-[10px] lowercase tracking-normal text-[#BB9E7F] bg-white/10 px-1.5 py-0.5 rounded-md font-semibold hidden lg:inline">
+                 active
+               </span>
+             )}
+           </button>
 
            {/* Simple pagination arrows */}
            <div className="flex items-center gap-3">
@@ -341,6 +474,36 @@ export default function CourseAdvisorStudentManagement() {
               </button>
            </div>
         </div>
+
+        {/* ACTIVE FILTER NOTICE BANNER */}
+        {isAssignedOnly && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-[#BB9E7F]/10 dark:bg-[#BB9E7F]/15 border border-[#BB9E7F]/30 rounded-2xl animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#09314F] text-[#BB9E7F] flex items-center justify-center font-black shadow-sm shrink-0">
+                <UserGroupOutline className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-black text-[#0F2843] dark:text-white uppercase tracking-wider">
+                  Viewing Advisees Assigned to You ({advisorName})
+                </p>
+                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                  Showing {filteredStudents.length} of {assignedCount} assigned student{assignedCount === 1 ? '' : 's'} matching current filters
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAssignedOnly(false);
+                setCurrentPage(1);
+              }}
+              className="text-xs font-bold text-[#09314F] dark:text-[#BB9E7F] hover:underline px-3 py-1.5 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 transition-all flex items-center gap-1.5 self-end sm:self-auto"
+            >
+              <XMarkIcon className="w-3.5 h-3.5" />
+              <span>Show All Students</span>
+            </button>
+          </div>
+        )}
 
         {/* Students Table Section */}
         <div className="space-y-4">
@@ -376,12 +539,14 @@ export default function CourseAdvisorStudentManagement() {
                     ? `${student.firstname} ${student.surname}`.trim() 
                     : student.username || "Unknown Student";
 
+                  const isAssignedToMe = isStudentAssignedToMe(student);
+
                   return (
                   <div 
                     key={student.id || idx} 
                     className={`grid grid-cols-6 items-center bg-white dark:bg-gray-800 px-8 py-5 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-gray-50 dark:border-gray-700 hover:shadow-xl transition-all cursor-pointer group animate-in fade-in slide-in-from-bottom-2 ${isSuspended ? "opacity-60 grayscale-[0.5]" : ""}`}
                   >
-                     {/* Name Column with Avatar */}
+                     {/* Name Column with Avatar & Assigned Badge */}
                      <div className="flex items-center gap-4 col-span-1">
                         <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#BB9E7F]/30 group-hover:border-[#BB9E7F] transition-all bg-gray-100 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
                            {student.profile_picture ? (
@@ -396,7 +561,15 @@ export default function CourseAdvisorStudentManagement() {
                              </span>
                            )}
                         </div>
-                        <span className="font-black text-[#0F2843] dark:text-white text-sm truncate">{displayName}</span>
+                        <div className="flex flex-col min-w-0">
+                           <span className="font-black text-[#0F2843] dark:text-white text-sm truncate">{displayName}</span>
+                           {isAssignedToMe && (
+                             <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-300 mt-0.5">
+                               <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                               Assigned to You
+                             </span>
+                           )}
+                        </div>
                      </div>
                      
                      {/* Data Columns */}
@@ -424,6 +597,7 @@ export default function CourseAdvisorStudentManagement() {
                      <div className="text-center">
                         <button 
                           onClick={() => handleOpenModal(student.id)}
+                          title="View Profile Details"
                           className="p-2.5 bg-gray-50 dark:bg-gray-700 text-gray-400 hover:text-[#0F2843] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-600 rounded-xl transition-all active:scale-95"
                         >
                            <EyeIcon className="w-5 h-5" />
@@ -433,15 +607,33 @@ export default function CourseAdvisorStudentManagement() {
                   </div>
                 )})
               ) : (
-                /* Awaiting Content Placeholder */
+                /* Empty Placeholder */
                 <div className="flex-1 flex flex-col items-center justify-center bg-white/40 dark:bg-gray-800/40 rounded-[32px] border-2 border-dashed border-gray-200 dark:border-gray-700 p-12">
                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-6">
                       <UserPlusIcon className="w-10 h-10 text-gray-300" />
                    </div>
-                   <h3 className="text-2xl font-black text-gray-400 mb-2">No Students Found</h3>
-                   <p className="text-gray-400 text-sm font-medium text-center max-w-sm leading-relaxed">
-                      {searchQuery ? `No student matches "${searchQuery}". Try a different search.` : "No students are currently registered in the system."}
+                   <h3 className="text-2xl font-black text-gray-500 dark:text-gray-300 mb-2">
+                     {isAssignedOnly ? "No Assigned Students Found" : "No Students Found"}
+                   </h3>
+                   <p className="text-gray-400 text-sm font-medium text-center max-w-sm leading-relaxed mb-4">
+                      {searchQuery 
+                        ? `No student matches "${searchQuery}". Try a different search.` 
+                        : isAssignedOnly
+                          ? "You currently have no students assigned to you by administrators."
+                          : "No students are currently registered in the system."}
                    </p>
+                   {isAssignedOnly && (
+                     <button
+                       type="button"
+                       onClick={() => {
+                         setIsAssignedOnly(false);
+                         setSearchQuery("");
+                       }}
+                       className="px-5 py-2.5 bg-[#09314F] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+                     >
+                       Show All Students
+                     </button>
+                   )}
                 </div>
               )}
            </div>
