@@ -173,6 +173,7 @@ export function StaffAuthProvider({ children }) {
     <StaffAuthContext.Provider
       value={{
         token,
+        staffToken: token,
         staff,
         role,
         login,
