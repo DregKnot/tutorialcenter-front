@@ -11,6 +11,7 @@ export default function StaffMeetWrapper() {
   const navigate = useNavigate();
   
   const [sessionDetails, setSessionDetails] = useState(null);
+  const [meetingRole, setMeetingRole] = useState(null);
   const staffToken = localStorage.getItem("staff_token");
   const { setIsClassActive } = useStaffAuth();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
@@ -110,12 +111,19 @@ export default function StaffMeetWrapper() {
   };
 
   const isZoom = sessionDetails?.class_link?.includes("zoom.us") || sessionDetails?.class_link?.includes("zoom");
+  const pagetitle = isZoom
+    ? (meetingRole?.isHost ? "Live Zoom Class (Host)" : "Live Zoom Class (Participant)")
+    : "Live Class Session";
 
   return (
-    <StaffDashboardLayout pagetitle={isZoom ? "Live Zoom Class (Host)" : "Live Class Session"}>
+    <StaffDashboardLayout pagetitle={pagetitle}>
       {isZoom ? (
         <div className="py-6 max-w-5xl mx-auto">
-          <ZoomMeetingSession classSessionId={sessionDetails.class_schedule_id} onLeave={handleLeave} />
+          <ZoomMeetingSession 
+            classSessionId={sessionDetails.class_schedule_id} 
+            onLeave={handleLeave} 
+            onRoleResolved={setMeetingRole}
+          />
         </div>
       ) : (
         <div className="flex items-center justify-center min-h-[60vh]">

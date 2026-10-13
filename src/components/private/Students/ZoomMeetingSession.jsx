@@ -3,7 +3,7 @@ import axios from "axios";
 import { Icon } from "@iconify/react";
 import { isAdvisorStaff, isTutorStaff } from "../../../utils/roleUtils";
 
-const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
+const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave, onRoleResolved }, ref) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
@@ -153,6 +153,14 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave }, ref) => {
                 const data = response.data;
                 if (!data.success) {
                     throw new Error(data.message || "Failed to fetch Zoom credentials.");
+                }
+
+                if (onRoleResolved) {
+                    onRoleResolved({
+                        role: data.role,
+                        isHost: data.is_host ?? (data.role === 1),
+                        activeHostStaffId: data.active_host_staff_id,
+                    });
                 }
 
                 // If Google Meet or direct external link is returned
