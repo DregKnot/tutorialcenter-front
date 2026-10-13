@@ -1045,250 +1045,433 @@ export default function ExamInterface({
 
       {/* Congratulations / Exam Finished Modal Overlay */}
       {examFinished && (
-        <div className="fixed inset-0 z-[2500] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-500">
-          <div className="bg-white dark:bg-[#09314F] rounded-[32px] border border-[#C5A97A]/30 p-8 shadow-2xl text-center max-w-3xl w-full relative overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-green-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
+        <div className="fixed inset-0 z-[2500] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 md:p-8 animate-in fade-in duration-300 overflow-y-auto">
+          <div
+            className={`bg-white dark:bg-[#09314F] rounded-[28px] sm:rounded-[36px] border border-[#C5A97A]/35 shadow-2xl relative w-full ${
+              showFeedback
+                ? "max-w-xl"
+                : isJambAttempt
+                ? "max-w-4xl lg:max-w-5xl"
+                : "max-w-xl sm:max-w-2xl"
+            } max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200`}
+          >
+            <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-bl from-[#C5A97A]/15 to-transparent rounded-bl-full pointer-events-none" />
 
-            {showFeedback ? (
-              <div className="text-left">
-                <Icon icon="mdi:message-star-outline" className="w-16 h-16 text-[#C5A97A] mx-auto mb-4" />
-                <h2 className="text-2xl font-black text-[#09314F] dark:text-white text-center tracking-tight mb-2">
-                  How was the practice?
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
-                  Before you see your score, let us know how you felt about this exam.
-                </p>
+            <div className="overflow-y-auto p-5 sm:p-7 md:p-8 custom-scrollbar flex-1 flex flex-col justify-between">
+              {showFeedback ? (
+                <div className="text-left">
+                  <Icon icon="mdi:message-star-outline" className="w-14 h-14 text-[#C5A97A] mx-auto mb-3" />
+                  <h2 className="text-2xl font-black text-[#09314F] dark:text-white text-center tracking-tight mb-2">
+                    How was the practice?
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
+                    Before you see your score, let us know how you felt about this exam.
+                  </p>
 
-                {feedbackError && (
-                  <div className="bg-red-50 text-red-500 p-3 rounded-xl border border-red-100 mb-4 text-sm font-medium">
-                    {feedbackError}
+                  {feedbackError && (
+                    <div className="bg-red-50 text-red-500 p-3 rounded-xl border border-red-100 mb-4 text-sm font-medium">
+                      {feedbackError}
+                    </div>
+                  )}
+
+                  <div className="mb-6 flex flex-col items-center">
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setRating(star)}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          className="transition-transform hover:scale-110 focus:outline-none"
+                        >
+                          <Icon
+                            icon={(hoverRating || rating) >= star ? "mdi:star" : "mdi:star-outline"}
+                            className={`w-10 h-10 ${(hoverRating || rating) >= star ? "text-yellow-400" : "text-gray-300 dark:text-gray-600"}`}
+                          />
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                )}
 
-                <div className="mb-6 flex flex-col items-center">
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setRating(star)}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        className="transition-transform hover:scale-110 focus:outline-none"
-                      >
-                        <Icon
-                          icon={(hoverRating || rating) >= star ? "mdi:star" : "mdi:star-outline"}
-                          className={`w-10 h-10 ${(hoverRating || rating) >= star ? "text-yellow-400" : "text-gray-300 dark:text-gray-600"}`}
-                        />
-                      </button>
-                    ))}
+                  <div className="space-y-4 mb-8">
+                    <div>
+                      <label className="block text-sm font-bold text-[#09314F] dark:text-gray-300 mb-2">
+                        Title (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={feedbackTitle}
+                        onChange={(e) => setFeedbackTitle(e.target.value)}
+                        placeholder="E.g., Great questions, but a bit tough"
+                        className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-[#09314F] dark:text-white focus:ring-2 focus:ring-[#BB9E7F] transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-[#09314F] dark:text-gray-300 mb-2">
+                        Comment (Optional)
+                      </label>
+                      <textarea
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder="Tell us what you thought..."
+                        rows="3"
+                        className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-[#09314F] dark:text-white focus:ring-2 focus:ring-[#BB9E7F] transition-all resize-none"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <button
+                      onClick={() => setShowFeedback(false)}
+                      className="flex-1 py-4 border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 font-black text-xs uppercase tracking-widest rounded-2xl transition-all"
+                    >
+                      Skip
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (rating === 0) {
+                          setFeedbackError("Please select a star rating.");
+                          return;
+                        }
+                        setFeedbackLoading(true);
+                        setFeedbackError(null);
+                        try {
+                          const studentToken = localStorage.getItem("student_token");
+                          await axios.post(`${API_BASE_URL}/api/students/feedback`, {
+                            feedbackable_type: "exam_attempt",
+                            feedbackable_id: attemptId,
+                            rating,
+                            title: feedbackTitle,
+                            comment,
+                          }, {
+                            headers: { Authorization: `Bearer ${studentToken}` }
+                          });
+                          setFeedbackLoading(false);
+                          setShowFeedback(false);
+                        } catch (err) {
+                          setFeedbackLoading(false);
+                          setFeedbackError(err.response?.data?.message || err.message || "Failed to submit feedback.");
+                        }
+                      }}
+                      disabled={feedbackLoading}
+                      className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all disabled:opacity-50"
+                    >
+                      {feedbackLoading ? "Submitting..." : "Submit Feedback"}
+                    </button>
                   </div>
                 </div>
-
-                <div className="space-y-4 mb-8">
-                  <div>
-                    <label className="block text-sm font-bold text-[#09314F] dark:text-gray-300 mb-2">
-                      Title (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={feedbackTitle}
-                      onChange={(e) => setFeedbackTitle(e.target.value)}
-                      placeholder="E.g., Great questions, but a bit tough"
-                      className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-[#09314F] dark:text-white focus:ring-2 focus:ring-[#BB9E7F] transition-all"
-                    />
+              ) : isJambAttempt ? (
+                <div className="flex-1 flex flex-col justify-between">
+                  {/* Top Header */}
+                  <div className="text-center sm:text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 mb-5 border-b border-gray-100 dark:border-white/10">
+                    <div className="flex items-center gap-3 justify-center sm:justify-start">
+                      <div className="w-11 h-11 rounded-2xl bg-[#C5A97A]/15 border border-[#C5A97A]/30 flex items-center justify-center text-[#C5A97A] shrink-0">
+                        <Icon icon="lucide:award" className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl sm:text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight">
+                          JAMB UTME Practice Summary
+                        </h2>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Official 4-subject aggregate performance and scaled breakdown
+                        </p>
+                      </div>
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 self-center sm:self-auto px-3.5 py-1.5 rounded-full bg-gray-100 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] text-[11px] font-black uppercase tracking-wider">
+                      <span>Official Scale / 400</span>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-bold text-[#09314F] dark:text-gray-300 mb-2">
-                      Comment (Optional)
-                    </label>
-                    <textarea
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder="Tell us what you thought..."
-                      rows="3"
-                      className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-[#09314F] dark:text-white focus:ring-2 focus:ring-[#BB9E7F] transition-all resize-none"
-                    ></textarea>
+                  {/* 2-Column Body: Left (Compact Score & Aggregate) + Right (4-Subject Scaled Breakdown) */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6 items-stretch">
+                    {/* Left Column: Compact Aggregate Card */}
+                    <div className="md:col-span-5 bg-gradient-to-br from-[#06243A] via-[#09314F] to-[#0A3D63] border border-[#C5A97A]/30 rounded-3xl p-5 text-white flex flex-col items-center justify-between shadow-lg relative overflow-hidden">
+                      <div className="absolute -top-10 -left-10 w-28 h-28 bg-[#C5A97A]/15 rounded-full blur-xl pointer-events-none" />
+
+                      <div className="text-center w-full">
+                        <span className="text-[10px] font-black uppercase text-gray-300 tracking-widest block">
+                          Aggregate Standing
+                        </span>
+
+                        {/* Compact Gauge Chart */}
+                        <div className="relative w-36 h-36 mx-auto my-3 flex items-center justify-center">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle
+                              cx="72"
+                              cy="72"
+                              r="58"
+                              className="stroke-white/10 fill-transparent"
+                              strokeWidth="8"
+                            />
+                            <circle
+                              cx="72"
+                              cy="72"
+                              r="58"
+                              className="stroke-[#C5A97A] fill-transparent transition-all duration-1000 ease-out"
+                              strokeWidth="8"
+                              strokeDasharray={364}
+                              strokeDashoffset={364 - (364 * Math.min(percentage, 100)) / 100}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <div className="absolute flex flex-col items-center">
+                            <span className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none">
+                              {resultSummary?.jamb_score ?? resultSummary?.score ?? 0}
+                            </span>
+                            <span className="text-[9px] font-black uppercase text-[#C5A97A] tracking-widest mt-1">
+                              UTME AGGREGATE
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-300 mt-0.5">
+                              ({percentage}%)
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Standing Pill */}
+                        {(() => {
+                          const jambScore = Number(resultSummary?.jamb_score ?? resultSummary?.score ?? 0);
+                          let standingBadge = {
+                            label: "Needs Practice",
+                            color: "text-amber-300 bg-amber-500/15 border-amber-500/30",
+                            icon: "lucide:alert-circle"
+                          };
+                          if (jambScore >= 280) {
+                            standingBadge = {
+                              label: "High Standing",
+                              color: "text-emerald-300 bg-emerald-500/15 border-emerald-500/30",
+                              icon: "lucide:sparkles"
+                            };
+                          } else if (jambScore >= 220) {
+                            standingBadge = {
+                              label: "Competitive",
+                              color: "text-[#C5A97A] bg-[#C5A97A]/15 border-[#C5A97A]/30",
+                              icon: "lucide:check-circle"
+                            };
+                          } else if (jambScore >= 180) {
+                            standingBadge = {
+                              label: "Solid Baseline",
+                              color: "text-blue-300 bg-blue-500/15 border-blue-500/30",
+                              icon: "lucide:trending-up"
+                            };
+                          }
+                          return (
+                            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${standingBadge.color}`}>
+                              <Icon icon={standingBadge.icon} className="w-3 h-3" />
+                              <span>{standingBadge.label}</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Accuracy 3-box mini grid */}
+                      <div className="w-full grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/10 text-center">
+                        <div className="bg-white/5 rounded-xl py-2 px-1">
+                          <Icon icon="lucide:check-circle" className="w-4 h-4 text-emerald-400 mx-auto mb-0.5" />
+                          <span className="text-[9px] font-bold text-gray-300 uppercase block tracking-wider">
+                            Correct
+                          </span>
+                          <span className="text-base font-black text-emerald-400 mt-0.5 block">
+                            {correctVal}
+                          </span>
+                        </div>
+                        <div className="bg-white/5 rounded-xl py-2 px-1">
+                          <Icon icon="lucide:x-circle" className="w-4 h-4 text-red-400 mx-auto mb-0.5" />
+                          <span className="text-[9px] font-bold text-gray-300 uppercase block tracking-wider">
+                            Wrong
+                          </span>
+                          <span className="text-base font-black text-red-400 mt-0.5 block">
+                            {wrongVal}
+                          </span>
+                        </div>
+                        <div className="bg-white/5 rounded-xl py-2 px-1">
+                          <Icon icon="lucide:help-circle" className="w-4 h-4 text-gray-400 mx-auto mb-0.5" />
+                          <span className="text-[9px] font-bold text-gray-300 uppercase block tracking-wider">
+                            Skipped
+                          </span>
+                          <span className="text-base font-black text-gray-300 mt-0.5 block">
+                            {skippedVal}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column: 4-Subject Scaled Breakdown */}
+                    <div className="md:col-span-7 flex flex-col justify-between space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-xs font-black uppercase text-gray-500 dark:text-gray-300 tracking-wider">
+                            Subject Breakdown
+                          </h4>
+                          <span className="text-[10px] font-bold text-[#C5A97A] uppercase tracking-wider">
+                            Scaled / 100 each
+                          </span>
+                        </div>
+
+                        {resultSummary?.subject_scores && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {Object.values(resultSummary.subject_scores).map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="bg-gray-50/90 dark:bg-[#06243A] rounded-2xl p-3.5 border border-gray-100 dark:border-white/10 flex flex-col justify-between hover:border-[#C5A97A]/40 transition-all shadow-sm"
+                              >
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="min-w-0 pr-2">
+                                    <span className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-wider block truncate">
+                                      {item.subject_name}
+                                    </span>
+                                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-medium">
+                                      {item.correct} of {item.total_questions} correct
+                                    </span>
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <span className="text-lg font-black text-[#C5A97A]">
+                                      {item.score}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 font-bold block">
+                                      / 100
+                                    </span>
+                                  </div>
+                                </div>
+                                {/* Scaled score mini progress bar */}
+                                <div className="w-full bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-700 ${
+                                      Number(item.score) >= 70
+                                        ? "bg-emerald-500"
+                                        : Number(item.score) >= 50
+                                        ? "bg-[#C5A97A]"
+                                        : "bg-red-400"
+                                    }`}
+                                    style={{ width: `${Math.min(Math.max(Number(item.score), 0), 100)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Insight / Guidance Callout */}
+                      <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-[#C5A97A]/10 border border-amber-200/50 dark:border-[#C5A97A]/20 flex items-start gap-2.5 text-left">
+                        <Icon icon="lucide:info" className="w-4 h-4 text-[#C5A97A] shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                          Each subject is scaled out of 100 marks to produce your final 400 aggregate. Review your exam to see question-by-question explanations.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <button
-                    onClick={() => setShowFeedback(false)}
-                    className="flex-1 py-4 border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 font-black text-xs uppercase tracking-widest rounded-2xl transition-all"
-                  >
-                    Skip
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (rating === 0) {
-                        setFeedbackError("Please select a star rating.");
-                        return;
-                      }
-                      setFeedbackLoading(true);
-                      setFeedbackError(null);
-                      try {
-                        const studentToken = localStorage.getItem("student_token");
-                        await axios.post(`${API_BASE_URL}/api/students/feedback`, {
-                          feedbackable_type: "exam_attempt",
-                          feedbackable_id: attemptId,
-                          rating,
-                          title: feedbackTitle,
-                          comment,
-                        }, {
-                          headers: { Authorization: `Bearer ${studentToken}` }
-                        });
-                        setFeedbackLoading(false);
-                        setShowFeedback(false);
-                      } catch (err) {
-                        setFeedbackLoading(false);
-                        setFeedbackError(err.response?.data?.message || err.message || "Failed to submit feedback.");
-                      }
-                    }}
-                    disabled={feedbackLoading}
-                    className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all disabled:opacity-50"
-                  >
-                    {feedbackLoading ? "Submitting..." : "Submit Feedback"}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <Icon icon="lucide:party-popper" className="w-20 h-20 text-[#C5A97A] mx-auto mb-6 animate-bounce" />
-                <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight mb-2">
-                  Practice Completed!
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
-                  Excellent job completing your practice attempt. Here is your summary:
-                </p>
-
-            {/* Prominent Circular Progress Score Chart */}
-            <div className="relative w-44 h-44 mx-auto mb-8 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90">
-                <circle
-                  cx="88"
-                  cy="88"
-                  r="74"
-                  className="stroke-gray-100 dark:stroke-[#09314F] fill-transparent"
-                  strokeWidth="10"
-                />
-                <circle
-                  cx="88"
-                  cy="88"
-                  r="74"
-                  className="stroke-[#C5A97A] fill-transparent transition-all duration-1000 ease-out"
-                  strokeWidth="10"
-                  strokeDasharray={465}
-                  strokeDashoffset={465 - (465 * percentage) / 100}
-                  strokeLinecap="round"
-                />
-              </svg>
-              {isJambAttempt ? (
-                <div className="absolute flex flex-col items-center">
-                  <span className="text-4xl font-black text-[#09314F] dark:text-white tracking-tight">
-                    {resultSummary?.jamb_score ?? resultSummary?.score}
-                  </span>
-                  <span className="text-[9px] font-black uppercase text-[#C5A97A] tracking-widest mt-1">
-                    JAMB UTME AGGREGATE
-                  </span>
-                  <span className="text-[9px] font-bold text-gray-400 mt-0.5">
-                    ({percentage}%)
-                  </span>
+                  {/* Actions Row */}
+                  <div className="mt-6 pt-5 border-t border-gray-100 dark:border-white/10 flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={onBack}
+                      className="flex-1 py-3.5 px-4 border-2 border-[#09314F] dark:border-gray-500 hover:bg-[#09314F] dark:hover:bg-gray-500 hover:text-white text-[#09314F] dark:text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all"
+                    >
+                      Go back to Center
+                    </button>
+                    <button
+                      onClick={() => onReviewExam && onReviewExam(attemptId)}
+                      className="flex-1 py-3.5 px-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
+                    >
+                      Review Exam
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="absolute flex flex-col items-center">
-                  <span className="text-3xl font-black text-[#09314F] dark:text-white">
-                    {percentage}%
-                  </span>
-                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mt-1">
-                    SCORE OBTAINED
-                  </span>
-                </div>
-              )}
-            </div>
+                /* Standard Non-JAMB (O-Level) Modal Content */
+                <div className="flex-1 flex flex-col justify-between text-center">
+                  <div>
+                    <Icon icon="lucide:party-popper" className="w-16 h-16 text-[#C5A97A] mx-auto mb-4 animate-bounce" />
+                    <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight mb-2">
+                      Practice Completed!
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+                      Excellent job completing your practice attempt. Here is your summary:
+                    </p>
 
-            {/* JAMB 4-Subject Scaled Scores Breakdown Cards */}
-            {isJambAttempt && resultSummary?.subject_scores && (
-              <div className="mb-8 text-left">
-                <h4 className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 tracking-widest mb-3 text-center sm:text-left">
-                  Subject Breakdown (Scaled out of 100)
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {Object.values(resultSummary.subject_scores).map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-gray-50 dark:bg-[#06243A] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 flex items-center justify-between"
-                    >
-                      <div className="min-w-0 pr-3">
-                        <span className="text-xs font-black text-[#09314F] dark:text-white uppercase tracking-wider block truncate">
-                          {item.subject_name}
+                    {/* Circular Score Gauge */}
+                    <div className="relative w-40 h-40 mx-auto mb-6 flex items-center justify-center">
+                      <svg className="w-full h-full transform -rotate-90">
+                        <circle
+                          cx="80"
+                          cy="80"
+                          r="68"
+                          className="stroke-gray-100 dark:stroke-[#06243A] fill-transparent"
+                          strokeWidth="10"
+                        />
+                        <circle
+                          cx="80"
+                          cy="80"
+                          r="68"
+                          className="stroke-[#C5A97A] fill-transparent transition-all duration-1000 ease-out"
+                          strokeWidth="10"
+                          strokeDasharray={427}
+                          strokeDashoffset={427 - (427 * percentage) / 100}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute flex flex-col items-center">
+                        <span className="text-3xl font-black text-[#09314F] dark:text-white">
+                          {percentage}%
                         </span>
-                        <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">
-                          {item.correct} of {item.total_questions} correct
-                        </span>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-lg font-black text-[#C5A97A]">
-                          {item.score}
-                        </span>
-                        <span className="text-[10px] text-gray-400 font-bold block">
-                          / 100
+                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider mt-1">
+                          SCORE OBTAINED
                         </span>
                       </div>
                     </div>
-                  ))}
+
+                    {/* Stats 3-Grid */}
+                    <div className="grid grid-cols-3 gap-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-4 mb-6 border border-gray-100 dark:border-gray-800">
+                      <div className="flex flex-col items-center">
+                        <Icon icon="lucide:check-circle" className="w-5 h-5 text-green-500 mb-1" />
+                        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                          Correct
+                        </span>
+                        <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
+                          {correctVal}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <Icon icon="lucide:x-circle" className="w-5 h-5 text-red-500 mb-1" />
+                        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                          Wrong
+                        </span>
+                        <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
+                          {wrongVal}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <Icon icon="lucide:help-circle" className="w-5 h-5 text-gray-400 mb-1" />
+                        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                          Skipped
+                        </span>
+                        <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
+                          {skippedVal}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                    <button
+                      onClick={onBack}
+                      className="flex-1 py-4 border-2 border-[#09314F] dark:border-gray-500 hover:bg-[#09314F] dark:hover:bg-gray-500 hover:text-white text-[#09314F] dark:text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all"
+                    >
+                      Go back to Center
+                    </button>
+                    <button
+                      onClick={() => onReviewExam && onReviewExam(attemptId)}
+                      className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
+                    >
+                      Review Exam
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Details Section */}
-            <div className="grid grid-cols-3 gap-3 bg-gray-50 dark:bg-[#06243A] rounded-2xl p-5 mb-8 border border-gray-100 dark:border-gray-800">
-              <div className="flex flex-col items-center">
-                <Icon icon="lucide:check-circle" className="w-5 h-5 text-green-500 mb-1" />
-                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                  Correct
-                </span>
-                <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                  {correctVal}
-                </span>
-              </div>
-              <div className="flex flex-col items-center">
-                <Icon icon="lucide:x-circle" className="w-5 h-5 text-red-500 mb-1" />
-                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                  Wrong
-                </span>
-                <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                  {wrongVal}
-                </span>
-              </div>
-              <div className="flex flex-col items-center">
-                <Icon icon="lucide:help-circle" className="w-5 h-5 text-gray-400 mb-1" />
-                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                  Skipped
-                </span>
-                <span className="text-lg font-black text-gray-700 dark:text-gray-200 mt-1">
-                  {skippedVal}
-                </span>
-              </div>
+              )}
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={onBack}
-                className="flex-1 py-4 border-2 border-[#09314F] dark:border-gray-500 hover:bg-[#09314F] dark:hover:bg-gray-500 hover:text-white text-[#09314F] dark:text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all"
-              >
-                Go back to Center
-              </button>
-              <button
-                onClick={() => onReviewExam && onReviewExam(attemptId)}
-                className="flex-1 py-4 bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-90 active:scale-[0.98] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl transition-all"
-              >
-                Review Exam
-              </button>
-            </div>
-            </>
-            )}
           </div>
         </div>
       )}
