@@ -306,7 +306,7 @@ export default function StudentAchievements() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             {filteredList.map((item) => {
               const condition = getAchievementCondition(item);
               const isEarned = Boolean(item.earned);
@@ -318,7 +318,7 @@ export default function StudentAchievements() {
                 <div
                   key={item.id || item.code}
                   onClick={() => setInspectingItem(item)}
-                  className={`relative bg-white dark:bg-gray-800/60 rounded-3xl p-6 border transition-all flex flex-col justify-between cursor-pointer group ${
+                  className={`relative bg-white dark:bg-gray-800/60 rounded-2xl sm:rounded-3xl p-3 sm:p-6 border transition-all flex flex-col justify-between cursor-pointer group ${
                     isEarned
                       ? "border-amber-400/30 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/10 dark:border-amber-500/20"
                       : "border-gray-100 dark:border-gray-800 hover:border-gray-300 opacity-70 hover:opacity-95"
@@ -326,61 +326,70 @@ export default function StudentAchievements() {
                 >
                   {/* Multiplier badge on top right of the card if unlocked more than once */}
                   {isEarned && earnedCount > 1 && (
-                    <div className="absolute top-4 right-4 z-20">
-                      <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 text-xs font-black tracking-tight shadow-sm">
+                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20">
+                      <span className="inline-flex items-center justify-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 text-[9px] sm:text-xs font-black tracking-tight shadow-sm">
                         x{earnedCount}
                       </span>
                     </div>
                   )}
 
-                  {/* Badge Display */}
-                  <div className="py-4 flex justify-center">
-                    <AchievementVisualRenderer
-                      achievement={item}
-                      size={135}
-                      earned={isEarned}
-                    />
+                  {/* Badge Display (Compact size on mobile, full size on desktop) */}
+                  <div className="py-2 sm:py-4 flex justify-center">
+                    <div className="hidden sm:block">
+                      <AchievementVisualRenderer
+                        achievement={item}
+                        size={135}
+                        earned={isEarned}
+                      />
+                    </div>
+                    <div className="block sm:hidden">
+                      <AchievementVisualRenderer
+                        achievement={item}
+                        size={84}
+                        earned={isEarned}
+                      />
+                    </div>
                   </div>
 
                   {/* Info Section */}
-                  <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-gray-700 text-center">
+                  <div className="space-y-1.5 sm:space-y-3 pt-2 sm:pt-3 border-t border-gray-100 dark:border-gray-700 text-center">
                     <div>
-                      <div className="flex items-center justify-center gap-1.5 mb-1">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-[#09314F] dark:text-amber-400">
+                      <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1 flex-wrap">
+                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-wider text-[#09314F] dark:text-amber-400 truncate max-w-[85px] sm:max-w-none">
                           {item.category?.replace('_', ' ')}
                         </span>
                         {item.tier && (
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-500 border border-amber-400/20">
+                          <span className="text-[8px] sm:text-[9px] font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-500 border border-amber-400/20">
                             {item.tier}
                           </span>
                         )}
                       </div>
 
-                      <h3 className="text-base font-black text-gray-900 dark:text-white group-hover:text-amber-500 transition-colors">
+                      <h3 className="text-xs sm:text-base font-black text-gray-900 dark:text-white group-hover:text-amber-500 transition-colors line-clamp-1">
                         {item.name}
                       </h3>
                     </div>
 
                     {/* Condition Snippet */}
-                    <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 text-left">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1 mb-1">
+                    <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 text-left">
+                      <p className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1 mb-0.5 sm:mb-1">
                         {isEarned ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500 shrink-0" />
                         ) : (
-                          <Lock className="w-3.5 h-3.5 text-gray-400" />
+                          <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400 shrink-0" />
                         )}
-                        <span>{isEarned ? "Requirement Met:" : "Unlock Requirement:"}</span>
+                        <span className="truncate">{isEarned ? "Requirement Met:" : "Unlock Requirement:"}</span>
                       </p>
-                      <p className="text-[11px] text-gray-600 dark:text-gray-300 font-semibold leading-tight line-clamp-2">
+                      <p className="text-[9px] sm:text-[11px] text-gray-600 dark:text-gray-300 font-semibold leading-tight line-clamp-2">
                         {condition}
                       </p>
                     </div>
 
                     {/* Status Badge */}
-                    <div className="flex items-center justify-between text-[11px] pt-1">
+                    <div className="flex items-center justify-between text-[9px] sm:text-[11px] pt-0.5 sm:pt-1">
                       {isEarned ? (
                         <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 truncate">
-                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                          <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                           <span className="truncate">
                             {earnedCount > 1 
                               ? `Unlocked (x${earnedCount})` 
@@ -389,12 +398,12 @@ export default function StudentAchievements() {
                         </span>
                       ) : (
                         <span className="text-gray-400 font-medium flex items-center gap-1">
-                          <Lock className="w-3.5 h-3.5" />
+                          <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                           <span>Locked</span>
                         </span>
                       )}
 
-                      <span className="text-xs font-bold text-amber-500 group-hover:translate-x-0.5 transition-transform shrink-0">
+                      <span className="text-[10px] sm:text-xs font-bold text-amber-500 group-hover:translate-x-0.5 transition-transform shrink-0">
                         Inspect →
                       </span>
                     </div>
