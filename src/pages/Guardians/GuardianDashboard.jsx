@@ -25,6 +25,10 @@ export default function GuardianDashboard() {
   const [openAccordion, setOpenAccordion] = useState('schedule');
   const [activeDayHover, setActiveDayHover] = useState(null);
 
+  // Onboarding Incomplete Modal Prompt State
+  const [onboardingPromptWard, setOnboardingPromptWard] = useState(null);
+  const [promptLoading, setPromptLoading] = useState(false);
+
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
   // 1. Initial Load: Guardian Profile and Wards List
@@ -61,7 +65,14 @@ export default function GuardianDashboard() {
           const wardsList = wardsRes.value.data?.data || [];
           setDashboardWards(wardsList);
           if (wardsList.length > 0) {
-            setSelectedStudentId(wardsList[0].id);
+            // Prioritize fully onboarded ward, then verified, then first ward
+            const firstComplete = wardsList.find((w) => w.is_onboarding_complete);
+            const firstVerified = wardsList.find((w) => w.is_verified || w.email_verified_at);
+            const defaultWard = firstComplete || firstVerified || wardsList[0];
+            setSelectedStudentId(defaultWard.id);
+            if (!defaultWard.is_onboarding_complete) {
+              setOnboardingPromptWard(defaultWard);
+            }
           }
         }
       } catch (error) {
@@ -75,6 +86,56 @@ export default function GuardianDashboard() {
   }, [navigate, API_BASE_URL]);
 
   const [wardSchedule, setWardSchedule] = useState([]);
+
+  // Ward Selection with Incomplete Onboarding Interception Prompt
+  const handleSelectWard = (id, wardObj) => {
+    const ward = wardObj || dashboardWards.find((w) => w.id === id);
+    setSelectedStudentId(id);
+    if (ward && (!ward.is_onboarding_complete || !ward.is_verified || !ward.has_course)) {
+      setOnboardingPromptWard(ward);
+    }
+  };
+
+  const handleResumeWard = async (wardToResume) => {
+    const ward = wardToResume || onboardingPromptWard;
+    if (!ward) return;
+
+    // Step 1: Unverified student needs OTP resend
+    if (!ward.is_verified || ward.stopped_step === 1) {
+      setPromptLoading(true);
+      try {
+        if (ward.email) {
+          await axios.post(`${API_BASE_URL}/api/students/resend-email-verification`, {
+            email: ward.email,
+          });
+        } else if (ward.tel) {
+          await axios.post(`${API_BASE_URL}/api/Students/resend-phone-otp`, {
+            tel: ward.tel,
+          });
+        }
+      } catch (err) {
+        console.warn("Could not resend OTP prior to navigation:", err);
+      } finally {
+        setPromptLoading(false);
+        setOnboardingPromptWard(null);
+        navigate("/guardian/add-ward", {
+          state: { resumeWard: ward, resumeStep: 1 },
+        });
+      }
+      return;
+    }
+
+    // Step 2 or higher: resume directly at stopped step
+    const targetStep = ward.stopped_step || 2;
+    setOnboardingPromptWard(null);
+    navigate("/guardian/add-ward", {
+      state: { resumeWard: ward, resumeStep: targetStep },
+    });
+  };
+
+  const handlePromptLater = () => {
+    setOnboardingPromptWard(null);
+  };
 
   // 2. Fetch Detailed Stats & Attendance for Selected Ward
   const fetchWardStats = useCallback(async () => {
@@ -164,15 +225,7 @@ export default function GuardianDashboard() {
         heightPct: activeAnalysisTab === 'Statistics' ? Math.min(100, Math.max(25, (s.total_questions_attempted || 40) / 2)) : Math.min(100, Math.max(20, s.average_score)),
         subColor: subjectBarColors[idx % subjectBarColors.length]
       }))
-    : [
-        { label: "MTH", fullName: "Mathematics", value: activeAnalysisTab === 'Statistics' ? 85 : 78, heightPct: 78, subColor: subjectBarColors[0] },
-        { label: "ENG", fullName: "English", value: activeAnalysisTab === 'Statistics' ? 60 : 72, heightPct: 72, subColor: subjectBarColors[1] },
-        { label: "PHY", fullName: "Physics", value: activeAnalysisTab === 'Statistics' ? 95 : 65, heightPct: 65, subColor: subjectBarColors[2] },
-        { label: "CHM", fullName: "Chemistry", value: activeAnalysisTab === 'Statistics' ? 110 : 82, heightPct: 82, subColor: subjectBarColors[3] },
-        { label: "BIO", fullName: "Biology", value: activeAnalysisTab === 'Statistics' ? 75 : 88, heightPct: 88, subColor: subjectBarColors[4] },
-        { label: "ECN", fullName: "Economics", value: activeAnalysisTab === 'Statistics' ? 50 : 60, heightPct: 60, subColor: subjectBarColors[5] },
-        { label: "GOV", fullName: "Government", value: activeAnalysisTab === 'Statistics' ? 40 : 55, heightPct: 55, subColor: subjectBarColors[6] },
-      ];
+    : [];
 
   if (loading) {
     return (
@@ -194,7 +247,15 @@ export default function GuardianDashboard() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Link
+              to="/guardian/add-ward"
+              className="flex items-center gap-2 px-3.5 py-2 bg-[#09314F] hover:bg-[#0d3f66] dark:bg-[#C5A97A] dark:hover:bg-[#b09262] text-white dark:text-[#09314F] font-black text-xs rounded-xl shadow-md transition-all active:scale-95"
+            >
+              <Icon icon="lucide:user-plus" className="w-4 h-4" />
+              <span>Add Ward</span>
+            </Link>
+
             <Link
               to="/guardian/performance"
               className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-xs rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/80 transition-all"
@@ -205,9 +266,9 @@ export default function GuardianDashboard() {
 
             <Link
               to="/guardian/payments"
-              className="flex items-center gap-2 px-3.5 py-2 bg-[#09314F] hover:bg-[#0d3f66] dark:bg-[#C5A97A] dark:hover:bg-[#b09262] text-white dark:text-[#09314F] font-black text-xs rounded-xl shadow-md transition-all active:scale-95"
+              className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-xs rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/80 transition-all"
             >
-              <Icon icon="lucide:credit-card" className="w-4 h-4" />
+              <Icon icon="lucide:credit-card" className="w-4 h-4 text-[#C5A97A]" />
               <span>Renew Plan</span>
             </Link>
           </div>
@@ -217,14 +278,64 @@ export default function GuardianDashboard() {
         <GuardianTopWardSelector
           wards={dashboardWards}
           selectedWardId={selectedStudentId}
-          onSelectWard={(id) => id !== 'all' ? setSelectedStudentId(id) : null}
+          onSelectWard={handleSelectWard}
           showAllOption={false}
         />
+
+        {/* If the active selected ward has incomplete onboarding, show quick resumption banner */}
+        {selectedWard && (!selectedWard.is_onboarding_complete || !selectedWard.is_verified || !selectedWard.has_course) && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Icon icon="lucide:alert-circle" className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  Onboarding Incomplete • {selectedWard.stopped_step_name || 'Step 2: Course Program Selection'}
+                </p>
+                <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  <strong>{selectedWard.name}</strong> currently has no course, no subjects, and no active payment. {selectedWard.stopped_reason || 'Complete onboarding to activate their student portal.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setOnboardingPromptWard(selectedWard)}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 shrink-0 flex items-center justify-center gap-1.5"
+            >
+              <Icon icon="lucide:arrow-right-circle" className="w-4 h-4" />
+              <span>Continue Where You Stopped</span>
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* ASYMMETRIC BENTO GRID (Responsive Mobile & Desktop Layout)          */}
-      {/* ══════════════════════════════════════════════════════════════════ */}
+      {dashboardWards.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-[32px] p-8 sm:p-12 border border-gray-100 dark:border-gray-700/80 shadow-sm text-center max-w-2xl mx-auto space-y-6 my-10 animate-in fade-in">
+          <div className="w-20 h-20 rounded-full bg-[#09314F]/10 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] flex items-center justify-center mx-auto shadow-inner">
+            <Icon icon="lucide:user-plus" className="w-10 h-10" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl sm:text-2xl font-black text-[#09314F] dark:text-white">
+              No Wards Linked Yet
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+              Add your child or student account to start monitoring their CBT practice test scores, masterclass attendance, and academic trajectory.
+            </p>
+          </div>
+          <div>
+            <Link
+              to="/guardian/add-ward"
+              className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#09314F] hover:bg-[#0d3f66] dark:bg-[#C5A97A] dark:hover:bg-[#b09262] text-white dark:text-[#09314F] font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all active:scale-95"
+            >
+              <Icon icon="lucide:user-plus" className="w-4 h-4" />
+              <span>Add Your First Ward</span>
+            </Link>
+          </div>
+        </div>
+      ) : (
+      /* ══════════════════════════════════════════════════════════════════ */
+      /* ASYMMETRIC BENTO GRID (Responsive Mobile & Desktop Layout)          */
+      /* ══════════════════════════════════════════════════════════════════ */
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
         
         {/* ── LEFT & CENTER 8 COLS ──────────────────────────────────────── */}
@@ -529,6 +640,28 @@ export default function GuardianDashboard() {
                   </p>
                 </div>
               </div>
+            ) : monthlyCapsules.length === 0 ? (
+              <div className="p-8 text-center bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700/80 space-y-3 my-2">
+                <div className="w-12 h-12 rounded-2xl bg-[#09314F]/10 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] flex items-center justify-center mx-auto">
+                  <Icon icon="lucide:book-open" className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-black text-[#09314F] dark:text-white">
+                    No Enrolled Subjects Yet
+                  </h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto leading-relaxed">
+                    This ward currently has no subjects or course selected. Once subjects (e.g. Mathematics, English, Physics) are chosen, CBT score benchmarks and practice test analytics will appear here.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleResumeWard(selectedWard)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-xs font-black rounded-xl shadow-md transition-all active:scale-95"
+                >
+                  <Icon icon="lucide:plus" className="w-4 h-4" />
+                  <span>Configure Course & Subjects</span>
+                </button>
+              </div>
             ) : (
               <div className="pt-2 overflow-x-auto">
                 <div className="min-w-[400px]">
@@ -583,80 +716,151 @@ export default function GuardianDashboard() {
         {/* ── RIGHT COLUMN 4 COLS (Sidebar Hub) ───────────────────────── */}
         <div className="lg:col-span-4 space-y-5 lg:space-y-6">
           
-          {/* 1. VIBRANT YELLOW SUBSCRIPTION CARD (Model A) */}
-          <div className="bg-gradient-to-br from-[#F59E0B] via-[#EAB308] to-[#FACC15] text-[#09314F] rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[320px]">
-            <div className="absolute -right-8 -top-8 w-44 h-44 bg-white/20 rounded-full blur-2xl pointer-events-none" />
-            <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" viewBox="0 0 400 300">
-              <path d="M-20,150 Q100,50 200,160 T420,120" fill="none" stroke="#FFFFFF" strokeWidth="24" strokeLinecap="round" opacity="0.6" />
-              <path d="M30,220 Q150,120 280,240 T420,180" fill="none" stroke="#FFFFFF" strokeWidth="12" strokeLinecap="round" opacity="0.4" />
-            </svg>
+          {/* 1. SUBSCRIPTION CARD (Active Plan vs Inactive/Incomplete Plan) */}
+          {subscription?.has_active_subscription ? (
+            <div className="bg-gradient-to-br from-[#F59E0B] via-[#EAB308] to-[#FACC15] text-[#09314F] rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[320px]">
+              <div className="absolute -right-8 -top-8 w-44 h-44 bg-white/20 rounded-full blur-2xl pointer-events-none" />
+              <svg className="absolute inset-0 w-full h-full opacity-30 pointer-events-none" viewBox="0 0 400 300">
+                <path d="M-20,150 Q100,50 200,160 T420,120" fill="none" stroke="#FFFFFF" strokeWidth="24" strokeLinecap="round" opacity="0.6" />
+                <path d="M30,220 Q150,120 280,240 T420,180" fill="none" stroke="#FFFFFF" strokeWidth="12" strokeLinecap="round" opacity="0.4" />
+              </svg>
 
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#09314F]" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#09314F]">
-                  Academic Access & Billing
-                </h3>
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#09314F]" />
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#09314F]">
+                    Academic Access & Billing
+                  </h3>
+                </div>
+                {isNearExpiry && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#09314F] text-white text-[9px] font-black uppercase tracking-wider animate-pulse">
+                    Renewal Alert
+                  </span>
+                )}
               </div>
-              {isNearExpiry && (
-                <span className="px-2.5 py-0.5 rounded-full bg-[#09314F] text-white text-[9px] font-black uppercase tracking-wider animate-pulse">
-                  Renewal Alert
+
+              <div className="relative z-10 space-y-3 mt-4">
+                <div>
+                  <h4 className="text-base sm:text-lg font-black text-[#09314F] leading-tight">
+                    {subscription?.course_title || (selectedWard ? `${selectedWard.name}'s Prep Plan` : "WAEC & JAMB Intensive Plan")}
+                  </h4>
+                  <p className="text-xs font-bold text-[#09314F]/80 mt-0.5">
+                    {totalPlanDays}-Day Cycle • {elapsedCyclePct}% Elapsed ({daysUsed} of {totalPlanDays} Days)
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[9px] font-black text-[#09314F]">
+                    <span>50% Mid-Cycle</span>
+                    <span>80% Alert</span>
+                    <span>100% Expiry</span>
+                  </div>
+                  
+                  <div className="w-full bg-white/40 h-3 rounded-full overflow-hidden p-0.5 relative">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-[#09314F] via-purple-700 to-[#09314F]"
+                      style={{ width: `${elapsedCyclePct}%` }}
+                    />
+                    <div className="absolute top-0 bottom-0 left-[50%] w-0.5 bg-white/70" />
+                    <div className="absolute top-0 bottom-0 left-[80%] w-0.5 bg-white/70" />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl sm:text-4xl font-black text-[#09314F]">
+                      {daysLeft} DAYS
+                    </span>
+                    <span className="text-xs font-bold text-[#09314F]/70 uppercase">
+                      / {subscription?.cost != null ? `₦${Number(subscription.cost).toLocaleString()}` : (subscription?.course_price != null ? `₦${Number(subscription.course_price).toLocaleString()}` : "—")}
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-bold text-[#09314F]/70 mt-0.5">
+                    {daysLeft > 0 ? "Remaining until cycle expiration" : "Subscription expired. Renew to resume CBT practice."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 pt-4">
+                <Link
+                  to="/guardian/payments"
+                  className="w-full py-3.5 bg-white text-[#09314F] hover:bg-gray-50 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-center"
+                >
+                  <Icon icon="lucide:credit-card" className="w-4 h-4" />
+                  <span>{isNearExpiry ? "Renew Early (Maintain Access)" : "Renew Subscription"}</span>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            /* INCOMPLETE / NO ACTIVE PLAN CARD */
+            <div className="bg-gradient-to-br from-[#09314F] via-[#0D3F66] to-[#061A2B] text-white rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[320px] border border-amber-500/30">
+              <div className="absolute -right-8 -top-8 w-44 h-44 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                  <h3 className="text-xs font-black uppercase tracking-wider text-amber-300">
+                    Academic Access & Billing
+                  </h3>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-black uppercase tracking-wider">
+                  Plan Inactive
                 </span>
-              )}
-            </div>
+              </div>
 
-            <div className="relative z-10 space-y-3 mt-4">
-              <div>
-                <h4 className="text-base sm:text-lg font-black text-[#09314F] leading-tight">
-                  {subscription?.course_title || (selectedWard ? `${selectedWard.name}'s Prep Plan` : "WAEC & JAMB Intensive Plan")}
-                </h4>
-                <p className="text-xs font-bold text-[#09314F]/80 mt-0.5">
-                  {totalPlanDays}-Day Cycle • {elapsedCyclePct}% Elapsed ({daysUsed} of {totalPlanDays} Days)
+              <div className="relative z-10 space-y-3 mt-4">
+                <div>
+                  <h4 className="text-base sm:text-lg font-black text-white leading-tight">
+                    No Active Study Plan
+                  </h4>
+                  <p className="text-xs font-medium text-gray-300 mt-1 leading-relaxed">
+                    <strong>{selectedWard?.name || "This ward"}</strong> has not completed course enrollment.
+                  </p>
+                </div>
+
+                {/* Status Breakdown Pills */}
+                <div className="grid grid-cols-3 gap-2 p-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                  <div>
+                    <p className="text-[9px] uppercase font-bold text-gray-400">Course</p>
+                    <p className="text-[11px] font-black text-amber-300 mt-0.5">
+                      {selectedWard?.has_course ? "Selected" : "None"}
+                    </p>
+                  </div>
+                  <div className="border-x border-white/10">
+                    <p className="text-[9px] uppercase font-bold text-gray-400">Subjects</p>
+                    <p className="text-[11px] font-black text-amber-300 mt-0.5">
+                      {selectedWard?.subjects_count ? `${selectedWard.subjects_count} Selected` : "0 Enrolled"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] uppercase font-bold text-gray-400">Payment</p>
+                    <p className="text-[11px] font-black text-rose-400 mt-0.5">
+                      Unpaid
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-gray-300 leading-relaxed">
+                  Select an academic course (JAMB, WAEC, NECO) and activate a study plan to start CBT practices and live masterclasses.
                 </p>
               </div>
 
-              <div className="space-y-1">
-                <div className="flex justify-between text-[9px] font-black text-[#09314F]">
-                  <span>50% Mid-Cycle</span>
-                  <span>80% Alert</span>
-                  <span>100% Expiry</span>
-                </div>
-                
-                <div className="w-full bg-white/40 h-3 rounded-full overflow-hidden p-0.5 relative">
-                  <div
-                    className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-[#09314F] via-purple-700 to-[#09314F]"
-                    style={{ width: `${elapsedCyclePct}%` }}
-                  />
-                  <div className="absolute top-0 bottom-0 left-[50%] w-0.5 bg-white/70" />
-                  <div className="absolute top-0 bottom-0 left-[80%] w-0.5 bg-white/70" />
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl sm:text-4xl font-black text-[#09314F]">
-                    {daysLeft} DAYS
+              <div className="relative z-10 pt-4">
+                <button
+                  type="button"
+                  onClick={() => handleResumeWard(selectedWard)}
+                  className="w-full py-3.5 bg-[#C5A97A] hover:bg-[#b09262] text-[#09314F] font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-center"
+                >
+                  <Icon icon="lucide:arrow-right-circle" className="w-4 h-4" />
+                  <span>
+                    {selectedWard?.stopped_step_name
+                      ? `Continue: ${selectedWard.stopped_step_name}`
+                      : "Continue Onboarding"}
                   </span>
-                  <span className="text-xs font-bold text-[#09314F]/70 uppercase">
-                    / {subscription?.cost != null ? `₦${Number(subscription.cost).toLocaleString()}` : (subscription?.course_price != null ? `₦${Number(subscription.course_price).toLocaleString()}` : "—")}
-                  </span>
-                </div>
-                <p className="text-[11px] font-bold text-[#09314F]/70 mt-0.5">
-                  {daysLeft > 0 ? "Remaining until cycle expiration" : "Subscription expired. Renew to resume CBT practice."}
-                </p>
+                </button>
               </div>
             </div>
-
-            <div className="relative z-10 pt-4">
-              <Link
-                to="/guardian/payments"
-                className="w-full py-3.5 bg-white text-[#09314F] hover:bg-gray-50 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-center"
-              >
-                <Icon icon="lucide:credit-card" className="w-4 h-4" />
-                <span>{isNearExpiry ? "Renew Early (Maintain Access)" : "Renew Subscription"}</span>
-              </Link>
-            </div>
-          </div>
+          )}
 
           {/* 2. MASTERCLASS SCHEDULE & ATTENDANCE ACCORDIONS */}
           <div className="bg-white dark:bg-gray-800 rounded-[28px] sm:rounded-[32px] p-5 sm:p-6 border border-gray-100 dark:border-gray-700/80 shadow-sm space-y-4 divide-y divide-gray-100 dark:divide-gray-700/60">
@@ -813,6 +1017,127 @@ export default function GuardianDashboard() {
         </div>
 
       </div>
+      )}
+
+      {/* ── ONBOARDING INCOMPLETE: CONTINUE WHERE YOU STOPPED POPUP MODAL ── */}
+      {onboardingPromptWard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 sm:p-8 max-w-lg w-full border border-gray-100 dark:border-gray-700 shadow-2xl space-y-6 relative animate-in zoom-in-95">
+            
+            {/* Close Button ('Later' trigger) */}
+            <button
+              onClick={handlePromptLater}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-300 flex items-center justify-center transition-colors"
+              title="Later (Stay on dashboard)"
+            >
+              <Icon icon="lucide:x" className="w-4 h-4" />
+            </button>
+
+            {/* Warning Shield Icon & Heading */}
+            <div className="text-center space-y-2 pt-2">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border-2 border-amber-300 dark:border-amber-700/80 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto shadow-md">
+                <Icon icon="lucide:arrow-right-circle" className="w-8 h-8" />
+              </div>
+              <span className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-[10px] font-black uppercase tracking-wider inline-block">
+                Incomplete Onboarding
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black text-[#09314F] dark:text-white">
+                Continue From Where You Stopped?
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
+                Ward <strong className="text-[#09314F] dark:text-white">{onboardingPromptWard.name || onboardingPromptWard.firstname}</strong> has incomplete setup. They currently have <strong>no course, no subjects, and no active payment</strong>.
+              </p>
+            </div>
+
+            {/* Current Stopped Step Card */}
+            <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-amber-800 dark:text-amber-300 font-bold uppercase tracking-wider text-[10px]">
+                  Stopped At:
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-amber-200/60 dark:bg-amber-900 text-amber-900 dark:text-amber-200 text-[10px] font-black uppercase">
+                  Step {onboardingPromptWard.stopped_step || 2} of 5
+                </span>
+              </div>
+              <p className="text-sm font-black text-amber-950 dark:text-amber-100">
+                {onboardingPromptWard.stopped_step_name || "Step 2: Course Program Selection"}
+              </p>
+              <p className="text-xs text-amber-800/90 dark:text-amber-300/80 leading-relaxed">
+                {onboardingPromptWard.stopped_reason || "Academic training program (JAMB, WAEC, NECO) has not been selected yet."}
+              </p>
+            </div>
+
+            {/* Visual 5-Step Progress Timeline */}
+            <div className="space-y-1.5 pt-1">
+              <p className="text-[10px] font-black uppercase tracking-wider text-gray-400">
+                Onboarding Progress:
+              </p>
+              <div className="grid grid-cols-5 gap-1.5 text-center">
+                {[
+                  { num: 1, label: "Biodata & OTP", done: onboardingPromptWard.is_verified, stopped: onboardingPromptWard.stopped_step === 1 },
+                  { num: 2, label: "Course", done: onboardingPromptWard.has_course, stopped: onboardingPromptWard.stopped_step === 2 },
+                  { num: 3, label: "Subjects", done: onboardingPromptWard.has_subjects, stopped: onboardingPromptWard.stopped_step === 3 },
+                  { num: 4, label: "Plan", done: false, stopped: onboardingPromptWard.stopped_step === 4 },
+                  { num: 5, label: "Payment", done: onboardingPromptWard.has_active_payment, stopped: onboardingPromptWard.stopped_step === 5 },
+                ].map((st) => (
+                  <div
+                    key={st.num}
+                    className={`p-2 rounded-xl border text-[9px] font-black leading-tight flex flex-col justify-between ${
+                      st.done
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                        : st.stopped
+                        ? "bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700 ring-2 ring-amber-400/30"
+                        : "bg-gray-50 dark:bg-gray-900/50 text-gray-400 border-gray-100 dark:border-gray-800"
+                    }`}
+                  >
+                    <span>Step {st.num}</span>
+                    <span className="truncate mt-0.5">{st.label}</span>
+                    <span className="text-[8px] font-extrabold mt-1">
+                      {st.done ? "✓ Done" : st.stopped ? "▶ Here" : "Pending"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handlePromptLater}
+                className="w-full sm:w-1/2 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 order-2 sm:order-1"
+              >
+                <Icon icon="lucide:clock" className="w-4 h-4 text-gray-400" />
+                <span>Later (Stay on Dashboard)</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={promptLoading}
+                onClick={() => handleResumeWard(onboardingPromptWard)}
+                className="w-full sm:w-1/2 py-3 px-4 rounded-xl bg-[#09314F] hover:bg-[#0d3f66] dark:bg-[#C5A97A] dark:hover:bg-[#b09262] text-white dark:text-[#09314F] text-xs font-black shadow-lg transition-all active:scale-98 text-center flex items-center justify-center gap-2 order-1 sm:order-2 disabled:opacity-50"
+              >
+                {promptLoading ? (
+                  <>
+                    <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" />
+                    <span>Preparing Step...</span>
+                  </>
+                ) : (
+                  <>
+                    <Icon icon="lucide:arrow-right" className="w-4 h-4" />
+                    <span>
+                      {onboardingPromptWard.stopped_step === 1 && !onboardingPromptWard.is_verified
+                        ? "Verify OTP Now"
+                        : `Continue to Step ${onboardingPromptWard.stopped_step || 2}`}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </GuardianDashboardLayout>
   );
 }

@@ -53,6 +53,31 @@ function canResendReceipt(payment) {
     payment.status === "successful";
 }
 
+// Check if a payment record is a free grant, fee waiver, complimentary access, or scholarship
+export function isFreeGrant(payment) {
+  if (!payment) return false;
+  if (Number(payment.amount) <= 0) return true;
+  if (payment.gateway === "complimentary") return true;
+  if (payment.meta?.type === "complimentary") return true;
+  if (payment.meta?.is_waived === true || payment.meta?.bank_transfer?.is_waived === true) return true;
+  if (payment.meta?.bank_transfer?.review?.is_waived === true) return true;
+  if (Boolean(payment.meta?.waiver_type || payment.meta?.bank_transfer?.review?.waiver_type)) return true;
+  if (typeof payment.gateway_reference === "string" && payment.gateway_reference.startsWith("FREE-")) return true;
+  return false;
+}
+
+export function getFreeGrantLabel(payment) {
+  const waiverType =
+    payment?.meta?.waiver_type ||
+    payment?.meta?.bank_transfer?.review?.waiver_type ||
+    payment?.meta?.type;
+  if (waiverType === "scholarship") return "SCHOLARSHIP";
+  if (waiverType === "test_account") return "TEST ACCOUNT";
+  if (waiverType === "admin_waiver") return "FEE WAIVER";
+  if (waiverType === "complimentary") return "FREE GRANT";
+  return "FREE GRANT";
+}
+
 // Return the view from a hook so the responsive layout's two copies share one
 // queue and one submission lock, rather than mounting two independent reviewers.
 function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
@@ -292,22 +317,43 @@ function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
               <thead><tr className="border-b text-gray-500 dark:text-gray-300">
                 {["Reference", "Student / Course", "Amount", "State", "Details"].map(title => <th key={title} scope="col" className="px-3 py-3">{title}</th>)}
               </tr></thead>
-              <tbody>{rows.map(payment => (
-                <tr key={payment.id} className="border-b border-gray-100 dark:border-gray-700">
-                  <td className="px-3 py-3 font-mono">{payment.gateway_reference}</td>
-                  <td className="px-3 py-3">
-                    <p className="font-semibold">{[payment.student?.firstname, payment.student?.surname].filter(Boolean).join(" ") || "Unknown student"}</p>
-                    <p>{payment.student?.email || payment.student?.tel || "No contact provided"}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-300">{payment.enrollment?.course?.title || "Course unavailable"}</p>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-3">₦{Number(payment.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  <td className="px-3 py-3">{bankReviewState(payment)}</td>
-                  <td className="px-3 py-3"><button type="button" disabled={saving} onClick={() => openReview(payment)}
-                    aria-label={`View transfer ${payment.gateway_reference}`} className="font-bold text-blue-700 dark:text-blue-300 disabled:opacity-50">
-                    {canReview && canReviewBankPayment(payment) ? "Review" : "View details"}
-                  </button></td>
-                </tr>
-              ))}</tbody>
+              <tbody>{rows.map(payment => {
+                const guardian = payment.guardian || payment.student?.guardian || null;
+                const guardianName = guardian?.name || (guardian ? [guardian.firstname, guardian.surname].filter(Boolean).join(" ") : null) || payment.meta?.bank_transfer?.guardian_name;
+                const guardianTel = guardian?.tel || payment.meta?.bank_transfer?.guardian_tel;
+                const guardianEmail = guardian?.email || payment.meta?.bank_transfer?.guardian_email;
+                const guardianContact = guardianTel || guardianEmail;
+                const guardianRel = guardian?.relationship || payment.meta?.bank_transfer?.guardian_relationship;
+
+                return (
+                  <tr key={payment.id} className="border-b border-gray-100 dark:border-gray-700">
+                    <td className="px-3 py-3 font-mono">{payment.gateway_reference}</td>
+                    <td className="px-3 py-3">
+                      {guardianName && (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 text-[11px] font-black shadow-sm mb-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                          <span>Guardian Sponsor: {guardianName} {guardianContact ? `(${guardianContact})` : ""}</span>
+                          {guardianRel && <span className="opacity-70 capitalize">• {guardianRel}</span>}
+                        </div>
+                      )}
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        <span className="text-[10px] uppercase font-bold text-gray-400 mr-1">Ward:</span>
+                        {[payment.student?.firstname, payment.student?.surname].filter(Boolean).join(" ") || "Unknown student"}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{payment.student?.email || payment.student?.tel || "No contact provided"}</p>
+                      <p className="text-xs font-semibold text-[#09314F] dark:text-[#C5A97A] mt-0.5">
+                        Training Course: {payment.enrollment?.course?.title || "Course unavailable"} {payment.billing_cycle ? `(${payment.billing_cycle})` : ""}
+                      </p>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3">₦{Number(payment.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="px-3 py-3">{bankReviewState(payment)}</td>
+                    <td className="px-3 py-3"><button type="button" disabled={saving} onClick={() => openReview(payment)}
+                      aria-label={`View transfer ${payment.gateway_reference}`} className="font-bold text-blue-700 dark:text-blue-300 disabled:opacity-50">
+                      {canReview && canReviewBankPayment(payment) ? "Review" : "View details"}
+                    </button></td>
+                  </tr>
+                );
+              })}</tbody>
             </table>
             {!rows.length && <p className="py-6 text-center text-gray-500">No bank transfers match these filters.</p>}
           </div>
@@ -329,28 +375,54 @@ function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
             <h3 className="font-bold">Transfer {reviewPayment.gateway_reference}</h3>
             <button type="button" disabled={saving} onClick={() => setReviewPayment(null)} className="text-sm underline">Close review</button>
           </div>
-          <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-            <div><dt className="text-gray-500 dark:text-gray-300">Expected amount</dt><dd>₦{Number(reviewPayment.amount).toLocaleString()}</dd></div>
-            <div><dt className="text-gray-500 dark:text-gray-300">Claimed amount</dt><dd>{claim.amount_paid != null ? `₦${Number(claim.amount_paid).toLocaleString()}` : "Not provided"}</dd></div>
-            <div><dt className="text-gray-500 dark:text-gray-300">Sender's account name</dt><dd>{claim.paid_from_account_name || "Not provided"}</dd></div>
-            <div><dt className="text-gray-500 dark:text-gray-300">Claim time</dt><dd>{claim.claimed_paid_at ? new Date(claim.claimed_paid_at).toLocaleString() : "Not claimed yet"}</dd></div>
-            <div>
-              <dt className="text-gray-500 dark:text-gray-300">Exam Track / Program</dt>
-              <dd className="font-bold text-[#09314F] dark:text-blue-200">
-                {claim.exam_track ? `${claim.exam_track} (${reviewPayment.enrollment?.course?.title || "O-Levels"})` : (reviewPayment.enrollment?.course?.title || "Standard Course")}
-              </dd>
-            </div>
-            {claim.subjects && claim.subjects.length > 0 && (
-              <div>
-                <dt className="text-gray-500 dark:text-gray-300">Selected Subject IDs</dt>
-                <dd className="font-mono text-xs text-gray-700 dark:text-gray-200">{claim.subjects.join(", ")}</dd>
-              </div>
-            )}
-            <div className="sm:col-span-2"><dt className="text-gray-500 dark:text-gray-300">Student's note</dt><dd className="whitespace-pre-wrap break-words">{claim.note || "No note"}</dd></div>
-            {claim.review && <div className="sm:col-span-2"><dt className="text-gray-500 dark:text-gray-300">Previous review</dt>
-              <dd>{claim.review.action} · Staff #{claim.review.by_staff_id || "—"} · {claim.review.reason || "No reason recorded"}{claim.review.is_waived ? ` · (Waived: ${claim.review.waiver_type || "Free"})` : ""}</dd>
-            </div>}
-          </dl>
+
+          {(() => {
+            const revGuardian = reviewPayment.guardian || reviewPayment.student?.guardian || null;
+            const revGName = revGuardian?.name || (revGuardian ? [revGuardian.firstname, revGuardian.surname].filter(Boolean).join(" ") : null) || claim.guardian_name;
+            const revGContact = revGuardian?.tel || revGuardian?.email || claim.guardian_tel || claim.guardian_email;
+            const revGRel = revGuardian?.relationship || claim.guardian_relationship;
+
+            return (
+              <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                {revGName && (
+                  <div className="sm:col-span-2 p-3.5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 shadow-sm space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
+                        Guardian Sponsor Highlight
+                      </span>
+                      <strong className="text-amber-950 dark:text-amber-100 text-xs font-black">{revGName}</strong>
+                    </div>
+                    <p className="text-xs text-amber-900 dark:text-amber-200">
+                      Contact: <strong>{revGContact || "—"}</strong> {revGRel ? `• Relationship: ${revGRel}` : ""}
+                    </p>
+                    <p className="text-[11px] text-amber-800/80 dark:text-amber-300">
+                      Paying for Ward: <strong>{[reviewPayment.student?.firstname, reviewPayment.student?.surname].filter(Boolean).join(" ") || "Student"}</strong> ({reviewPayment.student?.email || reviewPayment.student?.tel || "No contact"})
+                    </p>
+                  </div>
+                )}
+                <div><dt className="text-gray-500 dark:text-gray-300">Expected amount</dt><dd>₦{Number(reviewPayment.amount).toLocaleString()}</dd></div>
+                <div><dt className="text-gray-500 dark:text-gray-300">Claimed amount</dt><dd>{claim.amount_paid != null ? `₦${Number(claim.amount_paid).toLocaleString()}` : "Not provided"}</dd></div>
+                <div><dt className="text-gray-500 dark:text-gray-300">Sender's account name</dt><dd>{claim.paid_from_account_name || "Not provided"}</dd></div>
+                <div><dt className="text-gray-500 dark:text-gray-300">Claim time</dt><dd>{claim.claimed_paid_at ? new Date(claim.claimed_paid_at).toLocaleString() : "Not claimed yet"}</dd></div>
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-300">Exam Track / Program</dt>
+                  <dd className="font-bold text-[#09314F] dark:text-blue-200">
+                    {claim.exam_track ? `${claim.exam_track} (${reviewPayment.enrollment?.course?.title || "O-Levels"})` : (reviewPayment.enrollment?.course?.title || "Standard Course")}
+                  </dd>
+                </div>
+                {claim.subjects && claim.subjects.length > 0 && (
+                  <div>
+                    <dt className="text-gray-500 dark:text-gray-300">Selected Subject IDs</dt>
+                    <dd className="font-mono text-xs text-gray-700 dark:text-gray-200">{claim.subjects.join(", ")}</dd>
+                  </div>
+                )}
+                <div className="sm:col-span-2"><dt className="text-gray-500 dark:text-gray-300">Student's note</dt><dd className="whitespace-pre-wrap break-words">{claim.note || "No note"}</dd></div>
+                {claim.review && <div className="sm:col-span-2"><dt className="text-gray-500 dark:text-gray-300">Previous review</dt>
+                  <dd>{claim.review.action} · Staff #{claim.review.by_staff_id || "—"} · {claim.review.reason || "No reason recorded"}{claim.review.is_waived ? ` · (Waived: ${claim.review.waiver_type || "Free"})` : ""}</dd>
+                </div>}
+              </dl>
+            );
+          })()}
           {canReview && canReviewBankPayment(reviewPayment) ? (
             <form onSubmit={submitReview} className="mt-6 space-y-5 rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(9,49,79,0.45)] dark:border-gray-700 dark:bg-gray-800 sm:p-6">
               <div className="flex items-center gap-3">
@@ -551,7 +623,8 @@ export default function AdminPaymentHistory() {
   const [copiedId, setCopiedId] = useState(null);
   const [showOptionsDropdown, setShowOptionsDropdown] = useState(false);
 
-  const paymentsPerPage = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [backendSummary, setBackendSummary] = useState(null);
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
@@ -564,12 +637,18 @@ export default function AdminPaymentHistory() {
       let response;
       try {
         response = await axios.get(`${API_BASE_URL}/api/admin/payments/all`, {
-          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+          params: { all: true, per_page: 500 }
         });
       } catch (err) {
         response = await axios.get(`${API_BASE_URL}/api/admin/payments`, {
-          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+          params: { all: true, per_page: 500 }
         });
+      }
+
+      if (response?.data?.summary) {
+        setBackendSummary(response.data.summary);
       }
 
       let paymentData = [];
@@ -690,34 +769,39 @@ export default function AdminPaymentHistory() {
         p.status?.toLowerCase() === "refunded"
     );
 
-    const renewals = successful.filter((p) => {
+    // Free Grants: strictly identified across all forms (amount=0, complimentary, waivers, scholarships)
+    const freeGrants = timeframePayments.filter(isFreeGrant);
+    const payingSuccessful = successful.filter((p) => !isFreeGrant(p));
+
+    const renewals = payingSuccessful.filter((p) => {
       const type = getPaymentType(p, payments);
       return type.includes("Renewal");
     });
 
-    const freeGrants = timeframePayments.filter(
-      (p) => Number(p.amount) === 0 || p.payment_method === "manual"
-    );
-
-    const revenue = successful.reduce(
-      (acc, curr) => acc + Number(curr.amount || 0),
-      0
-    );
+    // Monetary Revenue: strictly excludes any free grants, fee waivers, or scholarships
+    const revenue =
+      timeframe === "all" && backendSummary?.total_revenue != null
+        ? Number(backendSummary.total_revenue)
+        : payingSuccessful.reduce(
+            (acc, curr) => acc + Number(curr.amount || 0),
+            0
+          );
 
     const conversionRate = total > 0 ? Math.round((successful.length / total) * 100) : 0;
     const dropoffRate = 100 - conversionRate;
-    const aov = successful.length > 0 ? Math.round(revenue / successful.length) : 0;
+    const aov = payingSuccessful.length > 0 ? Math.round(revenue / payingSuccessful.length) : 0;
 
     // Funnel stage calculation
     const initiatedVal = total;
-    const authorizedVal = Math.max(successful.length + pending.length, Math.round(total * 0.82));
-    const successfulVal = successful.length;
-    const renewalsVal = renewals.length > 0 ? renewals.length : Math.round(successful.length * 0.6);
-    const completedVal = Math.max(successful.length - failed.length, Math.round(successful.length * 0.5));
+    const pendingVal = pending.length;
+    const successfulVal = payingSuccessful.length;
+    const renewalsVal = renewals.length;
+    const freeGrantsVal = freeGrants.length;
 
     return {
       total,
       successfulCount: successful.length,
+      payingCount: payingSuccessful.length,
       pendingCount: pending.length,
       failedCount: failed.length,
       renewalsCount: renewals.length,
@@ -737,20 +821,20 @@ export default function AdminPaymentHistory() {
           color: "from-blue-500 to-indigo-600"
         },
         {
-          id: "authorized",
-          label: "Authorized Payments",
-          value: authorizedVal,
+          id: "pending",
+          label: "Pending Review",
+          value: pendingVal,
           displayVal:
-            authorizedVal >= 1000
-              ? `${(authorizedVal / 1000).toFixed(1)}k`
-              : authorizedVal.toString(),
-          heightPct: 68,
+            pendingVal >= 1000
+              ? `${(pendingVal / 1000).toFixed(1)}k`
+              : pendingVal.toString(),
+          heightPct: total > 0 ? Math.max(18, Math.min(80, Math.round((pendingVal / total) * 100))) : 18,
           isFocus: false,
-          color: "from-blue-500 to-indigo-600"
+          color: "from-amber-500 to-amber-600"
         },
         {
           id: "successful",
-          label: "Successful Payments",
+          label: "Successful (Paid)",
           value: successfulVal,
           displayVal:
             successfulVal >= 1000
@@ -774,19 +858,16 @@ export default function AdminPaymentHistory() {
         },
         {
           id: "completed",
-          label: "Completed Grants",
-          value: completedVal,
-          displayVal:
-            completedVal >= 1000
-              ? `${(completedVal / 1000).toFixed(1)}k`
-              : completedVal.toString(),
-          heightPct: 24,
+          label: "Free Grants",
+          value: freeGrantsVal,
+          displayVal: freeGrantsVal.toString(),
+          heightPct: total > 0 ? Math.max(16, Math.min(85, Math.round((freeGrantsVal / total) * 100))) : 16,
           isFocus: false,
-          color: "from-blue-500 to-indigo-600"
+          color: "from-purple-500 to-indigo-600"
         }
       ]
     };
-  }, [timeframePayments, getPaymentType, payments]);
+  }, [timeframePayments, getPaymentType, payments, timeframe, backendSummary]);
 
   // ─── Filtered Payments List ────────────────────────────────────────────────
   const filteredPayments = useMemo(() => {
@@ -813,7 +894,7 @@ export default function AdminPaymentHistory() {
       // Status / Funnel Filter
       let matchesStatus = true;
       if (statusFilter === "successful") {
-        matchesStatus = payment.status?.toLowerCase() === "successful";
+        matchesStatus = payment.status?.toLowerCase() === "successful" && !isFreeGrant(payment);
       } else if (statusFilter === "pending") {
         matchesStatus = payment.status?.toLowerCase() === "pending";
       } else if (statusFilter === "failed") {
@@ -825,16 +906,16 @@ export default function AdminPaymentHistory() {
         const type = getPaymentType(payment, payments);
         matchesStatus = type.includes("Renewal");
       } else if (statusFilter === "free") {
-        matchesStatus = Number(payment.amount) === 0 || payment.payment_method === "manual";
+        matchesStatus = isFreeGrant(payment);
       }
 
       return matchesSearch && matchesStatus;
     });
   }, [timeframePayments, searchTerm, statusFilter, getPaymentType, payments]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredPayments.length / paymentsPerPage));
-  const startIndex = (currentPage - 1) * paymentsPerPage;
-  const paginatedPayments = filteredPayments.slice(startIndex, startIndex + paymentsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredPayments.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPayments = filteredPayments.slice(startIndex, startIndex + itemsPerPage);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -989,7 +1070,7 @@ export default function AdminPaymentHistory() {
                   const isStageSelected =
                     (statusFilter === "all" && stage.id === "initiated") ||
                     (statusFilter === "successful" && stage.id === "successful") ||
-                    (statusFilter === "pending" && stage.id === "authorized") ||
+                    (statusFilter === "pending" && stage.id === "pending") ||
                     (statusFilter === "renewals" && stage.id === "renewals") ||
                     (statusFilter === "free" && stage.id === "completed");
 
@@ -998,7 +1079,7 @@ export default function AdminPaymentHistory() {
                       key={stage.id}
                       onClick={() => {
                         if (stage.id === "initiated") setStatusFilter("all");
-                        else if (stage.id === "authorized") setStatusFilter("pending");
+                        else if (stage.id === "pending") setStatusFilter("pending");
                         else if (stage.id === "successful") setStatusFilter("successful");
                         else if (stage.id === "renewals") setStatusFilter("renewals");
                         else if (stage.id === "completed") setStatusFilter("free");
@@ -1119,7 +1200,7 @@ export default function AdminPaymentHistory() {
                 ₦{funnelStats.totalRevenue.toLocaleString()}
               </h3>
               <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 flex items-center gap-1">
-                <ArrowTrendingUpIcon className="w-3.5 h-3.5" /> 100% verified settlement
+                <ArrowTrendingUpIcon className="w-3.5 h-3.5" /> 100% verified paid tuition (₦0 from grants)
               </p>
             </div>
           </div>
@@ -1127,17 +1208,17 @@ export default function AdminPaymentHistory() {
           {/* 2. Successful Transactions */}
           <div className="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-700/60 shadow-sm relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400">Successful Orders</span>
+              <span className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400">Paid Tuition Orders</span>
               <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                 <CheckCircleIcon className="w-5 h-5" />
               </div>
             </div>
             <div className="mt-2">
               <h3 className="text-2xl font-black text-[#0F2843] dark:text-white">
-                {funnelStats.successfulCount}
+                {funnelStats.payingCount}
               </h3>
               <p className="text-[11px] text-blue-600 dark:text-blue-400 font-bold mt-0.5">
-                {funnelStats.conversionRate}% overall conversion rate
+                {funnelStats.payingCount} Paid Tuition • {funnelStats.freeGrantsCount} Free Grants (₦0.00)
               </p>
             </div>
           </div>
@@ -1155,7 +1236,7 @@ export default function AdminPaymentHistory() {
                 {funnelStats.pendingCount}
               </h3>
               <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold mt-0.5">
-                In-flight gateway confirmations
+                {funnelStats.pendingCount} awaiting approval • {funnelStats.failedCount} failed/cancelled
               </p>
             </div>
           </div>
@@ -1163,7 +1244,7 @@ export default function AdminPaymentHistory() {
           {/* 4. Average Order Value */}
           <div className="bg-white dark:bg-gray-800/80 rounded-2xl p-5 border border-gray-100 dark:border-gray-700/60 shadow-sm relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400">Avg Transaction (AOV)</span>
+              <span className="text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400">Avg Paid Order (AOV)</span>
               <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
                 <CreditCardIcon className="w-5 h-5" />
               </div>
@@ -1173,7 +1254,7 @@ export default function AdminPaymentHistory() {
                 ₦{funnelStats.aov.toLocaleString()}
               </h3>
               <p className="text-[11px] text-purple-600 dark:text-purple-400 font-bold mt-0.5">
-                Per active enrollment
+                Calculated on paying orders only
               </p>
             </div>
           </div>
@@ -1198,11 +1279,12 @@ export default function AdminPaymentHistory() {
           {/* Quick Segment Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
             {[
-              { id: "all", label: "All Records", count: timeframePayments.length },
-              { id: "successful", label: "Successful", count: funnelStats.successfulCount },
+              { id: "all", label: "All Initiated", count: timeframePayments.length },
+              { id: "successful", label: "Successful (Paid)", count: funnelStats.payingCount },
               { id: "pending", label: "Pending", count: funnelStats.pendingCount },
               { id: "renewals", label: "Renewals", count: funnelStats.renewalsCount },
-              { id: "free", label: "Free Grants", count: funnelStats.freeGrantsCount }
+              { id: "free", label: "Free Grants", count: funnelStats.freeGrantsCount },
+              { id: "failed", label: "Failed / Cancelled", count: funnelStats.failedCount }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1256,7 +1338,8 @@ export default function AdminPaymentHistory() {
                 const paymentType = getPaymentType(payment, payments);
                 const isSuccessful = payment.status?.toLowerCase() === "successful";
                 const isPending = payment.status?.toLowerCase() === "pending";
-                const isFree = Number(payment.amount) === 0;
+                const isFree = isFreeGrant(payment);
+                const freeLabel = getFreeGrantLabel(payment);
 
                 return (
                   <div key={payment.id || idx}>
@@ -1292,17 +1375,24 @@ export default function AdminPaymentHistory() {
                       {/* Amount & Gateway */}
                       <div className="text-center">
                         {isFree ? (
-                          <span className="px-2.5 py-0.5 rounded-lg text-xs font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200">
-                            FREE
-                          </span>
+                          <div className="flex flex-col items-center">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                              {freeLabel}
+                            </span>
+                            <p className="text-[10px] font-black text-gray-400 uppercase mt-0.5">
+                              ₦0.00 • Granted
+                            </p>
+                          </div>
                         ) : (
-                          <p className="font-black text-sm text-[#0F2843] dark:text-white">
-                            ₦{Number(payment.amount).toLocaleString()}
-                          </p>
+                          <>
+                            <p className="font-black text-sm text-[#0F2843] dark:text-white">
+                              ₦{Number(payment.amount).toLocaleString()}
+                            </p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">
+                              {payment.payment_method || "Card"} • {payment.gateway || "Paystack"}
+                            </p>
+                          </>
                         )}
-                        <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">
-                          {payment.payment_method || "Card"} • {payment.gateway || "Paystack"}
-                        </p>
                       </div>
 
                       {/* Transaction Type */}
@@ -1395,7 +1485,9 @@ export default function AdminPaymentHistory() {
                         {/* Amount Badge */}
                         <div className="text-right">
                           {isFree ? (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700">FREE</span>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200">
+                              {freeLabel} • ₦0
+                            </span>
                           ) : (
                             <span className="text-sm font-black text-[#0F2843] dark:text-white">
                               ₦{Number(payment.amount).toLocaleString()}
@@ -1438,31 +1530,54 @@ export default function AdminPaymentHistory() {
           </div>
 
           {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700/60">
-              <p className="text-xs text-gray-400 font-bold">
-                Showing {startIndex + 1}–{Math.min(startIndex + paymentsPerPage, filteredPayments.length)} of {filteredPayments.length} transactions
-              </p>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-30 transition-all"
-                >
-                  <ChevronLeftIcon className="w-4 h-4" />
-                </button>
-                <span className="text-xs font-black text-gray-700 dark:text-gray-300 px-2">
-                  {currentPage} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-30 transition-all"
-                >
-                  <ChevronRightIcon className="w-4 h-4" />
-                </button>
+          {filteredPayments.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-gray-700/60">
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-gray-400 font-bold">
+                  Showing {startIndex + 1}–{Math.min(startIndex + itemsPerPage, filteredPayments.length)} of {filteredPayments.length} transactions
+                </p>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="font-semibold text-gray-400">Per page:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1 text-xs font-bold text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
+                  >
+                    <option value={10}>10</option>
+                    <option value={15}>15</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={500}>All ({filteredPayments.length})</option>
+                  </select>
+                </div>
               </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-30 transition-all hover:bg-gray-50 dark:hover:bg-gray-700"
+                    title="Previous page"
+                  >
+                    <ChevronLeftIcon className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs font-black text-gray-700 dark:text-gray-300 px-2">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-30 transition-all hover:bg-gray-50 dark:hover:bg-gray-700"
+                    title="Next page"
+                  >
+                    <ChevronRightIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -1498,21 +1613,38 @@ export default function AdminPaymentHistory() {
               <div className="p-6 overflow-y-auto space-y-6 text-xs">
                 
                 {/* Amount Hero */}
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700/50 dark:to-gray-700/20 border border-blue-100 dark:border-gray-600 flex items-center justify-between">
+                <div className={`p-5 rounded-2xl border flex items-center justify-between ${
+                  isFreeGrant(selectedPayment)
+                    ? "bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/40 dark:to-indigo-950/20 border-purple-200 dark:border-purple-800"
+                    : "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700/50 dark:to-gray-700/20 border-blue-100 dark:border-gray-600"
+                }`}>
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Total Settlement</span>
-                    <h2 className="text-3xl font-black text-[#0F2843] dark:text-white mt-0.5">
-                      {Number(selectedPayment.amount) === 0 ? "FREE GRANT" : `₦${Number(selectedPayment.amount).toLocaleString()}`}
-                    </h2>
+                    {isFreeGrant(selectedPayment) ? (
+                      <div className="mt-0.5">
+                        <h2 className="text-2xl font-black text-purple-700 dark:text-purple-300">
+                          {getFreeGrantLabel(selectedPayment)} (₦0.00)
+                        </h2>
+                        <p className="text-[11px] font-bold text-purple-600 dark:text-purple-400 mt-0.5">
+                          100% Tuition Fee Waiver Granted
+                        </p>
+                      </div>
+                    ) : (
+                      <h2 className="text-3xl font-black text-[#0F2843] dark:text-white mt-0.5">
+                        ₦{Number(selectedPayment.amount).toLocaleString()}
+                      </h2>
+                    )}
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
                     selectedPayment.status?.toLowerCase() === "successful"
-                      ? "bg-emerald-100 text-emerald-800"
+                      ? isFreeGrant(selectedPayment)
+                        ? "bg-purple-100 text-purple-800 border border-purple-200"
+                        : "bg-emerald-100 text-emerald-800"
                       : ["failed", "cancelled", "refunded"].includes(selectedPayment.status?.toLowerCase())
                       ? "bg-rose-100 text-rose-800"
                       : "bg-amber-100 text-amber-800"
                   }`}>
-                    {selectedPayment.status || "Pending"}
+                    {isFreeGrant(selectedPayment) ? "Grant Approved" : (selectedPayment.status || "Pending")}
                   </span>
                 </div>
 

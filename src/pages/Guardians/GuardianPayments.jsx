@@ -368,7 +368,8 @@ export default function GuardianPayments() {
   // Calculated configured course price
   const configPlanMonths = DURATION_PLANS[configuredDuration]?.months || 3;
   const configDurationPlan = DURATION_PLANS[configuredDuration] || DURATION_PLANS.quarterly;
-  const configuredCoursePrice = Math.max(100, calculatePlanPrice(Number(selectedCourse?.price || 0), configPlanMonths));
+  const rawCoursePrice = Number(selectedCourse?.price || 0);
+  const configuredCoursePrice = rawCoursePrice <= 0 ? 0 : Math.max(100, calculatePlanPrice(rawCoursePrice, configPlanMonths));
 
   // 4. Server-Side Atomic Verification
   const verifyPaymentOnBackend = async (reference, metadata) => {
@@ -520,6 +521,19 @@ export default function GuardianPayments() {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // Check if training was activated as free grant
+      if (initRes.data?.is_free || initRes.data?.data?.is_free || configuredCoursePrice <= 0) {
+        setPaymentMessage({
+          type: 'success',
+          text: initRes.data?.message || `Free training grant successfully activated for ${selectedWard?.name || 'ward'}!`
+        });
+        setProcessingPayment(false);
+        setShowConfigModal(false);
+        await fetchWardDetails();
+        return;
+      }
+
       if (initRes.data?.success && initRes.data?.data) {
         initData = initRes.data.data;
       }
@@ -1293,8 +1307,8 @@ export default function GuardianPayments() {
                     </div>
                     <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700 text-sm">
                       <span className="font-black text-[#09314F] dark:text-white">Total Amount Payable:</span>
-                      <strong className="font-mono text-emerald-600 dark:text-emerald-400 text-base font-black">
-                        ₦{configuredCoursePrice.toLocaleString()}
+                      <strong className={`font-mono text-base font-black ${configuredCoursePrice === 0 ? "text-emerald-500 font-sans" : "text-emerald-600 dark:text-emerald-400"}`}>
+                        {configuredCoursePrice === 0 ? "₦0.00 (100% Free Grant / Waiver)" : `₦${configuredCoursePrice.toLocaleString()}`}
                       </strong>
                     </div>
                   </div>
@@ -1319,7 +1333,11 @@ export default function GuardianPayments() {
                       ) : (
                         <>
                           <Icon icon="lucide:shield-check" className="w-4 h-4" />
-                          <span>Proceed to Payment • ₦{configuredCoursePrice.toLocaleString()}</span>
+                          <span>
+                            {configuredCoursePrice === 0
+                              ? "Activate Free Training Grant (₦0)"
+                              : `Proceed to Payment • ₦${configuredCoursePrice.toLocaleString()}`}
+                          </span>
                         </>
                       )}
                     </button>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 
 export default function GuardianTopWardSelector({
@@ -6,7 +7,8 @@ export default function GuardianTopWardSelector({
   selectedWardId = null,
   onSelectWard,
   showAllOption = true,
-  isLoading = false
+  isLoading = false,
+  showAddWard = true,
 }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-2.5 border border-gray-100 dark:border-gray-700/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -36,10 +38,13 @@ export default function GuardianTopWardSelector({
 
         {wards.map((ward) => {
           const isSelected = selectedWardId === ward.id;
+          const isUnverified = ward.is_verified === false || ward.email_verified_at === null;
+          const isIncomplete = ward.is_onboarding_complete === false || (!ward.has_course && ward.is_verified);
+
           return (
             <button
               key={ward.id}
-              onClick={() => onSelectWard(ward.id)}
+              onClick={() => onSelectWard(ward.id, ward)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 isSelected
                   ? 'bg-[#09314F] text-white shadow-sm dark:bg-[#C5A97A] dark:text-[#09314F] font-black'
@@ -54,9 +59,31 @@ export default function GuardianTopWardSelector({
                 {ward.name?.[0]?.toUpperCase() || 'W'}
               </div>
               <span className="truncate max-w-[120px]">{ward.name}</span>
+              {isUnverified ? (
+                <span className="px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 text-[9px] font-extrabold uppercase tracking-tight flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Unverified
+                </span>
+              ) : isIncomplete ? (
+                <span className="px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 text-[9px] font-extrabold uppercase tracking-tight flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                  {ward.stopped_step ? `Step ${ward.stopped_step}` : 'Incomplete'}
+                </span>
+              ) : null}
             </button>
           );
         })}
+
+        {showAddWard && (
+          <Link
+            to="/guardian/add-ward"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border border-dashed border-gray-300 dark:border-gray-600 text-[#09314F] dark:text-[#C5A97A] hover:bg-[#09314F]/5 dark:hover:bg-white/5 hover:border-[#09314F] dark:hover:border-[#C5A97A] active:scale-95"
+            title="Register or link another ward"
+          >
+            <Icon icon="lucide:plus" className="w-3.5 h-3.5" />
+            <span>Add Ward</span>
+          </Link>
+        )}
       </div>
     </div>
   );

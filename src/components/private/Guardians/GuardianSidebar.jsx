@@ -19,6 +19,11 @@ const guardianMenuItems = [
     destination: "/guardian/dashboard",
   },
   {
+    label: "Add Ward",
+    icon: "lucide:user-plus",
+    destination: "/guardian/add-ward",
+  },
+  {
     label: "Performance",
     icon: "material-symbols:trending-up-rounded",
     destination: "/guardian/performance",
