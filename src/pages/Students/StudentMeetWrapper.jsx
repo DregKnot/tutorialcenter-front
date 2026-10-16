@@ -67,7 +67,7 @@ export default function StudentMeetWrapper() {
     <DashboardLayout pagetitle={isZoom ? "Live Zoom Class" : "Live Class Session"} hideRightPanel={true}>
       {isZoom ? (
         <div className="py-4">
-          <ZoomMeetingSession classSessionId={sessionDetails.class_schedule_id} />
+          <ZoomMeetingSession classSessionId={sessionDetails.class_schedule_id} isStaff={false} />
         </div>
       ) : (
         <div className="flex items-center justify-center min-h-[60vh]">

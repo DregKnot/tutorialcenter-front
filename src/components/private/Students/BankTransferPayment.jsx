@@ -161,8 +161,14 @@ export default function BankTransferPayment({
         if (cached?.reference && cached?.accessToken) {
           try {
             const updated = await fetchBankTransferStatus(cached);
-            if (active) saveTransfer(key, updated);
-            continue;
+            // If this is a renewal and the cached transfer is already approved/settled from a previous cycle,
+            // we do NOT reuse the old completed payment; we must initiate a fresh transfer for the new cycle.
+            if (item.isRenewal && (updated.state === "approved" || updated.status === "successful")) {
+              // Discard settled cache so fresh renewal reference is generated below
+            } else {
+              if (active) saveTransfer(key, updated);
+              continue;
+            }
           } catch (err) {
             if (![403, 404].includes(err.response?.status)) {
               if (active) {
@@ -185,15 +191,26 @@ export default function BankTransferPayment({
         inFlightRef.current[key] = true;
 
         try {
+          const authToken =
+            localStorage.getItem("guardian_token") ||
+            localStorage.getItem("token") ||
+            localStorage.getItem("access_token");
+
           const response = await axios.post(
             `${API_BASE_URL}/api/payments/bank-transfer`,
             { 
               student_id: Number(studentId), 
               course_enrollment_id: Number(item.enrollmentId),
-              billing_cycle: item.billingCycle || undefined
+              billing_cycle: item.billingCycle || undefined,
+              is_renewal: item.isRenewal !== undefined ? Boolean(item.isRenewal) : undefined,
+              guardian_id: item.guardianId || undefined,
             },
             {
-              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              headers: { 
+                "Content-Type": "application/json", 
+                Accept: "application/json",
+                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
+              },
               timeout: 30000,
             }
           );

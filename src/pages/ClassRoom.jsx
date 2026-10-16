@@ -43,9 +43,11 @@ export default function ClassRoom() {
         };
     }, [setStudentClassActive, setStaffClassActive]);
 
+    const isStudentRoute = location.pathname.startsWith("/zoom/masterclass") || Boolean(location.state?.isStudent);
+    const staffToken = localStorage.getItem("staff_token");
+    const isStaff = !isStudentRoute && Boolean(staffToken);
+
     const handleLeaveRedirect = () => {
-        const staffToken = localStorage.getItem("staff_token");
-        const isStaff = !!staffToken;
         const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
         if (isStaff) {
@@ -110,6 +112,6 @@ export default function ClassRoom() {
     // Client View renders into #zmmtg-root (injected by the SDK into document.body).
     // This component just initializes the meeting; Zoom handles the full-page UI.
     return (
-        <ZoomMeetingSession ref={zoomRef} classSessionId={classSessionId} onLeave={handleLeaveRedirect} />
+        <ZoomMeetingSession ref={zoomRef} classSessionId={classSessionId} isStaff={isStaff} onLeave={handleLeaveRedirect} />
     );
 }

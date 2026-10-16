@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../../components/private/Students/DashboardLayout.jsx";
 import StaffDashboardLayout from "../../components/private/staffs/DashboardLayout.jsx";
 import { Icon } from "@iconify/react";
@@ -75,6 +75,7 @@ export const formatViewCount = (count) => {
 
 const RecordedClasses = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCourseFilter, setSelectedCourseFilter] = useState("all");
@@ -90,21 +91,43 @@ const RecordedClasses = () => {
   const [sessionAnalyticsData, setSessionAnalyticsData] = useState(null);
   const { setIsClassActive, token } = useAuth();
 
-  // Detect staff/admin vs student role
+  // Route-aware context detection:
+  // /student/* routes are strictly student scope.
+  // /staffs/* routes are strictly staff scope.
+  const pathname = location?.pathname || (typeof window !== "undefined" ? window.location.pathname : "");
+  const isStaffRoute = pathname.startsWith("/staffs");
+  const isStudentRoute = pathname.startsWith("/student");
+
   const staffToken = localStorage.getItem("staff_token");
   const staffRole = localStorage.getItem("staff_role") || "";
-  const isAdminOrStaff = Boolean(staffToken);
-  const isAuthorized = !isAdminOrStaff || canAccessVideoVault(staffRole);
-  const activeToken = staffToken || token || localStorage.getItem("student_token");
+  const studentToken = localStorage.getItem("student_token") || token;
+
+  // Strict role separation:
+  // If explicitly on a student route (/student/*), we NEVER treat the user as staff or use staffToken,
+  // preventing layout and token cross-contamination when a user shares an email across student & staff roles.
+  // If explicitly on a staff route (/staffs/*), we treat the user as staff if staffToken exists.
+  // If route is ambiguous (e.g. root in unit tests), fallback to staffToken presence.
+  const isAdminOrStaff = isStudentRoute 
+    ? false 
+    : (isStaffRoute ? Boolean(staffToken) : Boolean(staffToken));
+
+  const isAuthorized = isStaffRoute ? canAccessVideoVault(staffRole) : true;
+  const activeToken = isAdminOrStaff ? staffToken : studentToken;
   
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
   // Restrict unauthorized staff (e.g., Tutors) from accessing Video Vault
   useEffect(() => {
-    if (isAdminOrStaff && !canAccessVideoVault(staffRole)) {
-      navigate("/staffs/tutor/dashboard", { replace: true });
+    if (isStaffRoute) {
+      if (!staffToken) {
+        navigate("/staff/login", { replace: true });
+        return;
+      }
+      if (!canAccessVideoVault(staffRole)) {
+        navigate("/staffs/tutor/dashboard", { replace: true });
+      }
     }
-  }, [isAdminOrStaff, staffRole, navigate]);
+  }, [isStaffRoute, staffToken, staffRole, navigate]);
 
   // Prevent autologout while watching a recorded class
   useEffect(() => {

@@ -234,21 +234,21 @@ export default function PaymentMethodModal({
 
   // ── STANDARD PAYMENT METHOD SELECTION ──
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-[40px] p-8 md:p-10 w-[90%] max-w-md max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200">
-        <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors font-bold text-gray-400">✕</button>
-        <h2 className="text-2xl font-black text-[#0F2843] mb-2 text-center uppercase tracking-tighter italic">Payment Method</h2>
-        <p className="text-gray-400 text-[10px] font-bold text-center uppercase tracking-widest mb-8">Choose your preferred gateway</p>
+      <div className="relative bg-white dark:bg-[#09314F] text-[#0F2843] dark:text-white rounded-[40px] p-8 md:p-10 w-full max-w-md max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-white/10">
+        <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors font-bold text-gray-400 dark:text-gray-300">✕</button>
+        <h2 className="text-2xl font-black text-[#0F2843] dark:text-white mb-2 text-center uppercase tracking-tighter italic">Payment Method</h2>
+        <p className="text-gray-400 dark:text-gray-300 text-[10px] font-bold text-center uppercase tracking-widest mb-8">Choose your preferred gateway</p>
         
-        <div className="bg-gray-50 border border-gray-100 rounded-3xl p-6 mb-8 flex justify-between items-center">
+        <div className="bg-gray-50 dark:bg-black/20 border border-gray-100 dark:border-white/10 rounded-3xl p-6 mb-8 flex justify-between items-center">
           <div className="flex flex-col">
              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Selected Plan</span>
-             <span className="text-sm font-black text-[#0F2843] uppercase italic">{selectedDuration || "Termwise"}</span>
+             <span className="text-sm font-black text-[#0F2843] dark:text-[#C5A97A] uppercase italic">{selectedDuration || "Termwise"}</span>
           </div>
           <div className="text-right">
              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Amount</span>
-             <span className="text-xl font-black text-[#0F2843]">₦{amount.toLocaleString()}</span>
+             <span className="text-xl font-black text-[#0F2843] dark:text-white">₦{amount.toLocaleString()}</span>
           </div>
         </div>
 
@@ -261,17 +261,17 @@ export default function PaymentMethodModal({
                 onClick={() => setSelectedMethod(item)}
                 className={`w-full flex items-center justify-between px-6 py-4 rounded-xl border-2 transition-all duration-200 ${
                   isSelected
-                    ? "border-[#76D287] bg-green-50"
-                    : "border-gray-200 hover:border-[#09314F] bg-white"
+                    ? "border-[#76D287] bg-green-50 dark:bg-emerald-950/40"
+                    : "border-gray-200 dark:border-white/10 hover:border-[#09314F] dark:hover:border-white/30 bg-white dark:bg-white/5"
                 }`}
               >
                 <span className={`font-bold text-sm md:text-base ${
-                  isSelected ? "text-[#09314F]" : "text-gray-600"
+                  isSelected ? "text-[#09314F] dark:text-emerald-300" : "text-gray-600 dark:text-gray-300"
                 }`}>
-                  {item}
+                  {item === "Paystack" ? "Pay with Card / Paystack" : "Direct Bank Transfer"}
                 </span>
                 <span className={`font-bold text-lg ${
-                  isSelected ? "text-[#76D287]" : "text-[#09314F]"
+                  isSelected ? "text-[#76D287]" : "text-[#09314F] dark:text-gray-400"
                 }`}>
                   {isSelected ? "✓" : "›"}
                 </span>

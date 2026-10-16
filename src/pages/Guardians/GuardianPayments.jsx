@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Icon } from '@iconify/react';
 import GuardianDashboardLayout from '../../components/private/Guardians/GuardianDashboardLayout';
 import GuardianTopWardSelector from '../../components/private/Guardians/GuardianTopWardSelector';
+import PaymentMethodModal from '../../components/private/Students/PaymentMethodModal';
 
 export default function GuardianPayments() {
   const navigate = useNavigate();
@@ -30,6 +31,11 @@ export default function GuardianPayments() {
   const [paymentMessage, setPaymentMessage] = useState(null);
   const [receiptModalData, setReceiptModalData] = useState(null);
 
+  // Payment Method Modal State (Paystack Card / Direct Bank Transfer)
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("Paystack");
+  const [paymentModalConfig, setPaymentModalConfig] = useState(null);
+
   // Multi-Step Add Training Modal
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [configStep, setConfigStep] = useState(1); // 1: Subjects, 2: Duration & Confirm
@@ -40,22 +46,6 @@ export default function GuardianPayments() {
   const [configuredDuration, setConfiguredDuration] = useState('quarterly');
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
-  const isLocalHost = 
-    typeof window !== "undefined" && 
-    (window.location.hostname === "localhost" || 
-     window.location.hostname === "127.0.0.1" || 
-     window.location.hostname.endsWith(".test") ||
-     process.env.NODE_ENV === "development");
-
-  const PAYSTACK_KEY = 
-    process.env.REACT_APP_PAYSTACK_PUBLIC_KEY || 
-    "pk_test_d810e0935d60a336bea860384aabbc753cdd78ff";
-
-  if (!isLocalHost && !process.env.REACT_APP_PAYSTACK_PUBLIC_KEY) {
-    console.warn(
-      "[GuardianPayments] REACT_APP_PAYSTACK_PUBLIC_KEY is not defined in production environment. Defaulting to sandbox test key."
-    );
-  }
 
   // Standard Academic Billing Cycles & Durations (Monthly, Quarterly, Semi-Annually, Annually)
   const DURATION_PLANS = {
@@ -412,29 +402,21 @@ export default function GuardianPayments() {
     }
   };
 
-  // 5. Handle Renewal Checkout (Backend-Initiated with Explicit Course Targeting)
+  // 5. Handle Renewal Checkout (Opens PaymentMethodModal with Card & Bank Transfer options)
   const handleRenewPayment = async () => {
     if (!selectedWardId || selectedWardId === 'all') {
       setPaymentMessage({ type: 'error', text: 'Please select a specific ward first.' });
       return;
     }
 
-    setProcessingPayment(true);
-    setPaymentMessage(null);
-
-    const isReady = await ensurePaystackLoaded();
-    if (!isReady || !window.PaystackPop) {
-      setPaymentMessage({ type: 'error', text: 'Payment gateway could not be initialized. Please check your connection.' });
-      setProcessingPayment(false);
-      return;
-    }
-
     const targetCourseId = currentEnrollment?.course_id || currentEnrollment?.id || (availableCourses.length > 0 ? availableCourses[0]?.id : null);
     if (!targetCourseId) {
       setPaymentMessage({ type: 'error', text: 'No course found to renew. Please select a valid course.' });
-      setProcessingPayment(false);
       return;
     }
+
+    setProcessingPayment(true);
+    setPaymentMessage(null);
 
     const token = localStorage.getItem("guardian_token");
     let initData = null;
@@ -456,10 +438,9 @@ export default function GuardianPayments() {
       console.warn("[GuardianPayments] Backend renewal initialization fallback:", err.response?.data || err);
     }
 
-    const reference = initData?.reference || `TCR_${selectedWardId}_${Date.now()}`;
     const payerEmail = initData?.email || getValidPayerEmail();
     const finalAmount = initData?.amount ? Number(initData.amount) : calculatedRenewalTotal;
-    const paystackKey = initData?.key || PAYSTACK_KEY;
+    const targetEnrollmentId = initData?.enrollment_id || currentEnrollment?.id;
 
     const sanitizedRenewalSubjects = Array.isArray(currentEnrollment?.enrolled_subjects)
       ? currentEnrollment.enrolled_subjects
@@ -469,8 +450,9 @@ export default function GuardianPayments() {
       : [];
 
     const paystackMetadata = {
-      type: "student_enrollment",
+      type: "course_renewal",
       student_id: selectedWardId,
+      guardian_id: guardian?.id,
       courses: [
         {
           course_id: targetCourseId,
@@ -481,39 +463,30 @@ export default function GuardianPayments() {
       ]
     };
 
-    console.log("[GuardianPayments] Launching Paystack Renewal Popup for Target Course:", {
-      targetCourseTitle: currentEnrollment?.course_title,
-      targetCourseId,
-      amount: Math.round(finalAmount * 100),
-      reference,
-      metadata: paystackMetadata
+    setPaymentModalConfig({
+      amount: finalAmount,
+      selectedDuration: DURATION_PLANS[billingCycle]?.label || billingCycle,
+      email: payerEmail,
+      metadata: paystackMetadata,
+      bankEnrollments: [
+        {
+          enrollmentId: Number(targetEnrollmentId),
+          courseName: currentEnrollment?.course_title || "Training Program",
+          amount: finalAmount,
+          billingCycle: billingCycle,
+          isRenewal: true,
+          guardianId: guardian?.id,
+        }
+      ],
+      studentId: selectedWardId,
     });
 
-    try {
-      const handler = window.PaystackPop.setup({
-        key: paystackKey,
-        email: payerEmail,
-        amount: Math.round(finalAmount * 100),
-        currency: "NGN",
-        ref: reference,
-        metadata: paystackMetadata,
-        callback: (response) => {
-          verifyPaymentOnBackend(response.reference || reference, paystackMetadata);
-        },
-        onClose: () => {
-          setProcessingPayment(false);
-        }
-      });
-
-      handler.openIframe();
-    } catch (e) {
-      console.error("[GuardianPayments] Error opening Paystack modal:", e);
-      setPaymentMessage({ type: 'error', text: 'Failed to trigger payment checkout window.' });
-      setProcessingPayment(false);
-    }
+    setProcessingPayment(false);
+    setSelectedPaymentMethod("Paystack");
+    setShowPaymentModal(true);
   };
 
-  // 6. Handle Add Training Course Checkout (Backend-Initiated)
+  // 6. Handle Add Training Course Checkout (Opens PaymentMethodModal with Card & Bank Transfer options)
   const handleAddTrainingCheckout = async () => {
     if (!selectedWardId || selectedWardId === 'all') {
       alert("Please select a specific ward first.");
@@ -527,13 +500,6 @@ export default function GuardianPayments() {
 
     setProcessingPayment(true);
     setShowConfigModal(false);
-
-    const isReady = await ensurePaystackLoaded();
-    if (!isReady || !window.PaystackPop) {
-      alert("Payment gateway loading. Please try again.");
-      setProcessingPayment(false);
-      return;
-    }
 
     const sanitizedEnrolledSubjects = selectedSubjectIds
       .map(s => (typeof s === 'object' && s !== null ? (s.subject_id || s.id) : s))
@@ -561,14 +527,14 @@ export default function GuardianPayments() {
       console.warn("[GuardianPayments] Backend add-course initialization fallback:", err.response?.data || err);
     }
 
-    const reference = initData?.reference || `TCA_${selectedWardId}_${Date.now()}`;
     const payerEmail = initData?.email || getValidPayerEmail();
     const finalAmount = initData?.amount ? Number(initData.amount) : configuredCoursePrice;
-    const paystackKey = initData?.key || PAYSTACK_KEY;
+    const targetEnrollmentId = initData?.enrollment_id;
 
     const paystackMetadata = {
       type: "student_enrollment",
       student_id: selectedWardId,
+      guardian_id: guardian?.id,
       courses: [
         {
           course_id: selectedCourse.id,
@@ -579,28 +545,53 @@ export default function GuardianPayments() {
       ]
     };
 
-    try {
-      const handler = window.PaystackPop.setup({
-        key: paystackKey,
-        email: payerEmail,
-        amount: Math.round(finalAmount * 100),
-        currency: "NGN",
-        ref: reference,
-        metadata: paystackMetadata,
-        callback: (response) => {
-          verifyPaymentOnBackend(response.reference || reference, paystackMetadata);
-        },
-        onClose: () => {
-          setProcessingPayment(false);
+    setPaymentModalConfig({
+      amount: finalAmount,
+      selectedDuration: configDurationPlan?.label || configuredDuration,
+      email: payerEmail,
+      metadata: paystackMetadata,
+      bankEnrollments: targetEnrollmentId ? [
+        {
+          enrollmentId: Number(targetEnrollmentId),
+          courseName: selectedCourse.title || "New Training Course",
+          amount: finalAmount,
+          billingCycle: configuredDuration,
+          isRenewal: false,
+          guardianId: guardian?.id,
         }
-      });
+      ] : [],
+      studentId: selectedWardId,
+    });
 
-      handler.openIframe();
-    } catch (e) {
-      console.error("[GuardianPayments] Error opening Paystack modal:", e);
-      alert("Failed to open Paystack payment modal.");
-      setProcessingPayment(false);
-    }
+    setProcessingPayment(false);
+    setSelectedPaymentMethod("Paystack");
+    setShowPaymentModal(true);
+  };
+
+  // Payment Modal Callbacks
+  const handlePaystackModalSuccess = async (response) => {
+    setShowPaymentModal(false);
+    setProcessingPayment(true);
+    const ref = response?.reference || `TC-PAY-${Date.now()}`;
+    await verifyPaymentOnBackend(ref, paymentModalConfig?.metadata);
+  };
+
+  const handleBankTransferSettled = () => {
+    setShowPaymentModal(false);
+    setPaymentMessage({
+      type: 'success',
+      text: 'Bank transfer confirmed! Your ward training subscription is active.'
+    });
+    fetchWardDetails();
+  };
+
+  const handleBankTransferPending = () => {
+    setShowPaymentModal(false);
+    setPaymentMessage({
+      type: 'success',
+      text: 'Direct bank transfer claim submitted! An administrator is verifying your payment and will activate the training.'
+    });
+    fetchWardDetails();
   };
 
   // Filtered payment history based on search query
@@ -1327,8 +1318,8 @@ export default function GuardianPayments() {
                         <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" />
                       ) : (
                         <>
-                          <Icon icon="lucide:credit-card" className="w-4 h-4" />
-                          <span>Pay ₦{configuredCoursePrice.toLocaleString()} with Paystack</span>
+                          <Icon icon="lucide:shield-check" className="w-4 h-4" />
+                          <span>Proceed to Payment • ₦{configuredCoursePrice.toLocaleString()}</span>
                         </>
                       )}
                     </button>
@@ -1340,6 +1331,29 @@ export default function GuardianPayments() {
           </div>
         );
       })()}
+
+      {/* ── PAYMENT METHOD GATEWAY MODAL (PAYSTACK CARD / DIRECT BANK TRANSFER) ── */}
+      {showPaymentModal && paymentModalConfig && (
+        <PaymentMethodModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setProcessingPayment(false);
+          }}
+          selectedDuration={paymentModalConfig.selectedDuration}
+          amount={paymentModalConfig.amount}
+          email={paymentModalConfig.email}
+          metadata={paymentModalConfig.metadata}
+          bankEnrollments={paymentModalConfig.bankEnrollments}
+          studentId={paymentModalConfig.studentId}
+          onBankSettled={handleBankTransferSettled}
+          onPendingSubmitted={handleBankTransferPending}
+          selectedMethod={selectedPaymentMethod}
+          setSelectedMethod={setSelectedPaymentMethod}
+          onContinue={handlePaystackModalSuccess}
+          loading={processingPayment}
+        />
+      )}
 
       {/* ── RECEIPT MODAL ─────────────────────────────────────────────────── */}
       {receiptModalData && (

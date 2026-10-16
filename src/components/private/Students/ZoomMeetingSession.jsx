@@ -3,7 +3,7 @@ import axios from "axios";
 import { Icon } from "@iconify/react";
 import { isAdvisorStaff, isTutorStaff } from "../../../utils/roleUtils";
 
-const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave, onRoleResolved }, ref) => {
+const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave, onRoleResolved, isStaff: propIsStaff }, ref) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
@@ -13,13 +13,27 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave, onRoleResolved
     const isJoiningRef = useRef(false);
     const hasJoinedRef = useRef(false);
     const prevSessionIdRef = useRef(classSessionId);
+    const onRoleResolvedRef = useRef(onRoleResolved);
+
+    useEffect(() => {
+        onRoleResolvedRef.current = onRoleResolved;
+    }, [onRoleResolved]);
 
     const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
     
     const staffToken = localStorage.getItem("staff_token");
     const studentToken = localStorage.getItem("student_token") || localStorage.getItem("token");
     
-    const isStaff = !!staffToken;
+    let pathname = "";
+    try {
+      pathname = window.location.pathname || "";
+    } catch (e) {}
+
+    const isStudentRoute = pathname.startsWith("/zoom/masterclass") || pathname.startsWith("/student");
+    const isStaff = typeof propIsStaff === "boolean"
+        ? propIsStaff
+        : (isStudentRoute ? false : Boolean(staffToken));
+
     const token = isStaff ? staffToken : studentToken;
     const signatureEndpoint = isStaff 
         ? `${API_BASE_URL}/api/staffs/zoom/signature` 
@@ -155,8 +169,8 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave, onRoleResolved
                     throw new Error(data.message || "Failed to fetch Zoom credentials.");
                 }
 
-                if (onRoleResolved) {
-                    onRoleResolved({
+                if (onRoleResolvedRef.current) {
+                    onRoleResolvedRef.current({
                         role: data.role,
                         isHost: data.is_host ?? (data.role === 1),
                         activeHostStaffId: data.active_host_staff_id,
@@ -190,7 +204,7 @@ const ZoomMeetingSession = forwardRef(({ classSessionId, onLeave, onRoleResolved
                             meetingNumber: data.meeting_number,
                             passWord: data.password,
                             userName: data.user_name,
-                            userEmail: "",
+                            userEmail: data.user_email || "",
                             tk: "",
                             success: () => {
                                 hasJoinedRef.current = true;

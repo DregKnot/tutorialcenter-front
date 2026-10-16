@@ -121,6 +121,7 @@ export default function StaffMeetWrapper() {
         <div className="py-6 max-w-5xl mx-auto">
           <ZoomMeetingSession 
             classSessionId={sessionDetails.class_schedule_id} 
+            isStaff={true}
             onLeave={handleLeave} 
             onRoleResolved={setMeetingRole}
           />

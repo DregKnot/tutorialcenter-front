@@ -3,9 +3,11 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import axios from "axios";
 
 const mockNavigate = jest.fn();
+let mockLocation = { pathname: "/student/recorded-classes" };
 
 jest.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
+  useLocation: () => mockLocation,
 }), { virtual: true });
 
 // Mock Iconify Icon
@@ -53,6 +55,7 @@ describe("RecordedClasses & View Counter Suite", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
+    mockLocation = { pathname: "/student/recorded-classes" };
   });
 
   describe("formatViewCount Helper", () => {
@@ -96,10 +99,50 @@ describe("RecordedClasses & View Counter Suite", () => {
       expect(screen.queryByTitle(/Click to view student watch attendance/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/Class Viewers & Engagement/i)).not.toBeInTheDocument();
     });
+
+    test("strictly renders student view under DashboardLayout even when staff_token exists in localStorage (dual-role email edge case)", async () => {
+      mockLocation = { pathname: "/student/recorded-classes" };
+      localStorage.setItem("staff_token", "dual-role-staff-token");
+      localStorage.setItem("staff_role", "admin");
+
+      const mockClasses = [
+        {
+          id: 79,
+          title: "JAMB - Chemistry Fundamentals",
+          subject: "Chemistry",
+          tutor: "Dr. Smith",
+          views: 15,
+          total_views: 15,
+          unique_viewers: 7,
+          viewers: [],
+        },
+      ];
+
+      axios.get.mockResolvedValueOnce({
+        data: { success: true, data: mockClasses },
+      });
+
+      render(<RecordedClasses />);
+
+      await waitFor(() => {
+        expect(screen.getByText("JAMB - Chemistry Fundamentals")).toBeInTheDocument();
+      });
+
+      // Must render Student DashboardLayout, NOT StaffDashboardLayout
+      expect(screen.getByTestId("dashboard-layout")).toBeInTheDocument();
+      expect(screen.queryByTestId("staff-dashboard-layout")).not.toBeInTheDocument();
+
+      // Must NOT display staff-only elements
+      expect(screen.queryByText(/Master Class Video Vault/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Total Class Plays/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Unique Students/i)).not.toBeInTheDocument();
+      expect(screen.queryByTitle(/Click to view student watch attendance/i)).not.toBeInTheDocument();
+    });
   });
 
   describe("Admin / Staff Engagement Analytics Modal", () => {
     test("allows staff to open viewers modal with metrics, repeat watchers, and privacy compliance", async () => {
+      mockLocation = { pathname: "/staffs/recorded-classes" };
       localStorage.setItem("staff_token", "fake-staff-token");
       localStorage.setItem("staff_role", "admin");
 
