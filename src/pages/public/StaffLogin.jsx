@@ -25,7 +25,16 @@ export default function StaffLogin() {
   const API_BASE_URL =
     process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
-  
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("session") === "expired") {
+      setToast({
+        type: "error",
+        message: "Your session has expired. Please log in again.",
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (toast && toast.type === "error" && !toast.isRateLimit) {
       const timer = setTimeout(() => setToast(null), 5000);

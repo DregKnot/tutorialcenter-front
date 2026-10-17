@@ -4,6 +4,7 @@ import axios from "axios";
 import { Icon } from "@iconify/react";
 import GuardianDashboardLayout from "../../components/private/Guardians/GuardianDashboardLayout";
 import { location as nigerianLocations } from "../../data/locations";
+import { dropdownTheme } from "../../utils/dropdownTheme";
 
 const STEPS = [
   { num: 1, label: "Ward Biodata & OTP", icon: "lucide:user-check" },
@@ -23,56 +24,6 @@ const DURATION_PLANS = {
 const calculatePlanPrice = (basePrice, months = 1) => {
   const total = Number(basePrice || 0) * (months || 1);
   return months === 1 ? total : Math.round(total * 0.95);
-};
-
-const stripHtml = (html) => {
-  if (!html) return "";
-  return html
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, " ")
-    .trim();
-};
-
-const getCourseTheme = (title = "") => {
-  const t = (title || "").toLowerCase();
-  if (t.includes("jamb")) {
-    return {
-      gradient: "from-[#0B3B60] via-[#09314F] to-[#041C30]",
-      badgeBg: "bg-cyan-500/20 text-cyan-300 border-cyan-400/30",
-      accentColor: "#06B6D4",
-      examTag: "JAMB UTME",
-      icon: "lucide:award",
-    };
-  }
-  if (t.includes("waec")) {
-    return {
-      gradient: "from-[#064E3B] via-[#043E30] to-[#022C22]",
-      badgeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-400/30",
-      accentColor: "#10B981",
-      examTag: "WAEC SSCE",
-      icon: "lucide:book-open",
-    };
-  }
-  if (t.includes("neco")) {
-    return {
-      gradient: "from-[#4C1D95] via-[#3B0764] to-[#2E0854]",
-      badgeBg: "bg-purple-500/20 text-purple-300 border-purple-400/30",
-      accentColor: "#A855F7",
-      examTag: "NECO SSCE",
-      icon: "lucide:layers",
-    };
-  }
-  return {
-    gradient: "from-[#0F2843] via-[#09314F] to-[#051829]",
-    badgeBg: "bg-amber-500/20 text-amber-300 border-amber-400/30",
-    accentColor: "#F59E0B",
-    examTag: "GCE / O-Level",
-    icon: "lucide:scroll",
-  };
 };
 
 export default function GuardianAddWard() {
@@ -122,12 +73,15 @@ export default function GuardianAddWard() {
   // ── Module 2: Course Selection State ───────────────────────────────────────
   const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedCourseIds, setSelectedCourseIds] = useState([]);
 
   // ── Module 3: Subject Selection State ──────────────────────────────────────
-  const [courseSubjects, setCourseSubjects] = useState([]);
+  const [subjectsByCourse, setSubjectsByCourse] = useState({});
+  const [selectedSubjectsByCourse, setSelectedSubjectsByCourse] = useState({});
   const [loadingSubjects, setLoadingSubjects] = useState(false);
-  const [selectedSubjectIds, setSelectedSubjectIds] = useState([]);
+  const [openDropdownCourseId, setOpenDropdownCourseId] = useState(null);
+  const [showSubjectReviewModal, setShowSubjectReviewModal] = useState(false);
+  const subjectDropdownRef = useRef(null);
 
   // ── Module 4: Duration Plan State ──────────────────────────────────────────
   const [selectedDuration, setSelectedDuration] = useState("quarterly");
@@ -277,7 +231,7 @@ export default function GuardianAddWard() {
           const list = coursesRes.value.data?.courses || coursesRes.value.data?.data || [];
           setCourses(list);
           if (list.length > 0) {
-            setSelectedCourse((prev) => prev || list[0]);
+            setSelectedCourseIds((prev) => (prev.length > 0 ? prev : [list[0].id]));
           }
         }
 
@@ -295,61 +249,132 @@ export default function GuardianAddWard() {
     fetchCoursesAndProfile();
   }, [API_BASE_URL]);
 
-  // ── Helper to fetch subjects for selected course & department ───────────────
-  const fetchSubjectsForCourse = async (course, wardObj) => {
-    const targetWard = wardObj || createdWard;
-    if (!course || !targetWard) return;
-    setLoadingSubjects(true);
-    try {
-      const dept = targetWard.department || formData.department || "Science";
-      let list = [];
+  // ── Close Subject Dropdown when clicking outside ───────────────────────────
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (subjectDropdownRef.current && !subjectDropdownRef.current.contains(event.target)) {
+        setOpenDropdownCourseId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // ── Helper to fetch subjects for one specific course with multi-tier fallback ──
+  const fetchSubjectsForOneCourse = async (course, wardDept) => {
+    if (!course) return [];
+    const dept = wardDept || "Science";
+    let list = [];
+
+    // 1. Try course + dept endpoint if department is standard (Science, Arts, Commercial)
+    if (dept && dept !== "General") {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/courses/${course.id}/subjects/${dept}`);
-        list = res.data?.subjects || res.data?.data || [];
+        const data = res.data?.subjects || res.data?.data || [];
+        if (Array.isArray(data) && data.length > 0) {
+          list = data;
+        }
       } catch (e) {
+        console.warn(`Dept subject fetch failed for course ${course.id}, dept ${dept}`, e);
+      }
+    }
+
+    // 2. If empty or General track, try general course subjects: /api/courses/{course.id}/subjects
+    if (!list || list.length === 0) {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/courses/${course.id}/subjects`);
+        const data = res.data?.subjects || res.data?.data || (Array.isArray(res.data) ? res.data : []);
+        if (Array.isArray(data) && data.length > 0) {
+          list = data;
+        }
+      } catch (e) {
+        console.warn(`Course subjects fetch failed for course ${course.id}`, e);
+      }
+    }
+
+    // 3. Global fallback: /api/subjects
+    if (!list || list.length === 0) {
+      try {
         const fallback = await axios.get(`${API_BASE_URL}/api/subjects`);
-        list = fallback.data?.subjects || fallback.data?.data || [];
+        const all = fallback.data?.subjects || fallback.data?.data || (Array.isArray(fallback.data) ? fallback.data : []);
+        if (Array.isArray(all) && all.length > 0) {
+          list = all;
+        }
+      } catch (e) {
+        console.warn("Global subjects fallback failed", e);
       }
-      setCourseSubjects(list);
-      // Auto-select compulsory subjects or first 4
-      const compulsory = list.filter((s) => s.is_compulsory).map((s) => s.id);
-      const maxLimit = course.title?.toLowerCase().includes("jamb") ? 4 : 9;
-      if (compulsory.length > 0) {
-        setSelectedSubjectIds(compulsory.slice(0, maxLimit));
-      } else if (list.length > 0) {
-        setSelectedSubjectIds(list.slice(0, Math.min(4, maxLimit)).map((s) => s.id));
-      }
+    }
+
+    return list;
+  };
+
+  // ── Helper to fetch subjects for ALL selected courses & department ──────────
+  const fetchSubjectsForActiveCourses = async (activeCourses, wardObj) => {
+    const targetWard = wardObj || createdWard;
+    if (!activeCourses || activeCourses.length === 0 || !targetWard) return;
+    setLoadingSubjects(true);
+
+    try {
+      const dept = targetWard.department || formData.department || "Science";
+      const newSubjectsByCourse = {};
+      const newSelectedSubjects = { ...selectedSubjectsByCourse };
+
+      await Promise.all(
+        activeCourses.map(async (course) => {
+          const list = await fetchSubjectsForOneCourse(course, dept);
+          newSubjectsByCourse[course.id] = list;
+
+          // Auto-select compulsory subjects or first 4/9 if not already selected
+          if (!newSelectedSubjects[course.id] || newSelectedSubjects[course.id].length === 0) {
+            const compulsory = list.filter((s) => s.is_compulsory).map((s) => s.id);
+            const maxLimit = course.title?.toLowerCase().includes("jamb") ? 4 : 9;
+            if (compulsory.length > 0) {
+              newSelectedSubjects[course.id] = compulsory.slice(0, maxLimit);
+            } else if (list.length > 0) {
+              newSelectedSubjects[course.id] = list.slice(0, Math.min(4, maxLimit)).map((s) => s.id);
+            } else {
+              newSelectedSubjects[course.id] = [];
+            }
+          }
+        })
+      );
+
+      setSubjectsByCourse(newSubjectsByCourse);
+      setSelectedSubjectsByCourse(newSelectedSubjects);
     } catch (err) {
-      console.error("Failed to fetch subjects:", err);
+      console.error("Failed to fetch subjects for active courses:", err);
     } finally {
       setLoadingSubjects(false);
     }
   };
 
   // ── Helper to activate zero-cost free training grant instantly ──────────────
-  const handleActivateFreeGrant = async (courseToUse) => {
-    const course = courseToUse || selectedCourse;
-    if (!course || !createdWard) return;
+  const handleActivateFreeGrant = async () => {
+    if (!createdWard) return;
     setActivatingGrant(true);
     setToast(null);
 
     const token = localStorage.getItem("guardian_token");
+    const active = courses.filter((c) => selectedCourseIds.includes(c.id));
     try {
-      const res = await axios.post(
-        `${API_BASE_URL}/api/guardians/payments/training/add-course`,
-        {
-          student_id: createdWard.id,
-          course_id: course.id,
-          amount: 0,
-          billing_cycle: selectedDuration,
-          subject_ids: selectedSubjectIds.length > 0 ? selectedSubjectIds : [],
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      for (const course of active) {
+        const subIds = selectedSubjectsByCourse[course.id] || [];
+        await axios.post(
+          `${API_BASE_URL}/api/guardians/payments/training/add-course`,
+          {
+            student_id: createdWard.id,
+            course_id: course.id,
+            amount: 0,
+            billing_cycle: selectedDuration,
+            subject_ids: subIds,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
 
       setGrantSuccess({
-        course: course.title,
-        message: res.data?.message || `Free training grant successfully activated for ${createdWard.firstname}!`,
+        course: active.map((c) => c.title).join(", "),
+        message: `Free training grant successfully activated for ${createdWard.firstname}!`,
       });
       setCreatedWard((prev) => ({
         ...prev,
@@ -358,7 +383,7 @@ export default function GuardianAddWard() {
       }));
       setToast({
         type: "success",
-        message: `Free Training Grant Activated! ${createdWard.firstname} now has active access to ${course.title}.`,
+        message: `Free Training Grant Activated! ${createdWard.firstname} now has active access.`,
       });
     } catch (err) {
       setToast({
@@ -370,68 +395,130 @@ export default function GuardianAddWard() {
     }
   };
 
-  // ── Advance from Step 2 to Step 3 ──────────────────────────────────────────
-  const handleProceedToStep3 = async () => {
-    if (!selectedCourse) {
-      setToast({ type: "error", message: "Please select an examination course program first." });
-      return;
-    }
-    await fetchSubjectsForCourse(selectedCourse, createdWard);
-    setCurrentStep(3);
-  };
-
-  // ── Toggle Subject Selection ───────────────────────────────────────────────
-  const toggleSubjectSelection = (subjectId) => {
-    const maxLimit = selectedCourse?.title?.toLowerCase().includes("jamb") ? 4 : 9;
-    setSelectedSubjectIds((prev) => {
-      if (prev.includes(subjectId)) {
-        return prev.filter((id) => id !== subjectId);
+  // ── Toggle Training Selection (Guardian Signup Flow style) ──────────────────
+  const toggleTraining = (courseId) => {
+    setSelectedCourseIds((prev) => {
+      let updated;
+      if (prev.includes(courseId)) {
+        if (prev.length === 1) {
+          setToast({
+            type: "info",
+            message: "At least one examination program must remain selected.",
+          });
+          return prev;
+        }
+        updated = prev.filter((id) => id !== courseId);
+      } else {
+        updated = [...prev, courseId];
       }
-      if (prev.length >= maxLimit) {
-        setToast({
-          type: "info",
-          message: `Maximum of ${maxLimit} subjects allowed for ${selectedCourse?.title || "this course"}.`,
-        });
-        return prev;
-      }
-      return [...prev, subjectId];
+      return updated;
     });
   };
 
-  // ── Advance from Step 3 to Step 4 ──────────────────────────────────────────
-  const handleProceedToStep4 = () => {
-    if (selectedSubjectIds.length === 0) {
-      setToast({ type: "error", message: "Please select at least 1 subject for your ward." });
+  // ── Advance from Step 2 to Step 3 (Multi-Course Support) ───────────────────
+  const handleProceedToStep3 = async () => {
+    const active = courses.filter((c) => selectedCourseIds.includes(c.id));
+    if (active.length === 0) {
+      setToast({ type: "error", message: "Please select an examination course program first." });
       return;
     }
-    setCurrentStep(4);
+    await fetchSubjectsForActiveCourses(active, createdWard);
+    setCurrentStep(3);
   };
 
-  // ── Advance from Step 4 to Step 5 (Stage Enrollment) ─────────────────────────
+  // ── Toggle Subject Selection for Course (Multi-Course Support) ─────────────
+  const toggleSubjectForCourse = (courseId, subjectId) => {
+    const course = courses.find((c) => c.id === courseId);
+    const maxLimit = course?.title?.toLowerCase().includes("jamb") ? 4 : 9;
+    setSelectedSubjectsByCourse((prev) => {
+      const current = prev[courseId] || [];
+      if (current.includes(subjectId)) {
+        return {
+          ...prev,
+          [courseId]: current.filter((id) => id !== subjectId),
+        };
+      }
+      if (current.length >= maxLimit) {
+        setToast({
+          type: "info",
+          message: `Maximum of ${maxLimit} subjects allowed for ${course?.title || "this course"}.`,
+        });
+        return prev;
+      }
+      return {
+        ...prev,
+        [courseId]: [...current, subjectId],
+      };
+    });
+  };
+
+  // ── Advance from Step 3: Trigger Review Confirmation Modal ──────────────────
+  const handleProceedToStep4 = () => {
+    const active = courses.filter((c) => selectedCourseIds.includes(c.id));
+    if (active.length === 0) {
+      setToast({ type: "error", message: "No active examination program selected." });
+      return;
+    }
+    for (const course of active) {
+      const selected = selectedSubjectsByCourse[course.id] || [];
+      if (selected.length === 0) {
+        setToast({
+          type: "error",
+          message: `Please select at least 1 subject for ${course.title}.`,
+        });
+        return;
+      }
+    }
+    setShowSubjectReviewModal(true);
+  };
+
+  const handleConfirmReviewAndProceed = () => {
+    setShowSubjectReviewModal(false);
+    const active = courses.filter((c) => selectedCourseIds.includes(c.id));
+    const totalPrice = active.reduce((sum, c) => sum + Number(c.price || 0), 0);
+    if (totalPrice <= 0) {
+      handleActivateFreeGrant();
+    } else {
+      setCurrentStep(4);
+    }
+  };
+
+  // ── Advance from Step 4 to Step 5 (Stage Enrollment across active courses) ─
   const handleProceedToStep5 = async () => {
     setLoading(true);
     const token = localStorage.getItem("guardian_token");
-    const rawPrice = Number(selectedCourse?.price || 0);
+    const active = courses.filter((c) => selectedCourseIds.includes(c.id));
     const planMonths = DURATION_PLANS[selectedDuration]?.months || 3;
-    const finalPrice = rawPrice <= 0 ? 0 : Math.max(100, calculatePlanPrice(rawPrice, planMonths));
 
     try {
-      const res = await axios.post(
-        `${API_BASE_URL}/api/guardians/payments/training/add-course`,
-        {
-          student_id: createdWard.id,
-          course_id: selectedCourse.id,
-          amount: finalPrice,
-          billing_cycle: selectedDuration,
-          subject_ids: selectedSubjectIds,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      let staged = null;
+      for (const course of active) {
+        const rawPrice = Number(course.price || 0);
+        const finalPrice = rawPrice <= 0 ? 0 : Math.max(100, calculatePlanPrice(rawPrice, planMonths));
+        const subIds = selectedSubjectsByCourse[course.id] || [];
 
-      if (res.data?.is_free || res.data?.data?.is_free || finalPrice <= 0) {
+        const res = await axios.post(
+          `${API_BASE_URL}/api/guardians/payments/training/add-course`,
+          {
+            student_id: createdWard.id,
+            course_id: course.id,
+            amount: finalPrice,
+            billing_cycle: selectedDuration,
+            subject_ids: subIds,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (finalPrice > 0 && res.data?.data) {
+          staged = res.data.data;
+        }
+      }
+
+      const totalRawPrice = active.reduce((sum, c) => sum + Number(c.price || 0), 0);
+      if (totalRawPrice <= 0) {
         setGrantSuccess({
-          course: selectedCourse.title,
-          message: res.data?.message || `Free training grant successfully activated for ${createdWard.firstname}!`,
+          course: active.map((c) => c.title).join(", "),
+          message: `Free training grant successfully activated for ${createdWard.firstname}!`,
         });
         setCreatedWard((prev) => ({
           ...prev,
@@ -442,10 +529,14 @@ export default function GuardianAddWard() {
         return;
       }
 
-      setStagedEnrollment(res.data?.data || null);
+      setStagedEnrollment(staged);
       setCurrentStep(5);
     } catch (err) {
       console.warn("Failed to stage enrollment:", err);
+      setToast({
+        type: "error",
+        message: err.response?.data?.message || "Failed to stage course enrollment. Please retry.",
+      });
       setCurrentStep(5);
     } finally {
       setLoading(false);
@@ -458,6 +549,7 @@ export default function GuardianAddWard() {
     setLoadingBankTransfer(true);
     try {
       const token = localStorage.getItem("guardian_token");
+      const allSelectedSubjects = Object.values(selectedSubjectsByCourse).flat();
       const res = await axios.post(
         `${API_BASE_URL}/api/payments/bank-transfer`,
         {
@@ -465,7 +557,7 @@ export default function GuardianAddWard() {
           course_enrollment_id: stagedEnrollment.enrollment_id,
           billing_cycle: selectedDuration,
           guardian_id: guardian?.id,
-          subjects: selectedSubjectIds,
+          subjects: allSelectedSubjects,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1517,28 +1609,28 @@ export default function GuardianAddWard() {
         )}
 
         {/* ==================================================================== */}
-        {/* MODULE 2: COURSE SELECTION                                          */}
+        {/* MODULE 2: TRAINING SELECTION (SIGNUP FLOW DESIGN PRINCIPLE)          */}
         {/* ==================================================================== */}
         {currentStep === 2 && createdWard && (
           <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 sm:p-10 border border-gray-100 dark:border-gray-700/80 shadow-xl space-y-6 animate-in fade-in zoom-in-95">
             
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+            {/* Header & Subtitle matching Guardian Signup Flow */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
               <div>
-                <span className="px-3.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-[10px] font-black uppercase tracking-wider">
-                  Module 2 of 5 • Course Program
+                <span className="px-3.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-[#09314F] dark:text-blue-300 text-[10px] font-black uppercase tracking-wider">
+                  Module 2 of 5 • Training Selection
                 </span>
-                <h2 className="text-xl sm:text-2xl font-black text-[#09314F] dark:text-white mt-1">
-                  Select Training Course for {createdWard.firstname}
-                </h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Choose the academic examination track your ward will prepare for.
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#09314F] dark:text-white mt-1">
+                  Select Training
+                </h1>
+                <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-0.5">
+                  Select the examinations each student is about to write. You may select more than one examination per student.
                 </p>
               </div>
 
               {/* Ward Mini Pill */}
               <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 self-start sm:self-auto">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-xs">
+                <div className="w-8 h-8 rounded-xl bg-[#09314F] text-white flex items-center justify-center font-bold text-xs">
                   <Icon icon="lucide:user" className="w-4 h-4" />
                 </div>
                 <div>
@@ -1585,94 +1677,84 @@ export default function GuardianAddWard() {
               </div>
             ) : (
               <>
-                {/* Courses Loading State */}
-                {loadingCourses ? (
-                  <div className="py-12 flex flex-col items-center justify-center space-y-3">
-                    <Icon icon="lucide:loader-2" className="w-8 h-8 text-[#09314F] dark:text-[#C5A97A] animate-spin" />
-                    <p className="text-xs text-gray-500 font-bold">Loading examination programs...</p>
+                {/* Per-Student Accordion matching Guardian Signup flow */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/80 overflow-hidden">
+                  {/* Accordion Header */}
+                  <div className="w-full flex items-center justify-between px-5 py-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-[#09314F] dark:text-white uppercase tracking-wide">
+                        Student 1
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        — {createdWard.firstname} {createdWard.surname}
+                      </span>
+                      {selectedCourseIds.length > 0 && (
+                        <span className="text-xs bg-green-100 dark:bg-green-950/60 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">
+                          {selectedCourseIds.length} selected
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-[#09314F] dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 px-2.5 py-0.5 rounded-full uppercase">
+                        {createdWard.department} Track
+                      </span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {courses.map((course) => {
-                      const isSelected = selectedCourse?.id === course.id;
-                      const theme = getCourseTheme(course.title);
-                      const isFree = Number(course.price || 0) === 0;
 
-                      return (
-                        <div
-                          key={course.id}
-                          onClick={() => setSelectedCourse(course)}
-                          className={`rounded-2xl p-5 border-2 transition-all cursor-pointer flex flex-col justify-between space-y-4 relative overflow-hidden group ${
-                            isSelected
-                              ? "border-[#09314F] dark:border-[#C5A97A] bg-blue-50/40 dark:bg-gray-900/90 shadow-md ring-2 ring-[#09314F]/10 dark:ring-[#C5A97A]/20"
-                              : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-850 hover:border-gray-300 dark:hover:border-gray-600"
-                          }`}
-                        >
-                          <div className="space-y-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${theme.badgeBg}`}>
-                                {theme.examTag}
-                              </span>
+                  {/* Accordion Body — Course Grid (h-[50px] rectangular buttons matching Guardian flow) */}
+                  <div className="px-5 pb-6 pt-4">
+                    {loadingCourses ? (
+                      <div className="py-8 flex flex-col items-center justify-center space-y-2">
+                        <Icon icon="lucide:loader-2" className="w-6 h-6 text-[#09314F] animate-spin" />
+                        <p className="text-xs text-gray-500 font-bold">Loading examinations...</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3">
+                        {courses.map((exam) => {
+                          const isSelected = selectedCourseIds.includes(exam.id);
+                          const isFree = Number(exam.price || 0) === 0;
 
-                              {isSelected ? (
-                                <div className="w-6 h-6 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] flex items-center justify-center shadow-sm">
-                                  <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
-                                </div>
-                              ) : (
-                                <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600" />
-                              )}
-                            </div>
-
-                            <div>
-                              <h3 className="text-base font-black text-gray-900 dark:text-white leading-tight">
-                                {course.title}
-                              </h3>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                                {stripHtml(course.description) || "Comprehensive CBT simulation, live masterclasses, and syllabus drills."}
-                              </p>
-                            </div>
-
-                            {/* Features Checklist */}
-                            <div className="space-y-1.5 pt-1">
-                              {[
-                                "Realistic Timed CBT Mock Simulations",
-                                "Curated Past Questions & Syllabus Bank",
-                                "Live Masterclasses & Tutor Consultations",
-                                "Instant Diagnostic Analytics & Reports",
-                              ].map((perk, i) => (
-                                <div key={i} className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-300 font-medium">
-                                  <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                                  <span>{perk}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Pricing Footer */}
-                          <div className="pt-3 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
-                            <div>
-                              <p className="text-[10px] uppercase font-bold text-gray-400">Tuition Fee</p>
-                              {isFree ? (
-                                <span className="inline-flex items-center gap-1 text-xs font-black text-emerald-600 dark:text-emerald-400">
-                                  <Icon icon="lucide:sparkles" className="w-3.5 h-3.5" />
-                                  100% Free / Scholarship
+                          return (
+                            <button
+                              key={exam.id}
+                              type="button"
+                              onClick={() => toggleTraining(exam.id)}
+                              className={`h-[50px] rounded-lg font-bold flex items-center justify-between px-4 transition-all duration-300 active:scale-[0.98] ${
+                                isSelected
+                                  ? "bg-[#76D287] text-white shadow-md shadow-green-100"
+                                  : "bg-[#D1D5DB] text-[#4B5563] hover:bg-gray-400 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-650"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm uppercase tracking-wide">
+                                  {exam.title}
                                 </span>
-                              ) : (
-                                <p className="font-mono text-base font-black text-[#09314F] dark:text-white">
-                                  ₦{Number(course.price).toLocaleString()}
-                                </p>
+                                {isFree && (
+                                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${isSelected ? "bg-white/25 text-white" : "bg-emerald-100 text-emerald-800"}`}>
+                                    FREE
+                                  </span>
+                                )}
+                              </div>
+                              {isSelected && (
+                                <span className="text-base font-black">✓</span>
                               )}
-                            </div>
-
-                            <span className={`text-xs font-bold ${isSelected ? "text-[#09314F] dark:text-[#C5A97A]" : "text-gray-400"}`}>
-                              {isSelected ? "Selected ✓" : "Click to Select"}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* Tuition & Program Summary */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-2 text-xs text-gray-500 dark:text-gray-400">
+                  <span>
+                    Selected Examination(s): <strong className="text-[#09314F] dark:text-white">{courses.filter((c) => selectedCourseIds.includes(c.id)).map((c) => c.title).join(", ") || "None"}</strong>
+                  </span>
+                  <span>
+                    Tuition Fee: <strong className="font-mono text-[#09314F] dark:text-[#C5A97A]">{courses.filter((c) => selectedCourseIds.includes(c.id)).reduce((acc, c) => acc + Number(c.price || 0), 0) <= 0 ? "Free Grant (₦0)" : `₦${courses.filter((c) => selectedCourseIds.includes(c.id)).reduce((acc, c) => acc + Number(c.price || 0), 0).toLocaleString()}`}</strong>
+                  </span>
+                </div>
 
                 {/* Bottom Action Footer */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -1682,18 +1764,19 @@ export default function GuardianAddWard() {
                       setIsVerifyingOtp(false);
                       setCurrentStep(1);
                     }}
-                    className="px-5 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="w-full sm:w-auto px-6 py-4 rounded-[18px] border-2 border-gray-200 dark:border-gray-700 text-[#09314F] dark:text-gray-300 font-bold text-xs uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                   >
-                    ← Edit Biodata
+                    <Icon icon="lucide:arrow-left" className="w-4 h-4" />
+                    <span>Edit Biodata</span>
                   </button>
 
                   <div className="flex items-center gap-3 w-full sm:w-auto">
-                    {selectedCourse && Number(selectedCourse.price || 0) === 0 ? (
+                    {selectedCourseIds.length > 0 && courses.filter((c) => selectedCourseIds.includes(c.id)).reduce((acc, c) => acc + Number(c.price || 0), 0) <= 0 ? (
                       <button
                         type="button"
-                        onClick={() => handleActivateFreeGrant(selectedCourse)}
+                        onClick={handleActivateFreeGrant}
                         disabled={activatingGrant}
-                        className="w-full sm:w-auto px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto px-6 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
                       >
                         {activatingGrant ? (
                           <>
@@ -1707,17 +1790,17 @@ export default function GuardianAddWard() {
                           </>
                         )}
                       </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleProceedToStep3}
-                        disabled={!selectedCourse || loadingCourses}
-                        className="w-full sm:w-auto px-6 py-3.5 bg-[#09314F] hover:bg-[#0d3f66] dark:bg-[#C5A97A] dark:hover:bg-[#b09262] text-white dark:text-[#09314F] font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                      >
-                        <span>Confirm Program & Proceed to Step 3: Subjects</span>
-                        <Icon icon="lucide:arrow-right" className="w-4 h-4" />
-                      </button>
-                    )}
+                    ) : null}
+
+                    <button
+                      type="button"
+                      onClick={handleProceedToStep3}
+                      disabled={selectedCourseIds.length === 0 || loadingCourses}
+                      className="w-full sm:w-auto py-5 px-10 rounded-[22px] font-bold text-base text-white bg-gradient-to-r from-[#09314F] to-[#E83831] shadow-xl hover:shadow-[#E8383144] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <span>Continue</span>
+                      <Icon icon="lucide:arrow-right" className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
               </>
@@ -1727,88 +1810,390 @@ export default function GuardianAddWard() {
         )}
 
         {/* ==================================================================== */}
-        {/* MODULE 3: SUBJECT SELECTION                                         */}
+        {/* MODULE 3: SUBJECT SELECTION (SIGNUP FLOW DESIGN PRINCIPLE)           */}
         {/* ==================================================================== */}
-        {currentStep === 3 && createdWard && selectedCourse && (
-          <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 sm:p-10 border border-gray-100 dark:border-gray-700/80 shadow-xl space-y-6 animate-in fade-in zoom-in-95">
-            
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-gray-700">
+        {currentStep === 3 && createdWard && selectedCourseIds.length > 0 && (
+          <div className="space-y-6 animate-in fade-in zoom-in-95">
+            {/* Header & Department Context matching Guardian Signup Flow */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
               <div>
-                <span className="px-3.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-[10px] font-black uppercase tracking-wider">
+                <span className="px-3.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-[#09314F] dark:text-blue-300 text-[10px] font-black uppercase tracking-wider">
                   Module 3 of 5 • Subject Selection
                 </span>
-                <h2 className="text-xl sm:text-2xl font-black text-[#09314F] dark:text-white mt-1">
-                  Choose Examination Subjects
-                </h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Select the subjects for <strong>{selectedCourse.title}</strong> according to {createdWard.firstname}'s <strong>{createdWard.department}</strong> track.
+                <h1 className="text-2xl sm:text-3xl font-black text-[#09314F] dark:text-white mt-1">
+                  Subject Selection
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  Select subjects for {createdWard.firstname}'s chosen training (
+                  {courses
+                    .filter((c) => selectedCourseIds.includes(c.id))
+                    .map((c) => c.title)
+                    .join(", ")}
+                  ).
                 </p>
               </div>
 
-              <div className="px-3.5 py-2 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-right self-start sm:self-auto">
-                <p className="text-[10px] font-bold text-gray-400 uppercase">Selected</p>
-                <p className="text-xs font-black text-[#09314F] dark:text-white">
-                  {selectedSubjectIds.length} of max {selectedCourse.title?.toLowerCase().includes("jamb") ? 4 : 9}
-                </p>
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-[#09314F] dark:text-gray-200 shadow-sm">
+                  Track: <strong className="text-blue-600 dark:text-blue-400">{createdWard.department}</strong>
+                </span>
               </div>
             </div>
 
-            {loadingSubjects ? (
-              <div className="py-12 flex flex-col items-center justify-center space-y-3">
-                <Icon icon="lucide:loader-2" className="w-8 h-8 text-[#09314F] dark:text-[#C5A97A] animate-spin" />
-                <p className="text-xs text-gray-500 font-bold">Loading department syllabus subjects...</p>
+            {/* Signature Student Card Container with Navy Table Bar */}
+            <div className={`bg-white dark:bg-gray-800 rounded-[32px] shadow-[0_10px_30px_rgba(0,0,0,0.03)] border border-gray-100 dark:border-gray-700/80 mb-4 relative ${openDropdownCourseId ? 'z-50' : 'z-10'}`}>
+              
+              {/* Student Header Bar */}
+              <div className="w-full flex items-center justify-between p-6 hover:bg-gray-50/50 dark:hover:bg-gray-750/50 transition-colors rounded-[32px]">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-2xl bg-[#09314F] text-white flex items-center justify-center font-black text-xs shadow-md shadow-[#09314F22]">
+                    1
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black text-[#888888] dark:text-gray-400 uppercase tracking-widest leading-none mb-1">
+                      Student
+                    </p>
+                    <h3 className="text-sm font-black text-[#09314F] dark:text-white uppercase tracking-wide">
+                      {createdWard.firstname} {createdWard.surname}
+                    </h3>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {courses
+                    .filter((c) => selectedCourseIds.includes(c.id))
+                    .map((c) => (
+                      <span
+                        key={c.id}
+                        className="text-[10px] font-black text-[#09314F] dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 px-3 py-1 rounded-full uppercase"
+                      >
+                        {c.title}
+                      </span>
+                    ))}
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {courseSubjects.map((sub) => {
-                  const isChecked = selectedSubjectIds.includes(sub.id);
-                  return (
-                    <div
-                      key={sub.id}
-                      onClick={() => toggleSubjectSelection(sub.id)}
-                      className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-                        isChecked
-                          ? "border-[#09314F] dark:border-[#C5A97A] bg-blue-50/50 dark:bg-[#C5A97A]/10 text-[#09314F] dark:text-white shadow-sm"
-                          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-850 text-gray-700 dark:text-gray-300 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-colors ${
-                          isChecked ? "bg-[#09314F] dark:bg-[#C5A97A] border-[#09314F] dark:border-[#C5A97A] text-white dark:text-[#09314F]" : "border-gray-300 dark:border-gray-600"
-                        }`}>
-                          {isChecked && <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />}
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold leading-tight">{sub.name}</p>
-                          {sub.is_compulsory && (
-                            <span className="text-[9px] font-black uppercase text-amber-600 dark:text-amber-400">Compulsory</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+              {/* Signature Navy Table Section */}
+              <div className="p-2 sm:p-4 pt-0 animate-fadeIn relative">
+                {/* Navy Table Header Bar */}
+                <div className="grid grid-cols-3 bg-[#09314F] text-white px-4 md:px-6 py-4 rounded-t-[12px] shadow-sm">
+                  <span className="text-[8px] sm:text-[10px] md:text-sm font-black uppercase tracking-wider text-left leading-tight">
+                    Exam
+                  </span>
+                  <span className="text-[8px] sm:text-[10px] md:text-sm font-black uppercase tracking-wider text-center leading-tight">
+                    Subjects
+                  </span>
+                  <span className="text-[8px] sm:text-[10px] md:text-sm font-black uppercase tracking-wider text-right leading-tight">
+                    Count
+                  </span>
+                </div>
+
+                {/* Navy Table Rows for all selected courses */}
+                <div className="space-y-0">
+                  {courses
+                    .filter((c) => selectedCourseIds.includes(c.id))
+                    .map((course, idx, arr) => {
+                      const selectedIds = selectedSubjectsByCourse[course.id] || [];
+                      const subjects = subjectsByCourse[course.id] || [];
+                      const limit = course.title?.toLowerCase().includes("jamb") ? 4 : 9;
+                      const isOpen = openDropdownCourseId === course.id;
+                      const isLast = idx === arr.length - 1;
+
+                      return (
+                        <div
+                          key={course.id}
+                          className={`grid grid-cols-3 items-center px-4 md:px-6 py-5 border-x border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-850 relative ${
+                            isLast ? "rounded-b-[12px]" : ""
+                          } ${isOpen ? "z-50" : "z-10"}`}
+                        >
+                          {/* Col 1: Exam Title */}
+                          <div className="text-[9px] sm:text-[11px] md:text-sm font-bold text-[#09314F] dark:text-white uppercase tracking-wide truncate leading-tight">
+                            {course.title}
+                          </div>
+
+                          {/* Col 2: Interactive Subject Selector & Floating Overlay */}
+                          <div className="min-w-0 lg:relative flex justify-center">
+                            <button
+                              id={`toggle-subjects-${course.id}`}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenDropdownCourseId(isOpen ? null : course.id);
+                              }}
+                              className="w-full max-w-[220px] min-w-0 min-h-[44px] flex items-center justify-center transition-all group pointer-events-auto text-[9px] sm:text-[11px] md:text-sm leading-tight focus:outline-none"
+                            >
+                              <div className={`${dropdownTheme.subjectPreview} dark:bg-gray-700 dark:text-gray-100 text-center truncate flex items-center justify-between gap-1 shadow-inner px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600`}>
+                                <span className="truncate font-bold">
+                                  {selectedIds.length > 0 ? (
+                                    subjects
+                                      .filter((s) => selectedIds.includes(s.id))
+                                      .map((s) => s.name)
+                                      .join(", ")
+                                  ) : (
+                                    "Select subjects"
+                                  )}
+                                </span>
+                                <Icon
+                                  icon="lucide:chevron-down"
+                                  className={`w-3.5 h-3.5 text-gray-400 group-hover:text-[#09314F] dark:group-hover:text-white transition-transform duration-200 flex-shrink-0 ${
+                                    isOpen ? "rotate-180" : ""
+                                  }`}
+                                />
+                              </div>
+                            </button>
+
+                            {/* Floating Overlay Menu using exact dropdownTheme styling */}
+                            {isOpen && (
+                              <div
+                                ref={subjectDropdownRef}
+                                className={`${dropdownTheme.overlay.container} !w-auto !left-2 !right-2 sm:!left-auto sm:!right-auto sm:!w-[320px] z-[200] shadow-2xl dark:bg-gray-900 dark:border-gray-700`}
+                              >
+                                <div className="flex items-center justify-between mb-2 px-2">
+                                  <p className={`${dropdownTheme.overlay.header} mb-0 dark:text-gray-400`}>
+                                    Choose up to {limit} for {course.title}
+                                  </p>
+                                  <span className="text-[10px] font-black text-[#09314F] dark:text-gray-300">
+                                    {selectedIds.length} / {limit}
+                                  </span>
+                                </div>
+
+                                {loadingSubjects ? (
+                                  <div className="py-6 flex flex-col items-center justify-center space-y-2">
+                                    <Icon icon="lucide:loader-2" className="w-5 h-5 text-[#09314F] animate-spin" />
+                                    <p className="text-[11px] text-gray-500 font-bold">Loading subjects...</p>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-1 max-h-[240px] overflow-y-auto pr-1">
+                                    {subjects.map((sub) => {
+                                      const isSelected = selectedIds.includes(sub.id);
+                                      const isLimitReached = !isSelected && selectedIds.length >= limit;
+                                      return (
+                                        <button
+                                          key={sub.id}
+                                          type="button"
+                                          disabled={isLimitReached}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleSubjectForCourse(course.id, sub.id);
+                                          }}
+                                          className={`${dropdownTheme.overlay.item(isSelected, isLimitReached)} dark:text-gray-200`}
+                                        >
+                                          <div className="flex items-center gap-1.5 truncate">
+                                            <span className="truncate">{sub.name}</span>
+                                            {sub.is_compulsory && (
+                                              <span className="text-[8px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-black tracking-wider uppercase">
+                                                Req
+                                              </span>
+                                            )}
+                                          </div>
+                                          {isSelected && <Icon icon="lucide:check" className="w-3.5 h-3.5 flex-shrink-0" />}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Col 3: Counter */}
+                          <div className="text-right">
+                            <span className="text-[10px] md:text-xs font-black text-[#09314F] dark:text-white">
+                              {selectedIds.length}
+                            </span>
+                            <span className="text-[10px] md:text-xs font-bold text-gray-300 dark:text-gray-600"> / </span>
+                            <span className="text-[10px] md:text-xs font-bold text-gray-400 dark:text-gray-400">
+                              {limit}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Selected Subject Chips Bar grouped by Course */}
+                {courses
+                  .filter((c) => selectedCourseIds.includes(c.id))
+                  .some((c) => (selectedSubjectsByCourse[c.id] || []).length > 0) && (
+                  <div className="mt-4 p-4 rounded-2xl bg-gray-50/70 dark:bg-gray-850/60 border border-gray-100 dark:border-gray-700/60 space-y-3">
+                    {courses
+                      .filter((c) => selectedCourseIds.includes(c.id))
+                      .map((c) => {
+                        const selectedIds = selectedSubjectsByCourse[c.id] || [];
+                        if (selectedIds.length === 0) return null;
+                        const subs = subjectsByCourse[c.id] || [];
+                        return (
+                          <div key={c.id} className="flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-black text-[#09314F] dark:text-gray-300 uppercase tracking-widest min-w-[70px]">
+                              {c.title}:
+                            </span>
+                            {subs
+                              .filter((s) => selectedIds.includes(s.id))
+                              .map((sub) => (
+                                <span
+                                  key={sub.id}
+                                  className="text-[10px] font-black text-[#09314F] dark:text-gray-100 uppercase bg-white dark:bg-gray-750 px-2.5 py-1.5 rounded-lg border border-[#09314F15] dark:border-gray-600 shadow-sm inline-flex items-center gap-1.5"
+                                >
+                                  <span>{sub.name}</span>
+                                  {sub.is_compulsory ? (
+                                    <span className="text-[8px] bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-1 py-0.5 rounded font-bold">
+                                      REQ
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleSubjectForCourse(c.id, sub.id)}
+                                      className="text-gray-400 hover:text-red-500 font-black text-xs leading-none ml-0.5"
+                                    >
+                                      ×
+                                    </button>
+                                  )}
+                                </span>
+                              ))}
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Signature Continue Button & Back */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="px-5 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-gray-50"
+                className="w-full sm:w-auto px-6 py-4 rounded-[18px] border-2 border-gray-200 dark:border-gray-700 text-[#09314F] dark:text-gray-300 font-bold text-xs uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
               >
-                ← Back to Courses
+                <Icon icon="lucide:arrow-left" className="w-4 h-4" />
+                <span>Back to Courses</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleProceedToStep4}
-                disabled={selectedSubjectIds.length === 0}
-                className="w-full sm:w-auto px-6 py-3.5 bg-[#09314F] hover:bg-[#0d3f66] dark:bg-[#C5A97A] dark:hover:bg-[#b09262] text-white dark:text-[#09314F] font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={courses
+                  .filter((c) => selectedCourseIds.includes(c.id))
+                  .some((c) => (selectedSubjectsByCourse[c.id] || []).length === 0)}
+                className="w-full sm:w-auto py-5 px-10 rounded-[22px] font-bold text-base text-white bg-gradient-to-r from-[#09314F] to-[#E83831] shadow-xl hover:shadow-[#E8383144] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <span>Confirm Subjects & Proceed to Step 4: Duration</span>
-                <Icon icon="lucide:arrow-right" className="w-4 h-4" />
+                <span>Continue</span>
+                <Icon icon="lucide:arrow-right" className="w-5 h-5" />
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* ==================================================================== */}
+        {/* CONFIRMATION / REVIEW MODAL (MATCHING GUARDIAN SIGNUP FLOW)           */}
+        {/* ==================================================================== */}
+        {showSubjectReviewModal && createdWard && selectedCourseIds.length > 0 && (
+          <div className="fixed inset-0 bg-[#09314F77] backdrop-blur-[2px] flex items-center justify-center z-[150] p-4 sm:p-6 animate-fadeIn">
+            <div className="bg-white dark:bg-gray-850 w-full max-w-[560px] md:max-w-[700px] rounded-[24px] shadow-2xl p-6 sm:p-10 max-h-[85vh] overflow-y-auto space-y-6 border border-gray-100 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-[#09314F] dark:text-white">
+                Review
+              </h2>
+
+              <div className="space-y-4">
+                {/* Student Header with User Icon */}
+                <div className="flex items-center gap-3 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
+                  <div className="w-8 h-8 rounded-lg bg-[#09314F] text-white flex items-center justify-center flex-shrink-0">
+                    <Icon icon="lucide:user" className="w-5 h-5" />
+                  </div>
+                  <span className="text-sm font-bold text-[#09314F] dark:text-white uppercase">
+                    {createdWard.firstname} {createdWard.surname}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    — {createdWard.department} Track
+                  </span>
+                </div>
+
+                {/* Courses and Subjects Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                  {/* Desktop Header Row */}
+                  <div className="hidden md:block col-span-2">
+                    <div className="grid grid-cols-2 gap-8 pb-3 border-b-2 border-gray-200 dark:border-gray-700">
+                      <div className="text-xs font-bold text-[#09314F] dark:text-gray-300 uppercase tracking-widest">Courses</div>
+                      <div className="text-xs font-bold text-[#09314F] dark:text-gray-300 uppercase tracking-widest">Subjects</div>
+                    </div>
+                  </div>
+
+                  {/* Desktop View - Horizontal */}
+                  <div className="hidden md:contents">
+                    {courses
+                      .filter((c) => selectedCourseIds.includes(c.id))
+                      .map((course) => {
+                        const selectedSubs = (subjectsByCourse[course.id] || [])
+                          .filter((s) => (selectedSubjectsByCourse[course.id] || []).includes(s.id))
+                          .map((s) => s.name)
+                          .join(", ");
+
+                        return (
+                          <React.Fragment key={course.id}>
+                            <div className="text-sm font-bold text-[#09314F] dark:text-white uppercase tracking-wide py-3 border-b border-gray-100 dark:border-gray-700">
+                              {course.title}
+                            </div>
+                            <div className="text-sm font-medium text-gray-600 dark:text-gray-300 py-3 border-b border-gray-100 dark:border-gray-700 leading-relaxed">
+                              {selectedSubs || "None"}
+                            </div>
+                          </React.Fragment>
+                        );
+                      })}
+                  </div>
+
+                  {/* Mobile View - Vertical Card */}
+                  <div className="md:hidden col-span-1 space-y-3">
+                    {courses
+                      .filter((c) => selectedCourseIds.includes(c.id))
+                      .map((course) => {
+                        const selectedSubs = (subjectsByCourse[course.id] || [])
+                          .filter((s) => (selectedSubjectsByCourse[course.id] || []).includes(s.id))
+                          .map((s) => s.name)
+                          .join(", ");
+
+                        return (
+                          <div key={course.id} className="bg-gray-50 dark:bg-gray-800 rounded-[16px] p-4 border border-gray-200 dark:border-gray-700">
+                            <div className="text-xs font-bold text-[#09314F] dark:text-white uppercase tracking-widest mb-2">
+                              {course.title}
+                            </div>
+                            <div className="text-sm font-medium text-gray-600 dark:text-gray-300 leading-relaxed">
+                              {selectedSubs || "None"}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => setShowSubjectReviewModal(false)}
+                  className="flex-1 h-[54px] rounded-[14px] font-bold text-sm text-[#09314F] dark:text-gray-200 bg-white dark:bg-gray-800 border-2 border-[#09314F] dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-[0.98]"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmReviewAndProceed}
+                  className="flex-1 h-[54px] rounded-[14px] font-bold text-sm text-white bg-[#09314F] hover:bg-[#09314F]/95 transition-all shadow-lg shadow-[#09314F33] active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  {courses
+                    .filter((c) => selectedCourseIds.includes(c.id))
+                    .reduce((sum, c) => sum + Number(c.price || 0), 0) <= 0 ? (
+                    <>
+                      <Icon icon="lucide:sparkles" className="w-4 h-4 text-emerald-400" />
+                      <span>Confirm & Activate Free Training (₦0)</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Continue</span>
+                      <Icon icon="lucide:arrow-right" className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1816,7 +2201,7 @@ export default function GuardianAddWard() {
         {/* ==================================================================== */}
         {/* MODULE 4: DURATION PLAN SELECTION                                   */}
         {/* ==================================================================== */}
-        {currentStep === 4 && createdWard && selectedCourse && (
+        {currentStep === 4 && createdWard && selectedCourseIds.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 sm:p-10 border border-gray-100 dark:border-gray-700/80 shadow-xl space-y-6 animate-in fade-in zoom-in-95">
             
             <div className="pb-4 border-b border-gray-100 dark:border-gray-700">
@@ -1834,8 +2219,10 @@ export default function GuardianAddWard() {
             <div className="space-y-3">
               {Object.values(DURATION_PLANS).map((plan) => {
                 const isSelected = selectedDuration === plan.key;
-                const rawPrice = Number(selectedCourse.price || 0);
-                const calculated = rawPrice <= 0 ? 0 : calculatePlanPrice(rawPrice, plan.months);
+                const totalRawPrice = courses
+                  .filter((c) => selectedCourseIds.includes(c.id))
+                  .reduce((sum, c) => sum + Number(c.price || 0), 0);
+                const calculated = totalRawPrice <= 0 ? 0 : calculatePlanPrice(totalRawPrice, plan.months);
 
                 return (
                   <div
@@ -1907,7 +2294,7 @@ export default function GuardianAddWard() {
         {/* ==================================================================== */}
         {/* MODULE 5: PAYMENT & ACTIVATION                                       */}
         {/* ==================================================================== */}
-        {currentStep === 5 && createdWard && selectedCourse && (
+        {currentStep === 5 && createdWard && selectedCourseIds.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-[32px] p-6 sm:p-10 border border-gray-100 dark:border-gray-700/80 shadow-xl space-y-6 animate-in fade-in zoom-in-95">
             
             <div className="pb-4 border-b border-gray-100 dark:border-gray-700">
@@ -1962,11 +2349,18 @@ export default function GuardianAddWard() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Course Track:</span>
-                    <strong className="text-[#09314F] dark:text-[#C5A97A]">{selectedCourse.title}</strong>
+                    <strong className="text-[#09314F] dark:text-[#C5A97A]">
+                      {courses
+                        .filter((c) => selectedCourseIds.includes(c.id))
+                        .map((c) => c.title)
+                        .join(", ")}
+                    </strong>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Selected Subjects:</span>
-                    <strong className="text-gray-900 dark:text-white">{selectedSubjectIds.length} Subjects</strong>
+                    <strong className="text-gray-900 dark:text-white">
+                      {Object.values(selectedSubjectsByCourse).reduce((sum, arr) => sum + arr.length, 0)} Subjects
+                    </strong>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Duration Plan:</span>
@@ -1985,7 +2379,7 @@ export default function GuardianAddWard() {
                   <div className="pt-2">
                     <button
                       type="button"
-                      onClick={() => handleActivateFreeGrant(selectedCourse)}
+                      onClick={handleActivateFreeGrant}
                       disabled={activatingGrant}
                       className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2"
                     >
