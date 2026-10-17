@@ -124,11 +124,25 @@ export default function RevenueChart({ payments = [], loading = false }) {
       paidCount: 0,
     }));
 
+    const isFreeGrant = (payment) => {
+      if (!payment) return false;
+      if (Number(payment.amount || 0) <= 0) return true;
+      if (payment.gateway === "complimentary") return true;
+      if (payment.meta?.type === "complimentary") return true;
+      if (payment.meta?.is_waived === true || payment.meta?.bank_transfer?.is_waived === true) return true;
+      if (payment.meta?.bank_transfer?.review?.is_waived === true) return true;
+      if (Boolean(payment.meta?.waiver_type || payment.meta?.bank_transfer?.review?.waiver_type)) return true;
+      if (typeof payment.gateway_reference === "string" && payment.gateway_reference.startsWith("FREE-")) return true;
+      return false;
+    };
+
     const successful = payments.filter(
       (p) => p.status?.toLowerCase() === "successful"
     );
 
-    successful.forEach((p) => {
+    const payingSuccessful = successful.filter((p) => !isFreeGrant(p));
+
+    payingSuccessful.forEach((p) => {
       const date = new Date(p.paid_at || p.created_at);
       if (date.getFullYear() === currentYear) {
         const monthIndex = date.getMonth();
@@ -148,7 +162,7 @@ export default function RevenueChart({ payments = [], loading = false }) {
       Students: i <= currentMonthIndex ? m.students.size : null,
     }));
 
-    const totalRevenue = successful.reduce(
+    const totalRevenue = payingSuccessful.reduce(
       (sum, p) => sum + Number(p.amount || 0),
       0
     );

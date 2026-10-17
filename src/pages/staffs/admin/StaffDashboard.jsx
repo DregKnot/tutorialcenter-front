@@ -31,6 +31,7 @@ export default function StaffDashboard() {
         `${API_BASE_URL}/api/admin/payments/all`,
         {
           headers: { Authorization: `Bearer ${token}` },
+          params: { all: true, per_page: 500 },
         }
       );
 

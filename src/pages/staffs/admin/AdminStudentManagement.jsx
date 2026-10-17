@@ -172,7 +172,7 @@ export default function AdminStudentManagement() {
 
       const [studentsRes, paymentsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/admin/students/all`, config),
-        axios.get(`${API_BASE_URL}/api/admin/payments/all`, config).catch(e => {
+        axios.get(`${API_BASE_URL}/api/admin/payments/all`, { ...config, params: { all: true, per_page: 500 } }).catch(e => {
           console.warn("Failed to fetch payments:", e);
           return { data: [] };
         })

@@ -45,7 +45,7 @@ export default function CooDashboard() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [paymentsRes, studentsRes, staffRes, coursesRes, blogsRes, subjectsRes] = await Promise.allSettled([
-        axios.get(`${API_BASE_URL}/api/admin/payments/all`, { headers }),
+        axios.get(`${API_BASE_URL}/api/admin/payments/all`, { headers, params: { all: true, per_page: 500 } }),
         axios.get(`${API_BASE_URL}/api/admin/students/all`, { headers }),
         axios.get(`${API_BASE_URL}/api/admin/staffs/all`, { headers }),
         axios.get(`${API_BASE_URL}/api/courses`),
@@ -60,6 +60,8 @@ export default function CooDashboard() {
           ? raw
           : Array.isArray(raw?.data)
           ? raw.data
+          : Array.isArray(raw?.payments?.data)
+          ? raw.payments.data
           : Array.isArray(raw?.payments)
           ? raw.payments
           : [];
@@ -155,11 +157,26 @@ export default function CooDashboard() {
     });
   };
 
-  // Compute Total Revenue
-  const totalRevenue = payments.reduce((acc, curr) => {
-    const amount = Number(curr.amount || curr.total_amount || 0);
-    return acc + (isNaN(amount) ? 0 : amount);
-  }, 0);
+  // Helper to identify free grants / waivers / complimentary access
+  const isFreeGrant = (payment) => {
+    if (!payment) return false;
+    if (Number(payment.amount || payment.total_amount || 0) <= 0) return true;
+    if (payment.gateway === "complimentary") return true;
+    if (payment.meta?.type === "complimentary") return true;
+    if (payment.meta?.is_waived === true || payment.meta?.bank_transfer?.is_waived === true) return true;
+    if (payment.meta?.bank_transfer?.review?.is_waived === true) return true;
+    if (Boolean(payment.meta?.waiver_type || payment.meta?.bank_transfer?.review?.waiver_type)) return true;
+    if (typeof payment.gateway_reference === "string" && payment.gateway_reference.startsWith("FREE-")) return true;
+    return false;
+  };
+
+  // Compute Total Revenue: strictly successful, paying orders only (excludes free grants & waivers)
+  const totalRevenue = payments
+    .filter((p) => p.status?.toLowerCase() === "successful" && !isFreeGrant(p))
+    .reduce((acc, curr) => {
+      const amount = Number(curr.amount || curr.total_amount || 0);
+      return acc + (isNaN(amount) ? 0 : amount);
+    }, 0);
 
   // Compute Total Blog Views
   const totalBlogViews = blogs.reduce((acc, curr) => {
