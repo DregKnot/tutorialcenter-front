@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import axios from "axios";
 import { Icon } from "@iconify/react";
 import GuardianDashboardLayout from "../../components/private/Guardians/GuardianDashboardLayout";
+import Paystack from "../../components/Paystack";
 import { location as nigerianLocations } from "../../data/locations";
 import { dropdownTheme } from "../../utils/dropdownTheme";
 
@@ -87,10 +88,17 @@ export default function GuardianAddWard() {
   const [selectedDuration, setSelectedDuration] = useState("quarterly");
 
   // ── Module 5: Payment & Activation State ───────────────────────────────────
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [paymentMethod, setPaymentMethod] = useState(null);
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [gateway, setGateway] = useState(null);
+  const [paymentError, setPaymentError] = useState("");
+  const [pendingPayment, setPendingPayment] = useState(null);
+  const [paystackRef, setPaystackRef] = useState(`TC-G-${Date.now()}`);
+  const verificationLock = useRef(false);
   const [stagedEnrollment, setStagedEnrollment] = useState(null);
   const [bankTransferData, setBankTransferData] = useState(null);
   const [loadingBankTransfer, setLoadingBankTransfer] = useState(false);
+  const [paystackVerifying, setPaystackVerifying] = useState(false);
   const [bankClaim, setBankClaim] = useState({
     paid_from_account_name: "",
     amount_paid: "",
@@ -483,6 +491,42 @@ export default function GuardianAddWard() {
     }
   };
 
+  // ── Ensure Paystack inline script is loaded ───────────────────────────────
+  const ensurePaystackLoaded = useCallback(() => {
+    return new Promise((resolve) => {
+      if (window.PaystackPop) {
+        resolve(true);
+        return;
+      }
+      const existingScript = document.getElementById("paystack-inline-js");
+      if (existingScript) {
+        existingScript.onload = () => resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.id = "paystack-inline-js";
+      script.src = "https://js.paystack.co/v1/inline.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  }, []);
+
+  useEffect(() => {
+    ensurePaystackLoaded();
+  }, [ensurePaystackLoaded]);
+
+  // ── Total Amount Payable Across All Selected Courses & Plan Duration ────────
+  const totalPayableAmount = useMemo(() => {
+    const active = courses.filter((c) => selectedCourseIds.includes(c.id));
+    const planMonths = DURATION_PLANS[selectedDuration]?.months || 3;
+    return active.reduce((sum, c) => {
+      const raw = Number(c.price || 0);
+      return sum + (raw <= 0 ? 0 : Math.max(100, calculatePlanPrice(raw, planMonths)));
+    }, 0);
+  }, [courses, selectedCourseIds, selectedDuration]);
+
   // ── Advance from Step 4 to Step 5 (Stage Enrollment across active courses) ─
   const handleProceedToStep5 = async () => {
     setLoading(true);
@@ -529,7 +573,7 @@ export default function GuardianAddWard() {
         return;
       }
 
-      setStagedEnrollment(staged);
+      setStagedEnrollment(staged ? { ...staged, amount: totalPayableAmount } : { amount: totalPayableAmount });
       setCurrentStep(5);
     } catch (err) {
       console.warn("Failed to stage enrollment:", err);
@@ -540,6 +584,136 @@ export default function GuardianAddWard() {
       setCurrentStep(5);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ── Payer Email for Payment Gateways ───────────────────────────────────────
+  const payerEmail = useMemo(() => {
+    if (guardian?.email && guardian.email.includes("@")) return guardian.email.trim();
+    const storedEmail = localStorage.getItem("guardianEmail");
+    if (storedEmail && storedEmail.includes("@")) return storedEmail.trim();
+    if (createdWard?.email && createdWard.email.includes("@")) return createdWard.email.trim();
+    return "guardian@tutorialcenter.com";
+  }, [guardian, createdWard]);
+
+  // ── Paystack Metadata matching Guardian Signup Flow & Backend Service ───────
+  const paystackMetadata = useMemo(() => {
+    if (!createdWard) return {};
+    const active = courses.filter((c) => selectedCourseIds.includes(c.id));
+    const planMonths = DURATION_PLANS[selectedDuration]?.months || 3;
+    const coursesMeta = active.map((c) => ({
+      course_id: c.id,
+      billing_cycle: selectedDuration,
+      price: Number(c.price || 0) <= 0 ? 0 : Math.max(100, calculatePlanPrice(Number(c.price || 0), planMonths)),
+      subjects: selectedSubjectsByCourse[c.id] || [],
+    }));
+
+    return {
+      type: "guardian_enrollment",
+      guardian_id: guardian?.id,
+      students: [
+        {
+          student_id: createdWard.id,
+          courses: coursesMeta,
+        },
+      ],
+      // Fallback for single student handlers
+      student_id: createdWard.id,
+      courses: coursesMeta,
+    };
+  }, [createdWard, courses, selectedCourseIds, selectedDuration, selectedSubjectsByCourse, guardian]);
+
+  // ── Open & Close Payment Gateway Modals (Matching Guardian Flow) ────────────
+  const openGateway = (selected) => {
+    if (!createdWard) return;
+    if (totalPayableAmount <= 0) {
+      handleActivateFreeGrant();
+      return;
+    }
+    setGateway(selected);
+    setPaymentError("");
+    setPaystackRef(stagedEnrollment?.reference || `TC-G-${Date.now()}`);
+    setShowPayModal(true);
+  };
+
+  const closeModal = () => {
+    if (!paystackVerifying) {
+      setShowPayModal(false);
+      setGateway(null);
+    }
+  };
+
+  // ── Verify Paystack Success Callback ───────────────────────────────────────
+  const handlePaystackSuccess = async (response) => {
+    if (paystackVerifying || verificationLock.current) return;
+
+    const reference = response?.reference || paystackRef;
+    if (!reference) {
+      setPaymentError("No payment reference was returned. Contact support before making another payment.");
+      setShowPayModal(false);
+      return;
+    }
+
+    const payment = { reference, metadata: paystackMetadata };
+    setPendingPayment(payment);
+    setPaymentError("");
+    verificationLock.current = true;
+    setPaystackVerifying(true);
+    setShowPayModal(false);
+
+    const active = courses.filter((c) => selectedCourseIds.includes(c.id));
+
+    try {
+      console.log("Verifying guardian payment with backend for reference:", reference);
+      const token = localStorage.getItem("guardian_token");
+      const result = await axios.post(
+        `${API_BASE_URL}/api/payments/verify-paystack`,
+        {
+          reference,
+          fallback_metadata: payment.metadata,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          timeout: 30000,
+        }
+      );
+
+      if (result.status === 200 && (result.data?.success === true || result.data?.status === "success")) {
+        setGrantSuccess({
+          course: active.map((c) => c.title).join(", "),
+          message: `Payment confirmed! Training program activated successfully for ${createdWard.firstname}!`,
+        });
+        setCreatedWard((prev) => ({
+          ...prev,
+          has_course: true,
+          is_onboarding_complete: true,
+        }));
+        setPendingPayment(null);
+        setToast({
+          type: "success",
+          message: "Payment successfully verified and ward training activated!",
+        });
+      } else {
+        throw new Error(result.data?.message || "Payment has not been confirmed.");
+      }
+    } catch (err) {
+      console.error("Guardian payment verification error:", err.response?.data || err);
+      setPaymentError(
+        `${err.response?.data?.message || err.message || "Unable to verify payment."} ` +
+        `If you were charged, do not pay again. Retry verification using the saved reference.`
+      );
+      setToast({
+        type: "error",
+        message: err.response?.data?.message || "Payment verification failed. You can retry with the reference.",
+      });
+    } finally {
+      verificationLock.current = false;
+      setPaystackVerifying(false);
+      closeModal();
     }
   };
 
@@ -2369,13 +2543,13 @@ export default function GuardianAddWard() {
                   <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700 text-sm">
                     <span className="font-black text-[#09314F] dark:text-white">Amount Payable:</span>
                     <strong className="font-mono text-emerald-600 dark:text-emerald-400 text-base font-black">
-                      ₦{Number(stagedEnrollment?.amount || 0).toLocaleString()}
+                      ₦{Number(totalPayableAmount || stagedEnrollment?.amount || 0).toLocaleString()}
                     </strong>
                   </div>
                 </div>
 
                 {/* If Amount is zero: free grant button */}
-                {Number(stagedEnrollment?.amount || 0) === 0 ? (
+                {Number(totalPayableAmount || stagedEnrollment?.amount || 0) === 0 ? (
                   <div className="pt-2">
                     <button
                       type="button"
@@ -2397,190 +2571,262 @@ export default function GuardianAddWard() {
                     </button>
                   </div>
                 ) : (
-                  /* Paid options: Paystack or Bank Transfer */
-                  <div className="space-y-4">
-                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block">
-                      Select Payment Method:
-                    </label>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <>
+                    {/* Payment Error / Retry Box */}
+                    {paymentError && (
+                  <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/40 p-4 text-xs text-red-800 dark:text-red-300">
+                    <p className="font-bold">{paymentError}</p>
+                    {pendingPayment && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setPaymentMethod("bank_transfer");
-                          if (!bankTransferData) handleInitBankTransfer();
-                        }}
-                        className={`p-4 rounded-2xl border-2 text-left transition-all flex items-center justify-between ${
-                          paymentMethod === "bank_transfer"
-                            ? "border-[#09314F] dark:border-[#C5A97A] bg-blue-50/50 dark:bg-[#C5A97A]/10 text-[#09314F] dark:text-white shadow-sm"
-                            : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300"
-                        }`}
+                        onClick={() => handlePaystackSuccess(pendingPayment)}
+                        disabled={paystackVerifying}
+                        className="mt-3 rounded-lg bg-[#09314F] dark:bg-[#C5A97A] px-4 py-2 font-bold text-white dark:text-[#09314F] disabled:opacity-50 text-xs"
                       >
-                        <div className="flex items-center gap-3">
-                          <Icon icon="lucide:building-2" className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                          <div>
-                            <p className="text-xs font-black">Direct Bank Transfer</p>
-                            <p className="text-[10px] text-gray-400">GTBank • Narration matched</p>
-                          </div>
-                        </div>
-                        {paymentMethod === "bank_transfer" && <Icon icon="lucide:check-circle" className="w-4 h-4 text-emerald-500" />}
+                        Retry payment verification
                       </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod("paystack")}
-                        className={`p-4 rounded-2xl border-2 text-left transition-all flex items-center justify-between ${
-                          paymentMethod === "paystack"
-                            ? "border-[#09314F] dark:border-[#C5A97A] bg-blue-50/50 dark:bg-[#C5A97A]/10 text-[#09314F] dark:text-white shadow-sm"
-                            : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon icon="lucide:credit-card" className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
-                          <div>
-                            <p className="text-xs font-black">Paystack Online</p>
-                            <p className="text-[10px] text-gray-400">Debit card, USSD, Apple Pay</p>
-                          </div>
-                        </div>
-                        {paymentMethod === "paystack" && <Icon icon="lucide:check-circle" className="w-4 h-4 text-emerald-500" />}
-                      </button>
-                    </div>
-
-                    {/* Bank Transfer Details Box */}
-                    {paymentMethod === "bank_transfer" && (
-                      <div className="rounded-2xl p-5 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-4 animate-in fade-in">
-                        <div className="flex items-center gap-2">
-                          <Icon icon="lucide:shield-check" className="w-5 h-5 text-amber-600" />
-                          <h4 className="text-xs font-black text-amber-950 dark:text-amber-200 uppercase tracking-wider">
-                            Official Tutorial Center Bank Details
-                          </h4>
-                        </div>
-
-                        {loadingBankTransfer ? (
-                          <div className="py-6 flex items-center justify-center gap-2 text-xs font-bold text-amber-800">
-                            <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" />
-                            <span>Generating unique transfer reference...</span>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                              <div className="p-3 bg-white dark:bg-gray-900 rounded-xl border border-amber-100 dark:border-amber-900/40">
-                                <p className="text-[10px] uppercase font-bold text-gray-400">Bank Name</p>
-                                <p className="font-black text-gray-900 dark:text-white mt-0.5">Guaranty Trust Bank (GTBank)</p>
-                              </div>
-                              <div className="p-3 bg-white dark:bg-gray-900 rounded-xl border border-amber-100 dark:border-amber-900/40">
-                                <p className="text-[10px] uppercase font-bold text-gray-400">Account Name</p>
-                                <p className="font-black text-gray-900 dark:text-white mt-0.5">Tutorial Center Nigeria</p>
-                              </div>
-                              <div className="p-3 bg-white dark:bg-gray-900 rounded-xl border border-amber-100 dark:border-amber-900/40 flex items-center justify-between">
-                                <div>
-                                  <p className="text-[10px] uppercase font-bold text-gray-400">Account Number</p>
-                                  <p className="font-mono font-black text-sm text-gray-900 dark:text-white mt-0.5">0123456789</p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopy("0123456789", "account")}
-                                  className="text-xs font-bold text-[#09314F] dark:text-[#C5A97A] hover:underline"
-                                >
-                                  {copiedBankField === "account" ? "Copied ✓" : "Copy"}
-                                </button>
-                              </div>
-                              <div className="p-3 bg-white dark:bg-gray-900 rounded-xl border border-amber-100 dark:border-amber-900/40 flex items-center justify-between">
-                                <div>
-                                  <p className="text-[10px] uppercase font-bold text-gray-400">Transfer Narration / Reference</p>
-                                  <p className="font-mono font-black text-sm text-amber-700 dark:text-amber-400 mt-0.5">
-                                    {bankTransferData?.reference || "TCA_REF_GEN"}
-                                  </p>
-                                </div>
-                                {bankTransferData?.reference && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCopy(bankTransferData.reference, "ref")}
-                                    className="text-xs font-bold text-[#09314F] dark:text-[#C5A97A] hover:underline"
-                                  >
-                                    {copiedBankField === "ref" ? "Copied ✓" : "Copy"}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Claim Form */}
-                            {claimSubmitted ? (
-                              <div className="p-4 rounded-xl bg-emerald-100/70 dark:bg-emerald-950/40 border border-emerald-300 text-xs space-y-2">
-                                <p className="font-black text-emerald-900 dark:text-emerald-200">
-                                  ✓ Payment Claim Submitted Successfully!
-                                </p>
-                                <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed text-[11px]">
-                                  Tutorial Center staff will review your transfer narration and activate {createdWard.firstname}'s plan immediately.
-                                </p>
-                                <Link
-                                  to="/guardian/dashboard"
-                                  className="inline-block px-4 py-2 bg-emerald-700 text-white font-bold text-xs rounded-lg mt-1"
-                                >
-                                  Return to Dashboard
-                                </Link>
-                              </div>
-                            ) : (
-                              <form onSubmit={handleSubmitBankClaim} className="space-y-3 pt-2">
-                                <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                                  After making the transfer, confirm details below:
-                                </p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  <input
-                                    type="text"
-                                    placeholder="Sender's Account Name (e.g. John Doe)"
-                                    value={bankClaim.paid_from_account_name}
-                                    onChange={(e) => setBankClaim((prev) => ({ ...prev, paid_from_account_name: e.target.value }))}
-                                    required
-                                    className="px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
-                                  />
-                                  <input
-                                    type="number"
-                                    placeholder="Amount Paid (₦)"
-                                    value={bankClaim.amount_paid}
-                                    onChange={(e) => setBankClaim((prev) => ({ ...prev, amount_paid: e.target.value }))}
-                                    required
-                                    className="px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
-                                  />
-                                </div>
-                                <button
-                                  type="submit"
-                                  disabled={submittingClaim || !bankTransferData}
-                                  className="w-full py-3 bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                >
-                                  {submittingClaim ? (
-                                    <>
-                                      <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" />
-                                      <span>Submitting Claim...</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Icon icon="lucide:check" className="w-4 h-4" />
-                                      <span>I Have Transferred • Submit Payment Claim</span>
-                                    </>
-                                  )}
-                                </button>
-                              </form>
-                            )}
-                          </>
-                        )}
-                      </div>
                     )}
                   </div>
                 )}
 
-                <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                {/* Paid options: Paystack or Bank Transfer (Matching Guardian Signup Flow) */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-black text-[#09314F] dark:text-white uppercase tracking-wider">
+                    Select Payment Method
+                  </h3>
+
+                  {/* Paystack Gateway Option (Matching Guardian Flow: Card with ->) */}
                   <button
                     type="button"
-                    onClick={() => setCurrentStep(4)}
-                    className="px-5 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-gray-50"
+                    onClick={() => openGateway("Paystack")}
+                    disabled={paystackVerifying || !!pendingPayment}
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-[#09314F] dark:hover:border-[#C5A97A] rounded-xl px-5 py-4 font-semibold text-gray-800 dark:text-gray-100 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-all shadow-sm group disabled:opacity-50"
                   >
-                    ← Back to Duration
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#09314F] dark:text-blue-300 flex items-center justify-center">
+                        <Icon icon="lucide:credit-card" className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <span className="block font-black text-sm text-[#09314F] dark:text-white">Paystack</span>
+                        <span className="block text-[11px] text-gray-500 dark:text-gray-400">Debit card, USSD, Apple Pay, Bank Transfer</span>
+                      </div>
+                    </div>
+                    <span className="text-xl font-black text-gray-400 group-hover:text-[#09314F] dark:group-hover:text-[#C5A97A] transition-colors">→</span>
                   </button>
+
+                  {/* Direct Bank Transfer Option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentMethod(paymentMethod === "bank_transfer" ? null : "bank_transfer");
+                      if (!bankTransferData) handleInitBankTransfer();
+                    }}
+                    disabled={paystackVerifying || !!pendingPayment}
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-[#09314F] dark:hover:border-[#C5A97A] rounded-xl px-5 py-4 font-semibold text-gray-800 dark:text-gray-100 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-all shadow-sm group disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 flex items-center justify-center">
+                        <Icon icon="lucide:building-2" className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <span className="block font-black text-sm text-[#09314F] dark:text-white">Direct Bank Transfer</span>
+                        <span className="block text-[11px] text-gray-500 dark:text-gray-400">GTBank • Narration matched</span>
+                      </div>
+                    </div>
+                    <span className="text-xl font-black text-gray-400 group-hover:text-[#09314F] dark:group-hover:text-[#C5A97A] transition-colors">
+                      {paymentMethod === "bank_transfer" ? "↓" : "→"}
+                    </span>
+                  </button>
+
+                  {/* Bank Transfer Details Box */}
+                  {paymentMethod === "bank_transfer" && (
+                    <div className="rounded-2xl p-5 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-4 animate-in fade-in">
+                      <div className="flex items-center gap-2">
+                        <Icon icon="lucide:shield-check" className="w-5 h-5 text-amber-600" />
+                        <h4 className="text-xs font-black text-amber-950 dark:text-amber-200 uppercase tracking-wider">
+                          Official Tutorial Center Bank Details
+                        </h4>
+                      </div>
+
+                      {loadingBankTransfer ? (
+                        <div className="py-6 flex items-center justify-center gap-2 text-xs font-bold text-amber-800">
+                          <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" />
+                          <span>Generating unique transfer reference...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div className="p-3 bg-white dark:bg-gray-900 rounded-xl border border-amber-100 dark:border-amber-900/40">
+                              <p className="text-[10px] uppercase font-bold text-gray-400">Bank Name</p>
+                              <p className="font-black text-gray-900 dark:text-white mt-0.5">Guaranty Trust Bank (GTBank)</p>
+                            </div>
+                            <div className="p-3 bg-white dark:bg-gray-900 rounded-xl border border-amber-100 dark:border-amber-900/40">
+                              <p className="text-[10px] uppercase font-bold text-gray-400">Account Name</p>
+                              <p className="font-black text-gray-900 dark:text-white mt-0.5">Tutorial Center Nigeria</p>
+                            </div>
+                            <div className="p-3 bg-white dark:bg-gray-900 rounded-xl border border-amber-100 dark:border-amber-900/40 flex items-center justify-between">
+                              <div>
+                                <p className="text-[10px] uppercase font-bold text-gray-400">Account Number</p>
+                                <p className="font-mono font-black text-sm text-gray-900 dark:text-white mt-0.5">0123456789</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy("0123456789", "account")}
+                                className="text-xs font-bold text-[#09314F] dark:text-[#C5A97A] hover:underline"
+                              >
+                                {copiedBankField === "account" ? "Copied ✓" : "Copy"}
+                              </button>
+                            </div>
+                            <div className="p-3 bg-white dark:bg-gray-900 rounded-xl border border-amber-100 dark:border-amber-900/40 flex items-center justify-between">
+                              <div>
+                                <p className="text-[10px] uppercase font-bold text-gray-400">Transfer Narration / Reference</p>
+                                <p className="font-mono font-black text-sm text-amber-700 dark:text-amber-400 mt-0.5">
+                                  {bankTransferData?.reference || "TCA_REF_GEN"}
+                                </p>
+                              </div>
+                              {bankTransferData?.reference && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(bankTransferData.reference, "ref")}
+                                  className="text-xs font-bold text-[#09314F] dark:text-[#C5A97A] hover:underline"
+                                >
+                                  {copiedBankField === "ref" ? "Copied ✓" : "Copy"}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Claim Form */}
+                          {claimSubmitted ? (
+                            <div className="p-4 rounded-xl bg-emerald-100/70 dark:bg-emerald-950/40 border border-emerald-300 text-xs space-y-2">
+                              <p className="font-black text-emerald-900 dark:text-emerald-200">
+                                ✓ Payment Claim Submitted Successfully!
+                              </p>
+                              <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed text-[11px]">
+                                Tutorial Center staff will review your transfer narration and activate {createdWard.firstname}'s plan immediately.
+                              </p>
+                              <Link
+                                to="/guardian/dashboard"
+                                className="inline-block px-4 py-2 bg-emerald-700 text-white font-bold text-xs rounded-lg mt-1"
+                              >
+                                Return to Dashboard
+                              </Link>
+                            </div>
+                          ) : (
+                            <form onSubmit={handleSubmitBankClaim} className="space-y-3 pt-2">
+                              <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                After making the transfer, confirm details below:
+                              </p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <input
+                                  type="text"
+                                  placeholder="Sender's Account Name (e.g. John Doe)"
+                                  value={bankClaim.paid_from_account_name}
+                                  onChange={(e) => setBankClaim((prev) => ({ ...prev, paid_from_account_name: e.target.value }))}
+                                  required
+                                  className="px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
+                                />
+                                <input
+                                  type="number"
+                                  placeholder="Amount Paid (₦)"
+                                  value={bankClaim.amount_paid}
+                                  onChange={(e) => setBankClaim((prev) => ({ ...prev, amount_paid: e.target.value }))}
+                                  required
+                                  className="px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
+                                />
+                              </div>
+                              <button
+                                type="submit"
+                                disabled={submittingClaim || !bankTransferData}
+                                className="w-full py-3 bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                              >
+                                {submittingClaim ? (
+                                  <>
+                                    <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" />
+                                    <span>Submitting Claim...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Icon icon="lucide:check" className="w-4 h-4" />
+                                    <span>I Have Transferred • Submit Payment Claim</span>
+                                  </>
+                                )}
+                              </button>
+                            </form>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </>
             )}
 
+              {/* MODAL - MATCHING GUARDIAN SIGNUP FLOW */}
+              {showPayModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                  <div className="bg-white dark:bg-[#09314F] w-[90%] max-w-md rounded-2xl p-6 relative shadow-2xl border border-gray-100 dark:border-white/10 animate-in fade-in zoom-in-95">
+                    <h2 className="text-xl font-bold mb-4 text-[#09314F] dark:text-white text-center">
+                      {gateway} Payment
+                    </h2>
+
+                    <div className="text-3xl font-black text-center mb-6 text-[#09314F] dark:text-white font-mono">
+                      ₦{Number(totalPayableAmount || stagedEnrollment?.amount || 0).toLocaleString()}
+                    </div>
+
+                    <p className="text-xs text-gray-500 dark:text-gray-300 text-center mb-6">
+                      Online activation for <strong className="text-gray-900 dark:text-white">{createdWard?.name || createdWard?.firstname}</strong> ({payerEmail})
+                    </p>
+
+                    {gateway === "Paystack" && (
+                      <Paystack
+                        amount={totalPayableAmount || stagedEnrollment?.amount || 0}
+                        email={payerEmail}
+                        reference={paystackRef}
+                        metadata={paystackMetadata}
+                        onSuccess={handlePaystackSuccess}
+                        onClose={closeModal}
+                      />
+                    )}
+
+                    <button
+                      onClick={closeModal}
+                      disabled={paystackVerifying}
+                      className="mt-4 w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors text-center block"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(4)}
+                  className="px-5 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-gray-50"
+                >
+                  ← Back to Duration
+                </button>
+              </div>
+            </>
+          )}
+
+          </div>
+        )}
+
+        {/* Paystack Verification Overlay */}
+        {paystackVerifying && (
+          <div className="fixed inset-0 bg-[#09314F]/80 backdrop-blur-sm z-[100] flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-2xl flex flex-col items-center max-w-sm text-center mx-4 space-y-4 animate-in zoom-in-95">
+              <div className="w-16 h-16 border-4 border-gray-100 dark:border-gray-700 border-t-[#E83831] rounded-full animate-spin" />
+              <h3 className="text-lg font-black text-[#09314F] dark:text-white uppercase tracking-tight">
+                Activating Training Program
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Confirming transaction with Paystack and initializing your ward's course enrollments...
+              </p>
+            </div>
           </div>
         )}
 
