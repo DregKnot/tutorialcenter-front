@@ -12,6 +12,27 @@ import QueryProvider from "./providers/QueryProvider";
 
 import { HelmetProvider } from "react-helmet-async";
 import { createRoot } from "react-dom/client";
+import axios from "axios";
+
+// Ensure all API calls explicitly identify as JSON requests to avoid HTML redirect responses from Laravel
+axios.defaults.headers.common["Accept"] = "application/json";
+
+// Handle 401 Unauthorized responses globally for staff sessions
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const isStaffRoute = window.location.pathname.startsWith("/staff");
+      if (isStaffRoute && localStorage.getItem("staff_token")) {
+        localStorage.removeItem("staff_token");
+        localStorage.removeItem("staff_user");
+        localStorage.removeItem("staff_role");
+        window.location.href = "/staff/login?session=expired";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Intercept and ignore browser extension errors and Zoom SDK internal cancellations to prevent React development error overlay crashes
 window.addEventListener(

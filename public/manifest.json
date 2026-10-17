@@ -11,24 +11,24 @@
   "background_color": "#ffffff",
   "icons": [
     {
-      "src": "/public/TC 1.png",
+      "src": "/TC 1.png",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/png"
     },
     {
-      "src": "/public/TC 1.png",
+      "src": "/TC 1.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "/public/TC 1.png",
+      "src": "/TC 1.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     },
     {
-      "src": "/public/TC 1.png",
+      "src": "/TC 1.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"

@@ -137,26 +137,26 @@ export default function StaffDashboard() {
 
         {/* ─── Middle Section: Revenue & Traffic ──────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 min-w-0">
             <RevenueChart payments={payments} loading={loading} />
           </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 min-w-0">
             <SiteTrafficPlaceholder />
           </div>
         </div>
 
         {/* ─── Bottom Section: Analytics & Leaderboard ───────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 min-w-0">
             <MockExamAnalytics />
           </div>
           
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 min-w-0">
             <LocationAnalysis />
           </div>
 
           {/* Leaderboard Widget */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 min-w-0">
             <LeaderboardWidget />
           </div>
         </div>

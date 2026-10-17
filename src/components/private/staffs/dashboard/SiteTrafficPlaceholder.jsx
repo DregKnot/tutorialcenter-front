@@ -14,15 +14,19 @@ export default function SiteTrafficPlaceholder() {
   useEffect(() => {
     const fetchTraffic = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("staff_token") || localStorage.getItem("token");
         const res = await axios.get(`${API_BASE_URL}/api/admin/analytics/traffic`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json" 
+          }
         });
         if (res.data?.success) {
           setTrafficData(res.data.data);
         }
       } catch (err) {
-        console.error("Traffic analytics error", err);
+        // Silently handle when traffic analytics backend proxy is not yet provisioned
+        console.debug("Traffic analytics not yet available:", err?.message || err);
       } finally {
         setLoading(false);
       }
