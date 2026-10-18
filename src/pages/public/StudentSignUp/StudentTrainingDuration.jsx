@@ -186,11 +186,17 @@ export const StudentTrainingDuration = () => {
         currentCourseTitle = course.title || `Course #${course.id}`;
         const duration = durations[course.id];
         const courseSubjects = studentData?.selectedSubjects?.[course.id] || [];
+        const isOlevel = [2, 3, 4].includes(Number(course.id));
+        const examTrack = isOlevel
+          ? (studentData?.selectedExamTrack || "WAEC")
+          : (Number(course.id) === 1 ? "JAMB" : "WAEC");
+
         const response = await axios.post(`${API_BASE_URL}/api/course/enrollment`, {
           student_id: Number(studentData.id),
           course_id: Number(course.id),
           billing_cycle: duration.duration,
           subjects: courseSubjects,
+          exam_track: examTrack,
         }, {
           headers: { "Content-Type": "application/json", Accept: "application/json" },
           timeout: 30000,

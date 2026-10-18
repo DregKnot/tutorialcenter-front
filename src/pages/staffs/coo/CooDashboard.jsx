@@ -160,6 +160,7 @@ export default function CooDashboard() {
   // Helper to identify free grants / waivers / complimentary access
   const isFreeGrant = (payment) => {
     if (!payment) return false;
+    if (Number(payment.amount || payment.total_amount || 0) > 0) return false;
     if (Number(payment.amount || payment.total_amount || 0) <= 0) return true;
     if (payment.gateway === "complimentary") return true;
     if (payment.meta?.type === "complimentary") return true;

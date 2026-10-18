@@ -1221,6 +1221,7 @@ export default function AdminCreateStudent() {
     address: "",
     department: "",
     course_id: "",
+    exam_track: "WAEC",
     subject_ids: [],
     billing_cycle: "",
     reason: "",
@@ -1528,7 +1529,7 @@ export default function AdminCreateStudent() {
       return;
     }
 
-    // Auto-update amount_paid and reset subjects when course_id changes
+    // Auto-update amount_paid, track, and reset subjects when course_id changes
     if (name === "course_id") {
       const course = courses.find((c) => String(c.id) === String(value));
       const base = Number(course?.price || course?.cost || 0);
@@ -1547,9 +1548,17 @@ export default function AdminCreateStudent() {
         if (months > 1) fee *= 0.95;
         updatedAmount = Math.round(fee).toString();
       }
+
+      const cTitle = (course?.title || course?.slug || "").toLowerCase();
+      let autoTrack = formData.exam_track || "WAEC";
+      if (cTitle.includes("jamb")) autoTrack = "JAMB";
+      else if (cTitle.includes("neco")) autoTrack = "NECO";
+      else if (cTitle.includes("gce")) autoTrack = "GCE";
+
       setFormData((prev) => ({
         ...prev,
         course_id: value,
+        exam_track: autoTrack,
         subject_ids: [],
         amount_paid: updatedAmount,
       }));
@@ -1619,6 +1628,8 @@ export default function AdminCreateStudent() {
       ? `Completing enrollment for payment #${payment.id}${payment.gateway_reference ? ` (${payment.gateway_reference})` : ''}`
       : "Completing incomplete student registration";
 
+    const existingTrack = existingEnrollment?.exam_track || "WAEC";
+
     setFormData({
       student_id: student.id,
       payment_id: payment?.id || null,
@@ -1634,6 +1645,7 @@ export default function AdminCreateStudent() {
       address: student.address || "",
       department: student.department || "",
       course_id: prefilledCourseId,
+      exam_track: existingTrack,
       subject_ids: prefilledSubjectIds,
       billing_cycle: prefilledBillingCycle,
       reason: defaultReason,
@@ -1678,6 +1690,7 @@ export default function AdminCreateStudent() {
       address: "",
       department: "",
       course_id: "",
+      exam_track: "WAEC",
       subject_ids: [],
       billing_cycle: "",
       reason: "",
@@ -1782,6 +1795,7 @@ export default function AdminCreateStudent() {
         address: formData.address.trim() || undefined,
         department: formData.department,
         course_id: parseInt(formData.course_id),
+        exam_track: formData.exam_track || "WAEC",
         subject_ids: formData.subject_ids.map((id) => parseInt(id)),
         billing_cycle: formData.billing_cycle,
         reason: formData.reason.trim(),
@@ -2733,6 +2747,42 @@ export default function AdminCreateStudent() {
                             {errors.course_id}
                           </p>
                         )}
+                      </div>
+
+                      {/* Target Exam Track (WAEC / NECO / GCE / JAMB) */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                            Target Exam Board / Track <span className="text-red-400">*</span>
+                          </label>
+                          <span className="text-[10px] font-black text-[#C5A97A] uppercase tracking-wider">
+                            {formData.exam_track || "WAEC"} Track
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[
+                            { id: "WAEC", label: "WAEC" },
+                            { id: "NECO", label: "NECO" },
+                            { id: "GCE", label: "GCE" },
+                            { id: "JAMB", label: "JAMB" },
+                          ].map((trk) => {
+                            const isSelected = (formData.exam_track || "WAEC") === trk.id;
+                            return (
+                              <button
+                                key={trk.id}
+                                type="button"
+                                onClick={() => setFormData((prev) => ({ ...prev, exam_track: trk.id }))}
+                                className={`py-2.5 px-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all ${
+                                  isSelected
+                                    ? "bg-[#09314F] text-[#C5A97A] border-[#C5A97A] shadow-sm dark:bg-[#C5A97A] dark:text-[#09314F]"
+                                    : "bg-gray-50 dark:bg-[#06243A] text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                }`}
+                              >
+                                {trk.label}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
 
                       {/* Billing Cycle */}

@@ -56,6 +56,9 @@ function canResendReceipt(payment) {
 // Check if a payment record is a free grant, fee waiver, complimentary access, or scholarship
 export function isFreeGrant(payment) {
   if (!payment) return false;
+  // STRICT FINANCIAL TRUTH: Any transaction with a positive monetary amount (> 0)
+  // is an official paid transaction (revenue) regardless of gateway tag or recovery notes!
+  if (Number(payment.amount) > 0) return false;
   if (Number(payment.amount) <= 0) return true;
   if (payment.gateway === "complimentary") return true;
   if (payment.meta?.type === "complimentary") return true;
@@ -67,6 +70,7 @@ export function isFreeGrant(payment) {
 }
 
 export function getFreeGrantLabel(payment) {
+  if (Number(payment?.amount) > 0) return "PAID";
   const waiverType =
     payment?.meta?.waiver_type ||
     payment?.meta?.bank_transfer?.review?.waiver_type ||
@@ -666,6 +670,68 @@ export default function AdminPaymentHistory() {
         );
         if (possibleArray) paymentData = possibleArray;
       }
+
+      // ─── Diagnostic Logging for Free Grants & Multi-Payment Students ────────
+      console.log("[AdminPaymentHistory] Raw payments API response:", response.data);
+      console.log("[AdminPaymentHistory] Loaded payment records count:", paymentData.length);
+
+      const yamDelightPayments = paymentData.filter(
+        p => p.student_id === 26 || p.student?.id === 26 || p.student?.email === "Delight@gmail.com"
+      );
+      console.log("[AdminPaymentHistory] Diagnosis for Student 26 (Yam Delight):", {
+        studentId: 26,
+        paymentsCount: yamDelightPayments.length,
+        payments: yamDelightPayments.map(p => ({
+          id: p.id,
+          amount: p.amount,
+          status: p.status,
+          gateway: p.gateway,
+          gateway_reference: p.gateway_reference,
+          payment_method: p.payment_method,
+          is_free_grant: isFreeGrant(p),
+          free_grant_label: getFreeGrantLabel(p),
+          created_at: p.created_at,
+          paid_at: p.paid_at,
+          meta: p.meta
+        }))
+      });
+
+      const allFreeGrants = paymentData.filter(isFreeGrant);
+      console.log("[AdminPaymentHistory] All Free Grants detected across database (" + allFreeGrants.length + "):", allFreeGrants.map(p => ({
+        id: p.id,
+        student_id: p.student_id || p.student?.id,
+        student_name: p.student ? `${p.student.firstname} ${p.student.surname || ""}` : "Unknown",
+        student_email: p.student?.email,
+        amount: p.amount,
+        status: p.status,
+        gateway_reference: p.gateway_reference,
+        label: getFreeGrantLabel(p),
+        is_free_grant: isFreeGrant(p)
+      })));
+
+      const studentPaymentsMap = {};
+      paymentData.forEach(p => {
+        const sId = p.student_id || p.student?.id;
+        if (!sId) return;
+        if (!studentPaymentsMap[sId]) studentPaymentsMap[sId] = [];
+        studentPaymentsMap[sId].push(p);
+      });
+      const multiPaymentStudents = Object.entries(studentPaymentsMap)
+        .filter(([sId, plist]) => plist.length > 1)
+        .map(([sId, plist]) => {
+          const hasFree = plist.some(isFreeGrant);
+          const hasPaid = plist.some(p => !isFreeGrant(p) && (p.status === "successful" || p.status === "paid") && Number(p.amount) > 0);
+          return {
+            studentId: sId,
+            studentName: plist[0]?.student ? `${plist[0].student.firstname} ${plist[0].student.surname || ""}` : "Unknown",
+            studentEmail: plist[0]?.student?.email,
+            hasFree,
+            hasPaid,
+            payments: plist.map(p => ({ id: p.id, amount: p.amount, status: p.status, ref: p.gateway_reference, isFree: isFreeGrant(p) }))
+          };
+        })
+        .filter(item => item.hasFree && item.hasPaid);
+      console.log("[AdminPaymentHistory] Students with BOTH Free Grant AND Paid Payments:", multiPaymentStudents);
 
       setPayments(paymentData);
       setError("");
@@ -1630,9 +1696,16 @@ export default function AdminPaymentHistory() {
                         </p>
                       </div>
                     ) : (
-                      <h2 className="text-3xl font-black text-[#0F2843] dark:text-white mt-0.5">
-                        ₦{Number(selectedPayment.amount).toLocaleString()}
-                      </h2>
+                      <div>
+                        <h2 className="text-3xl font-black text-[#0F2843] dark:text-white mt-0.5">
+                          ₦{Number(selectedPayment.amount).toLocaleString()}
+                        </h2>
+                        {selectedPayment.gateway === "complimentary" && (
+                          <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400 mt-0.5">
+                            Administrative Manual Settlement / Recovery (Paid)
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
@@ -1740,6 +1813,24 @@ export default function AdminPaymentHistory() {
                       <span className="text-[10px] text-gray-400 font-bold">Payment Method</span>
                       <span className="font-bold text-gray-800 dark:text-white capitalize">{selectedPayment.payment_method || "Card"}</span>
                     </div>
+                    {selectedPayment.gateway && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-gray-400 font-bold">Gateway / Channel</span>
+                        <span className="font-bold text-gray-800 dark:text-white capitalize">
+                          {selectedPayment.gateway === "complimentary" && Number(selectedPayment.amount) > 0
+                            ? "Manual Staff Entry / Recovery"
+                            : selectedPayment.gateway}
+                        </span>
+                      </div>
+                    )}
+                    {selectedPayment.meta?.reason && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-gray-400 font-bold">Admin Audit Note</span>
+                        <span className="font-semibold text-gray-700 dark:text-gray-300 text-right max-w-[65%]">
+                          {selectedPayment.meta.reason}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-gray-400 font-bold">Transaction Date</span>
                       <span className="font-bold text-gray-800 dark:text-white">

@@ -76,15 +76,49 @@ export default function CourseAdvisorDashboard() {
       return student.is_active;
     }
 
-    const courses = student?.courses || student?.course_enrollments || [];
     const payments = student?.payments || [];
-    const hasActiveCourse = courses.some(c => 
-      (c.status === 'active' || c.enrollment_status === 'active') && 
-      (!c.end_date || new Date(c.end_date) >= new Date())
+    const courses = student?.courses || student?.course_enrollments || [];
+    const now = new Date();
+
+    // Active student means student who has paid and their payment has not expired (payment is still on)
+    const hasUnexpiredPayment = payments.some((p) => {
+      const status = (p.status || "").toLowerCase();
+      if (status !== "successful" && status !== "paid") return false;
+
+      const paidAtStr = p.paid_at || p.created_at;
+      if (!paidAtStr) return false;
+
+      const cycle = (p.billing_cycle || "monthly").toLowerCase();
+      const days =
+        cycle === "weekly"
+          ? 7
+          : cycle === "quarterly"
+          ? 90
+          : cycle === "semi_annual"
+          ? 180
+          : cycle === "annual"
+          ? 365
+          : 30;
+
+      const expiry = new Date(new Date(paidAtStr).getTime() + days * 24 * 60 * 60 * 1000);
+      const ce = courses.find((c) => Number(c.id) === Number(p.course_enrollment_id));
+      const ceEnd = ce?.end_date ? new Date(ce.end_date) : null;
+
+      return (ceEnd && ceEnd >= now) || expiry >= now;
+    });
+
+    if (hasUnexpiredPayment) return true;
+
+    const hasActiveCourse = courses.some(
+      (c) =>
+        (c.status === "active" || c.enrollment_status === "active") &&
+        c.end_date &&
+        new Date(c.end_date) >= now
     );
-    const hasSuccessfulPayment = payments.some(p => 
-      p.status === 'successful' || p.status === 'paid'
+    const hasSuccessfulPayment = payments.some(
+      (p) => p.status === "successful" || p.status === "paid"
     );
+
     return hasActiveCourse && hasSuccessfulPayment;
   }, []);
 

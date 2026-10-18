@@ -151,6 +151,7 @@ export default function SummaryCards({ payments = [], loading = false }) {
 
     const isFreeGrant = (payment) => {
       if (!payment) return false;
+      if (Number(payment.amount || 0) > 0) return false;
       if (Number(payment.amount || 0) <= 0) return true;
       if (payment.gateway === "complimentary") return true;
       if (payment.meta?.type === "complimentary") return true;
