@@ -194,8 +194,18 @@ export default function AdminStudentManagement() {
       }
 
       studentsArray = studentsArray.map(student => {
-         const studentPayments = paymentsArray.filter(p => p.student_id === student.id || p.student?.id === student.id);
-         return { ...student, payments: studentPayments };
+         const studentPayments = paymentsArray
+           .filter(p => p.student_id === student.id || p.student?.id === student.id)
+           .sort((a, b) => {
+             const timeA = new Date(a.paid_at || a.created_at || 0).getTime();
+             const timeB = new Date(b.paid_at || b.created_at || 0).getTime();
+             if (timeB !== timeA) return timeB - timeA;
+             return (Number(b.id) || 0) - (Number(a.id) || 0);
+           });
+         return { 
+           ...student, 
+           payments: studentPayments.length > 0 ? studentPayments : (student.payments || []) 
+         };
       });
 
       // Sort newest to oldest by registration date (created_at desc), falling back to id desc
