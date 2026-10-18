@@ -75,17 +75,18 @@ export default function StudentDashboard({ blogs = [] }) {
   const [courses, setCourses] = useState(() => cachedData?.courses || []);
   const [loading, setLoading] = useState(() => !cachedData); // Only show spinner if NO cache exists
   const [showNoCoursePopup, setShowNoCoursePopup] = useState(false);
-  const [hasPendingPayment, setHasPendingPayment] = useState(false);
-  const [pendingEnrollmentData, setPendingEnrollmentData] = useState(null);
+  const [hasPendingPayment, setHasPendingPayment] = useState(() => cachedData?.hasPendingPayment || false);
+  const [pendingEnrollmentData, setPendingEnrollmentData] = useState(() => cachedData?.pendingEnrollmentData || null);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
   const [attempts, setAttempts] = useState(() => cachedData?.attempts || []);
   const [unreadCount, setUnreadCount] = useState(() => cachedData?.unreadCount || 0);
   const [leaderboardRank, setLeaderboardRank] = useState(() => cachedData?.leaderboardRank || null);
+  const [sessions, setSessions] = useState(() => cachedData?.sessions || []);
 
   // Fetch real login/logout activity data
   const { weekData: weekActivity } = useStudentActivity(authToken);
 
-  // Fetch unread notification count
+  // Fetch unread notification count on realtime event
   const fetchUnreadCount = useCallback(async () => {
     if (!authToken) return;
     try {
@@ -100,224 +101,98 @@ export default function StudentDashboard({ blogs = [] }) {
   }, [API_BASE_URL, authToken]);
 
   useEffect(() => {
-    fetchUnreadCount();
     window.addEventListener('updateUnreadCount', fetchUnreadCount);
     return () => window.removeEventListener('updateUnreadCount', fetchUnreadCount);
   }, [fetchUnreadCount]);
 
-  useEffect(() => {
-    let currentCourses = courses;
-    let currentAttempts = attempts;
-    let currentRank = leaderboardRank;
+  // Single-flight composite BFF fetch for entire dashboard state
+  const fetchDashboardSummary = useCallback(async (isRefresh = false) => {
+    if (!authToken) return;
+    if (isRefresh) setRefreshingStatus(true);
 
-    const fetchActiveCourses = async () => {
-      try {
-        const [res, paymentsRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/students/courses`, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-              Accept: "application/json",
-            },
-          }),
-          axios.get(`${API_BASE_URL}/api/students/payments`, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-              Accept: "application/json",
-            },
-          }).catch(() => ({ data: { payments: [] } }))
-        ]);
-
-        const fetchedCourses = res?.data?.courses || res?.data?.data || [];
-        const paymentsList = paymentsRes?.data?.payments || paymentsRes?.data?.courses || paymentsRes?.data?.data || [];
-
-        const isCourseExpired = (c) => {
-          const status = c.status?.toLowerCase();
-          if (status === 'cancelled' || status === 'removed' || status === 'inactive' || status === 'expired' || status === 'unpaid') {
-            return true;
-          }
-          if (c.end_date) {
-            const end = new Date(c.end_date);
-            if (!isNaN(end.getTime()) && end < new Date()) {
-              return true;
-            }
-          }
-          return false;
-        };
-
-        const activeMap = new Map();
-        fetchedCourses.forEach((c) => {
-          if (!isCourseExpired(c)) {
-            const cid = Number(c.course_id || c.course?.id || c.id);
-            if (cid) activeMap.set(cid, c);
-          }
-        });
-
-        // Add any course from recent successful payments that might be omitted from /api/students/courses
-        paymentsList.forEach((p) => {
-          if (p.status === 'successful' || p.status === 'paid') {
-            const cid = Number(p.course_id || p.course?.id || p.enrollment?.course_id);
-            if (cid && !activeMap.has(cid)) {
-              const paidAt = p.paid_at || p.created_at;
-              let isPaymentExpired = false;
-              let computedEndDate = p.enrollment?.end_date;
-
-              if (paidAt) {
-                const pDate = new Date(paidAt);
-                const monthsMap = { weekly: 0.25, monthly: 1, quarterly: 3, semi_annual: 6, annual: 12 };
-                const months = monthsMap[p.billing_cycle?.toLowerCase()] || 1;
-                const paymentExpiry = new Date(pDate);
-                paymentExpiry.setDate(paymentExpiry.getDate() + Math.round(months * 30));
-                
-                computedEndDate = paymentExpiry.toISOString();
-                if (paymentExpiry < new Date()) {
-                  isPaymentExpired = true;
-                }
-              }
-
-              if (!isPaymentExpired) {
-                const enrollmentObj = p.enrollment || {};
-                const courseObj = p.enrollment?.course || p.course || { id: cid, title: p.course_title || p.course_name };
-                
-                activeMap.set(cid, {
-                  ...enrollmentObj,
-                  id: enrollmentObj.id || p.course_enrollment_id || cid,
-                  course_id: cid,
-                  course: courseObj,
-                  course_name: courseObj.title || p.course_title || p.course_name,
-                  title: courseObj.title || p.course_title || p.course_name,
-                  status: 'active',
-                  billing_cycle: p.billing_cycle || enrollmentObj.billing_cycle,
-                  start_date: p.paid_at || p.created_at,
-                  end_date: computedEndDate,
-                  subjects: enrollmentObj.subjects || p.subjects || courseObj.subjects || []
-                });
-              }
-            }
-          }
-        });
-
-        const pendingData = res?.data?.pending_enrollment || null;
-        setPendingEnrollmentData(pendingData);
-
-        let hasStoredPendingTransfer = false;
-        try {
-          const store = JSON.parse(localStorage.getItem("studentBankTransfers") || "{}");
-          hasStoredPendingTransfer = Object.values(store).some(
-            t => t && (t.state === "awaiting_confirmation" || t.status === "pending")
-          );
-          if (!hasStoredPendingTransfer) {
-            const pendingIds = JSON.parse(localStorage.getItem("pendingBankTransferCourseIds") || "[]");
-            hasStoredPendingTransfer = Array.isArray(pendingIds) && pendingIds.length > 0;
-          }
-        } catch {}
-
-        const hasPendingEnrollment = Boolean(
-          pendingData ||
-          hasStoredPendingTransfer ||
-          fetchedCourses.some(c => c.status?.toLowerCase() === 'pending') ||
-          paymentsList.some(p => p.status === 'pending')
-        );
-        setHasPendingPayment(hasPendingEnrollment);
-
-        const mergedCourses = Array.from(activeMap.values());
-        currentCourses = mergedCourses;
-        setCourses(mergedCourses);
-        if (mergedCourses.length === 0 && !hasPendingEnrollment) setShowNoCoursePopup(true);
-        else setShowNoCoursePopup(false);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchHistory = async () => {
-      try {
-        const res = await axios.get(`${API_BASE_URL}/api/students/exams/results/history`, {
-          headers: { Authorization: `Bearer ${authToken}`, Accept: "application/json" },
-        });
-        const responseData = res?.data || [];
-        let attemptsArray = [];
-        if (Array.isArray(responseData)) attemptsArray = responseData;
-        else if (Array.isArray(responseData.data)) attemptsArray = responseData.data;
-        else if (responseData.attempts && Array.isArray(responseData.attempts.data)) attemptsArray = responseData.attempts.data;
-        else if (responseData.history && Array.isArray(responseData.history)) attemptsArray = responseData.history;
-        else if (responseData.data && Array.isArray(responseData.data.data)) attemptsArray = responseData.data.data;
-
-        currentAttempts = attemptsArray;
-        setAttempts(attemptsArray);
-      } catch (err) {
-        console.error("Failed to load exam history for stats:", err);
-      }
-    };
-
-    const fetchRank = async () => {
-      try {
-        const res = await axios.get(`${API_BASE_URL}/api/students/leaderboard`, {
-          headers: { Authorization: `Bearer ${authToken}`, Accept: "application/json" },
-        });
-        let rawData = [];
-        if (Array.isArray(res.data)) rawData = res.data;
-        else if (res.data?.data && Array.isArray(res.data.data)) rawData = res.data.data;
-        else if (res.data?.leaderboard && Array.isArray(res.data.leaderboard)) rawData = res.data.leaderboard;
-
-        const studentObj = rawData.find(item => item.student_id === student?.id || item.id === student?.id);
-        if (studentObj && studentObj.rank) {
-          currentRank = studentObj.rank;
-          setLeaderboardRank(studentObj.rank);
-        } else {
-          const idx = rawData.findIndex(item => item.student_id === student?.id || item.id === student?.id);
-          if (idx !== -1) {
-            currentRank = idx + 1;
-            setLeaderboardRank(idx + 1);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch leaderboard rank:", err);
-      }
-    };
-
-    const loadData = async () => {
-      await Promise.all([fetchActiveCourses(), fetchHistory(), fetchRank()]);
-      // Cache data for instant loading on subsequent navigations
-      if (studentId) {
-        setDashboardCache(studentId, {
-          courses: currentCourses,
-          attempts: currentAttempts,
-          leaderboardRank: currentRank,
-          unreadCount,
-        });
-      }
-    };
-
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [API_BASE_URL, authToken, studentId]);
-
-
-  const handleRefreshStatus = async () => {
-    setRefreshingStatus(true);
     try {
-      const coursesRes = await axios.get(`${API_BASE_URL}/api/students/courses`, {
+      const res = await axios.get(`${API_BASE_URL}/api/students/dashboard-summary`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           Accept: "application/json",
         },
       });
-      const pending = coursesRes?.data?.pending_enrollment || null;
-      setPendingEnrollmentData(pending);
-      const active = coursesRes?.data?.courses || [];
-      if (active.length > 0) {
-        setCourses(active);
-        setHasPendingPayment(false);
-      } else {
-        setHasPendingPayment(Boolean(pending));
+
+      const rawPayload = res?.data || {};
+      const data = (rawPayload.data && typeof rawPayload.data === "object" && !Array.isArray(rawPayload.data))
+        ? rawPayload.data
+        : rawPayload;
+      const fetchedCourses = Array.isArray(data.courses) ? data.courses : [];
+      const fetchedAttempts = Array.isArray(data.attempts) ? data.attempts : [];
+      const fetchedSessions = Array.isArray(data.sessions) ? data.sessions : [];
+      const fetchedPendingEnrollment = data.pending_enrollment || null;
+      let fetchedHasPendingPayment = Boolean(data.has_pending_payment || fetchedPendingEnrollment);
+
+      // Check local storage for bank transfers as client-side fallback
+      try {
+        const store = JSON.parse(localStorage.getItem("studentBankTransfers") || "{}");
+        const hasStoredPendingTransfer = Object.values(store).some(
+          t => t && (t.state === "awaiting_confirmation" || t.status === "pending")
+        );
+        if (hasStoredPendingTransfer) {
+          fetchedHasPendingPayment = true;
+        } else {
+          const pendingIds = JSON.parse(localStorage.getItem("pendingBankTransferCourseIds") || "[]");
+          if (Array.isArray(pendingIds) && pendingIds.length > 0) {
+            fetchedHasPendingPayment = true;
+          }
+        }
+      } catch {}
+
+      setCourses(fetchedCourses);
+      setAttempts(fetchedAttempts);
+      setSessions(fetchedSessions);
+      setPendingEnrollmentData(fetchedPendingEnrollment);
+      setHasPendingPayment(fetchedHasPendingPayment);
+
+      if (typeof data.unread_count === "number") {
+        setUnreadCount(data.unread_count);
       }
-    } catch (e) {
-      console.error("Refresh status failed:", e);
+      if (data.leaderboard_rank !== undefined) {
+        setLeaderboardRank(data.leaderboard_rank);
+      }
+
+      if (fetchedCourses.length === 0 && !fetchedHasPendingPayment) {
+        setShowNoCoursePopup(true);
+      } else {
+        setShowNoCoursePopup(false);
+      }
+
+      // Cache data for instant loading on subsequent navigations
+      if (studentId) {
+        setDashboardCache(studentId, {
+          courses: fetchedCourses,
+          attempts: fetchedAttempts,
+          sessions: fetchedSessions,
+          leaderboardRank: data.leaderboard_rank || null,
+          unreadCount: data.unread_count || 0,
+          pendingEnrollmentData: fetchedPendingEnrollment,
+          hasPendingPayment: fetchedHasPendingPayment,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load dashboard summary:", err);
+      // Fallback: If no cache exists and no courses, show popup
+      if (!cachedData && courses.length === 0) {
+        setShowNoCoursePopup(true);
+      }
     } finally {
-      setRefreshingStatus(false);
+      setLoading(false);
+      if (isRefresh) setRefreshingStatus(false);
     }
+  }, [API_BASE_URL, authToken, studentId, cachedData, courses.length]);
+
+  useEffect(() => {
+    fetchDashboardSummary();
+  }, [fetchDashboardSummary]);
+
+  const handleRefreshStatus = async () => {
+    await fetchDashboardSummary(true);
   };
 
   // Compute average score from history
@@ -626,7 +501,7 @@ export default function StudentDashboard({ blogs = [] }) {
               <AchievementsPanel />
             </div>
             <div className="flex-none">
-              <MiniCalendarWidget />
+              <MiniCalendarWidget initialSessions={sessions} />
             </div>
           </div>
 

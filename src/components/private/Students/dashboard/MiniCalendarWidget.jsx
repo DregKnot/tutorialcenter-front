@@ -328,7 +328,7 @@ function SessionCard({ session, onClick, token, API_BASE_URL }) {
 }
 
 // ── Main Widget ───────────────────────────────────────────────────────────────
-export default function MiniCalendarWidget() {
+export default function MiniCalendarWidget({ initialSessions = null }) {
   const { token } = useAuth();
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test";
 
@@ -340,12 +340,19 @@ export default function MiniCalendarWidget() {
 
   // Selected day in the 5-day strip (default: today)
   const [selectedDay, setSelectedDay] = useState(today);
-  const [sessions, setSessions] = useState([]);
+  const [sessions, setSessions] = useState(() => (Array.isArray(initialSessions) ? initialSessions : []));
   const [selectedSession, setSelectedSession] = useState(null);
 
-  // Fetch schedule
+  // Sync if initialSessions changes
+  useEffect(() => {
+    if (Array.isArray(initialSessions) && initialSessions.length > 0) {
+      setSessions(initialSessions);
+    }
+  }, [initialSessions]);
+
+  // Fetch schedule only if initialSessions was not provided
   const fetchSessions = useCallback(async () => {
-    if (!token) return;
+    if (!token || (Array.isArray(initialSessions) && initialSessions.length > 0)) return;
     try {
       const res = await axios.get(`${API_BASE_URL}/api/students/calendar/schedule`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
@@ -355,7 +362,7 @@ export default function MiniCalendarWidget() {
     } catch {
       setSessions([]);
     }
-  }, [token, API_BASE_URL]);
+  }, [token, API_BASE_URL, initialSessions]);
 
   useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
