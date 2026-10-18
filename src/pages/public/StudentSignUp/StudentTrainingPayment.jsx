@@ -128,17 +128,25 @@ export const StudentTrainingPayment = () => {
 
     const courses = Object.entries(selectedDurations)
       .filter(([id, duration]) => Boolean(duration) && !isSettledTransfer(bankTransfers[studentData?.selectedEnrollments[id]?.course_enrollment_id]))
-      .map(([courseId, duration]) => ({
-        course_id: Number(courseId),
-        billing_cycle: duration.duration,
-        price: Number(duration.price || 0),
-        subjects: selectedSubjects[courseId] || [],
-      }));
+      .map(([courseId, duration]) => {
+        const isOlevel = [2, 3, 4].includes(Number(courseId));
+        const examTrack = isOlevel
+          ? (studentData?.selectedExamTrack || "WAEC")
+          : (Number(courseId) === 1 ? "JAMB" : "WAEC");
+        return {
+          course_id: Number(courseId),
+          billing_cycle: duration.duration,
+          price: Number(duration.price || 0),
+          subjects: selectedSubjects[courseId] || [],
+          exam_track: examTrack,
+        };
+      });
 
     return {
       type: "student_enrollment",
       student_id: studentId,
       courses,
+      exam_track: studentData?.selectedExamTrack || null,
       referral_code: referralCode,
     };
   }, [studentData, selectedDurations, bankTransfers]);
