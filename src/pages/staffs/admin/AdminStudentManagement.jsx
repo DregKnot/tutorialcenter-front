@@ -87,22 +87,50 @@ export default function AdminStudentManagement() {
       return student.is_active;
     }
 
-    const courses = student?.courses || student?.course_enrollments || [];
     const payments = student?.payments || [];
-    const subjects = student?.enrolled_subjects || student?.subject_enrollments || [];
+    const courses = student?.courses || student?.course_enrollments || [];
+    const now = new Date();
 
-    const hasActiveCourse = courses.some(c => 
-      (c.status === 'active' || c.enrollment_status === 'active') && 
-      (!c.end_date || new Date(c.end_date) >= new Date())
+    // Active student means student who has paid and their payment has not expired (payment is still on)
+    const hasUnexpiredPayment = payments.some((p) => {
+      const status = (p.status || "").toLowerCase();
+      if (status !== "successful" && status !== "paid") return false;
+
+      const paidAtStr = p.paid_at || p.created_at;
+      if (!paidAtStr) return false;
+
+      const cycle = (p.billing_cycle || "monthly").toLowerCase();
+      const days =
+        cycle === "weekly"
+          ? 7
+          : cycle === "quarterly"
+          ? 90
+          : cycle === "semi_annual"
+          ? 180
+          : cycle === "annual"
+          ? 365
+          : 30;
+
+      const expiry = new Date(new Date(paidAtStr).getTime() + days * 24 * 60 * 60 * 1000);
+      const ce = courses.find((c) => Number(c.id) === Number(p.course_enrollment_id));
+      const ceEnd = ce?.end_date ? new Date(ce.end_date) : null;
+
+      return (ceEnd && ceEnd >= now) || expiry >= now;
+    });
+
+    if (hasUnexpiredPayment) return true;
+
+    const hasActiveCourse = courses.some(
+      (c) =>
+        (c.status === "active" || c.enrollment_status === "active") &&
+        c.end_date &&
+        new Date(c.end_date) >= now
+    );
+    const hasSuccessfulPayment = payments.some(
+      (p) => p.status === "successful" || p.status === "paid"
     );
 
-    const hasSuccessfulPayment = payments.some(p => 
-      p.status === 'successful' || p.status === 'paid'
-    );
-
-    const hasSubjects = subjects.length > 0;
-
-    return hasActiveCourse && hasSuccessfulPayment && hasSubjects;
+    return hasActiveCourse && hasSuccessfulPayment;
   };
 
   const getStudentStatusInfo = (student) => {
@@ -132,31 +160,41 @@ export default function AdminStudentManagement() {
   };
 
   const getLatestCourse = (student) => {
+    if (student.latest_end_date) {
+      return { end_date: student.latest_end_date, status: student.enrollment_status || "active" };
+    }
+
+    const courses = student.course_enrollments || student.courses || [];
+    if (courses.length > 0) {
+      const active = courses.find((c) => c.status === "active" && c.end_date);
+      if (active) return active;
+    }
+
     const payments = student.payments || [];
     if (payments.length > 0) {
-       const sortedPayments = [...payments]
-         .filter(p => p.status === 'successful' && p.enrollment && p.enrollment.end_date)
-         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-       
-       if (sortedPayments.length > 0) {
-          const latestPayment = sortedPayments[0];
-          return {
-             status: latestPayment.enrollment.status || 'active',
-             end_date: latestPayment.enrollment.end_date,
-             start_date: latestPayment.enrollment.start_date
-          };
-       }
+      const sortedPayments = [...payments]
+        .filter((p) => (p.status === "successful" || p.status === "paid") && p.enrollment && p.enrollment.end_date)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      if (sortedPayments.length > 0) {
+        const latestPayment = sortedPayments[0];
+        return {
+          status: latestPayment.enrollment.status || "active",
+          end_date: latestPayment.enrollment.end_date,
+          start_date: latestPayment.enrollment.start_date,
+        };
+      }
     }
 
     const studentInfo = Array.isArray(student?.information) ? student.information[0] : (student?.information || {});
-    const courses = student?.courses || student?.course_enrollments || studentInfo?.courses || studentInfo?.course_enrollments || [];
-    
-    if (!courses || courses.length === 0) return null;
-    
-    return [...courses].sort((a, b) => {
-       const dateA = new Date(a.end_date || 0);
-       const dateB = new Date(b.end_date || 0);
-       return dateB - dateA;
+    const infoCourses = courses.length > 0 ? courses : (studentInfo?.courses || studentInfo?.course_enrollments || []);
+
+    if (!infoCourses || infoCourses.length === 0) return null;
+
+    return [...infoCourses].sort((a, b) => {
+      const dateA = new Date(a.end_date || 0);
+      const dateB = new Date(b.end_date || 0);
+      return dateB - dateA;
     })[0];
   };
 
@@ -164,60 +202,33 @@ export default function AdminStudentManagement() {
     setLoading(true);
     try {
       const config = {
-        headers: { 
-          "Authorization": `Bearer ${token}`,
-          "Accept": "application/json"
-        }
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
       };
 
-      const [studentsRes, paymentsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/admin/students/all`, config),
-        axios.get(`${API_BASE_URL}/api/admin/payments/all`, { ...config, params: { all: true, per_page: 500 } }).catch(e => {
-          console.warn("Failed to fetch payments:", e);
-          return { data: [] };
-        })
-      ]);
-
+      // High-speed pruned endpoint call
+      const studentsRes = await axios.get(`${API_BASE_URL}/api/admin/students/all`, config);
       console.log("[AdminStudentManagement] Fetch results:", studentsRes.data);
+
       const fetchedStudents = studentsRes.data?.students || studentsRes.data?.data || [];
-      let studentsArray = Array.isArray(fetchedStudents) ? fetchedStudents : [];
-      
-      let paymentsArray = [];
-      const pData = paymentsRes.data;
-      if (Array.isArray(pData)) paymentsArray = pData;
-      else if (Array.isArray(pData?.data)) paymentsArray = pData.data;
-      else if (Array.isArray(pData?.payments)) paymentsArray = pData.payments;
-      else if (Array.isArray(pData?.payments?.data)) paymentsArray = pData.payments.data;
-      else if (pData && typeof pData === 'object') {
-        const possibleArray = Object.values(pData).find(val => Array.isArray(val));
-        if (possibleArray) paymentsArray = possibleArray;
-      }
+      const studentsArray = Array.isArray(fetchedStudents) ? fetchedStudents : [];
 
-      studentsArray = studentsArray.map(student => {
-         const studentPayments = paymentsArray
-           .filter(p => p.student_id === student.id || p.student?.id === student.id)
-           .sort((a, b) => {
-             const timeA = new Date(a.paid_at || a.created_at || 0).getTime();
-             const timeB = new Date(b.paid_at || b.created_at || 0).getTime();
-             if (timeB !== timeA) return timeB - timeA;
-             return (Number(b.id) || 0) - (Number(a.id) || 0);
-           });
-         return { 
-           ...student, 
-           payments: studentPayments.length > 0 ? studentPayments : (student.payments || []) 
-         };
-      });
-
-      // Sort newest to oldest by registration date (created_at desc), falling back to id desc
-      studentsArray.sort((a, b) => {
-        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
-        if (timeB !== timeA) return timeB - timeA;
-        return (Number(b.id) || 0) - (Number(a.id) || 0);
-      });
-      
       setStudents(studentsArray);
-      calculateStats(studentsArray);
+
+      // Use pre-computed backend stats if provided; fallback to client calculation
+      if (studentsRes.data?.stats) {
+        const s = studentsRes.data.stats;
+        setStats((prev) => [
+          { ...prev[0], value: s.total, subLabel: `+${s.new_this_month} new` },
+          { ...prev[1], value: s.active, subLabel: "Active" },
+          { ...prev[2], value: s.inactive, subLabel: "Inactive" },
+          { ...prev[3], value: s.suspended, subLabel: "Suspended" },
+        ]);
+      } else {
+        calculateStats(studentsArray);
+      }
     } catch (error) {
       console.error("Failed to fetch students:", error);
       setStudents([]);

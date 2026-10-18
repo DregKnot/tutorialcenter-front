@@ -136,15 +136,49 @@ export default function CourseAdvisorStudentManagement() {
       return student.is_active;
     }
 
-    const courses = student?.courses || student?.course_enrollments || [];
     const payments = student?.payments || [];
-    const hasActiveCourse = courses.some(c => 
-      (c.status === 'active' || c.enrollment_status === 'active') && 
-      (!c.end_date || new Date(c.end_date) >= new Date())
+    const courses = student?.courses || student?.course_enrollments || [];
+    const now = new Date();
+
+    // Active student means student who has paid and their payment has not expired (payment is still on)
+    const hasUnexpiredPayment = payments.some((p) => {
+      const status = (p.status || "").toLowerCase();
+      if (status !== "successful" && status !== "paid") return false;
+
+      const paidAtStr = p.paid_at || p.created_at;
+      if (!paidAtStr) return false;
+
+      const cycle = (p.billing_cycle || "monthly").toLowerCase();
+      const days =
+        cycle === "weekly"
+          ? 7
+          : cycle === "quarterly"
+          ? 90
+          : cycle === "semi_annual"
+          ? 180
+          : cycle === "annual"
+          ? 365
+          : 30;
+
+      const expiry = new Date(new Date(paidAtStr).getTime() + days * 24 * 60 * 60 * 1000);
+      const ce = courses.find((c) => Number(c.id) === Number(p.course_enrollment_id));
+      const ceEnd = ce?.end_date ? new Date(ce.end_date) : null;
+
+      return (ceEnd && ceEnd >= now) || expiry >= now;
+    });
+
+    if (hasUnexpiredPayment) return true;
+
+    const hasActiveCourse = courses.some(
+      (c) =>
+        (c.status === "active" || c.enrollment_status === "active") &&
+        c.end_date &&
+        new Date(c.end_date) >= now
     );
-    const hasSuccessfulPayment = payments.some(p => 
-      p.status === 'successful' || p.status === 'paid'
+    const hasSuccessfulPayment = payments.some(
+      (p) => p.status === "successful" || p.status === "paid"
     );
+
     return hasActiveCourse && hasSuccessfulPayment;
   }, []);
 
@@ -256,32 +290,10 @@ export default function CourseAdvisorStudentManagement() {
         }
       };
 
-      const [studentsRes, paymentsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/advisor/students/all`, config),
-        axios.get(`${API_BASE_URL}/api/admin/payments/all`, { ...config, params: { all: true, per_page: 500 } }).catch(e => {
-          console.warn("Failed to fetch payments:", e);
-          return { data: [] };
-        })
-      ]);
-
+      // High-speed pruned endpoint call
+      const studentsRes = await axios.get(`${API_BASE_URL}/api/advisor/students/all`, config);
       const fetchedStudents = studentsRes.data?.students || studentsRes.data?.data || [];
-      let studentsArray = Array.isArray(fetchedStudents) ? fetchedStudents : [];
-      
-      let paymentsArray = [];
-      const pData = paymentsRes.data;
-      if (Array.isArray(pData)) paymentsArray = pData;
-      else if (Array.isArray(pData?.data)) paymentsArray = pData.data;
-      else if (Array.isArray(pData?.payments)) paymentsArray = pData.payments;
-      else if (Array.isArray(pData?.payments?.data)) paymentsArray = pData.payments.data;
-      else if (pData && typeof pData === 'object') {
-        const possibleArray = Object.values(pData).find(val => Array.isArray(val));
-        if (possibleArray) paymentsArray = possibleArray;
-      }
-
-      studentsArray = studentsArray.map(student => {
-         const studentPayments = paymentsArray.filter(p => p.student_id === student.id || p.student?.id === student.id);
-         return { ...student, payments: studentPayments };
-      });
+      const studentsArray = Array.isArray(fetchedStudents) ? fetchedStudents : [];
 
       // Sort newest to oldest by registration date (created_at desc), falling back to id desc
       studentsArray.sort((a, b) => {
