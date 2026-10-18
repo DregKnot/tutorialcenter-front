@@ -13,21 +13,50 @@ import QueryProvider from "./providers/QueryProvider";
 import { HelmetProvider } from "react-helmet-async";
 import { createRoot } from "react-dom/client";
 import axios from "axios";
+import {
+  clearStaffSession,
+  clearStudentSession,
+  clearGuardianSession
+} from "./utils/auth.js";
 
 // Ensure all API calls explicitly identify as JSON requests to avoid HTML redirect responses from Laravel
 axios.defaults.headers.common["Accept"] = "application/json";
 
-// Handle 401 Unauthorized responses globally for staff sessions
+// Handle 401 Unauthorized responses globally for staff, student, and guardian sessions
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      const isStaffRoute = window.location.pathname.startsWith("/staff");
-      if (isStaffRoute && localStorage.getItem("staff_token")) {
-        localStorage.removeItem("staff_token");
-        localStorage.removeItem("staff_user");
-        localStorage.removeItem("staff_role");
-        window.location.href = "/staff/login?session=expired";
+      const pathname = (window.location.pathname || "").toLowerCase();
+
+      // Avoid triggering session-expiry redirects if the 401 was returned by an explicit login attempt
+      const isAuthPage =
+        pathname.includes("/login") ||
+        pathname.includes("/register") ||
+        pathname.includes("/forgot-password") ||
+        pathname.includes("/reset-password");
+
+      if (!isAuthPage) {
+        if (pathname.startsWith("/staff")) {
+          if (localStorage.getItem("staff_token")) {
+            clearStaffSession();
+            window.location.href = "/staff/login?session=expired";
+          }
+        } else if (pathname.startsWith("/guardian")) {
+          if (localStorage.getItem("guardian_token")) {
+            clearGuardianSession();
+            window.location.href = "/guardian/login?session=expired";
+          }
+        } else if (
+          pathname.startsWith("/student") ||
+          pathname.startsWith("/classroom") ||
+          pathname.startsWith("/zoom")
+        ) {
+          if (localStorage.getItem("student_token")) {
+            clearStudentSession();
+            window.location.href = "/student/login?session=expired";
+          }
+        }
       }
     }
     return Promise.reject(error);

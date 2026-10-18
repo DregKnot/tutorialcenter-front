@@ -95,7 +95,7 @@ describe("MiniCalendarWidget Component", () => {
     await waitFor(() => {
       expect(screen.getByText("Chemistry")).toBeInTheDocument();
     });
-    expect(screen.getByText("Class Session")).toBeInTheDocument();
+    expect(screen.getByText("Scheduled")).toBeInTheDocument();
     expect(screen.getByText("Join Live Classroom")).toBeInTheDocument();
   });
 

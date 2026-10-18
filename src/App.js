@@ -156,11 +156,6 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/cognitive-test" element={<CognitiveTest />} />
             <Route path="/guardian/login" element={<GuardianLogin />} />
-            <Route path="/guardian/dashboard" element={<GuardianDashboard />} />
-            <Route path="/guardian/performance" element={<GuardianPerformance />} />
-            <Route path="/guardian/audit-logs" element={<GuardianAuditLogs />} />
-            <Route path="/guardian/payments" element={<GuardianPayments />} />
-            <Route path="/guardian/add-ward" element={<GuardianAddWard />} />
             <Route path="/login" element={<LoginSelection />} />
             <Route path="/badge-demo" element={<BadgeDemo />} />
             <Route path="/about" element={<About />} />
@@ -211,12 +206,24 @@ function App() {
             <Route path="/register/student/training/payment" element={<StudentTrainingPayment />} />
             <Route path="/register/student/training/payment/success" element={<StudentPaymentSuccessScreen />} />
 
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
+            {/* Guardian Protected Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['guardian']} />}>
+              <Route path="/guardian/dashboard" element={<GuardianDashboard />} />
+              <Route path="/guardian/performance" element={<GuardianPerformance />} />
+              <Route path="/guardian/audit-logs" element={<GuardianAuditLogs />} />
+              <Route path="/guardian/payments" element={<GuardianPayments />} />
+              <Route path="/guardian/add-ward" element={<GuardianAddWard />} />
+            </Route>
+
+            {/* Shared Classroom / Masterclass Live Session Routes (Students & Staff) */}
+            <Route element={<ProtectedRoute allowedRoles={['classroom']} />}>
               <Route path="/classroom/:classSessionId" element={<ClassRoom />} />
               <Route path="/zoom/masterclass/:classSessionId" element={<ClassRoom />} />
               <Route path="/zoom/masterclass/class/:classSessionId" element={<ClassRoom />} />
-              {/* Student Routes */}
+            </Route>
+
+            {/* Student Protected Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['student']} />}>
               <Route path="/student/dashboard" element={<StudentDashboard />} />
               <Route path="/student/notifications" element={<StudentNotifications />} />
               <Route path="/student/payments" element={<StudentPaymentDisplay />} />
@@ -236,23 +243,27 @@ function App() {
               <Route path="/student/scholarship" element={<StudentScholarship />} />
               <Route path="/student/leaderboard" element={<StudentLeaderboard />} />
               <Route path="/student/blog" element={<StudentBlog />} />
+            </Route>
 
-              {/* Staff Routes */}
-              <Route path="/staffs/dashboard" element={<StaffDashboard />} />
-              <Route path="/staffs/assessments" element={<AdminAssessments />} />
-              <Route path="/staffs/coo/dashboard" element={<CooDashboard />} />
-              <Route path="/staffs/manage-blogs" element={<BlogManagement />} />
-              <Route path="/staffs/audit-logs" element={<AuditLog />} />
-              <Route path="/staffs/feedback" element={<StaffFeedback />} />
-              <Route path="/staffs/admin/survey-analytics" element={<AdminSurveyAnalytics />} />
-              <Route path="/staffs/leaderboard" element={<StaffLeaderboard />} />
+            {/* General Staff Routes (All Authenticated Staff) */}
+            <Route element={<ProtectedRoute allowedRoles={['staff']} />}>
               <Route path="/staffs/notifications" element={<StaffNotification />} />
               <Route path="/staffs/meet" element={<StaffMeetWrapper />} />
               <Route path="/staffs/meet/app" element={<StaffAppMeetWrapper />} />
+              <Route path="/staffs/leaderboard" element={<StaffLeaderboard />} />
+              <Route path="/staffs/feedback" element={<StaffFeedback />} />
+            </Route>
+
+            {/* Tutor Specific Routes (Tutors & Admin Staff) */}
+            <Route element={<ProtectedRoute allowedRoles={['tutor']} />}>
               <Route path="/staffs/tutor/dashboard" element={<TutorDashboard />} />
               <Route path="/staffs/tutor/master-class" element={<TutorMasterClass />} />
               <Route path="/staffs/tutor/calendar" element={<TutorCalendar />} />
               <Route path="/staffs/tutor/assessments" element={<TutorAssessments />} />
+            </Route>
+
+            {/* Course Advisor Routes (Advisors & Admin Staff) */}
+            <Route element={<ProtectedRoute allowedRoles={['advisor']} />}>
               <Route path="/staffs/course-advisor/dashboard" element={<CourseAdvisorDashboard />} />
               <Route path="/staffs/course-advisor/students" element={<CourseAdvisorStudentManagement />} />
               <Route path="/staffs/course-advisor/guardians" element={<CourseAdvisorGuardianManagement />} />
@@ -264,6 +275,22 @@ function App() {
               <Route path="/staffs/course-advisor/exams/:bodyId/subjects/:subjectId/years" element={<ExamYearList />} />
               <Route path="/staffs/course-advisor/exams/:bodyId/subjects/:subjectId/years/:yearId/questions" element={<ExamQuestionList />} />
               <Route path="/staffs/course-advisor/settings" element={<CourseAdvisorComingSoon title="Settings" />} />
+            </Route>
+
+            {/* Video Vault Routes (Restricted per roleUtils.canAccessVideoVault) */}
+            <Route element={<ProtectedRoute allowedRoles={['video-vault']} />}>
+              <Route path="/staffs/recorded-classes" element={<RecordedClasses />} />
+              <Route path="/staffs/video-vault" element={<RecordedClasses />} />
+            </Route>
+
+            {/* Administrative Management Routes (Admins, COO, Moderators, Operations) */}
+            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+              <Route path="/staffs/dashboard" element={<StaffDashboard />} />
+              <Route path="/staffs/assessments" element={<AdminAssessments />} />
+              <Route path="/staffs/coo/dashboard" element={<CooDashboard />} />
+              <Route path="/staffs/manage-blogs" element={<BlogManagement />} />
+              <Route path="/staffs/audit-logs" element={<AuditLog />} />
+              <Route path="/staffs/admin/survey-analytics" element={<AdminSurveyAnalytics />} />
               <Route path="/staffs/staff-registration" element={<StaffRegistration />} />
               <Route path="/staffs/manage-staffs" element={<StaffManagement />} />
               <Route path="/staffs/manage-students" element={<AdminStudentManagement />} />
@@ -272,8 +299,6 @@ function App() {
               <Route path="/staffs/master-class" element={<StaffMasterClassList />} />
               <Route path="/staffs/student-schedule" element={<StaffStudentSchedule />} />
               <Route path="/staffs/calendar" element={<AdminCalendar />} />
-              <Route path="/staffs/recorded-classes" element={<RecordedClasses />} />
-              <Route path="/staffs/video-vault" element={<RecordedClasses />} />
               <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
               <Route path="/staffs/manage-exams" element={<ExamManagement />} />
               <Route path="/staffs/school-tests" element={<SchoolCognitiveTests />} />

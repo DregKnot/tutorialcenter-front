@@ -116,8 +116,8 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
     const fetchDirectories = async () => {
       try {
         const subjectsUrl = isAdvisor ? `${API_BASE_URL}/api/subjects` : `${API_BASE_URL}/api/admin/subjects/all`;
-        const guardiansUrl = isAdvisor ? `${API_BASE_URL}/api/guardians/all` : `${API_BASE_URL}/api/admin/guardians/all`;
-        const advisorsUrl = isAdvisor ? `${API_BASE_URL}/api/advisors/all` : `${API_BASE_URL}/api/admin/advisors/all`;
+        const guardiansUrl = `${API_BASE_URL}/api/${apiPrefix}/guardians/all`;
+        const advisorsUrl = `${API_BASE_URL}/api/${apiPrefix}/advisors/all`;
 
         const [cRes, sRes, gRes, aRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/courses`).catch(() => ({ data: [] })),
@@ -146,7 +146,7 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
       }
     };
     fetchDirectories();
-  }, [isOpen, studentId, API_BASE_URL, token, isAdvisor]);
+  }, [isOpen, studentId, API_BASE_URL, token, isAdvisor, apiPrefix]);
 
   // Fetch full student details
   const fetchStudentDetails = useCallback(async () => {
