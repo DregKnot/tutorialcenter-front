@@ -182,7 +182,7 @@ export default function LocationAnalysisMap() {
 
         <div className="flex-1 flex flex-col justify-between">
           <div className="h-40 w-full relative">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            <ResponsiveContainer width="100%" height={160} minWidth={100} minHeight={100}>
               <PieChart>
                 <Pie
                   data={topStates}

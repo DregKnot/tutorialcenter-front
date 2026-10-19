@@ -36,7 +36,29 @@ const BackIcon = () => (
   </svg>
 );
 
-const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// Official Tutorial Center African Time Zone (West Africa Time / UTC+1)
+const AFRICAN_TIMEZONE = "Africa/Lagos";
+
+// Helper to get African Date in YYYY-MM-DD format strictly tied to Africa/Lagos
+const getAfricanDateYMD = (dateInput = new Date()) => {
+  if (!dateInput) return "";
+  if (typeof dateInput === "string") {
+    const trimmed = dateInput.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
+  }
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: AFRICAN_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+};
+
+const DAYS_OF_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 
@@ -122,7 +144,7 @@ export default function CourseAdvisorCalendar() {
       
       const source = parentClass || s.class || s;
       const rawDate = s.session_date || s.date || s.scheduled_date || s.start_date || s.created_at;
-      const dateStr = rawDate ? String(rawDate).split("T")[0].split(" ")[0] : new Date().toISOString().split("T")[0];
+      const dateStr = rawDate ? getAfricanDateYMD(rawDate) : getAfricanDateYMD();
 
       const rawSubject = source.subject || s.subject;
       const subjectName = typeof rawSubject === "object" ? rawSubject?.name : rawSubject;
@@ -286,7 +308,8 @@ export default function CourseAdvisorCalendar() {
   const generateMonthDays = useCallback((baseDate) => {
     const year = baseDate.getFullYear();
     const month = baseDate.getMonth();
-    const firstDayIndex = new Date(year, month, 1).getDay();
+    const firstDayRaw = new Date(year, month, 1).getDay();
+    const firstDayIndex = (firstDayRaw + 6) % 7; // Monday = 0, ..., Sunday = 6
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, month, 0).getDate();
 
@@ -319,10 +342,10 @@ export default function CourseAdvisorCalendar() {
 
   const monthDays = useMemo(() => generateMonthDays(currentDate), [currentDate, generateMonthDays]);
 
-  // Generate Week Days (7 days)
+  // Generate Week Days (7 days, Monday-first)
   const weekDays = useMemo(() => {
     const start = new Date(currentDate);
-    const day = start.getDay();
+    const day = (start.getDay() + 6) % 7;
     start.setDate(start.getDate() - day);
     start.setHours(0, 0, 0, 0);
     return Array.from({ length: 7 }, (_, i) => {
@@ -334,25 +357,16 @@ export default function CourseAdvisorCalendar() {
 
   // Sessions Filtering
   const getSessionsForDate = useCallback((date) => {
+    const targetYMD = getAfricanDateYMD(date);
     return sessions.filter((s) => {
-      const sDate = new Date(s.session_date);
-      return (
-        sDate.getFullYear() === date.getFullYear() &&
-        sDate.getMonth() === date.getMonth() &&
-        sDate.getDate() === date.getDate()
-      );
+      return getAfricanDateYMD(s.session_date) === targetYMD;
     });
   }, [sessions]);
 
   const getSessionsForDateAndHour = useCallback((date, hour) => {
+    const targetYMD = getAfricanDateYMD(date);
     return sessions.filter((s) => {
-      const sDate = new Date(s.session_date);
-      const sameDay = (
-        sDate.getFullYear() === date.getFullYear() &&
-        sDate.getMonth() === date.getMonth() &&
-        sDate.getDate() === date.getDate()
-      );
-      if (!sameDay) return false;
+      if (getAfricanDateYMD(s.session_date) !== targetYMD) return false;
       const startHour = parseInt((s.starts_at || "00:00").split(":")[0], 10);
       return startHour === hour;
     });

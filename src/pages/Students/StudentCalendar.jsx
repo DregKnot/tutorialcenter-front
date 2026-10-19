@@ -42,15 +42,15 @@ const BackIcon = () => (
 const AFRICAN_TIMEZONE = "Africa/Lagos";
 
 // Helper to get African Date in YYYY-MM-DD format strictly tied to Africa/Lagos
-const getAfricanDateYMD = (dateInput) => {
+const getAfricanDateYMD = (dateInput = new Date()) => {
   if (!dateInput) return "";
   if (typeof dateInput === "string") {
-    const rawDatePart = dateInput.split("T")[0].split(" ")[0];
-    if (/^\d{4}-\d{2}-\d{2}$/.test(rawDatePart)) {
-      return rawDatePart;
+    const trimmed = dateInput.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed;
     }
   }
-  const d = new Date(dateInput);
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
   if (isNaN(d.getTime())) return "";
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: AFRICAN_TIMEZONE,
@@ -60,7 +60,7 @@ const getAfricanDateYMD = (dateInput) => {
   }).format(d);
 };
 
-const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS_OF_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i); // 0 to 23 (12 AM to 11 PM)
 
@@ -155,16 +155,27 @@ export default function StudentCalendar() {
 
   // Helper to flatten tiered schedule API response safely
   const getFlatSessions = (data) => {
+    const normalizeSession = (s) => {
+      if (!s) return null;
+      return {
+        ...s,
+        session_date: s.session_date ? getAfricanDateYMD(s.session_date) : getAfricanDateYMD(),
+      };
+    };
+
+    if (Array.isArray(data)) {
+      return data.map(normalizeSession).filter(Boolean);
+    }
     const list = [];
-    if (Array.isArray(data)) return data; // if it's already a flat array
     
     const addSession = (s) => {
       if (!s) return;
+      const normalized = normalizeSession(s);
       const isDuplicate = list.some(item => {
-        if (s.id && item.id) return item.id === s.id;
-        return item.title === s.title && item.session_date === s.session_date && item.starts_at === s.starts_at;
+        if (normalized.id && item.id) return item.id === normalized.id;
+        return item.title === normalized.title && item.session_date === normalized.session_date && item.starts_at === normalized.starts_at;
       });
-      if (!isDuplicate) list.push(s);
+      if (!isDuplicate) list.push(normalized);
     };
 
     if (data.next_class) addSession(data.next_class);
@@ -245,11 +256,12 @@ export default function StudentCalendar() {
     return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
   };
 
-  // Generate Month Grid Days (42 cells)
+  // Generate Month Grid Days (42 cells, Monday-first)
   const generateMonthDays = useCallback((baseDate) => {
     const year = baseDate.getFullYear();
     const month = baseDate.getMonth();
-    const firstDayIndex = new Date(year, month, 1).getDay();
+    const firstDayRaw = new Date(year, month, 1).getDay();
+    const firstDayIndex = (firstDayRaw + 6) % 7; // Monday = 0, ..., Sunday = 6
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, month, 0).getDate();
 
@@ -282,11 +294,11 @@ export default function StudentCalendar() {
 
   const monthDays = useMemo(() => generateMonthDays(currentDate), [currentDate, generateMonthDays]);
 
-  // Generate Week Days (7 days)
+  // Generate Week Days (7 days, Monday-first)
   const weekDays = useMemo(() => {
     const start = new Date(currentDate);
-    const day = start.getDay();
-    start.setDate(start.getDate() - day);
+    const dayIndex = (start.getDay() + 6) % 7; // Monday = 0, ..., Sunday = 6
+    start.setDate(start.getDate() - dayIndex);
     start.setHours(0, 0, 0, 0);
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(start);
@@ -675,7 +687,7 @@ export default function StudentCalendar() {
                             }`}
                           >
                             <div className="text-[10px] font-bold text-gray-400 dark:text-blue-200 uppercase">
-                              {DAYS_OF_WEEK[date.getDay()]}
+                              {date.toLocaleDateString("en-US", { weekday: "short" })}
                             </div>
                             <div className={`text-sm font-extrabold mt-0.5 ${
                               curToday ? "text-[#C5A97A] dark:text-blue-400" : "text-gray-700 dark:text-gray-200"

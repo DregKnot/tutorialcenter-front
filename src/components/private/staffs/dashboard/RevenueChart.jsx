@@ -294,7 +294,7 @@ export default function RevenueChart({ payments = [], loading = false }) {
           }}
         />
 
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+        <ResponsiveContainer width="100%" height={280} minWidth={100} minHeight={100}>
           <AreaChart
             data={chartData}
             margin={{ top: 5, right: 10, left: 0, bottom: 0 }}

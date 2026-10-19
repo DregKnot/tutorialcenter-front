@@ -41,8 +41,16 @@ import AdminSessionActionModal from "../../../components/private/staffs/AdminSes
 const AFRICAN_TIMEZONE = "Africa/Lagos";
 
 // Helper to get African Date in YYYY-MM-DD format strictly tied to Africa/Lagos
-const getAfricanDateYMD = (d = new Date()) => {
-  if (!d) return "";
+const getAfricanDateYMD = (dateInput = new Date()) => {
+  if (!dateInput) return "";
+  if (typeof dateInput === "string") {
+    const trimmed = dateInput.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
+  }
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(d.getTime())) return "";
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: AFRICAN_TIMEZONE,
     year: "numeric",
@@ -52,7 +60,7 @@ const getAfricanDateYMD = (d = new Date()) => {
   return formatter.format(d);
 };
 
-const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS_OF_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 
@@ -147,7 +155,7 @@ const extractFlatSessions = (data) => {
     let recording = session.recording_link || source.recording_link;
 
     const rawDate = session.session_date || session.date || session.scheduled_date || session.start_date || session.created_at;
-    const dateStr = rawDate ? String(rawDate).split("T")[0].split(" ")[0] : getAfricanDateYMD();
+    const dateStr = rawDate ? getAfricanDateYMD(rawDate) : getAfricanDateYMD();
     
     const startTime = session.starts_at || session.start_time || "10:00";
     const endTime = session.ends_at || session.end_time || "11:30";
@@ -470,11 +478,12 @@ export default function AdminCalendar() {
     fetchAllSchedules();
   };
 
-  // Month grid generator
+  // Month grid generator (Monday-first)
   const monthDays = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
+    const firstDayRaw = new Date(year, month, 1).getDay();
+    const firstDay = (firstDayRaw + 6) % 7; // Monday = 0, ..., Sunday = 6
     const totalDays = new Date(year, month + 1, 0).getDate();
     const prevMonthDays = new Date(year, month, 0).getDate();
 
@@ -492,10 +501,11 @@ export default function AdminCalendar() {
     return days;
   }, [currentDate]);
 
-  // Week days generator
+  // Week days generator (Monday-first)
   const weekDays = useMemo(() => {
     const curr = new Date(currentDate);
-    const first = curr.getDate() - curr.getDay();
+    const dayIndex = (curr.getDay() + 6) % 7; // Monday = 0, ..., Sunday = 6
+    const first = curr.getDate() - dayIndex;
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(curr);
       d.setDate(first + i);
@@ -855,7 +865,7 @@ export default function AdminCalendar() {
                       className="flex flex-col items-center cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-700/50 py-1 rounded-xl transition-all"
                     >
                       <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">
-                        {DAYS_OF_WEEK[d.getDay()]}
+                        {d.toLocaleDateString("en-US", { weekday: "short" })}
                       </span>
                       <span className={`text-sm font-extrabold mt-0.5 w-7 h-7 flex items-center justify-center rounded-full ${
                         isToday ? "bg-[#E83831] text-white shadow-md" : "text-gray-800 dark:text-gray-200"
@@ -1056,7 +1066,7 @@ export default function AdminCalendar() {
                   );
                 })}
 
-              {filteredSessions.filter(s => s.session_date === currentDate.toISOString().split("T")[0]).length === 0 && (
+              {filteredSessions.filter(s => s.session_date === getAfricanDateYMD(currentDate)).length === 0 && (
                 <div className="text-center py-16 text-gray-400 dark:text-gray-500">
                   <CalendarDaysIcon className="w-14 h-14 mx-auto mb-2 opacity-30" />
                   <p className="text-base font-bold text-gray-600 dark:text-gray-300">No Master Classes scheduled for this date.</p>
