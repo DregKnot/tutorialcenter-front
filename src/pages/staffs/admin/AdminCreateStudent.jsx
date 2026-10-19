@@ -29,6 +29,7 @@ import {
   ClockIcon,
   CreditCardIcon,
   BanknotesIcon,
+  GiftIcon,
 } from "@heroicons/react/24/outline";
 
 const API_BASE_URL =
@@ -209,7 +210,17 @@ function VerificationModal({ student, onClose, onVerified }) {
                     : "text-gray-400 hover:text-gray-600"
                 }`}
               >
-                {m === "email" ? "📧 Email Token" : "📱 Phone OTP"}
+                {m === "email" ? (
+                  <span className="flex items-center justify-center gap-1.5">
+                    <EnvelopeIcon className="w-3.5 h-3.5" />
+                    <span>Email Token</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-1.5">
+                    <PhoneIcon className="w-3.5 h-3.5" />
+                    <span>Phone OTP</span>
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -655,9 +666,9 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#09314F] to-[#0F4068]">
+        <div className="px-6 sm:px-8 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#09314F] to-[#0F4068]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white">
@@ -681,7 +692,7 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5 max-h-[85vh] overflow-y-auto custom-scrollbar">
           {/* Current Expiry Banner */}
           <div className="bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl p-4 border border-blue-100 dark:border-blue-900/40 flex items-center justify-between">
             <div>
@@ -816,76 +827,99 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
             </div>
 
             {isPaidExtension && (
-              <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-3">
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-700/80 space-y-4">
                 {/* Who Paid? (Payer Selection) */}
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-1.5 uppercase tracking-widest">
+                  <label className="block text-[11px] font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
                     Payment Deposited By <span className="text-red-400">*</span>
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-gray-100 dark:bg-[#041a2b] p-1.5 rounded-xl">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-gray-100/80 dark:bg-[#041a2b] p-2 rounded-2xl">
                     <button
                       type="button"
                       onClick={() => handlePayerTypeChange("student")}
-                      className={`py-1.5 px-2 rounded-lg text-xs font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                      className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
                         payerType === "student"
-                          ? "bg-[#09314F] text-white shadow"
-                          : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                          ? "bg-[#09314F] text-white border-[#09314F] shadow-md ring-2 ring-[#09314F]/20"
+                          : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                       }`}
                     >
-                      <span>👨‍🎓 Student</span>
-                      <span className="text-[10px] opacity-75 font-mono">(TC-)</span>
+                      <div className="flex items-center gap-1.5">
+                        <UserIcon className="w-4 h-4 text-blue-400" />
+                        <span className="font-extrabold text-xs">Student</span>
+                      </div>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${payerType === "student" ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
+                        TC-
+                      </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handlePayerTypeChange("guardian")}
-                      className={`py-1.5 px-2 rounded-lg text-xs font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                      className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
                         payerType === "guardian"
-                          ? "bg-amber-600 text-white shadow"
-                          : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                          ? "bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/20"
+                          : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                       }`}
                     >
-                      <span>🛡️ Guardian</span>
-                      <span className="text-[10px] opacity-75 font-mono">(TCG-)</span>
+                      <div className="flex items-center gap-1.5">
+                        <ShieldCheckIcon className="w-4 h-4 text-amber-400" />
+                        <span className="font-extrabold text-xs">Guardian</span>
+                      </div>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${payerType === "guardian" ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
+                        TCG-
+                      </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handlePayerTypeChange("scholarship")}
-                      className={`py-1.5 px-2 rounded-lg text-xs font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                      className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
                         payerType === "scholarship"
-                          ? "bg-purple-700 text-white shadow"
-                          : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                          ? "bg-purple-700 text-white border-purple-700 shadow-md ring-2 ring-purple-700/20"
+                          : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                       }`}
                     >
-                      <span>🎓 Scholarship</span>
-                      <span className="text-[10px] opacity-75 font-mono">(FREE-GRANT-)</span>
+                      <div className="flex items-center gap-1.5">
+                        <AcademicCapIcon className="w-4 h-4 text-purple-300" />
+                        <span className="font-extrabold text-xs">Scholarship</span>
+                      </div>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded whitespace-nowrap ${payerType === "scholarship" ? "bg-white/20 text-white" : "bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300"}`}>
+                        FREE-GRANT-
+                      </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handlePayerTypeChange("free")}
-                      className={`py-1.5 px-2 rounded-lg text-xs font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                      className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
                         payerType === "free"
-                          ? "bg-emerald-600 text-white shadow"
-                          : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-600/20"
+                          : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                       }`}
                     >
-                      <span>🎁 Free Grant</span>
-                      <span className="text-[10px] opacity-75 font-mono">(FREE-)</span>
+                      <div className="flex items-center gap-1.5">
+                        <GiftIcon className="w-4 h-4 text-emerald-400" />
+                        <span className="font-extrabold text-xs">Free Grant</span>
+                      </div>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded whitespace-nowrap ${payerType === "free" ? "bg-white/20 text-white" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300"}`}>
+                        FREE-
+                      </span>
                     </button>
                   </div>
                   {payerType === "guardian" && guardianName && (
-                    <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-1 px-1">
-                      Linked Guardian: {guardianName} {guardianRel ? `(${guardianRel})` : ""}
-                    </p>
+                    <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-xs font-bold text-amber-700 dark:text-amber-300">
+                      <ShieldCheckIcon className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>Linked Guardian: <strong>{guardianName}</strong> {guardianRel ? `(${guardianRel})` : ""}</span>
+                    </div>
                   )}
                   {payerType === "scholarship" && (
-                    <p className="text-[11px] font-bold text-purple-600 dark:text-purple-400 mt-1 px-1">
-                      Full Academic Scholarship • ₦0 Tuition with official FREE-GRANT- integer reference
-                    </p>
+                    <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/40 text-xs font-bold text-purple-700 dark:text-purple-300">
+                      <AcademicCapIcon className="w-4 h-4 text-purple-500 shrink-0" />
+                      <span>Full Academic Scholarship • ₦0 Tuition with official <strong>FREE-GRANT-</strong> integer reference</span>
+                    </div>
                   )}
                   {payerType === "free" && (
-                    <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 px-1">
-                      Complimentary Free Grant • ₦0 Tuition with official FREE- integer reference
-                    </p>
+                    <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                      <GiftIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>Complimentary Free Grant • ₦0 Tuition with official <strong>FREE-</strong> integer reference</span>
+                    </div>
                   )}
                 </div>
 
@@ -952,7 +986,7 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
                           ? "e.g. TCG-XXXXXX or Bank Session ID"
                           : "e.g. TC-XXXXXX or Bank Session ID"
                       }
-                      className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0B2740] py-3 pl-4 pr-32 text-sm font-bold text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all font-mono"
+                      className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0B2740] py-3 pl-4 pr-52 sm:pr-56 text-sm font-bold text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all font-mono"
                       required={isPaidExtension}
                     />
                     <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
@@ -1169,9 +1203,9 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#C5A97A] to-[#D4B98C]">
+        <div className="px-6 sm:px-8 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#C5A97A] to-[#D4B98C]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white">
@@ -1195,7 +1229,7 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5 max-h-[85vh] overflow-y-auto custom-scrollbar">
           {/* Notice */}
           <div
             className={`rounded-2xl p-4 border flex items-start gap-3 ${
@@ -1283,73 +1317,96 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
 
           {/* Who Paid? (Payer Selection) */}
           <div>
-            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
+            <label className="block text-[11px] font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
               Payment Deposited By <span className="text-red-400">*</span>
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-gray-100 dark:bg-[#06243A] p-1.5 rounded-2xl">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-gray-100/80 dark:bg-[#06243A] p-2 rounded-2xl">
               <button
                 type="button"
                 onClick={() => handlePayerTypeChange("student")}
-                className={`py-2 px-2 rounded-xl text-xs font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
                   payerType === "student"
-                    ? "bg-[#09314F] text-white shadow"
-                    : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                    ? "bg-[#09314F] text-white border-[#09314F] shadow-md ring-2 ring-[#09314F]/20"
+                    : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                 }`}
               >
-                <span>👨‍🎓 Student</span>
-                <span className="text-[10px] opacity-75 font-mono">(TC-)</span>
+                <div className="flex items-center gap-1.5">
+                  <UserIcon className="w-4 h-4 text-blue-400" />
+                  <span className="font-extrabold text-xs">Student</span>
+                </div>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${payerType === "student" ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
+                  TC-
+                </span>
               </button>
               <button
                 type="button"
                 onClick={() => handlePayerTypeChange("guardian")}
-                className={`py-2 px-2 rounded-xl text-xs font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
                   payerType === "guardian"
-                    ? "bg-amber-600 text-white shadow"
-                    : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                    ? "bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/20"
+                    : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                 }`}
               >
-                <span>🛡️ Guardian</span>
-                <span className="text-[10px] opacity-75 font-mono">(TCG-)</span>
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheckIcon className="w-4 h-4 text-amber-400" />
+                  <span className="font-extrabold text-xs">Guardian</span>
+                </div>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${payerType === "guardian" ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
+                  TCG-
+                </span>
               </button>
               <button
                 type="button"
                 onClick={() => handlePayerTypeChange("scholarship")}
-                className={`py-2 px-2 rounded-xl text-xs font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
                   payerType === "scholarship"
-                    ? "bg-purple-700 text-white shadow"
-                    : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                    ? "bg-purple-700 text-white border-purple-700 shadow-md ring-2 ring-purple-700/20"
+                    : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                 }`}
               >
-                <span>🎓 Scholarship</span>
-                <span className="text-[10px] opacity-75 font-mono">(FREE-GRANT-)</span>
+                <div className="flex items-center gap-1.5">
+                  <AcademicCapIcon className="w-4 h-4 text-purple-300" />
+                  <span className="font-extrabold text-xs">Scholarship</span>
+                </div>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded whitespace-nowrap ${payerType === "scholarship" ? "bg-white/20 text-white" : "bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300"}`}>
+                  FREE-GRANT-
+                </span>
               </button>
               <button
                 type="button"
                 onClick={() => handlePayerTypeChange("free")}
-                className={`py-2 px-2 rounded-xl text-xs font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
                   payerType === "free"
-                    ? "bg-emerald-600 text-white shadow"
-                    : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-600/20"
+                    : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
                 }`}
               >
-                <span>🎁 Free Grant</span>
-                <span className="text-[10px] opacity-75 font-mono">(FREE-)</span>
+                <div className="flex items-center gap-1.5">
+                  <GiftIcon className="w-4 h-4 text-emerald-400" />
+                  <span className="font-extrabold text-xs">Free Grant</span>
+                </div>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded whitespace-nowrap ${payerType === "free" ? "bg-white/20 text-white" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300"}`}>
+                  FREE-
+                </span>
               </button>
             </div>
             {payerType === "guardian" && guardianName && (
-              <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-1.5 px-1">
-                Linked Guardian: {guardianName} {guardianRel ? `(${guardianRel})` : ""}
-              </p>
+              <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-xs font-bold text-amber-700 dark:text-amber-300">
+                <ShieldCheckIcon className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Linked Guardian: <strong>{guardianName}</strong> {guardianRel ? `(${guardianRel})` : ""}</span>
+              </div>
             )}
             {payerType === "scholarship" && (
-              <p className="text-[11px] font-bold text-purple-600 dark:text-purple-400 mt-1.5 px-1">
-                Full Academic Scholarship • ₦0 Tuition with official FREE-GRANT- integer reference
-              </p>
+              <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/40 text-xs font-bold text-purple-700 dark:text-purple-300">
+                <AcademicCapIcon className="w-4 h-4 text-purple-500 shrink-0" />
+                <span>Full Academic Scholarship • ₦0 Tuition with official <strong>FREE-GRANT-</strong> integer reference</span>
+              </div>
             )}
             {payerType === "free" && (
-              <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1.5 px-1">
-                Complimentary Free Grant • ₦0 Tuition with official FREE- integer reference
-              </p>
+              <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                <GiftIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>Complimentary Free Grant • ₦0 Tuition with official <strong>FREE-</strong> integer reference</span>
+              </div>
             )}
           </div>
 
@@ -1383,7 +1440,7 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
                     ? "Click 'Generate Reference' or paste TCG-XXXXXX / Bank Session ID"
                     : "Click 'Generate Reference' or paste TC-XXXXXX / Bank Session ID"
                 }
-                className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 pl-4 pr-32 text-sm font-bold text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all font-mono"
+                className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 pl-4 pr-52 sm:pr-56 text-sm font-bold text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all font-mono"
                 required
               />
               <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
