@@ -93,8 +93,17 @@ export default function StudentPaymentDisplay() {
       const paymentsRes = await axios.get(`${API_BASE_URL}/api/students/payments`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
       });
-      // The user wants response.data.payments
-      setPayments(paymentsRes.data.payments || paymentsRes.data.courses || []);
+      // Filter out abandoned / unsubmitted bank transfer drafts from history table
+      const rawPayments = paymentsRes.data.payments || paymentsRes.data.courses || [];
+      const validPayments = rawPayments.filter((p) => {
+        if (p.gateway === 'bank' || p.payment_method === 'bank_transfer') {
+          const isSuccessful = p.status === 'successful' || p.status === 'paid';
+          const hasClaimed = Boolean(p.meta?.bank_transfer?.claimed_paid_at);
+          return isSuccessful || hasClaimed;
+        }
+        return true;
+      });
+      setPayments(validPayments);
       console.log("History API Response:", paymentsRes.data);
 
       // 2. Fetch Active Enrolled Courses (these have the titles and dates we need for "On-going Training")
@@ -156,6 +165,13 @@ export default function StudentPaymentDisplay() {
       selectedPayment?.title ||
       `Course #${courseId}`;
 
+    const existingEnrollmentId = Number(
+      selectedPayment?.course_enrollment_id ||
+      selectedPayment?.enrollment_id ||
+      selectedPayment?.enrollment?.id ||
+      (selectedPayment?.source === 'active_courses' ? selectedPayment?.id : null)
+    );
+
     setRenewLoading(true);
     try {
       const res = await axios.post(
@@ -164,6 +180,7 @@ export default function StudentPaymentDisplay() {
           student_id: student?.id,
           course_id: courseId,
           billing_cycle: selectedDuration,
+          is_renewal: true,
         },
         {
           headers: {
@@ -175,11 +192,7 @@ export default function StudentPaymentDisplay() {
       );
 
       const enr = res.data?.enrollment;
-      const enrId =
-        enr?.id ||
-        selectedPayment?.enrollment_id ||
-        selectedPayment?.course_enrollment_id ||
-        selectedPayment?.id;
+      const enrId = enr?.id || existingEnrollmentId;
 
       setBankEnrollments([
         {
@@ -187,16 +200,14 @@ export default function StudentPaymentDisplay() {
           courseName: cName,
           amount: Number(calculatedPrice),
           billingCycle: selectedDuration,
+          isRenewal: true,
         },
       ]);
       setShowDurationModal(false);
       setShowPaymentModal(true);
     } catch (err) {
       console.warn("Could not pre-register renewal enrollment, using fallback enrollment ID:", err);
-      const enrId =
-        selectedPayment?.enrollment_id ||
-        selectedPayment?.course_enrollment_id ||
-        selectedPayment?.id;
+      const enrId = existingEnrollmentId;
 
       setBankEnrollments([
         {
@@ -204,6 +215,7 @@ export default function StudentPaymentDisplay() {
           courseName: cName,
           amount: Number(calculatedPrice),
           billingCycle: selectedDuration,
+          isRenewal: true,
         },
       ]);
       setShowDurationModal(false);
@@ -239,7 +251,6 @@ export default function StudentPaymentDisplay() {
       type: "success",
       message: "Bank transfer claim submitted! An administrator will review your transfer to activate your plan.",
     });
-    setShowPaymentModal(false);
     fetchData();
   };
 
@@ -564,31 +575,45 @@ export default function StudentPaymentDisplay() {
   // Combine all active courses and any previous courses from payment history for complete renewal coverage
   const renewableCourses = useMemo(() => {
     const map = new Map();
+    const seenEnrollmentIds = new Set();
+    const seenCourseIds = new Set();
 
     // 1. Add all courses from activeCourses (students/courses endpoint)
     activeCourses.forEach((c) => {
       const courseId = Number(c.course_id || c.course?.id || c.id);
+      const enrId = Number(c.enrollment_id || c.id);
       const title = c.course?.title || c.course_name || c.title;
-      const key = courseId ? `cid-${courseId}` : (title ? `title-${title.toLowerCase()}` : `enrollment-${c.enrollment_id || c.id}`);
+      const key = enrId ? `enr-${enrId}` : (courseId ? `cid-${courseId}` : `title-${title?.toLowerCase()}`);
       
+      if (enrId) seenEnrollmentIds.add(enrId);
+      if (courseId) seenCourseIds.add(courseId);
+
       map.set(key, {
         ...c,
         course_id: courseId,
-        enrollment_id: c.enrollment_id || c.id,
+        enrollment_id: enrId,
         course: c.course || { id: courseId, title: title },
         course_name: title || c.course?.title,
-        title: title || c.course?.title || `Enrollment #${c.enrollment_id || c.id}`,
+        title: title || c.course?.title || `Enrollment #${enrId}`,
         source: 'active_courses'
       });
     });
 
-    // 2. Add any courses from payment history (students/payments endpoint) that might not be in activeCourses
+    // 2. Add any courses from payment history that might not be in activeCourses
     payments.forEach((p) => {
       const courseId = Number(p.course_id || p.course?.id);
+      const enrId = Number(p.course_enrollment_id || p.enrollment_id || p.id);
       const title = p.course?.title || p.course_name || p.course_title || p.name;
-      const key = courseId ? `cid-${courseId}` : (title ? `title-${title.toLowerCase()}` : null);
+      const key = enrId ? `enr-${enrId}` : (courseId ? `cid-${courseId}` : (title ? `title-${title?.toLowerCase()}` : null));
       
+      // Do not duplicate if this enrollment or course is already in the list
+      if (enrId && seenEnrollmentIds.has(enrId)) return;
+      if (courseId && seenCourseIds.has(courseId)) return;
+
       if (key && !map.has(key)) {
+        if (enrId) seenEnrollmentIds.add(enrId);
+        if (courseId) seenCourseIds.add(courseId);
+
         const matchedCourse = allCourses.find((ac) => 
           (courseId && Number(ac.id) === courseId) || 
           (title && ac.title?.toLowerCase() === title.toLowerCase())
@@ -597,7 +622,7 @@ export default function StudentPaymentDisplay() {
         map.set(key, {
           ...p,
           course_id: courseId || matchedCourse?.id,
-          enrollment_id: p.course_enrollment_id || p.enrollment_id || p.id,
+          enrollment_id: enrId,
           course: matchedCourse || p.course || { id: courseId, title: title || `Course #${courseId}` },
           course_name: title || matchedCourse?.title,
           title: title || matchedCourse?.title || `Course #${courseId}`,
@@ -647,7 +672,7 @@ export default function StudentPaymentDisplay() {
               
               return (
                 <div
-                  key={item.enrollment_id || item.id || `active-${index}`}
+                  key={`renewable-${item.enrollment_id || item.course_id || item.id || index}-${index}`}
                   className={`bg-white dark:bg-[#09314F]/50 dark:backdrop-blur-md border rounded-2xl p-6 hover:shadow-md transition-all ${
                     isCancelled 
                       ? 'border-red-200 bg-red-50/20 dark:bg-red-900/10 dark:border-red-900/30' 
