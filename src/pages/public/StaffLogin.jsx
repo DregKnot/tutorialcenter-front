@@ -138,6 +138,7 @@ export default function StaffLogin() {
 
       const diagInfo = {
         timestamp: new Date().toLocaleTimeString(),
+        clientOrigin: typeof window !== "undefined" ? window.location.origin : "unknown",
         httpStatus: status || "NETWORK_ERROR / NO_RESPONSE",
         endpoint: `${API_BASE_URL}/api/staffs/login`,
         attemptedLogin: submitData.login,
@@ -330,9 +331,12 @@ export default function StaffLogin() {
                   <p className="text-[11px] text-gray-500 font-mono truncate">
                     <strong>Endpoint:</strong> {diagnosticError.endpoint}
                   </p>
+                  <p className="text-[11px] text-gray-500 font-mono truncate">
+                    <strong>Client Origin:</strong> {diagnosticError.clientOrigin}
+                  </p>
                   {diagnosticError.httpStatus === "NETWORK_ERROR / NO_RESPONSE" && (
                     <p className="text-[11px] text-amber-700 font-medium">
-                      The browser could not reach the backend server. Verify backend URL and CORS headers.
+                      The browser could not reach the backend server. Verify if client origin is whitelisted in CORS or blocked by an extension.
                     </p>
                   )}
                 </div>
