@@ -18,14 +18,22 @@ import {
 const AFRICAN_TIMEZONE = "Africa/Lagos";
 
 // Helper to get African Date in YYYY-MM-DD format strictly tied to Africa/Lagos
-const getAfricanDateYMD = (d = new Date()) => {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
+const getAfricanDateYMD = (dateInput = new Date()) => {
+  if (!dateInput) return "";
+  if (typeof dateInput === "string") {
+    const trimmed = dateInput.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
+  }
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("en-CA", {
     timeZone: AFRICAN_TIMEZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  });
-  return formatter.format(d);
+  }).format(d);
 };
 
 // Helper to get current African time in minutes from midnight (0..1439)
@@ -164,7 +172,7 @@ const extractFlatSessions = (data) => {
     let recording = session.recording_link || source.recording_link;
 
     const rawDate = session.session_date || session.date || session.scheduled_date || session.start_date;
-    const dateStr = rawDate ? String(rawDate).split("T")[0].split(" ")[0] : getAfricanDateYMD();
+    const dateStr = rawDate ? getAfricanDateYMD(rawDate) : getAfricanDateYMD();
     
     const startTime = session.starts_at || session.start_time || "10:00";
     const endTime = session.ends_at || session.end_time || "11:30";

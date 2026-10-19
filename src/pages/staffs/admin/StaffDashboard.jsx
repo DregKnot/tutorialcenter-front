@@ -87,8 +87,7 @@ export default function StaffDashboard() {
               {getGreeting()},{" "}
               <span className="text-mainBlue dark:text-blue-400">
                 {staff?.firstname || "Admin"}
-              </span>{" "}
-              👋
+              </span>
             </h2>
             <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mt-0.5">
               Here's what's happening with your tutorial center today.

@@ -17,6 +17,8 @@ export default function StaffLogin() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [diagnosticError, setDiagnosticError] = useState(null);
+  const [copiedDiag, setCopiedDiag] = useState(false);
   const [formData, setFormData] = useState({
     login: "",
     password: "",
@@ -107,6 +109,7 @@ export default function StaffLogin() {
 
     setLoading(true);
     setErrors({});
+    setDiagnosticError(null);
 
     const submitData = {
       ...formData,
@@ -125,17 +128,45 @@ export default function StaffLogin() {
       }
 
     } catch (error) {
-      console.error("Login error:", error.response?.data);
-
       const status = error.response?.status;
-      const message = error.response?.data?.message;
-      const backendErrors = error.response?.data?.errors;
+      const responseData = error.response?.data;
+      const message = responseData?.message || error.message || "Login failed.";
+      const backendErrors = responseData?.errors;
+      const serverError = responseData?.error;
+      const errorType = responseData?.error_type;
+      const errorLocation = responseData?.error_location;
 
-      // ✅ Handle rate limiting (429) with countdown
+      const diagInfo = {
+        timestamp: new Date().toLocaleTimeString(),
+        httpStatus: status || "NETWORK_ERROR / NO_RESPONSE",
+        endpoint: `${API_BASE_URL}/api/staffs/login`,
+        attemptedLogin: submitData.login,
+        message: message,
+        serverError: serverError || null,
+        errorType: errorType || null,
+        errorLocation: errorLocation || null,
+        backendValidation: backendErrors || null,
+        rawAxiosError: error.message,
+        code: error.code || null,
+      };
+
+      setDiagnosticError(diagInfo);
+
+      console.group("Staff Login Detailed Diagnostics");
+      console.error("HTTP Status:", diagInfo.httpStatus);
+      console.error("Endpoint:", diagInfo.endpoint);
+      console.error("Attempted Login:", diagInfo.attemptedLogin);
+      console.error("Message:", diagInfo.message);
+      if (serverError) console.error("Server Exception:", serverError);
+      if (errorLocation) console.error("Location:", errorLocation);
+      if (backendErrors) console.error("Validation Errors:", backendErrors);
+      console.error("Full Axios Error:", error);
+      console.groupEnd();
+
+      // Handle rate limiting (429) with countdown
       if (status === 429) {
-        // Extract seconds from message: "Too many login attempts. Please try again in 57 seconds."
         const match = message?.match(/(\d+)\s*seconds?/i);
-        const seconds = match ? parseInt(match[1]) : 60;  // Default to 60 if can't parse
+        const seconds = match ? parseInt(match[1]) : 60;
         
         setToast({
           type: "error",
@@ -144,7 +175,7 @@ export default function StaffLogin() {
           baseMessage: message
         });
         
-        setRateLimitCountdown(seconds);  // ✅ Start countdown
+        setRateLimitCountdown(seconds);
       }
       else if (status === 403) {
         setToast({
@@ -169,13 +200,13 @@ export default function StaffLogin() {
       else if (!error.response) {
         setToast({
           type: "error",
-          message: "Network error. Please check your connection."
+          message: `Network error: Unable to reach backend at ${API_BASE_URL}`
         });
       }
       else {
         setToast({
           type: "error",
-          message: message || "Login failed. Please try again."
+          message: serverError ? `Login failed: ${serverError}` : (message || "Login failed. Please try again.")
         });
       }
 
@@ -265,6 +296,64 @@ export default function StaffLogin() {
           </div>
 
           <div className="bg-white shadow-lg border border-gray-100 rounded-2xl p-8 w-full max-w-md">
+            {/* Diagnostic Error Panel */}
+            {diagnosticError && (
+              <div className="mb-6 p-4 rounded-xl border border-red-200 bg-red-50 text-red-900 text-xs">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-red-200">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded bg-red-200 text-red-800">
+                      Status: {diagnosticError.httpStatus}
+                    </span>
+                    <span className="font-semibold text-red-700">Diagnostic Details</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDiagnosticError(null)}
+                    className="text-red-500 hover:text-red-700 text-sm font-bold"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="space-y-1.5 font-sans">
+                  <p className="font-bold text-red-800 text-sm">{diagnosticError.message}</p>
+                  {diagnosticError.serverError && (
+                    <div className="font-mono text-[11px] bg-white/70 p-2 rounded border border-red-200 text-red-950 break-words">
+                      <strong>Backend Exception:</strong> {diagnosticError.serverError}
+                    </div>
+                  )}
+                  {diagnosticError.errorLocation && (
+                    <p className="text-[11px] text-red-600 font-mono">
+                      <strong>Source:</strong> {diagnosticError.errorLocation}
+                    </p>
+                  )}
+                  <p className="text-[11px] text-gray-500 font-mono truncate">
+                    <strong>Endpoint:</strong> {diagnosticError.endpoint}
+                  </p>
+                  {diagnosticError.httpStatus === "NETWORK_ERROR / NO_RESPONSE" && (
+                    <p className="text-[11px] text-amber-700 font-medium">
+                      The browser could not reach the backend server. Verify backend URL and CORS headers.
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-3 pt-2 border-t border-red-200 flex items-center justify-between">
+                  <span className="text-[10px] text-gray-500">{diagnosticError.timestamp}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(JSON.stringify(diagnosticError, null, 2));
+                      setCopiedDiag(true);
+                      setTimeout(() => setCopiedDiag(false), 2000);
+                    }}
+                    className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[11px] font-semibold transition-all"
+                  >
+                    {copiedDiag ? "Copied!" : "Copy Error Details"}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <form
               onSubmit={handleSubmit}
               className="space-y-5"
