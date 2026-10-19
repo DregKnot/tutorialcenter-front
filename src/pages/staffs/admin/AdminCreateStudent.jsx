@@ -29,6 +29,7 @@ import {
   ClockIcon,
   CreditCardIcon,
   BanknotesIcon,
+  GiftIcon,
 } from "@heroicons/react/24/outline";
 
 const API_BASE_URL =
@@ -56,6 +57,27 @@ function generateStrongPassword(length = 14) {
     .split("")
     .sort(() => Math.random() - 0.5)
     .join("");
+}
+
+/* ======================================================
+   PAYMENT REFERENCE GENERATOR UTILITY
+====================================================== */
+function generatePaymentReference(payerType = "student") {
+  if (payerType === "scholarship") {
+    const num = Math.floor(100000 + Math.random() * 900000);
+    return `FREE-GRANT-${num}`;
+  }
+  if (payerType === "free" || payerType === "free_grant") {
+    const num = Math.floor(100000 + Math.random() * 900000);
+    return `FREE-${num}`;
+  }
+  const prefix = payerType === "guardian" ? "TCG-" : "TC-";
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  let code = prefix;
+  for (let i = 0; i < 6; i++) {
+    code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return code;
 }
 
 /* ======================================================
@@ -188,7 +210,17 @@ function VerificationModal({ student, onClose, onVerified }) {
                     : "text-gray-400 hover:text-gray-600"
                 }`}
               >
-                {m === "email" ? "📧 Email Token" : "📱 Phone OTP"}
+                {m === "email" ? (
+                  <span className="flex items-center justify-center gap-1.5">
+                    <EnvelopeIcon className="w-3.5 h-3.5" />
+                    <span>Email Token</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-1.5">
+                    <PhoneIcon className="w-3.5 h-3.5" />
+                    <span>Phone OTP</span>
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -525,6 +557,22 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
   const [customEndDate, setCustomEndDate] = useState("");
   const [reason, setReason] = useState("");
 
+  // Payment Extension Context
+  const [isPaidExtension, setIsPaidExtension] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [payerType, setPayerType] = useState("student"); // "student" | "guardian"
+  const [referenceCode, setReferenceCode] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+
+  const course = enrollment?.course || {};
+  const baseCoursePrice = Number(course?.price || 0);
+
+  const linkedGuardian = student?.guardian || enrollment?.student?.guardian || null;
+  const guardianName = linkedGuardian
+    ? (linkedGuardian.name || [linkedGuardian.firstname, linkedGuardian.surname].filter(Boolean).join(" "))
+    : null;
+  const guardianRel = linkedGuardian?.relationship || linkedGuardian?.pivot?.relationship || null;
+
   const currentEndDate = useMemo(() => {
     return enrollment?.end_date ? new Date(enrollment.end_date) : null;
   }, [enrollment?.end_date]);
@@ -551,22 +599,76 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
     });
   }, [extensionType, months, customEndDate, currentEndDate, isFuture]);
 
+  // Compute recommended price if paid extension
+  const computedFee = useMemo(() => {
+    if (!baseCoursePrice) return 0;
+    const durMonths = extensionType === "preset" ? Number(months) : 1;
+    let fee = baseCoursePrice * durMonths;
+    if (durMonths > 1) fee *= 0.95;
+    return Math.round(fee);
+  }, [baseCoursePrice, extensionType, months]);
+
+  // Auto-fill amount when isPaidExtension toggled on
+  useEffect(() => {
+    if (isPaidExtension && !amount && computedFee > 0) {
+      setAmount(computedFee.toString());
+    }
+  }, [isPaidExtension, computedFee, amount]);
+
+  const handleGenerateReference = (selectedPayer = payerType) => {
+    const code = generatePaymentReference(selectedPayer);
+    setReferenceCode(code);
+  };
+
+  const handlePayerTypeChange = (newPayer) => {
+    setPayerType(newPayer);
+    if (newPayer === "scholarship" || newPayer === "free" || newPayer === "free_grant") {
+      setAmount("0");
+      setReferenceCode(generatePaymentReference(newPayer));
+    } else if (newPayer === "student") {
+      if (referenceCode.startsWith("TCG-")) {
+        setReferenceCode("TC-" + referenceCode.slice(4));
+      } else if (referenceCode.startsWith("FREE-") || !referenceCode) {
+        setReferenceCode(generatePaymentReference("student"));
+      }
+      if (computedFee > 0 && (!amount || Number(amount) === 0)) {
+        setAmount(computedFee.toString());
+      }
+    } else if (newPayer === "guardian") {
+      if (referenceCode.startsWith("TC-")) {
+        setReferenceCode("TCG-" + referenceCode.slice(3));
+      } else if (referenceCode.startsWith("FREE-") || !referenceCode) {
+        setReferenceCode(generatePaymentReference("guardian"));
+      }
+      if (computedFee > 0 && (!amount || Number(amount) === 0)) {
+        setAmount(computedFee.toString());
+      }
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!reason.trim()) return;
+    if (isPaidExtension && (!referenceCode.trim() || isNaN(amount) || Number(amount) < 0)) {
+      return;
+    }
     onConfirm({
       enrollmentId: enrollment.id,
       months: extensionType === "preset" ? months : undefined,
       customEndDate: extensionType === "custom" ? customEndDate : undefined,
       reason: reason.trim(),
+      amount: isPaidExtension ? parseFloat(amount) : undefined,
+      reference_code: isPaidExtension ? referenceCode.trim() : undefined,
+      payment_method: isPaidExtension ? paymentMethod : undefined,
+      payer_type: isPaidExtension ? payerType : undefined,
     });
   };
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#09314F] to-[#0F4068]">
+        <div className="px-6 sm:px-8 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#09314F] to-[#0F4068]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white">
@@ -577,7 +679,7 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
                   Extend Course Registration Access
                 </h3>
                 <p className="text-white/70 text-xs font-medium mt-0.5">
-                  {student?.firstname} {student?.surname} • {enrollment?.course?.title || "Active Course"}
+                  {student?.firstname} {student?.surname} • {course?.title || "Active Course"}
                 </p>
               </div>
             </div>
@@ -590,7 +692,7 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5 max-h-[85vh] overflow-y-auto custom-scrollbar">
           {/* Current Expiry Banner */}
           <div className="bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl p-4 border border-blue-100 dark:border-blue-900/40 flex items-center justify-between">
             <div>
@@ -692,6 +794,255 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
             </div>
           )}
 
+          {/* Complimentary vs Paid Extension Context */}
+          <div className="bg-gray-50 dark:bg-[#06243A] p-3.5 rounded-2xl border border-gray-200 dark:border-gray-700/60 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-black text-gray-800 dark:text-gray-200 block">
+                  Record Paid Bank / POS Transaction
+                </span>
+                <span className="text-[11px] text-gray-500 dark:text-gray-400 block">
+                  Enable if student or guardian submitted a paid renewal fee
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !isPaidExtension;
+                  setIsPaidExtension(next);
+                  if (next && !referenceCode) {
+                    handleGenerateReference(payerType);
+                  }
+                }}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  isPaidExtension ? "bg-[#09314F] dark:bg-[#C5A97A]" : "bg-gray-300 dark:bg-gray-700"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    isPaidExtension ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {isPaidExtension && (
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-700/80 space-y-4">
+                {/* Who Paid? (Payer Selection) */}
+                <div>
+                  <label className="block text-[11px] font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+                    Payment Deposited By <span className="text-red-400">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-gray-100/80 dark:bg-[#041a2b] p-2 rounded-2xl">
+                    <button
+                      type="button"
+                      onClick={() => handlePayerTypeChange("student")}
+                      className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
+                        payerType === "student"
+                          ? "bg-[#09314F] text-white border-[#09314F] shadow-md ring-2 ring-[#09314F]/20"
+                          : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <UserIcon className="w-4 h-4 text-blue-400" />
+                        <span className="font-extrabold text-xs">Student</span>
+                      </div>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${payerType === "student" ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
+                        TC-
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePayerTypeChange("guardian")}
+                      className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
+                        payerType === "guardian"
+                          ? "bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/20"
+                          : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <ShieldCheckIcon className="w-4 h-4 text-amber-400" />
+                        <span className="font-extrabold text-xs">Guardian</span>
+                      </div>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${payerType === "guardian" ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
+                        TCG-
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePayerTypeChange("scholarship")}
+                      className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
+                        payerType === "scholarship"
+                          ? "bg-purple-700 text-white border-purple-700 shadow-md ring-2 ring-purple-700/20"
+                          : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <AcademicCapIcon className="w-4 h-4 text-purple-300" />
+                        <span className="font-extrabold text-xs">Scholarship</span>
+                      </div>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded whitespace-nowrap ${payerType === "scholarship" ? "bg-white/20 text-white" : "bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300"}`}>
+                        FREE-GRANT-
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePayerTypeChange("free")}
+                      className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
+                        payerType === "free"
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-600/20"
+                          : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <GiftIcon className="w-4 h-4 text-emerald-400" />
+                        <span className="font-extrabold text-xs">Free Grant</span>
+                      </div>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded whitespace-nowrap ${payerType === "free" ? "bg-white/20 text-white" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300"}`}>
+                        FREE-
+                      </span>
+                    </button>
+                  </div>
+                  {payerType === "guardian" && guardianName && (
+                    <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-xs font-bold text-amber-700 dark:text-amber-300">
+                      <ShieldCheckIcon className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>Linked Guardian: <strong>{guardianName}</strong> {guardianRel ? `(${guardianRel})` : ""}</span>
+                    </div>
+                  )}
+                  {payerType === "scholarship" && (
+                    <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/40 text-xs font-bold text-purple-700 dark:text-purple-300">
+                      <AcademicCapIcon className="w-4 h-4 text-purple-500 shrink-0" />
+                      <span>Full Academic Scholarship • ₦0 Tuition with official <strong>FREE-GRANT-</strong> integer reference</span>
+                    </div>
+                  )}
+                  {payerType === "free" && (
+                    <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                      <GiftIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>Complimentary Free Grant • ₦0 Tuition with official <strong>FREE-</strong> integer reference</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Amount Paid */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                      Extension Fee Paid (₦) <span className="text-red-400">*</span>
+                    </label>
+                    {computedFee > 0 && Number(amount) !== computedFee && (
+                      <button
+                        type="button"
+                        onClick={() => setAmount(computedFee.toString())}
+                        className="text-[10px] font-black text-[#C5A97A] hover:underline"
+                      >
+                        Reset to ₦{computedFee.toLocaleString()}
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#C5A97A]">
+                      ₦
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="e.g. 15000"
+                      className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0B2740] py-3 pl-9 pr-4 text-sm font-bold text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all"
+                      required={isPaidExtension}
+                    />
+                  </div>
+                </div>
+
+                {/* Payment Reference Code with Generate Button */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                      Payment Reference Code <span className="text-red-400">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateReference()}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-[#C5A97A]/20 hover:bg-[#C5A97A]/30 text-[#8B6E3F] dark:text-[#E8D4B0] border border-[#C5A97A]/40 transition-all active:scale-95 shadow-sm"
+                      title={`Generate official ${payerType === "guardian" ? "guardian (TCG-)" : payerType === "scholarship" ? "scholarship (FREE-GRANT-)" : payerType === "free" ? "free grant (FREE-)" : "student (TC-)"} reference code`}
+                    >
+                      <SparklesIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                      Generate Reference ({payerType === "guardian" ? "TCG-" : payerType === "scholarship" ? "FREE-GRANT-" : payerType === "free" ? "FREE-" : "TC-"})
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={referenceCode}
+                      onChange={(e) => setReferenceCode(e.target.value)}
+                      placeholder={
+                        payerType === "scholarship"
+                          ? "e.g. FREE-GRANT-XXXXXX"
+                          : payerType === "free"
+                          ? "e.g. FREE-XXXXXX"
+                          : payerType === "guardian"
+                          ? "e.g. TCG-XXXXXX or Bank Session ID"
+                          : "e.g. TC-XXXXXX or Bank Session ID"
+                      }
+                      className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0B2740] py-3 pl-4 pr-52 sm:pr-56 text-sm font-bold text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all font-mono"
+                      required={isPaidExtension}
+                    />
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider font-mono ${
+                          referenceCode.startsWith("FREE-GRANT-")
+                            ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800"
+                            : referenceCode.startsWith("FREE-")
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800"
+                            : referenceCode.startsWith("TCG-")
+                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
+                            : referenceCode.startsWith("TC-")
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800"
+                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+                        }`}
+                      >
+                        {referenceCode.startsWith("FREE-GRANT-")
+                          ? "SCHOLARSHIP (FREE-GRANT-)"
+                          : referenceCode.startsWith("FREE-")
+                          ? "FREE GRANT (FREE-)"
+                          : referenceCode.startsWith("TCG-")
+                          ? "GUARDIAN (TCG-)"
+                          : referenceCode.startsWith("TC-")
+                          ? "STUDENT (TC-)"
+                          : referenceCode
+                          ? "CUSTOM REF"
+                          : "NO REF"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Method */}
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-1.5 uppercase tracking-widest">
+                    Payment Channel
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0B2740] py-3 px-4 pr-10 text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 appearance-none transition-all"
+                    >
+                      <option value="bank_transfer">Direct Bank Transfer</option>
+                      <option value="pos">POS / Terminal Card</option>
+                      <option value="cash">Cash Deposit</option>
+                      <option value="card">Online Card</option>
+                      <option value="manual">Manual Admin Entry</option>
+                    </select>
+                    <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Reason */}
           <div>
             <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
@@ -700,7 +1051,7 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              rows={3}
+              rows={2}
               placeholder="e.g. Granted 30-day exam preparation extension per academic advisor approval."
               className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all resize-none"
               required
@@ -718,9 +1069,17 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
             </button>
             <button
               type="submit"
-              disabled={loading || !reason.trim() || (extensionType === "custom" && !customEndDate)}
+              disabled={
+                loading ||
+                !reason.trim() ||
+                (extensionType === "custom" && !customEndDate) ||
+                (isPaidExtension && (!referenceCode.trim() || !amount))
+              }
               className={`flex-1 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                loading || !reason.trim() || (extensionType === "custom" && !customEndDate)
+                loading ||
+                !reason.trim() ||
+                (extensionType === "custom" && !customEndDate) ||
+                (isPaidExtension && (!referenceCode.trim() || !amount))
                   ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
                   : "bg-gradient-to-r from-[#09314F] to-[#0F4068] text-white hover:opacity-90 active:scale-[0.98] shadow-lg shadow-[#09314F]/20"
               }`}
@@ -728,7 +1087,7 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
               {loading && (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               )}
-              {loading ? "Extending..." : "Confirm Extension"}
+              {loading ? "Extending..." : isPaidExtension ? "Confirm Extension & Payment" : "Confirm Extension"}
             </button>
           </div>
         </form>
@@ -738,17 +1097,39 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
 }
 
 /* ======================================================
-   RENEW COURSE MODAL (For Expired Courses)
+   RENEW COURSE MODAL (For Active or Expired Courses)
 ====================================================== */
 function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) {
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [amount, setAmount] = useState("");
+  const [payerType, setPayerType] = useState("student"); // "student" | "guardian"
   const [referenceCode, setReferenceCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [reason, setReason] = useState("");
 
   const course = enrollment?.course || {};
   const baseCoursePrice = Number(course?.price || 0);
+
+  const linkedGuardian = student?.guardian || enrollment?.student?.guardian || null;
+  const guardianName = linkedGuardian
+    ? (linkedGuardian.name || [linkedGuardian.firstname, linkedGuardian.surname].filter(Boolean).join(" "))
+    : null;
+  const guardianRel = linkedGuardian?.relationship || linkedGuardian?.pivot?.relationship || null;
+
+  const currentEndDate = useMemo(() => {
+    return enrollment?.end_date ? new Date(enrollment.end_date) : null;
+  }, [enrollment?.end_date]);
+
+  const isFuture = useMemo(() => {
+    return Boolean(currentEndDate && currentEndDate > new Date());
+  }, [currentEndDate]);
+
+  const diffDays = useMemo(() => {
+    if (!currentEndDate) return 0;
+    const now = new Date();
+    const diffTime = currentEndDate - now;
+    return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  }, [currentEndDate]);
 
   // Compute default price when billing cycle changes
   const computedFee = useMemo(() => {
@@ -773,6 +1154,37 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
     }
   }, [computedFee]);
 
+  const handleGenerateReference = (selectedPayer = payerType) => {
+    const code = generatePaymentReference(selectedPayer);
+    setReferenceCode(code);
+  };
+
+  const handlePayerTypeChange = (newPayer) => {
+    setPayerType(newPayer);
+    if (newPayer === "scholarship" || newPayer === "free" || newPayer === "free_grant") {
+      setAmount("0");
+      setReferenceCode(generatePaymentReference(newPayer));
+    } else if (newPayer === "student") {
+      if (referenceCode.startsWith("TCG-")) {
+        setReferenceCode("TC-" + referenceCode.slice(4));
+      } else if (referenceCode.startsWith("FREE-") || !referenceCode) {
+        setReferenceCode(generatePaymentReference("student"));
+      }
+      if (computedFee > 0 && (!amount || Number(amount) === 0)) {
+        setAmount(computedFee.toString());
+      }
+    } else if (newPayer === "guardian") {
+      if (referenceCode.startsWith("TC-")) {
+        setReferenceCode("TCG-" + referenceCode.slice(3));
+      } else if (referenceCode.startsWith("FREE-") || !referenceCode) {
+        setReferenceCode(generatePaymentReference("guardian"));
+      }
+      if (computedFee > 0 && (!amount || Number(amount) === 0)) {
+        setAmount(computedFee.toString());
+      }
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!referenceCode.trim() || !reason.trim() || isNaN(amount) || Number(amount) < 0) {
@@ -784,15 +1196,16 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
       amount: parseFloat(amount),
       reference_code: referenceCode.trim(),
       payment_method: paymentMethod,
+      payer_type: payerType,
       reason: reason.trim(),
     });
   };
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="bg-white dark:bg-[#0B2740] rounded-3xl border border-gray-100 dark:border-[#09314F] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#C5A97A] to-[#D4B98C]">
+        <div className="px-6 sm:px-8 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-[#C5A97A] to-[#D4B98C]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white">
@@ -800,10 +1213,10 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
               </div>
               <div>
                 <h3 className="text-white font-black text-sm">
-                  Renew Expired Course Registration
+                  Renew & Extend Course Registration
                 </h3>
                 <p className="text-white/80 text-xs font-medium mt-0.5">
-                  {student?.firstname} {student?.surname} • {course?.title || "Expired Course"}
+                  {student?.firstname} {student?.surname} • {course?.title || "Course Enrollment"}
                 </p>
               </div>
             </div>
@@ -816,12 +1229,36 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5 max-h-[85vh] overflow-y-auto custom-scrollbar">
           {/* Notice */}
-          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-4 border border-amber-100 dark:border-amber-900/40 flex items-start gap-3">
-            <ExclamationTriangleIcon className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-            <p className="text-xs font-bold text-amber-800 dark:text-amber-200 leading-relaxed">
-              This course is currently <strong>expired</strong>. Renewing will reset the registration start/end dates from today and <strong>record a new payment</strong> with the provided reference code.
+          <div
+            className={`rounded-2xl p-4 border flex items-start gap-3 ${
+              isFuture
+                ? "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50"
+                : "bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/40"
+            }`}
+          >
+            {isFuture ? (
+              <ClockIcon className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+            ) : (
+              <ExclamationTriangleIcon className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            )}
+            <p
+              className={`text-xs font-bold leading-relaxed ${
+                isFuture
+                  ? "text-blue-900 dark:text-blue-200"
+                  : "text-amber-800 dark:text-amber-200"
+              }`}
+            >
+              {isFuture ? (
+                <>
+                  This course is currently <strong>active with {diffDays} day{diffDays === 1 ? "" : "s"} remaining</strong>. Renewing will add this new duration onto the current expiry date (<strong>{currentEndDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong>) and record a verified payment.
+                </>
+              ) : (
+                <>
+                  This course is currently <strong>expired</strong>. Renewing will reset the registration start/end dates from today and <strong>record a new payment</strong> with the provided reference code.
+                </>
+              )}
             </p>
           </div>
 
@@ -878,21 +1315,166 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
             </div>
           </div>
 
-          {/* Payment Reference Code */}
+          {/* Who Paid? (Payer Selection) */}
           <div>
-            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
-              Payment Reference Code <span className="text-red-400">*</span>
+            <label className="block text-[11px] font-black text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
+              Payment Deposited By <span className="text-red-400">*</span>
             </label>
-            <input
-              type="text"
-              value={referenceCode}
-              onChange={(e) => setReferenceCode(e.target.value)}
-              placeholder="Paste Bank Session ID / Teller # / POS RRN / Paystack Ref"
-              className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all font-mono"
-              required
-            />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-gray-100/80 dark:bg-[#06243A] p-2 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => handlePayerTypeChange("student")}
+                className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
+                  payerType === "student"
+                    ? "bg-[#09314F] text-white border-[#09314F] shadow-md ring-2 ring-[#09314F]/20"
+                    : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <UserIcon className="w-4 h-4 text-blue-400" />
+                  <span className="font-extrabold text-xs">Student</span>
+                </div>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${payerType === "student" ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
+                  TC-
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePayerTypeChange("guardian")}
+                className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
+                  payerType === "guardian"
+                    ? "bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/20"
+                    : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheckIcon className="w-4 h-4 text-amber-400" />
+                  <span className="font-extrabold text-xs">Guardian</span>
+                </div>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${payerType === "guardian" ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"}`}>
+                  TCG-
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePayerTypeChange("scholarship")}
+                className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
+                  payerType === "scholarship"
+                    ? "bg-purple-700 text-white border-purple-700 shadow-md ring-2 ring-purple-700/20"
+                    : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <AcademicCapIcon className="w-4 h-4 text-purple-300" />
+                  <span className="font-extrabold text-xs">Scholarship</span>
+                </div>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded whitespace-nowrap ${payerType === "scholarship" ? "bg-white/20 text-white" : "bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300"}`}>
+                  FREE-GRANT-
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePayerTypeChange("free")}
+                className={`py-3 px-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 border text-center ${
+                  payerType === "free"
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-600/20"
+                    : "bg-white dark:bg-[#0B2740] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 shadow-sm"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <GiftIcon className="w-4 h-4 text-emerald-400" />
+                  <span className="font-extrabold text-xs">Free Grant</span>
+                </div>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded whitespace-nowrap ${payerType === "free" ? "bg-white/20 text-white" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300"}`}>
+                  FREE-
+                </span>
+              </button>
+            </div>
+            {payerType === "guardian" && guardianName && (
+              <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-xs font-bold text-amber-700 dark:text-amber-300">
+                <ShieldCheckIcon className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Linked Guardian: <strong>{guardianName}</strong> {guardianRel ? `(${guardianRel})` : ""}</span>
+              </div>
+            )}
+            {payerType === "scholarship" && (
+              <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/40 text-xs font-bold text-purple-700 dark:text-purple-300">
+                <AcademicCapIcon className="w-4 h-4 text-purple-500 shrink-0" />
+                <span>Full Academic Scholarship • ₦0 Tuition with official <strong>FREE-GRANT-</strong> integer reference</span>
+              </div>
+            )}
+            {payerType === "free" && (
+              <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                <GiftIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>Complimentary Free Grant • ₦0 Tuition with official <strong>FREE-</strong> integer reference</span>
+              </div>
+            )}
+          </div>
+
+          {/* Payment Reference Code with Generate Button */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                Payment Reference Code <span className="text-red-400">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => handleGenerateReference()}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-[#C5A97A]/20 hover:bg-[#C5A97A]/30 text-[#8B6E3F] dark:text-[#E8D4B0] border border-[#C5A97A]/40 transition-all active:scale-95 shadow-sm"
+                title={`Generate official ${payerType === "guardian" ? "guardian (TCG-)" : payerType === "scholarship" ? "scholarship (FREE-GRANT-)" : payerType === "free" ? "free grant (FREE-)" : "student (TC-)"} reference code`}
+              >
+                <SparklesIcon className="w-3.5 h-3.5 text-[#C5A97A]" />
+                Generate Reference ({payerType === "guardian" ? "TCG-" : payerType === "scholarship" ? "FREE-GRANT-" : payerType === "free" ? "FREE-" : "TC-"})
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                value={referenceCode}
+                onChange={(e) => setReferenceCode(e.target.value)}
+                placeholder={
+                  payerType === "scholarship"
+                    ? "Click 'Generate Reference' or paste FREE-GRANT-XXXXXX"
+                    : payerType === "free"
+                    ? "Click 'Generate Reference' or paste FREE-XXXXXX"
+                    : payerType === "guardian"
+                    ? "Click 'Generate Reference' or paste TCG-XXXXXX / Bank Session ID"
+                    : "Click 'Generate Reference' or paste TC-XXXXXX / Bank Session ID"
+                }
+                className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 pl-4 pr-52 sm:pr-56 text-sm font-bold text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all font-mono"
+                required
+              />
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                <span
+                  className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider font-mono ${
+                    referenceCode.startsWith("FREE-GRANT-")
+                      ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800"
+                      : referenceCode.startsWith("FREE-")
+                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800"
+                      : referenceCode.startsWith("TCG-")
+                      ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
+                      : referenceCode.startsWith("TC-")
+                      ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800"
+                      : referenceCode
+                      ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+                      : "bg-transparent text-gray-400"
+                  }`}
+                >
+                  {referenceCode.startsWith("FREE-GRANT-")
+                    ? "SCHOLARSHIP (FREE-GRANT-)"
+                    : referenceCode.startsWith("FREE-")
+                    ? "FREE GRANT (FREE-)"
+                    : referenceCode.startsWith("TCG-")
+                    ? "GUARDIAN (TCG-)"
+                    : referenceCode.startsWith("TC-")
+                    ? "STUDENT (TC-)"
+                    : referenceCode
+                    ? "CUSTOM REF"
+                    : ""}
+                </span>
+              </div>
+            </div>
             <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
-              Paste the bank transaction reference. Must be unique in the system.
+              Click <strong>Generate Reference</strong> to automatically assign an official unique reference code with the correct prefix, or paste bank teller / session ID.
             </p>
           </div>
 
@@ -1283,7 +1865,7 @@ export default function AdminCreateStudent() {
     fetchAccessStudents(accessSearchQuery.trim());
   };
 
-  const handleExtendSubmit = async ({ enrollmentId, months, days, customEndDate, reason }) => {
+  const handleExtendSubmit = async ({ enrollmentId, months, days, customEndDate, reason, amount, reference_code, payment_method, payer_type }) => {
     setSubmittingExtension(true);
     try {
       const endpoint = `${API_BASE_URL}/api/admin/enrollments/${enrollmentId}/extend`;
@@ -1292,6 +1874,10 @@ export default function AdminCreateStudent() {
         days: days || undefined,
         custom_end_date: customEndDate || undefined,
         reason: reason.trim(),
+        amount: amount !== undefined && amount !== "" ? parseFloat(amount) : undefined,
+        reference_code: reference_code ? reference_code.trim() : undefined,
+        payment_method: payment_method || undefined,
+        payer_type: payer_type || (reference_code?.startsWith("TCG-") ? "guardian" : "student"),
       };
       const res = await axios.post(endpoint, payload, config);
       setToast({
@@ -1305,16 +1891,21 @@ export default function AdminCreateStudent() {
       }
     } catch (err) {
       console.error("[AdminCreateStudent] Extend Access Error:", err.response?.data || err);
+      const backendErrors = err.response?.data?.errors;
+      let msg = err.response?.data?.message || "Failed to extend course access.";
+      if (backendErrors && backendErrors.reference_code) {
+        msg = backendErrors.reference_code[0];
+      }
       setToast({
         type: "error",
-        message: err.response?.data?.message || "Failed to extend course access.",
+        message: msg,
       });
     } finally {
       setSubmittingExtension(false);
     }
   };
 
-  const handleRenewSubmit = async ({ enrollmentId, billing_cycle, amount, reference_code, payment_method, reason }) => {
+  const handleRenewSubmit = async ({ enrollmentId, billing_cycle, amount, reference_code, payment_method, payer_type, reason }) => {
     setSubmittingRenewal(true);
     try {
       const endpoint = `${API_BASE_URL}/api/admin/enrollments/${enrollmentId}/renew`;
@@ -1323,6 +1914,7 @@ export default function AdminCreateStudent() {
         amount: parseFloat(amount),
         reference_code: reference_code.trim(),
         payment_method: payment_method || "bank_transfer",
+        payer_type: payer_type || (reference_code.startsWith("TCG-") ? "guardian" : "student"),
         reason: reason.trim(),
       };
       const res = await axios.post(endpoint, payload, config);
@@ -1778,7 +2370,17 @@ export default function AdminCreateStudent() {
         amount_paid:
           formData.payment_type === "paid" ? parseFloat(formData.amount_paid) : 0,
         reference_code:
-          formData.payment_type === "paid" ? formData.reference_code.trim() : undefined,
+          formData.payment_type === "paid"
+            ? formData.reference_code.trim()
+            : (formData.reference_code?.trim() || undefined),
+        payer_type:
+          formData.reference_code?.startsWith("FREE-GRANT-")
+            ? "scholarship"
+            : formData.reference_code?.startsWith("FREE-")
+            ? "free_grant"
+            : formData.reference_code?.startsWith("TCG-")
+            ? "guardian"
+            : undefined,
         payment_method:
           formData.payment_type === "paid"
             ? formData.payment_method || "bank_transfer"
@@ -2560,21 +3162,32 @@ export default function AdminCreateStudent() {
                                             type="button"
                                             onClick={() => setRenewModal({ student, enrollment: enr })}
                                             className="px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 active:scale-95 text-white shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all"
-                                            title="Renew course with fresh payment reference"
+                                            title="Renew expired course registration with payment"
                                           >
                                             <ArrowPathIcon className="w-4 h-4" />
                                             Renew Course
                                           </button>
                                         ) : (
-                                          <button
-                                            type="button"
-                                            onClick={() => setExtendModal({ student, enrollment: enr })}
-                                            className="px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 active:scale-95 text-white shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all"
-                                            title="Extend course registration duration"
-                                          >
-                                            <ClockIcon className="w-4 h-4" />
-                                            Extend Time
-                                          </button>
+                                          <div className="flex items-center gap-2">
+                                            <button
+                                              type="button"
+                                              onClick={() => setRenewModal({ student, enrollment: enr })}
+                                              className="px-3.5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 active:scale-95 text-white shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all"
+                                              title="Renew or extend registration duration with payment reference"
+                                            >
+                                              <ArrowPathIcon className="w-4 h-4" />
+                                              Renew / Paid Ext
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setExtendModal({ student, enrollment: enr })}
+                                              className="px-3.5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 active:scale-95 text-white shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all"
+                                              title="Extend course registration duration"
+                                            >
+                                              <ClockIcon className="w-4 h-4" />
+                                              Extend Time
+                                            </button>
+                                          </div>
                                         )}
                                       </div>
                                     </div>
@@ -2938,28 +3551,117 @@ export default function AdminCreateStudent() {
 
                           {/* Reference Code */}
                           <div>
-                            <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
-                              Payment Reference Code <span className="text-red-400">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              name="reference_code"
-                              value={formData.reference_code}
-                              onChange={handleChange}
-                              placeholder="e.g. TC-1790003177806-339281 / Bank Session ID / Teller #"
-                              className={`w-full rounded-2xl border bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 font-mono transition-all ${
-                                errors.reference_code
-                                  ? "border-red-500"
-                                  : "border-gray-200 dark:border-gray-700"
-                              }`}
-                            />
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                                Payment Reference Code <span className="text-red-400">*</span>
+                              </label>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const code = generatePaymentReference("student");
+                                    setFormData((prev) => ({ ...prev, reference_code: code }));
+                                    if (errors.reference_code) setErrors((prev) => ({ ...prev, reference_code: null }));
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-all active:scale-95 shadow-sm"
+                                  title="Generate student transfer reference (TC-)"
+                                >
+                                  <SparklesIcon className="w-3 h-3 text-blue-500" />
+                                  Student (TC-)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const code = generatePaymentReference("guardian");
+                                    setFormData((prev) => ({ ...prev, reference_code: code }));
+                                    if (errors.reference_code) setErrors((prev) => ({ ...prev, reference_code: null }));
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all active:scale-95 shadow-sm"
+                                  title="Generate guardian transfer reference (TCG-)"
+                                >
+                                  <SparklesIcon className="w-3 h-3 text-amber-500" />
+                                  Guardian (TCG-)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const code = generatePaymentReference("scholarship");
+                                    setFormData((prev) => ({ ...prev, reference_code: code, amount_paid: "0" }));
+                                    if (errors.reference_code) setErrors((prev) => ({ ...prev, reference_code: null }));
+                                    if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 transition-all active:scale-95 shadow-sm"
+                                  title="Generate scholarship reference (FREE-GRANT- followed by integers)"
+                                >
+                                  <SparklesIcon className="w-3 h-3 text-purple-500" />
+                                  Scholarship (FREE-GRANT-)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const code = generatePaymentReference("free");
+                                    setFormData((prev) => ({ ...prev, reference_code: code, amount_paid: "0" }));
+                                    if (errors.reference_code) setErrors((prev) => ({ ...prev, reference_code: null }));
+                                    if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition-all active:scale-95 shadow-sm"
+                                  title="Generate free grant reference (FREE- followed by integers)"
+                                >
+                                  <SparklesIcon className="w-3 h-3 text-emerald-500" />
+                                  Free (FREE-)
+                                </button>
+                              </div>
+                            </div>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                name="reference_code"
+                                value={formData.reference_code}
+                                onChange={handleChange}
+                                placeholder="Click button above or paste TC- / TCG- / FREE- / FREE-GRANT- / Bank Session ID"
+                                className={`w-full rounded-2xl border bg-gray-50 dark:bg-[#06243A] py-3.5 pl-4 pr-36 text-sm font-bold text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 font-mono transition-all ${
+                                  errors.reference_code
+                                    ? "border-red-500"
+                                    : "border-gray-200 dark:border-gray-700"
+                                }`}
+                              />
+                              <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                <span
+                                  className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider font-mono ${
+                                    formData.reference_code.startsWith("FREE-GRANT-")
+                                      ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800"
+                                      : formData.reference_code.startsWith("FREE-")
+                                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800"
+                                      : formData.reference_code.startsWith("TCG-")
+                                      ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
+                                      : formData.reference_code.startsWith("TC-")
+                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800"
+                                      : formData.reference_code
+                                      ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+                                      : "bg-transparent text-gray-400"
+                                  }`}
+                                >
+                                  {formData.reference_code.startsWith("FREE-GRANT-")
+                                    ? "SCHOLARSHIP (FREE-GRANT-)"
+                                    : formData.reference_code.startsWith("FREE-")
+                                    ? "FREE GRANT (FREE-)"
+                                    : formData.reference_code.startsWith("TCG-")
+                                    ? "GUARDIAN (TCG-)"
+                                    : formData.reference_code.startsWith("TC-")
+                                    ? "STUDENT (TC-)"
+                                    : formData.reference_code
+                                    ? "CUSTOM REF"
+                                    : ""}
+                                </span>
+                              </div>
+                            </div>
                             {errors.reference_code ? (
                               <p className="text-[10px] text-red-500 mt-1.5 font-bold">
                                 {errors.reference_code}
                               </p>
                             ) : (
                               <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
-                                Paste the bank session ID, Paystack ref, POS RRN, or teller number. Must be unique.
+                                Paste the bank session ID or use <strong>Student (TC-)</strong> / <strong>Guardian (TCG-)</strong> to generate an official reference code.
                               </p>
                             )}
                           </div>

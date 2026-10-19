@@ -132,7 +132,7 @@ export default function StudentDashboard({ blogs = [] }) {
       try {
         const store = JSON.parse(localStorage.getItem("studentBankTransfers") || "{}");
         const hasStoredPendingTransfer = Object.values(store).some(
-          t => t && (t.state === "awaiting_confirmation" || t.status === "pending")
+          t => t && t.state === "awaiting_confirmation"
         );
         if (hasStoredPendingTransfer) {
           fetchedHasPendingPayment = true;

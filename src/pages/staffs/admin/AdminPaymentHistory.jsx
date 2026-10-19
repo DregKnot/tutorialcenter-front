@@ -71,6 +71,9 @@ export function isFreeGrant(payment) {
 
 export function getFreeGrantLabel(payment) {
   if (Number(payment?.amount) > 0) return "PAID";
+  const ref = typeof payment?.gateway_reference === "string" ? payment.gateway_reference : "";
+  if (ref.startsWith("FREE-GRANT-")) return "SCHOLARSHIP";
+  if (ref.startsWith("FREE-")) return "FREE GRANT";
   const waiverType =
     payment?.meta?.waiver_type ||
     payment?.meta?.bank_transfer?.review?.waiver_type ||
@@ -322,29 +325,49 @@ function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
                 {["Reference", "Student / Course", "Amount", "State", "Details"].map(title => <th key={title} scope="col" className="px-3 py-3">{title}</th>)}
               </tr></thead>
               <tbody>{rows.map(payment => {
-                const guardian = payment.guardian || payment.student?.guardian || null;
-                const guardianName = guardian?.name || (guardian ? [guardian.firstname, guardian.surname].filter(Boolean).join(" ") : null) || payment.meta?.bank_transfer?.guardian_name;
-                const guardianTel = guardian?.tel || payment.meta?.bank_transfer?.guardian_tel;
-                const guardianEmail = guardian?.email || payment.meta?.bank_transfer?.guardian_email;
+                const isGuardianSponsored = Boolean(
+                  payment.meta?.bank_transfer?.is_guardian_sponsored ||
+                  payment.meta?.bank_transfer?.payer_type === "guardian" ||
+                  payment.meta?.paystack?.metadata?.guardian_id ||
+                  (payment.gateway_reference && payment.gateway_reference.startsWith("TCG-"))
+                );
+
+                const studentName = [payment.student?.firstname, payment.student?.surname].filter(Boolean).join(" ") || "Unknown student";
+                const studentContact = payment.student?.email || payment.student?.tel || "No contact provided";
+
+                const guardian = isGuardianSponsored
+                  ? (payment.guardian || payment.student?.guardian || null)
+                  : (payment.student?.guardian || null);
+
+                const guardianName = payment.meta?.bank_transfer?.guardian_name || (guardian ? (guardian.name || [guardian.firstname, guardian.surname].filter(Boolean).join(" ")) : null);
+                const guardianTel = payment.meta?.bank_transfer?.guardian_tel || guardian?.tel;
+                const guardianEmail = payment.meta?.bank_transfer?.guardian_email || guardian?.email;
                 const guardianContact = guardianTel || guardianEmail;
-                const guardianRel = guardian?.relationship || payment.meta?.bank_transfer?.guardian_relationship;
+                const guardianRel = payment.meta?.bank_transfer?.guardian_relationship || guardian?.relationship;
 
                 return (
                   <tr key={payment.id} className="border-b border-gray-100 dark:border-gray-700">
-                    <td className="px-3 py-3 font-mono">{payment.gateway_reference}</td>
+                    <td className="px-3 py-3 font-mono font-bold text-xs">{payment.gateway_reference}</td>
                     <td className="px-3 py-3">
-                      {guardianName && (
+                      {isGuardianSponsored ? (
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 text-[11px] font-black shadow-sm mb-1.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                           <span>Guardian Sponsor: {guardianName} {guardianContact ? `(${guardianContact})` : ""}</span>
                           {guardianRel && <span className="opacity-70 capitalize">• {guardianRel}</span>}
                         </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 text-[11px] font-black shadow-sm mb-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                          <span>Direct Student Payment</span>
+                        </div>
                       )}
                       <p className="font-semibold text-gray-900 dark:text-white">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 mr-1">Ward:</span>
-                        {[payment.student?.firstname, payment.student?.surname].filter(Boolean).join(" ") || "Unknown student"}
+                        <span className="text-[10px] uppercase font-bold text-gray-400 mr-1">
+                          {isGuardianSponsored ? "Ward:" : "Student:"}
+                        </span>
+                        {studentName}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{payment.student?.email || payment.student?.tel || "No contact provided"}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{studentContact}</p>
                       <p className="text-xs font-semibold text-[#09314F] dark:text-[#C5A97A] mt-0.5">
                         Training Course: {payment.enrollment?.course?.title || "Course unavailable"} {payment.billing_cycle ? `(${payment.billing_cycle})` : ""}
                       </p>
@@ -381,27 +404,54 @@ function useBankTransferReview({ enabled, token, canReview, onReviewed }) {
           </div>
 
           {(() => {
-            const revGuardian = reviewPayment.guardian || reviewPayment.student?.guardian || null;
-            const revGName = revGuardian?.name || (revGuardian ? [revGuardian.firstname, revGuardian.surname].filter(Boolean).join(" ") : null) || claim.guardian_name;
-            const revGContact = revGuardian?.tel || revGuardian?.email || claim.guardian_tel || claim.guardian_email;
-            const revGRel = revGuardian?.relationship || claim.guardian_relationship;
+            const isGuardianSponsored = Boolean(
+              reviewPayment.meta?.bank_transfer?.is_guardian_sponsored ||
+              reviewPayment.meta?.bank_transfer?.payer_type === "guardian" ||
+              reviewPayment.meta?.paystack?.metadata?.guardian_id ||
+              (reviewPayment.gateway_reference && reviewPayment.gateway_reference.startsWith("TCG-"))
+            );
+
+            const studentName = [reviewPayment.student?.firstname, reviewPayment.student?.surname].filter(Boolean).join(" ") || "Student";
+            const studentContact = reviewPayment.student?.email || reviewPayment.student?.tel || "No contact provided";
+
+            const guardian = reviewPayment.guardian || reviewPayment.student?.guardian || null;
+            const gName = (isGuardianSponsored ? claim.guardian_name : null) || (guardian ? (guardian.name || [guardian.firstname, guardian.surname].filter(Boolean).join(" ")) : null);
+            const gContact = (isGuardianSponsored ? (claim.guardian_tel || claim.guardian_email) : null) || guardian?.tel || guardian?.email;
+            const gRel = (isGuardianSponsored ? claim.guardian_relationship : null) || guardian?.relationship;
 
             return (
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-                {revGName && (
+                {isGuardianSponsored ? (
                   <div className="sm:col-span-2 p-3.5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 shadow-sm space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
                         Guardian Sponsor Highlight
                       </span>
-                      <strong className="text-amber-950 dark:text-amber-100 text-xs font-black">{revGName}</strong>
+                      <strong className="text-amber-950 dark:text-amber-100 text-xs font-black">{gName}</strong>
                     </div>
                     <p className="text-xs text-amber-900 dark:text-amber-200">
-                      Contact: <strong>{revGContact || "—"}</strong> {revGRel ? `• Relationship: ${revGRel}` : ""}
+                      Contact: <strong>{gContact || "—"}</strong> {gRel ? `• Relationship: ${gRel}` : ""}
                     </p>
                     <p className="text-[11px] text-amber-800/80 dark:text-amber-300">
-                      Paying for Ward: <strong>{[reviewPayment.student?.firstname, reviewPayment.student?.surname].filter(Boolean).join(" ") || "Student"}</strong> ({reviewPayment.student?.email || reviewPayment.student?.tel || "No contact"})
+                      Paying for Ward: <strong>{studentName}</strong> ({studentContact})
                     </p>
+                  </div>
+                ) : (
+                  <div className="sm:col-span-2 p-3.5 rounded-2xl bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 shadow-sm space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-200 dark:bg-blue-900/60 text-blue-900 dark:text-blue-200">
+                        Direct Student Payment
+                      </span>
+                      <strong className="text-blue-950 dark:text-blue-100 text-xs font-black">{studentName}</strong>
+                    </div>
+                    <p className="text-xs text-blue-900 dark:text-blue-200">
+                      Student Contact: <strong>{studentContact}</strong>
+                    </p>
+                    {guardian && (
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 pt-1 border-t border-blue-100 dark:border-blue-900/40">
+                        Registered Guardian (Emergency Contact): <strong>{[guardian.firstname, guardian.surname].filter(Boolean).join(" ") || guardian.name}</strong> {guardian.tel ? `• Contact: ${guardian.tel}` : ""} {guardian.relationship ? `(${guardian.relationship})` : ""}
+                      </p>
+                    )}
                   </div>
                 )}
                 <div><dt className="text-gray-500 dark:text-gray-300">Expected amount</dt><dd>₦{Number(reviewPayment.amount).toLocaleString()}</dd></div>

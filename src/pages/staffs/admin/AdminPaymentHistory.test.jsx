@@ -79,6 +79,32 @@ describe("AdminPaymentHistory Financial & Free Grant Rules", () => {
     expect(getFreeGrantLabel(scholarshipPayment)).toBe("SCHOLARSHIP");
   });
 
+  test("Scholarship with FREE-GRANT-[integer] reference", () => {
+    const payment = {
+      id: 101,
+      amount: "0.00",
+      status: "successful",
+      gateway: "complimentary",
+      gateway_reference: "FREE-GRANT-184920",
+    };
+
+    expect(isFreeGrant(payment)).toBe(true);
+    expect(getFreeGrantLabel(payment)).toBe("SCHOLARSHIP");
+  });
+
+  test("Free Grant with FREE-[integer] reference", () => {
+    const payment = {
+      id: 102,
+      amount: 0,
+      status: "successful",
+      gateway: "complimentary",
+      gateway_reference: "FREE-748291",
+    };
+
+    expect(isFreeGrant(payment)).toBe(true);
+    expect(getFreeGrantLabel(payment)).toBe("FREE GRANT");
+  });
+
   test("Pending or failed payment with amount > 0 is not a free grant", () => {
     const pendingPayment = {
       id: 100,

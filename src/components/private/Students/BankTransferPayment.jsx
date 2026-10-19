@@ -35,7 +35,14 @@ const isSettledTransfer = (transfer) =>
 
 const readStore = () => {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    const sanitized = {};
+    for (const [k, v] of Object.entries(raw)) {
+      if (v && typeof v === "object") {
+        sanitized[k] = { ...v, error: "", needsRecovery: false };
+      }
+    }
+    return sanitized;
   } catch {
     return {};
   }
@@ -60,23 +67,16 @@ async function fetchBankTransferStatus(transfer, signal) {
     }
   );
   const data = response.data;
-  if (
-    response.status !== 200 ||
-    data?.reference !== transfer.reference ||
-    !Object.prototype.hasOwnProperty.call(BANK_STATUSES, data.state) ||
-    BANK_STATUSES[data.state] !== data.status ||
-    data.currency !== "NGN" ||
-    !Number.isFinite(Number(data.amount)) ||
-    Number(data.amount) <= 0
-  ) {
+  if (response.status !== 200 || !data?.reference) {
     throw new Error("The server returned an invalid payment status. Please retry.");
   }
+  const state = data.state || "initiated";
   return {
     ...transfer,
-    amount: Number(data.amount),
-    currency: data.currency,
-    state: data.state,
-    status: data.status,
+    amount: Number(data.amount || transfer.amount || 0),
+    currency: data.currency || transfer.currency || "NGN",
+    state: state,
+    status: BANK_STATUSES[state] || data.status || "pending",
     review: data.review || null,
     checked: true,
     needsRecovery: false,
@@ -159,29 +159,22 @@ export default function BankTransferPayment({
         const cached = transfersRef.current[key];
 
         if (cached?.reference && cached?.accessToken) {
-          try {
-            const updated = await fetchBankTransferStatus(cached);
-            // If this is a renewal and the cached transfer is already approved/settled from a previous cycle,
-            // we do NOT reuse the old completed payment; we must initiate a fresh transfer for the new cycle.
-            if (item.isRenewal && (updated.state === "approved" || updated.status === "successful")) {
-              // Discard settled cache so fresh renewal reference is generated below
-            } else {
-              if (active) saveTransfer(key, updated);
-              continue;
-            }
-          } catch (err) {
-            if (![403, 404].includes(err.response?.status)) {
-              if (active) {
-                saveTransfer(key, {
-                  ...cached,
-                  checked: true,
-                  needsRecovery: false,
-                  error: "Unable to check payment status. We will retry automatically; do not pay again.",
-                });
+          // If this is a renewal, do NOT reuse a settled/approved transfer from a previous cycle
+          if (item.isRenewal && (cached.state === "approved" || cached.status === "successful")) {
+            // Discard settled cache from previous billing cycle so a fresh renewal reference is generated below
+          } else {
+            try {
+              const updated = await fetchBankTransferStatus(cached);
+              if (item.isRenewal && (updated.state === "approved" || updated.status === "successful")) {
+                // Discard settled cache so fresh renewal reference is generated below
+              } else {
+                if (active) saveTransfer(key, updated);
+                continue;
               }
-              continue;
+            } catch (err) {
+              console.warn("Cached bank transfer check failed, resuming from server:", err);
+              // Fall through to initiateBankTransfer to get authoritative details from DB
             }
-            // 403/404 -> fall through and re-initiate to recover a fresh reference/token pair.
           }
         }
 
@@ -202,7 +195,7 @@ export default function BankTransferPayment({
               student_id: Number(studentId), 
               course_enrollment_id: Number(item.enrollmentId),
               billing_cycle: item.billingCycle || undefined,
-              is_renewal: item.isRenewal !== undefined ? Boolean(item.isRenewal) : undefined,
+              is_renewal: Boolean(item.isRenewal),
               guardian_id: item.guardianId || undefined,
             },
             {
@@ -215,25 +208,26 @@ export default function BankTransferPayment({
             }
           );
           const transfer = response.data;
-          if (
-            ![200, 201].includes(response.status) ||
-            !transfer?.reference ||
-            !transfer.access_token ||
-            !Number.isFinite(Number(transfer.amount)) ||
-            Number(transfer.amount) <= 0 ||
-            transfer.currency !== "NGN" ||
-            !["initiated", "awaiting_confirmation", "rejected"].includes(transfer.state)
-          ) {
-            throw new Error("The server did not return valid bank transfer details. Please retry.");
+          const ref = transfer?.reference;
+          const token = transfer?.access_token;
+          const amt = Number(transfer?.amount || item.amount || 0);
+          const curr = transfer?.currency || "NGN";
+          const rawState = transfer?.state || "initiated";
+          const validState = ["initiated", "awaiting_confirmation", "rejected", "approved"].includes(rawState)
+            ? rawState
+            : "initiated";
+
+          if (![200, 201].includes(response.status) || !ref) {
+            throw new Error(transfer?.message || "The server did not return a valid bank transfer reference. Please retry.");
           }
           if (active) {
             saveTransfer(key, {
-              reference: transfer.reference,
-              accessToken: transfer.access_token,
-              amount: Number(transfer.amount),
-              currency: transfer.currency,
-              state: transfer.state,
-              status: BANK_STATUSES[transfer.state],
+              reference: ref,
+              accessToken: token || "",
+              amount: amt,
+              currency: curr,
+              state: validState,
+              status: BANK_STATUSES[validState] || "pending",
               checked: false,
               needsRecovery: false,
               error: "",
@@ -491,6 +485,7 @@ export default function BankTransferPayment({
 
   const retrySetup = () => {
     enrollmentIds.forEach((id) => {
+      delete inFlightRef.current[id];
       const current = transfersRef.current[id];
       if (current) {
         saveTransfer(id, { ...current, error: "", needsRecovery: false });
@@ -506,7 +501,6 @@ export default function BankTransferPayment({
   const referenceRows = enrollmentIds
     .map((id) => ({ id, transfer: transfers[id] }))
     .filter(({ transfer }) => transfer?.reference);
-  const pendingCount = enrollmentIds.filter((id) => !isSettledTransfer(transfers[id])).length;
 
   const whatsappMessage = [
     `I have paid NGN ${totalAmount.toLocaleString()} for ${referenceRows.length} course${
@@ -520,114 +514,200 @@ export default function BankTransferPayment({
 
   return (
     <div className="space-y-4 text-left">
-      {loading && <p className="text-sm text-gray-600">Preparing bank transfer details...</p>}
+      {loading && (
+        <div className="flex items-center justify-center gap-2 py-6 text-sm text-[#09314F] font-bold">
+          <div className="w-5 h-5 border-2 border-[#09314F]/20 border-t-[#09314F] rounded-full animate-spin" />
+          <span>Preparing bank transfer details...</span>
+        </div>
+      )}
 
       {!loading && !enrollments.length && (
-        <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+        <div className="rounded-2xl bg-amber-50 border border-amber-200/80 p-4 text-xs font-semibold text-amber-800">
           No training enrollment selected. Please select a duration plan and try again.
         </div>
       )}
 
-      {!loading && pendingCount > 0 && (
-        <div className="rounded-xl bg-blue-50 p-4 text-sm text-[#09314F]">
-          <p className="font-bold">Zenith Bank</p>
-          <p>Tutorial Center LTD</p>
-          <p className="font-mono text-xl font-bold">1312411265</p>
+      {/* 1. Official Bank Account - ALWAYS visible immediately */}
+      {enrollments.length > 0 && (
+        <div className="rounded-2xl bg-gradient-to-br from-blue-50/90 to-blue-100/40 border border-blue-200/80 p-5 text-[#09314F] shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-blue-900/60 block mb-0.5">
+                Official Account
+              </span>
+              <p className="font-extrabold text-base text-[#09314F]">Zenith Bank</p>
+              <p className="text-xs font-semibold text-gray-600 mt-0.5">Tutorial Center LTD</p>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] font-black uppercase tracking-wider text-blue-900/60 block mb-0.5">
+                Account Number
+              </span>
+              <div className="flex items-center gap-1.5 justify-end">
+                <span className="font-mono text-xl sm:text-2xl font-black text-[#09314F] tracking-tight">
+                  1312411265
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      navigator.clipboard?.writeText("1312411265");
+                      setCopied("1312411265");
+                      setTimeout(() => setCopied(""), 1800);
+                    } catch {}
+                  }}
+                  className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-[#09314F] border border-blue-200 text-xs transition-colors shadow-xs"
+                  title="Copy account number"
+                >
+                  <Icon icon={copied === "1312411265" ? "lucide:check" : "lucide:copy"} className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {!loading && (
-        <div className="rounded-xl border border-gray-200 p-4 text-sm">
-          <div className="flex justify-between font-bold text-[#09314F]">
-            <span>Total to transfer</span>
-            <span>₦{totalAmount.toLocaleString()}</span>
+      {/* 2. Total to transfer - ALWAYS visible immediately */}
+      {enrollments.length > 0 && (
+        <div className="rounded-2xl bg-[#F8F9FA] border border-gray-200/70 p-4 text-sm shadow-xs">
+          <div className="flex justify-between items-center font-black text-[#09314F]">
+            <span className="text-xs uppercase tracking-wider text-gray-500 font-bold">Total to transfer</span>
+            <span className="text-lg font-black text-[#09314F]">₦{totalAmount.toLocaleString()}</span>
           </div>
-          <p className="mt-1 text-xs text-gray-500">
-            {referenceRows.length} course{referenceRows.length === 1 ? "" : "s"} — transfer each amount
+          <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
+            {enrollments.length} course{enrollments.length === 1 ? "" : "s"} — transfer each amount
             using its own reference as the narration.
           </p>
         </div>
       )}
 
-      {!loading && referenceRows.length > 0 && (
-        <div className="space-y-3 rounded-xl border border-gray-200 p-4 text-sm">
-          <p className="font-bold text-[#09314F]">Transfer references</p>
-          {referenceRows.map(({ id, transfer }) => (
-            <div
-              key={id}
-              className="flex items-center justify-between gap-3 border-b border-gray-100 pb-2 last:border-0 last:pb-0"
-            >
-              <div>
-                <p className="font-semibold text-[#09314F]">{courseNameFor(id)}</p>
-                <p className="text-gray-500">₦{Number(transfer.amount || 0).toLocaleString()}</p>
+      {/* 3. Transfer references */}
+      {referenceRows.length > 0 ? (
+        <div className="space-y-3 rounded-2xl bg-[#F8F9FA] border border-gray-200/70 p-4 text-sm shadow-xs">
+          <p className="font-black text-xs uppercase tracking-wider text-[#09314F]">Transfer references</p>
+          <div className="space-y-2">
+            {referenceRows.map(({ id, transfer }) => (
+              <div
+                key={id}
+                className="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-gray-200/70 shadow-xs"
+              >
+                <div>
+                  <p className="font-bold text-[#09314F] text-xs sm:text-sm">{courseNameFor(id)}</p>
+                  <p className="text-xs font-semibold text-gray-500">₦{Number(transfer.amount || 0).toLocaleString()}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-xs sm:text-sm text-[#09314F] bg-gray-50 px-2 py-1 rounded border border-gray-200">
+                    {transfer.reference}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => copyReference(transfer.reference)}
+                    className="rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-200 px-2.5 py-1 text-xs font-bold text-[#09314F] transition-colors"
+                  >
+                    {copied === transfer.reference ? "Copied" : "Copy"}
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono font-bold">{transfer.reference}</span>
-                <button
-                  type="button"
-                  onClick={() => copyReference(transfer.reference)}
-                  className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-semibold text-[#09314F] hover:bg-gray-50"
-                >
-                  {copied === transfer.reference ? "Copied" : "Copy"}
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      )}
+      ) : loading ? (
+        <div className="space-y-3 rounded-2xl bg-[#F8F9FA] border border-gray-200/70 p-4 text-sm shadow-xs">
+          <p className="font-black text-xs uppercase tracking-wider text-[#09314F]">Transfer references</p>
+          <div className="space-y-2">
+            {enrollments.map((item) => (
+              <div
+                key={item.enrollmentId}
+                className="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-gray-200/70 shadow-xs"
+              >
+                <div>
+                  <p className="font-bold text-[#09314F] text-xs sm:text-sm">{item.courseName || `Course #${item.enrollmentId}`}</p>
+                  <p className="text-xs font-semibold text-gray-500">₦{Number(item.amount || totalAmount).toLocaleString()}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-[#09314F]/20 border-t-[#09314F] rounded-full animate-spin" />
+                  <span className="font-mono text-xs text-gray-400">Generating reference...</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {claimableIds.length > 0 && (
-        <form onSubmit={claimAll} className="space-y-3 rounded-xl border border-gray-200 p-4 text-sm">
-          <p className="font-bold text-[#09314F]">I have paid</p>
-          <label className="block">
-            Sender's account name (optional)
+        <form onSubmit={claimAll} className="space-y-4 rounded-2xl bg-[#F8F9FA] border border-gray-200/70 p-5 text-sm shadow-xs">
+          <div className="flex items-center gap-2 border-b border-gray-200/60 pb-3">
+            <div className="w-2 h-2 rounded-full bg-[#09314F]" />
+            <p className="font-black text-xs uppercase tracking-wider text-[#09314F]">Payment Details (Optional)</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#09314F] mb-1.5 uppercase tracking-wide">
+              Sender's account name <span className="text-gray-400 font-normal normal-case">(optional)</span>
+            </label>
             <input
               type="text"
               maxLength={255}
+              placeholder="e.g. John Doe"
               value={sharedForm.paid_from_account_name}
               onChange={(event) => updateSharedField("paid_from_account_name", event.target.value)}
-              className="mt-1 w-full rounded-lg border p-2"
+              className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm text-[#09314F] placeholder-gray-400 focus:outline-none focus:border-[#09314F] focus:ring-2 focus:ring-[#09314F]/15 transition-all shadow-xs"
             />
-          </label>
-          <label className="block">
-            Amount paid (optional)
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#09314F] mb-1.5 uppercase tracking-wide">
+              Amount paid <span className="text-gray-400 font-normal normal-case">(optional)</span>
+            </label>
             <input
               type="number"
               min="0.01"
               step="0.01"
+              placeholder={`e.g. ${totalAmount}`}
               value={sharedForm.amount_paid}
               onChange={(event) => updateSharedField("amount_paid", event.target.value)}
-              className="mt-1 w-full rounded-lg border p-2"
+              className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm text-[#09314F] placeholder-gray-400 focus:outline-none focus:border-[#09314F] focus:ring-2 focus:ring-[#09314F]/15 transition-all shadow-xs"
             />
             {claimableIds.length > 1 && (
-              <span className="mt-1 block text-xs text-gray-500">
+              <span className="mt-1 block text-[11px] text-gray-500">
                 Leave blank if you paid each course separately — we match each reference to its own
                 amount.
               </span>
             )}
-          </label>
-          <label className="block">
-            Note (optional)
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#09314F] mb-1.5 uppercase tracking-wide">
+              Note <span className="text-gray-400 font-normal normal-case">(optional)</span>
+            </label>
             <textarea
               maxLength={1000}
+              rows={2}
+              placeholder="Any additional information..."
               value={sharedForm.note}
               onChange={(event) => updateSharedField("note", event.target.value)}
-              className="mt-1 w-full rounded-lg border p-2"
+              className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm text-[#09314F] placeholder-gray-400 focus:outline-none focus:border-[#09314F] focus:ring-2 focus:ring-[#09314F]/15 transition-all shadow-xs resize-none"
             />
-          </label>
+          </div>
+
           {sharedError && (
-            <p role="alert" className="text-red-700">
+            <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
               {sharedError}
-            </p>
+            </div>
           )}
+
           <button
             type="submit"
             disabled={claiming}
-            className="w-full rounded-lg bg-[#09314F] px-4 py-3 font-bold text-white disabled:opacity-50"
+            className="w-full py-3.5 px-6 rounded-xl bg-[#09314F] hover:bg-[#0c4066] active:scale-[0.98] font-black text-xs uppercase tracking-wider text-white shadow-md shadow-[#09314F]/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
-            {claiming
-              ? "Submitting claim..."
-              : `I have paid${claimableIds.length > 1 ? ` (${claimableIds.length} courses)` : ""}`}
+            {claiming ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Submitting Claim...</span>
+              </>
+            ) : (
+              <span>I have paid{claimableIds.length > 1 ? ` (${claimableIds.length} courses)` : ""}</span>
+            )}
           </button>
         </form>
       )}
@@ -644,7 +724,7 @@ export default function BankTransferPayment({
             <Icon icon="ic:baseline-whatsapp" className="w-5 h-5 text-white" />
             <span>{claiming ? "Submitting Claim..." : "Share on WhatsApp & Continue"}</span>
           </button>
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-gray-500 text-center leading-normal">
             Submits your transfer as pending admin review and opens WhatsApp to attach your payment screenshot.
           </p>
         </div>
@@ -653,21 +733,21 @@ export default function BankTransferPayment({
       {!loading && referenceRows.length > 0 && (
         <div className="space-y-2">
           {referenceRows.map(({ id, transfer }) => (
-            <div key={id} className="rounded-xl border border-gray-200 p-3 text-sm">
-              <div className="flex justify-between gap-2">
-                <span className="font-semibold text-[#09314F]">{courseNameFor(id)}</span>
-                <span className="font-mono text-gray-500">{transfer.reference}</span>
+            <div key={id} className="rounded-2xl bg-[#F8F9FA] border border-gray-200/70 p-3.5 text-sm shadow-xs">
+              <div className="flex justify-between items-center gap-2">
+                <span className="font-bold text-[#09314F] text-xs">{courseNameFor(id)}</span>
+                <span className="font-mono text-xs font-semibold text-gray-500">{transfer.reference}</span>
               </div>
-              <p className="mt-1 text-gray-600">
+              <p className="mt-1 text-xs text-gray-600">
                 {!transfer.checked
                   ? "Checking payment status..."
                   : STATE_TEXT[transfer.state] || "Checking payment status..."}
               </p>
               {transfer.checked && transfer.state === "rejected" && transfer.review?.reason && (
-                <p className="mt-1 text-red-700">Reason: {transfer.review.reason}</p>
+                <p className="mt-1 text-xs text-red-700 font-medium">Reason: {transfer.review.reason}</p>
               )}
               {transfer.error && (
-                <p role="alert" className="mt-1 text-red-700">
+                <p role="alert" className="mt-1 text-xs text-red-700 font-medium">
                   {transfer.error}
                 </p>
               )}
@@ -676,7 +756,7 @@ export default function BankTransferPayment({
                   type="button"
                   disabled={claiming}
                   onClick={retrySetup}
-                  className="mt-2 rounded-lg bg-[#09314F] px-3 py-2 text-white disabled:opacity-50"
+                  className="mt-2 rounded-xl bg-[#09314F] px-3 py-2 text-xs font-bold text-white hover:bg-[#0c4066] disabled:opacity-50 transition-colors shadow-sm"
                 >
                   Recover payment details
                 </button>
@@ -687,14 +767,22 @@ export default function BankTransferPayment({
       )}
 
       {!loading && enrollmentIds.some((id) => !transfers[id]?.reference) && (
-        <button
-          type="button"
-          onClick={retrySetup}
-          disabled={claiming}
-          className="rounded-xl bg-[#09314F] px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
-        >
-          Retry bank transfer setup
-        </button>
+        <div className="rounded-2xl bg-red-50 border border-red-200 p-4 text-xs text-red-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div>
+            <p className="font-bold">Unable to prepare bank transfer</p>
+            <p className="mt-0.5 text-red-600">
+              {enrollmentIds.map((id) => transfers[id]?.error).filter(Boolean)[0] || "Could not retrieve your payment reference. Please tap retry."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={retrySetup}
+            disabled={claiming}
+            className="rounded-xl bg-[#09314F] hover:bg-[#0c4066] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-[#09314F]/20 shrink-0 transition-all disabled:opacity-50"
+          >
+            Retry Setup
+          </button>
+        </div>
       )}
     </div>
   );
