@@ -16,7 +16,12 @@ export const isStaffAuthenticated = () => {
 };
 
 export const getStaffRole = () => {
-  return (localStorage.getItem("staff_role") || "").toLowerCase().trim();
+  const rawRole = localStorage.getItem("staff_role") || "";
+  try {
+    const parsed = JSON.parse(rawRole);
+    if (typeof parsed === "string") return parsed.toLowerCase().trim();
+  } catch {}
+  return rawRole.replace(/^["']|["']$/g, "").toLowerCase().trim();
 };
 
 export const clearStudentSession = () => {

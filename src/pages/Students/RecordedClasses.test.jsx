@@ -179,7 +179,7 @@ describe("RecordedClasses & View Counter Suite", () => {
       ];
 
       axios.get.mockImplementation((url) => {
-        if (url.includes("/api/students/recorded-classes")) {
+        if (url.includes("/recorded-classes")) {
           return Promise.resolve({ data: { success: true, data: mockClasses } });
         }
         if (url.includes("/viewers")) {

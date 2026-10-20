@@ -72,18 +72,26 @@ export function StaffAuthProvider({ children }) {
 
     try {
       const currentToken = localStorage.getItem("staff_token");
-      if (currentToken) {
+      if (currentToken && (typeof navigator === "undefined" || navigator.onLine !== false)) {
         const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+
         await fetch(`${API_BASE_URL}/api/staffs/logout`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${currentToken}`,
             "Accept": "application/json"
-          }
+          },
+          signal: controller.signal
+        }).catch((err) => {
+          console.warn("Notice: Staff token revocation skipped due to network status:", err?.message || err);
         });
+
+        clearTimeout(timeoutId);
       }
     } catch (error) {
-      console.error("Staff logout failed:", error);
+      console.warn("Notice: Staff token revocation skipped:", error?.message || error);
     } finally {
       // Clear all local storage data
       localStorage.clear();

@@ -156,7 +156,10 @@ const RecordedClasses = () => {
           Authorization: `Bearer ${activeToken}`,
           Accept: "application/json"
         };
-        const response = await axios.get(`${API_BASE_URL}/api/students/recorded-classes`, { headers });
+        const endpoint = isAdminOrStaff
+          ? `${API_BASE_URL}/api/staffs/recorded-classes`
+          : `${API_BASE_URL}/api/students/recorded-classes`;
+        const response = await axios.get(endpoint, { headers });
         if (response.data?.subscription_expired) {
           setIsSubscriptionExpired(true);
           setSubscriptionExpiredMessage(response.data.message || "Your course enrollment has expired.");
@@ -253,8 +256,8 @@ const RecordedClasses = () => {
       )
     );
 
-    // Call the backend record view endpoint
-    if (cls.id && activeToken) {
+    // Call the backend record view endpoint (students only)
+    if (!isAdminOrStaff && cls.id && activeToken) {
       try {
         const headers = {
           Authorization: `Bearer ${activeToken}`,
