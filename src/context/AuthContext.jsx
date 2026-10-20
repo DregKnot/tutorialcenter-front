@@ -69,18 +69,27 @@ export function AuthProvider({ children }) {
 
     try {
       const currentToken = localStorage.getItem("student_token");
-      if (currentToken) {
+      if (currentToken && (typeof navigator === "undefined" || navigator.onLine !== false)) {
         const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+
         await fetch(`${API_BASE_URL}/api/students/logout`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${currentToken}`,
             "Accept": "application/json"
-          }
+          },
+          signal: controller.signal
+        }).catch((err) => {
+          // Network offline / DNS unreachable during autologout
+          console.warn("Notice: Backend token revocation was skipped due to network status:", err?.message || err);
         });
+
+        clearTimeout(timeoutId);
       }
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.warn("Notice: Backend token revocation was skipped:", error?.message || error);
     } finally {
       // Clear dashboard & activity caches and local/session storage data
       clearDashboardCache(student?.id);
