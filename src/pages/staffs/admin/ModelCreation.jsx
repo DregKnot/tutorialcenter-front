@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import { staffCurriculumApi } from "../../../services/curriculumService.js";
@@ -27,6 +27,7 @@ const API_BASE_URL =
 export default function ModelCreation() {
   const { subjectId: routeSubjectId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Subjects directory for switcher
   const [allSubjects, setAllSubjects] = useState([]);
@@ -157,6 +158,28 @@ export default function ModelCreation() {
       setLoadingModules(false);
     }
   }, [selectedSubjectId, expandedModuleId]);
+
+  // Determine course ID for active subject to enable direct back-navigation
+  const getSubjectCourseId = useCallback((subj) => {
+    if (!subj) return null;
+    if (subj.course_id) return subj.course_id;
+    if (subj.course?.id) return subj.course.id;
+    if (Array.isArray(subj.courses) && subj.courses[0]?.id) return subj.courses[0].id;
+    return null;
+  }, []);
+
+  const handleBackToSubjects = () => {
+    const fromState = location.state?.courseId;
+    const fromSubj = getSubjectCourseId(currentSubject);
+    const fromSession = sessionStorage.getItem("admin_lessons_course_id");
+    const targetCourseId = fromState || fromSubj || fromSession;
+
+    if (targetCourseId) {
+      navigate(`/staffs/lessons?courseId=${targetCourseId}`);
+    } else {
+      navigate("/staffs/lessons");
+    }
+  };
 
   useEffect(() => {
     if (selectedSubjectId) {
@@ -418,11 +441,11 @@ export default function ModelCreation() {
         <div className="p-6 sm:p-10 bg-[#0F2843] rounded-[40px] text-white shadow-xl flex flex-col gap-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <button
-              onClick={() => navigate("/staffs/subject-modules")}
+              onClick={handleBackToSubjects}
               className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#BB9E7F] hover:text-white transition-colors"
             >
               <ArrowLeftIcon className="w-4 h-4" />
-              Back to Subject Catalog
+              Back to Subjects
             </button>
 
             {/* Subject Switcher Dropdown */}

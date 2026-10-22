@@ -44,7 +44,7 @@ const adminNavSections = [
       { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
       { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/manage-guardians" },
       { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
-      { label: "Subject Modules", icon: AcademicCapIcon, destination: "/staffs/subject-modules" },
+      { label: "Lessons", icon: BookOpenIcon, destination: "/staffs/lessons" },
     ],
   },
   {
