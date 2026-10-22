@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import SubjectBookCard from "../../../components/common/SubjectBookCard.jsx";
 import axios from "axios";
@@ -20,14 +20,38 @@ const API_BASE_URL =
 
 export default function AdminSubjectModules() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [courses, setCourses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
-  // Navigation & Search State
-  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  // Navigation & Search State: initialize from URL query, location state, or session storage
+  const [selectedCourseId, setSelectedCourseId] = useState(() => {
+    const fromQuery = searchParams.get("courseId");
+    if (fromQuery) return Number(fromQuery);
+    if (location.state?.courseId) return Number(location.state.courseId);
+    return null;
+  });
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Sync selectedCourseId if search params or history state change
+  useEffect(() => {
+    const fromQuery = searchParams.get("courseId");
+    if (fromQuery) {
+      const num = Number(fromQuery);
+      setSelectedCourseId(num);
+      sessionStorage.setItem("admin_lessons_course_id", String(num));
+    } else if (location.state?.courseId) {
+      const num = Number(location.state.courseId);
+      setSelectedCourseId(num);
+      sessionStorage.setItem("admin_lessons_course_id", String(num));
+    } else if (!searchParams.has("courseId") && !location.state?.courseId) {
+      setSelectedCourseId(null);
+    }
+  }, [searchParams, location.state]);
 
   const token = localStorage.getItem("staff_token");
 
@@ -120,8 +144,37 @@ export default function AdminSubjectModules() {
     });
   }, [searchQuery, activeCourse, activeCourseSubjects, subjects]);
 
+  const handleSelectCourse = (courseId) => {
+    const num = Number(courseId);
+    setSelectedCourseId(num);
+    sessionStorage.setItem("admin_lessons_course_id", String(num));
+    setSearchParams({ courseId: String(num) });
+  };
+
+  const handleBackToCourses = () => {
+    setSelectedCourseId(null);
+    setSearchQuery("");
+    sessionStorage.removeItem("admin_lessons_course_id");
+    setSearchParams({});
+  };
+
   const openStudio = (subj) => {
-    navigate(`/staffs/model-creation/${subj.id}`);
+    const activeCid =
+      selectedCourseId ||
+      subj.course_id ||
+      (Array.isArray(subj.courses) && subj.courses[0]?.id) ||
+      subj.course?.id;
+
+    if (activeCid) {
+      sessionStorage.setItem("admin_lessons_course_id", String(activeCid));
+    }
+
+    navigate(`/staffs/model-creation/${subj.id}`, {
+      state: {
+        courseId: activeCid,
+        courseTitle: activeCourse?.title,
+      },
+    });
   };
 
   return (
@@ -181,10 +234,7 @@ export default function AdminSubjectModules() {
           <div className="flex items-center gap-3">
             {activeCourse && (
               <button
-                onClick={() => {
-                  setSelectedCourseId(null);
-                  setSearchQuery("");
-                }}
+                onClick={handleBackToCourses}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-xs font-black uppercase tracking-wider text-[#0F2843] dark:text-white transition-all shadow-sm active:scale-95"
               >
                 <ArrowLeftIcon className="w-4 h-4" />
@@ -269,7 +319,7 @@ export default function AdminSubjectModules() {
                   return (
                     <div
                       key={course.id}
-                      onClick={() => setSelectedCourseId(course.id)}
+                      onClick={() => handleSelectCourse(course.id)}
                       className="bg-white dark:bg-gray-800 rounded-[32px] p-6 border border-gray-100 dark:border-gray-700 shadow-md hover:shadow-2xl hover:-translate-y-1.5 transition-all cursor-pointer group flex flex-col justify-between h-64 relative overflow-hidden"
                     >
                       {/* Ambient background accent */}

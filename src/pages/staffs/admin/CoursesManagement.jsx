@@ -476,7 +476,9 @@ export default function CoursesManagement() {
                                           onClick={(e) => { 
                                             e.stopPropagation(); 
                                             setActiveMenu(null);
-                                            navigate(`/staffs/model-creation/${subject.id}`);
+                                            navigate(`/staffs/model-creation/${subject.id}`, {
+                                              state: { courseId: selectedCourse?.id || subject.course_id },
+                                            });
                                           }}
                                           className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all text-left group/item"
                                         >
@@ -598,7 +600,9 @@ export default function CoursesManagement() {
         }}
         onOpenCurriculum={(subject) => {
           setIsSubjectDetailModalOpen(false);
-          navigate(`/staffs/model-creation/${subject.id}`);
+          navigate(`/staffs/model-creation/${subject.id}`, {
+            state: { courseId: subject.course_id || selectedCourse?.id },
+          });
         }}
       />
     </StaffDashboardLayout>
