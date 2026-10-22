@@ -352,25 +352,66 @@ export default function StudentCourses() {
         )}
 
         {/* ========================================================================= */}
+        {/* ========================================================================= */}
         {/* VIEW 2: ALL REGISTERED COURSES & SUBJECTS GRID (CARDS WITH BANNERS)        */}
         {/* ========================================================================= */}
         {!activeSubject && (
           <div className="space-y-10">
-            {/* Header Hero */}
-            <div className="bg-[#09314F] text-white rounded-[36px] p-8 sm:p-10 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-              <div className="space-y-2 max-w-xl">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#BB9E7F]">
-                  Self-Paced Learning Path
-                </span>
-                <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight">
-                  Registered Subjects
-                </h1>
-                <p className="text-xs sm:text-sm text-gray-300 font-medium">
-                  All your registered subjects are organized below by program. Click any subject banner to open its complete curriculum, animated video lessons, and materials.
-                </p>
-              </div>
-              <div className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center">
-                <BookOpen className="w-8 h-8 text-[#BB9E7F]" />
+            {/* Hero Header: Inviting & Inspiring Animated Video Courses */}
+            <div className="relative rounded-[36px] p-8 sm:p-12 overflow-hidden shadow-2xl bg-gradient-to-br from-[#09314F] via-[#0E3E66] to-[#0A2239] text-white">
+              {/* Ambient luminous glow effects */}
+              <div className="absolute -top-24 -right-24 w-96 h-96 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                <div className="space-y-4 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                    <span className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-300">
+                      Interactive Animated Courses
+                    </span>
+                  </div>
+
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-tight">
+                    Visual Mastery & <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-200 to-[#BB9E7F]">Animated Lessons</span>
+                  </h1>
+
+                  <p className="text-xs sm:text-sm text-gray-200 font-medium leading-relaxed max-w-xl">
+                    Immerse yourself in high-yield animated video lectures, master difficult exam topics step-by-step, download slide summaries, and practice with interactive quizzes tailored for your registered subjects.
+                  </p>
+
+                  {/* Feature chips */}
+                  <div className="flex flex-wrap gap-2.5 pt-2">
+                    <span className="px-3.5 py-1.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-[11px] font-bold text-gray-100 flex items-center gap-2">
+                      <PlayCircle className="w-3.5 h-3.5 text-amber-400" />
+                      Animated Video Lectures
+                    </span>
+                    <span className="px-3.5 py-1.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-[11px] font-bold text-gray-100 flex items-center gap-2">
+                      <Layers className="w-3.5 h-3.5 text-blue-300" />
+                      Topic-by-Topic Modules
+                    </span>
+                    <span className="px-3.5 py-1.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 text-[11px] font-bold text-gray-100 flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      Interactive Quizzes
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right Hero Badge Card */}
+                <div className="hidden sm:flex flex-col items-center justify-center p-6 rounded-3xl bg-white/10 backdrop-blur-md border border-white/15 shadow-2xl text-center self-start lg:self-auto min-w-[240px]">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#BB9E7F] to-amber-300 text-[#09314F] flex items-center justify-center shadow-lg mb-3">
+                    <PlayCircle className="w-9 h-9 fill-[#09314F] text-[#BB9E7F]" />
+                  </div>
+                  <span className="text-sm font-black text-white tracking-wide uppercase">
+                    Self-Paced Learning
+                  </span>
+                  <span className="text-[11px] text-gray-300 font-medium mt-1">
+                    Learn anytime, anywhere
+                  </span>
+                  <div className="mt-3 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider border border-emerald-500/30">
+                    100% Visual Curriculum
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -401,7 +442,7 @@ export default function StudentCourses() {
                 <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto" />
                 <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200">No Enrolled Courses Found</h3>
                 <p className="text-xs text-gray-400 max-w-sm mx-auto">
-                  You are not currently enrolled in any academic programs.
+                  You are not currently enrolled in any courses (JAMB, WAEC, NECO, or GCE). Contact administration or browse available packages to get started.
                 </p>
               </div>
             )}
@@ -411,18 +452,35 @@ export default function StudentCourses() {
               <div className="space-y-12">
                 {courses.map((course) => {
                   const subjects = course.subjects || [];
+                  const rawCourseName = course.course?.title || course.title || course.name || "";
+                  const courseTitle = rawCourseName ? rawCourseName.toUpperCase() : "JAMB";
 
                   return (
                     <div key={course.id} className="space-y-6">
                       {/* Course Program Header */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-2.5 h-6 bg-[#09314F] dark:bg-blue-400 rounded-full" />
-                        <h2 className="text-xl sm:text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tight">
-                          {course.title || "Academic Program"}
-                        </h2>
-                        <span className="text-xs font-bold text-gray-400">
-                          ({subjects.length} registered {subjects.length === 1 ? "subject" : "subjects"})
-                        </span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-8 bg-gradient-to-b from-amber-400 to-[#BB9E7F] rounded-full shadow-sm" />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#BB9E7F]">
+                                Registered Course
+                              </span>
+                            </div>
+                            <h2 className="text-2xl sm:text-3xl font-black text-[#09314F] dark:text-white uppercase tracking-tight">
+                              {courseTitle}
+                            </h2>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-start sm:self-auto">
+                          <span className="px-4 py-1.5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-black text-[#09314F] dark:text-gray-200 shadow-sm">
+                            {subjects.length} {subjects.length === 1 ? "Subject" : "Subjects"}
+                          </span>
+                          <span className="px-3 py-1.5 rounded-2xl bg-[#09314F]/10 dark:bg-blue-900/40 text-[11px] font-black text-[#09314F] dark:text-blue-300 uppercase tracking-wider">
+                            Animated Curriculum
+                          </span>
+                        </div>
                       </div>
 
                       {/* Subjects Grid with Banners */}
@@ -445,7 +503,7 @@ export default function StudentCourses() {
                                   alt={sub.name}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#09314F] via-[#09314F]/50 to-black/20" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#09314F] via-[#09314F]/60 to-black/30" />
                               </div>
 
                               {/* Top Status Pill: Prominently showing "No module created yet" if empty */}
@@ -459,6 +517,11 @@ export default function StudentCourses() {
                                     {progress}% Complete
                                   </span>
                                 )}
+
+                                <span className="px-2.5 py-1 bg-black/40 backdrop-blur-md text-amber-300 text-[10px] font-black uppercase tracking-wider rounded-xl border border-white/10 flex items-center gap-1">
+                                  <PlayCircle className="w-3 h-3 text-amber-400" />
+                                  Animated
+                                </span>
                               </div>
 
                               {/* Bottom Subject Details */}
@@ -468,21 +531,21 @@ export default function StudentCourses() {
                                     {sub.name}
                                   </h3>
                                   <p className="text-[11px] text-gray-300 font-medium line-clamp-1 mt-0.5">
-                                    Click to open curriculum, video lessons & materials
+                                    Animated video lessons, lecture slides & practice quizzes
                                   </p>
                                 </div>
 
                                 {/* Progress bar */}
                                 <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
                                   <div
-                                    className="h-full bg-gradient-to-r from-emerald-400 to-[#76D287] rounded-full transition-all duration-500"
+                                    className="h-full bg-gradient-to-r from-amber-400 to-[#76D287] rounded-full transition-all duration-500"
                                     style={{ width: `${progress}%` }}
                                   />
                                 </div>
 
                                 <div className="pt-2 flex items-center justify-between">
                                   <span className="text-[10px] font-black text-[#BB9E7F] uppercase tracking-wider">
-                                    Open Curriculum
+                                    Explore Animated Course
                                   </span>
                                   <div className="w-8 h-8 rounded-full bg-white text-[#09314F] flex items-center justify-center group-hover:translate-x-1 transition-transform shadow-md">
                                     <ChevronRight className="w-4 h-4" />
