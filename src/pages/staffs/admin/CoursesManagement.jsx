@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import axios from "axios";
 import { 
@@ -20,7 +21,6 @@ import CourseCreate from "../../../components/private/staffs/CourseCreate.jsx";
 import CourseDetailModal from "../../../components/private/staffs/CourseDetailModal.jsx";
 import SubjectDetailModal from "../../../components/private/staffs/SubjectDetailModal.jsx";
 import SubjectCreate from "../../../components/private/staffs/SubjectCreate.jsx";
-import AdminCurriculumStudio from "../../../components/private/staffs/AdminCurriculumStudio.jsx";
 import { stripHtmlAndDecode } from "../../../utils/textUtils.js";
 import { isReadOnlyStaff } from "../../../utils/roleUtils.js";
 
@@ -28,6 +28,7 @@ import { isReadOnlyStaff } from "../../../utils/roleUtils.js";
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
 export default function CoursesManagement() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("courses"); // "courses" | "subjects"
   const [activeView, setActiveView] = useState("main"); // "main" | "edit" | "disenrolled"
   const [courses, setCourses] = useState([]);
@@ -42,7 +43,6 @@ export default function CoursesManagement() {
 
   const [isSubjectCreateModalOpen, setIsSubjectCreateModalOpen] = useState(false);
   const [isSubjectDetailModalOpen, setIsSubjectDetailModalOpen] = useState(false);
-  const [isCurriculumStudioOpen, setIsCurriculumStudioOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [expandedCourseIds, setExpandedCourseIds] = useState(new Set());
   const [initialEditItem, setInitialEditItem] = useState(null);
@@ -598,20 +598,9 @@ export default function CoursesManagement() {
           setIsSubjectDetailModalOpen(false);
         }}
         onOpenCurriculum={(subject) => {
-          setSelectedSubject(subject);
           setIsSubjectDetailModalOpen(false);
-          setIsCurriculumStudioOpen(true);
+          navigate(`/staffs/model-creation/${subject.id}`);
         }}
-      />
-
-      <AdminCurriculumStudio
-        isOpen={isCurriculumStudioOpen}
-        onClose={() => {
-          setIsCurriculumStudioOpen(false);
-          setSelectedSubject(null);
-        }}
-        subject={selectedSubject}
-        showToast={setToast}
       />
     </StaffDashboardLayout>
   );

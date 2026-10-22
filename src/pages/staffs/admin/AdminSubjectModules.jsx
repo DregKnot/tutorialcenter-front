@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import axios from "axios";
-import AdminCurriculumStudio from "../../../components/private/staffs/AdminCurriculumStudio.jsx";
 import {
   AcademicCapIcon,
   BookOpenIcon,
@@ -17,14 +17,11 @@ const API_BASE_URL =
   "http://localhost:8000";
 
 export default function AdminSubjectModules() {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
-
-  // Curriculum studio modal state
-  const [selectedSubject, setSelectedSubject] = useState(null);
-  const [isStudioOpen, setIsStudioOpen] = useState(false);
 
   const token = localStorage.getItem("staff_token");
 
@@ -72,8 +69,7 @@ export default function AdminSubjectModules() {
   }, [fetchData]);
 
   const openStudio = (subj) => {
-    setSelectedSubject(subj);
-    setIsStudioOpen(true);
+    navigate(`/staffs/model-creation/${subj.id}`);
   };
 
   return (
@@ -209,16 +205,6 @@ export default function AdminSubjectModules() {
           </div>
         )}
 
-        {/* Curriculum Studio Modal */}
-        <AdminCurriculumStudio
-          isOpen={isStudioOpen}
-          onClose={() => {
-            setIsStudioOpen(false);
-            setSelectedSubject(null);
-          }}
-          subject={selectedSubject}
-          showToast={setToast}
-        />
       </div>
     </StaffDashboardLayout>
   );
