@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { formatDepartments } from "../../../utils/textUtils";
 
-export default function SubjectDetailModal({ isOpen, subject, course, onClose, onDelete, onEdit }) {
+export default function SubjectDetailModal({ isOpen, subject, course, onClose, onDelete, onEdit, onOpenCurriculum }) {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   if (!isOpen || !subject) return null;
@@ -95,6 +95,15 @@ export default function SubjectDetailModal({ isOpen, subject, course, onClose, o
             </div>
 
             {/* Admin Actions */}
+            {onOpenCurriculum && (
+              <button 
+                onClick={() => onOpenCurriculum(subject)}
+                className="w-full py-4 bg-[#0F2843] text-white font-black rounded-3xl hover:shadow-2xl hover:scale-[1.01] transition-all flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest text-xs shadow-lg mb-3"
+              >
+                <BookOpenIcon className="w-5 h-5 text-[#BB9E7F]" />
+                Curriculum & Video Lessons Studio
+              </button>
+            )}
             <div className="pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row gap-4">
               <button 
                 onClick={() => onEdit(subject)}

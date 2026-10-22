@@ -20,6 +20,7 @@ import CourseCreate from "../../../components/private/staffs/CourseCreate.jsx";
 import CourseDetailModal from "../../../components/private/staffs/CourseDetailModal.jsx";
 import SubjectDetailModal from "../../../components/private/staffs/SubjectDetailModal.jsx";
 import SubjectCreate from "../../../components/private/staffs/SubjectCreate.jsx";
+import AdminCurriculumStudio from "../../../components/private/staffs/AdminCurriculumStudio.jsx";
 import { stripHtmlAndDecode } from "../../../utils/textUtils.js";
 import { isReadOnlyStaff } from "../../../utils/roleUtils.js";
 
@@ -41,6 +42,7 @@ export default function CoursesManagement() {
 
   const [isSubjectCreateModalOpen, setIsSubjectCreateModalOpen] = useState(false);
   const [isSubjectDetailModalOpen, setIsSubjectDetailModalOpen] = useState(false);
+  const [isCurriculumStudioOpen, setIsCurriculumStudioOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [expandedCourseIds, setExpandedCourseIds] = useState(new Set());
   const [initialEditItem, setInitialEditItem] = useState(null);
@@ -474,6 +476,20 @@ export default function CoursesManagement() {
                                           onClick={(e) => { 
                                             e.stopPropagation(); 
                                             setSelectedSubject(subject);
+                                            setIsCurriculumStudioOpen(true);
+                                            setActiveMenu(null);
+                                          }}
+                                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all text-left group/item"
+                                        >
+                                          <div className="w-8 h-8 bg-[#0F2843]/10 rounded-lg flex items-center justify-center text-[#0F2843] dark:text-[#BB9E7F] group-hover/item:bg-[#0F2843] group-hover/item:text-white transition-all">
+                                            <BookOpenIcon className="w-4 h-4" />
+                                          </div>
+                                          <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Curriculum</span>
+                                        </button>
+                                        <button 
+                                          onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            setSelectedSubject(subject);
                                             setInitialEditItem({ type: "subject", data: subject });
                                             setActiveTab("subjects");
                                             setActiveView("edit");
@@ -581,6 +597,21 @@ export default function CoursesManagement() {
           setActiveView("edit");
           setIsSubjectDetailModalOpen(false);
         }}
+        onOpenCurriculum={(subject) => {
+          setSelectedSubject(subject);
+          setIsSubjectDetailModalOpen(false);
+          setIsCurriculumStudioOpen(true);
+        }}
+      />
+
+      <AdminCurriculumStudio
+        isOpen={isCurriculumStudioOpen}
+        onClose={() => {
+          setIsCurriculumStudioOpen(false);
+          setSelectedSubject(null);
+        }}
+        subject={selectedSubject}
+        showToast={setToast}
       />
     </StaffDashboardLayout>
   );
