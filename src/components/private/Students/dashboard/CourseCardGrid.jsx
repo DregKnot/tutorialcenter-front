@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
 // ── Individual Course Card ────────────────────────────────────────────────────
 function CourseCard({ course }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   const subjects = course.subjects || [];
@@ -106,7 +108,9 @@ function CourseCard({ course }) {
             {subjects.map((sub, idx) => (
               <div
                 key={sub.id || idx}
-                className="flex items-center gap-2 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-3 py-2"
+                onClick={() => sub.id && navigate(`/student/courses/subject/${sub.id}`)}
+                className="flex items-center gap-2 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-xl px-3 py-2 cursor-pointer hover:border-[#09314F] dark:hover:border-blue-400 hover:shadow-sm active:scale-95 transition-all"
+                title="Click to view interactive curriculum and video lessons"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-[#09314F] dark:bg-blue-400 flex-shrink-0" />
                 <span className="text-[11px] font-bold text-[#09314F] dark:text-gray-200 whitespace-nowrap">

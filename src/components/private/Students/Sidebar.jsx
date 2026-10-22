@@ -53,7 +53,7 @@ const menuItems = [
   {
     label: "Courses",
     icon: "mdi:book-open-page-variant",
-    // destination: "/student/courses",
+    destination: "/student/courses",
   },
   {
     label: "Games & Fun",
