@@ -418,11 +418,11 @@ export default function ModelCreation() {
         <div className="p-6 sm:p-10 bg-[#0F2843] rounded-[40px] text-white shadow-xl flex flex-col gap-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <button
-              onClick={() => navigate("/staffs/subject-modules")}
+              onClick={() => navigate("/staffs/lessons")}
               className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#BB9E7F] hover:text-white transition-colors"
             >
               <ArrowLeftIcon className="w-4 h-4" />
-              Back to Subject Catalog
+              Back to Lessons
             </button>
 
             {/* Subject Switcher Dropdown */}

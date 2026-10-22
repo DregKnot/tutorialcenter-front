@@ -504,3 +504,43 @@ abbr:where([title]) {
   background: #09314f66;
 }
 
+/* 3D Book Opening Cinematic Animations */
+@keyframes flipBookCover {
+  0% {
+    transform: rotateY(0deg);
+  }
+  25% {
+    transform: rotateY(-35deg);
+  }
+  100% {
+    transform: rotateY(-180deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 75%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes scaleUpPopup {
+  0% {
+    transform: scale(0.75);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+

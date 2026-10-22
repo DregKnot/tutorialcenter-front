@@ -311,6 +311,7 @@ function App() {
               <Route path="/staffs/calendar" element={<AdminCalendar />} />
               <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
               <Route path="/staffs/subject-modules" element={<AdminSubjectModules />} />
+              <Route path="/staffs/lessons" element={<AdminSubjectModules />} />
               <Route path="/staffs/model-creation" element={<ModelCreation />} />
               <Route path="/staffs/model-creation/:subjectId" element={<ModelCreation />} />
               <Route path="/staffs/module-creation" element={<ModelCreation />} />
