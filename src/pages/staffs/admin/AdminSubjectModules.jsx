@@ -3,12 +3,9 @@ import { useNavigate } from "react-router-dom";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import axios from "axios";
 import {
-  AcademicCapIcon,
   BookOpenIcon,
-  PlusIcon,
   ChevronRightIcon,
   FolderPlusIcon,
-  SparklesIcon,
 } from "@heroicons/react/24/outline";
 
 const API_BASE_URL =

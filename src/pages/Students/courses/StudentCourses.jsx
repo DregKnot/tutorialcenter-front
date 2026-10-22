@@ -12,12 +12,7 @@ import {
   PlayCircle,
   CheckCircle2,
   Clock,
-  Download,
-  ExternalLink,
-  Award,
   AlertCircle,
-  FileText,
-  Sparkles,
   Layers
 } from "lucide-react";
 
@@ -37,7 +32,6 @@ export default function StudentCourses() {
   const [subjectCurriculum, setSubjectCurriculum] = useState(null);
   const [curriculumError, setCurriculumError] = useState(null);
   const [expandedModules, setExpandedModules] = useState({});
-  const [lessonDetailsCache, setLessonDetailsCache] = useState({}); // { [lessonId]: lessonData }
 
   // Fetch student enrolled courses & subjects
   const fetchEnrolledCourses = useCallback(async () => {

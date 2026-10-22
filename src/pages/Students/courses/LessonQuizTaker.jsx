@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   ArrowRight,
   RotateCcw,
-  BookOpen,
   Check
 } from "lucide-react";
 
@@ -104,39 +103,8 @@ export default function LessonQuizTaker() {
     }
   };
 
-  // Timer Countdown
-  useEffect(() => {
-    if (screen === "taking" && timeLeft !== null) {
-      timerIntervalRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerIntervalRef.current);
-            // Auto submit when time runs out
-            handleAutoSubmit();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    }
-
-    return () => {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    };
-  }, [screen, timeLeft]);
-
-  // Select option for current question
-  const handleSelectOption = (questionId, optionId) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: optionId,
-    }));
-  };
-
   // Submit Quiz Answers
-  const handleSubmitQuiz = async () => {
+  const handleSubmitQuiz = useCallback(async () => {
     if (submitting) return;
     try {
       setSubmitting(true);
@@ -161,10 +129,42 @@ export default function LessonQuizTaker() {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [submitting, answers, quizId, submissionId]);
 
-  const handleAutoSubmit = () => {
-    handleSubmitQuiz();
+  const handleAutoSubmitRef = useRef(handleSubmitQuiz);
+  useEffect(() => {
+    handleAutoSubmitRef.current = handleSubmitQuiz;
+  }, [handleSubmitQuiz]);
+
+  // Timer Countdown
+  useEffect(() => {
+    if (screen === "taking" && timeLeft !== null) {
+      timerIntervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerIntervalRef.current);
+            // Auto submit when time runs out
+            handleAutoSubmitRef.current();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    }
+
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    };
+  }, [screen, timeLeft]);
+
+  // Select option for current question
+  const handleSelectOption = (questionId, optionId) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: optionId,
+    }));
   };
 
   // Format seconds to mm:ss
