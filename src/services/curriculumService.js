@@ -163,27 +163,39 @@ export const studentCurriculumApi = {
   },
 };
 
+const getStaffPrefix = () => {
+  const role = (localStorage.getItem("staff_role") || "").toLowerCase();
+  const isAdminTier = ["admin", "coo", "moderator", "csa", "customer support"].some((r) =>
+    role.includes(r)
+  );
+  if (isAdminTier) return "admin";
+  return "tutor";
+};
+
 /*
 |--------------------------------------------------------------------------
 | Staff / Admin / Tutor Curriculum Authoring Endpoints
 |--------------------------------------------------------------------------
 | Enables instructors to structure modules under a subject, populate lessons,
 | upload materials (videos, slide PDFs, docs), and configure practice quizzes.
+| Routes are mounted under /api/admin or /api/tutor in the backend.
 */
 
 export const staffCurriculumApi = {
   // --- Modules ---
   getModulesBySubject: async (subjectId) => {
+    const prefix = getStaffPrefix();
     const res = await axios.get(
-      `${API_BASE_URL}/api/staffs/courses/modules/subject/${subjectId}`,
+      `${API_BASE_URL}/api/${prefix}/modules/subject/${subjectId}`,
       getStaffHeaders()
     );
     return res.data;
   },
 
   createModule: async (subjectId, { title, description, order = 0 }) => {
+    const prefix = getStaffPrefix();
     const res = await axios.post(
-      `${API_BASE_URL}/api/staffs/courses/modules/subject/${subjectId}`,
+      `${API_BASE_URL}/api/${prefix}/modules/subject/${subjectId}`,
       { title, description, order },
       getStaffHeaders()
     );
@@ -191,8 +203,9 @@ export const staffCurriculumApi = {
   },
 
   updateModule: async (moduleId, payload) => {
+    const prefix = getStaffPrefix();
     const res = await axios.put(
-      `${API_BASE_URL}/api/staffs/courses/modules/${moduleId}`,
+      `${API_BASE_URL}/api/${prefix}/modules/${moduleId}`,
       payload,
       getStaffHeaders()
     );
@@ -200,16 +213,18 @@ export const staffCurriculumApi = {
   },
 
   deleteModule: async (moduleId) => {
+    const prefix = getStaffPrefix();
     const res = await axios.delete(
-      `${API_BASE_URL}/api/staffs/courses/modules/${moduleId}`,
+      `${API_BASE_URL}/api/${prefix}/modules/${moduleId}`,
       getStaffHeaders()
     );
     return res.data;
   },
 
   reorderModules: async (subjectId, orders) => {
+    const prefix = getStaffPrefix();
     const res = await axios.post(
-      `${API_BASE_URL}/api/staffs/courses/modules/subject/${subjectId}/reorder`,
+      `${API_BASE_URL}/api/${prefix}/modules/subject/${subjectId}/reorder`,
       { orders },
       getStaffHeaders()
     );
@@ -218,16 +233,18 @@ export const staffCurriculumApi = {
 
   // --- Lessons ---
   getLessonsByModule: async (moduleId) => {
+    const prefix = getStaffPrefix();
     const res = await axios.get(
-      `${API_BASE_URL}/api/staffs/courses/lessons/module/${moduleId}`,
+      `${API_BASE_URL}/api/${prefix}/lessons/module/${moduleId}`,
       getStaffHeaders()
     );
     return res.data;
   },
 
   createLesson: async (moduleId, { title, description, durationMinutes = 0, order = 0 }) => {
+    const prefix = getStaffPrefix();
     const res = await axios.post(
-      `${API_BASE_URL}/api/staffs/courses/lessons/module/${moduleId}`,
+      `${API_BASE_URL}/api/${prefix}/lessons/module/${moduleId}`,
       {
         title,
         description,
@@ -240,8 +257,9 @@ export const staffCurriculumApi = {
   },
 
   updateLesson: async (lessonId, payload) => {
+    const prefix = getStaffPrefix();
     const res = await axios.put(
-      `${API_BASE_URL}/api/staffs/courses/lessons/${lessonId}`,
+      `${API_BASE_URL}/api/${prefix}/lessons/${lessonId}`,
       payload,
       getStaffHeaders()
     );
@@ -249,16 +267,18 @@ export const staffCurriculumApi = {
   },
 
   deleteLesson: async (lessonId) => {
+    const prefix = getStaffPrefix();
     const res = await axios.delete(
-      `${API_BASE_URL}/api/staffs/courses/lessons/${lessonId}`,
+      `${API_BASE_URL}/api/${prefix}/lessons/${lessonId}`,
       getStaffHeaders()
     );
     return res.data;
   },
 
   reorderLessons: async (moduleId, orders) => {
+    const prefix = getStaffPrefix();
     const res = await axios.post(
-      `${API_BASE_URL}/api/staffs/courses/lessons/module/${moduleId}/reorder`,
+      `${API_BASE_URL}/api/${prefix}/lessons/module/${moduleId}/reorder`,
       { orders },
       getStaffHeaders()
     );
@@ -267,16 +287,18 @@ export const staffCurriculumApi = {
 
   // --- Lesson Materials (Videos, Documents, Slides) ---
   getMaterialsByLesson: async (lessonId) => {
+    const prefix = getStaffPrefix();
     const res = await axios.get(
-      `${API_BASE_URL}/api/staffs/courses/lesson-materials/lesson/${lessonId}`,
+      `${API_BASE_URL}/api/${prefix}/lesson-materials/lesson/${lessonId}`,
       getStaffHeaders()
     );
     return res.data;
   },
 
   uploadMaterial: async (lessonId, formData) => {
+    const prefix = getStaffPrefix();
     const res = await axios.post(
-      `${API_BASE_URL}/api/staffs/courses/lesson-materials/lesson/${lessonId}`,
+      `${API_BASE_URL}/api/${prefix}/lesson-materials/lesson/${lessonId}`,
       formData,
       getStaffHeaders(true)
     );
@@ -284,16 +306,18 @@ export const staffCurriculumApi = {
   },
 
   deleteMaterial: async (materialId) => {
+    const prefix = getStaffPrefix();
     const res = await axios.delete(
-      `${API_BASE_URL}/api/staffs/courses/lesson-materials/${materialId}`,
+      `${API_BASE_URL}/api/${prefix}/lesson-materials/${materialId}`,
       getStaffHeaders()
     );
     return res.data;
   },
 
   reorderMaterials: async (lessonId, orders) => {
+    const prefix = getStaffPrefix();
     const res = await axios.post(
-      `${API_BASE_URL}/api/staffs/courses/lesson-materials/lesson/${lessonId}/reorder`,
+      `${API_BASE_URL}/api/${prefix}/lesson-materials/lesson/${lessonId}/reorder`,
       { orders },
       getStaffHeaders()
     );
@@ -302,16 +326,18 @@ export const staffCurriculumApi = {
 
   // --- Quizzes ---
   getQuizzesByLesson: async (lessonId) => {
+    const prefix = getStaffPrefix();
     const res = await axios.get(
-      `${API_BASE_URL}/api/staffs/courses/quizzes/lesson/${lessonId}`,
+      `${API_BASE_URL}/api/${prefix}/quizzes/lesson/${lessonId}`,
       getStaffHeaders()
     );
     return res.data;
   },
 
   createQuiz: async (lessonId, quizData) => {
+    const prefix = getStaffPrefix();
     const res = await axios.post(
-      `${API_BASE_URL}/api/staffs/courses/quizzes/lesson/${lessonId}`,
+      `${API_BASE_URL}/api/${prefix}/quizzes/lesson/${lessonId}`,
       quizData,
       getStaffHeaders()
     );
@@ -319,8 +345,9 @@ export const staffCurriculumApi = {
   },
 
   updateQuiz: async (quizId, quizData) => {
+    const prefix = getStaffPrefix();
     const res = await axios.put(
-      `${API_BASE_URL}/api/staffs/courses/quizzes/${quizId}`,
+      `${API_BASE_URL}/api/${prefix}/quizzes/${quizId}`,
       quizData,
       getStaffHeaders()
     );
@@ -328,8 +355,9 @@ export const staffCurriculumApi = {
   },
 
   deleteQuiz: async (quizId) => {
+    const prefix = getStaffPrefix();
     const res = await axios.delete(
-      `${API_BASE_URL}/api/staffs/courses/quizzes/${quizId}`,
+      `${API_BASE_URL}/api/${prefix}/quizzes/${quizId}`,
       getStaffHeaders()
     );
     return res.data;
@@ -337,8 +365,9 @@ export const staffCurriculumApi = {
 
   // --- Subject Progress Analytics ---
   getSubjectOverviewAnalytics: async (subjectId) => {
+    const prefix = getStaffPrefix();
     const res = await axios.get(
-      `${API_BASE_URL}/api/staffs/courses/course-progress/subject/${subjectId}/overview`,
+      `${API_BASE_URL}/api/${prefix}/course-progress/subject/${subjectId}/overview`,
       getStaffHeaders()
     );
     return res.data;
