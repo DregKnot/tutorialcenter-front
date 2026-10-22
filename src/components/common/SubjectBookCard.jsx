@@ -183,8 +183,14 @@ export default function SubjectBookCard({
 
   const bannerSrc = getBannerSrc();
   const subjectName = subject?.name || "Untitled Subject";
-  const modulesCount = subject?.modules_count || subject?.total_modules || 0;
-  const hasNoModules = modulesCount === 0;
+  const modulesCount =
+    typeof subject?.modules_count === "number"
+      ? subject.modules_count
+      : typeof subject?.total_modules === "number"
+      ? subject.total_modules
+      : Array.isArray(subject?.modules)
+      ? subject.modules.length
+      : 0;
 
   // Fallback palette when no banner is uploaded (first one matches the reference journal)
   const paletteIndex = ((subject?.id || 1) * 7) % 5;
@@ -429,7 +435,7 @@ export default function SubjectBookCard({
                   <div className="space-y-2 relative z-10 border-t border-gray-200 dark:border-gray-700 pt-3">
                     <div className="flex items-center gap-2 font-bold text-gray-900 dark:text-white uppercase text-[10px] sm:text-[11px] tracking-wider">
                       <Layers className="w-4 h-4 text-amber-500" />
-                      <span>{modulesCount} Interactive Topics</span>
+                      <span>{modulesCount} Interactive {modulesCount === 1 ? "Module" : "Modules"}</span>
                     </div>
                     <p className="hidden sm:block text-[11px] text-gray-500 dark:text-gray-400">
                       Animated instructional lectures, slide summaries, and practice quizzes.
@@ -564,7 +570,7 @@ export default function SubjectBookCard({
           <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 font-medium">
             <Layers className="w-3 h-3 text-gray-400" />
             <span>
-              {modulesCount} {modulesCount === 1 ? "Topic" : "Topics"}
+              {modulesCount} {modulesCount === 1 ? "Module" : "Modules"}
               {courseTitle ? ` · ${courseTitle}` : ""}
             </span>
           </div>
@@ -610,18 +616,14 @@ export default function SubjectBookCard({
 
               {/* Status pill, top right */}
               <div className="absolute top-0 right-0 z-10 p-3.5 flex items-start justify-end">
-                {hasNoModules ? (
-                  <span className="px-2.5 py-1 rounded-full bg-amber-500/90 text-white text-[9px] font-black uppercase tracking-wider shadow-md backdrop-blur-md">
-                    Coming Soon
-                  </span>
-                ) : progress !== null ? (
+                {progress !== null && progress > 0 ? (
                   <span className="px-2.5 py-1 rounded-full bg-emerald-600/90 text-white text-[9px] font-black uppercase tracking-wider shadow-md backdrop-blur-md flex items-center gap-1">
                     <CheckCircle2 className="w-2.5 h-2.5 text-amber-300" />
                     {Math.round(progress)}%
                   </span>
                 ) : (
                   <span className="px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white text-[9px] font-black uppercase tracking-wider">
-                    {modulesCount} Topics
+                    {modulesCount} {modulesCount === 1 ? "Module" : "Modules"}
                   </span>
                 )}
               </div>
