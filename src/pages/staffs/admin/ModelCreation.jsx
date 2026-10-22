@@ -916,7 +916,8 @@ export default function ModelCreation() {
                       className="px-3 py-2.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs font-bold outline-none"
                     >
                       <option value="video">Video (MP4 / YouTube / Vimeo)</option>
-                      <option value="document">Document (PDF Slides / Notes)</option>
+                      <option value="document">Document (PDF / Reading Notes / Worksheets)</option>
+                      <option value="slides">Slides (Presentation Decks / PDF Slides)</option>
                       <option value="link">External Resource Link</option>
                     </select>
                     <input
@@ -930,7 +931,7 @@ export default function ModelCreation() {
 
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-1">
-                      Or Upload Direct File (MP4, PDF, DOCX)
+                      Or Upload Direct File (MP4, PDF, PPTX, DOCX)
                     </label>
                     <input
                       type="file"

@@ -521,8 +521,9 @@ export default function AdminCurriculumStudio({ isOpen, onClose, subject, showTo
                   onChange={(e) => setMatType(e.target.value)}
                   className="px-3 py-2.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-xs font-bold outline-none"
                 >
-                  <option value="video">Video (MP4 / YouTube)</option>
-                  <option value="document">Document (PDF / Slides)</option>
+                  <option value="video">Video (MP4 / YouTube / Vimeo)</option>
+                  <option value="document">Document (PDF / Reading Notes)</option>
+                  <option value="slides">Slides (Presentation Decks / PDF Slides)</option>
                   <option value="link">External Web Link</option>
                 </select>
                 <input
