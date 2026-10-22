@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import DashboardLayout from "../../../components/private/Students/DashboardLayout.jsx";
 import { studentCurriculumApi } from "../../../services/curriculumService.js";
+import { useAuth } from "../../../context/AuthContext";
 import {
   CheckCircle2,
   FileText,
@@ -80,6 +81,19 @@ export default function LessonPlayer() {
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
   const [thumbError, setThumbError] = useState(false);
   const heartbeatTimerRef = useRef(null);
+  const { setIsClassActive } = useAuth();
+
+  // Deactivate auto-logout the minute a student opens/watches a lesson
+  useEffect(() => {
+    if (setIsClassActive) {
+      setIsClassActive(true);
+    }
+    return () => {
+      if (setIsClassActive) {
+        setIsClassActive(false);
+      }
+    };
+  }, [setIsClassActive]);
 
   // Reset playback and thumbnail fallback when navigating between lessons
   useEffect(() => {
@@ -241,7 +255,7 @@ export default function LessonPlayer() {
 
   return (
     <DashboardLayout pagetitle={lessonData?.title ? `${lessonData.title} · Lesson` : "Lesson Player"}>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-7xl 2xl:max-w-[1536px] mx-auto px-4 sm:px-6 py-6 space-y-6">
         
         {/* Top Navigation Bar */}
         <div className="flex items-center justify-between">
@@ -274,7 +288,7 @@ export default function LessonPlayer() {
           <div className="bg-white dark:bg-[#101C2E] border border-gray-100 dark:border-[#1E2D42] rounded-3xl p-10 sm:p-14 text-center animate-pulse space-y-5 shadow-xl">
             <div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded-md" />
             <div className="h-8 w-72 bg-gray-200 dark:bg-gray-700 rounded-lg" />
-            <div className="w-full aspect-video bg-gray-200 dark:bg-gray-700 rounded-2xl max-w-3xl mx-auto mt-4" />
+            <div className="w-full aspect-video bg-gray-200 dark:bg-gray-700 rounded-2xl mx-auto mt-4" />
           </div>
         )}
 
@@ -397,13 +411,13 @@ export default function LessonPlayer() {
                   
                   {videoSource ? (
                     !hasStartedPlaying ? (
-                      /* Custom Video Cover with Custom Play Button (matching Recorded Classes) */
+                      /* Custom Video Cover with Custom Play Button (centered on mobile & laptop) */
                       <div
                         onClick={() => {
                           setHasStartedPlaying(true);
                           setIsPlaying(true);
                         }}
-                        className="group relative w-full h-full flex items-center justify-center cursor-pointer select-none overflow-hidden bg-slate-950"
+                        className="group relative w-full h-full cursor-pointer select-none overflow-hidden bg-slate-950"
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
@@ -420,7 +434,7 @@ export default function LessonPlayer() {
                             <img
                               src={thumbnailUrl}
                               alt={lessonData?.title || "Lesson Thumbnail"}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                               onError={() => {
                                 if (!thumbError) {
                                   setThumbError(true);
@@ -428,18 +442,20 @@ export default function LessonPlayer() {
                               }}
                             />
                             {/* Dark gradient overlay for contrast and sleek cinematic look */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/20 group-hover:from-black/75 transition-colors duration-300" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/20 group-hover:from-black/75 transition-colors duration-300 pointer-events-none" />
                           </>
                         ) : (
                           /* Fallback sleek gradient */
-                          <div className="absolute inset-0 bg-gradient-to-br from-[#09314F] via-slate-900 to-black flex items-center justify-center">
+                          <div className="absolute inset-0 bg-gradient-to-br from-[#09314F] via-slate-900 to-black flex items-center justify-center pointer-events-none">
                             <div className="absolute inset-0 opacity-15 bg-[radial-gradient(circle_at_center,white_2px,transparent_2px)] bg-[size:20px_20px]" />
                           </div>
                         )}
 
-                        {/* Custom Play Button Overlay - matching Recorded Classes */}
-                        <div className="relative z-10 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border-2 border-white/40 group-hover:scale-110 group-hover:bg-[#E83831] group-hover:border-[#E83831] transition-all duration-300 shadow-2xl">
-                          <Play className="w-8 h-8 sm:w-9 sm:h-9 text-white ml-1 fill-white" />
+                        {/* Custom Play Button Overlay - perfectly centered for laptop and mobile */}
+                        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border-2 border-white/40 group-hover:scale-110 group-hover:bg-[#E83831] group-hover:border-[#E83831] transition-all duration-300 shadow-2xl pointer-events-auto">
+                            <Play className="w-7 h-7 sm:w-9 sm:h-9 text-white ml-1 fill-white" />
+                          </div>
                         </div>
 
                         {/* Title watermark at bottom */}

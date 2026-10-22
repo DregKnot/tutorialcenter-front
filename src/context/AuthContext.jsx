@@ -225,7 +225,9 @@ export function AuthProvider({ children }) {
       path.startsWith("/classroom") ||
       path.startsWith("/zoom/masterclass") ||
       path.startsWith("/student/meet") ||
-      path.startsWith("/staffs/meet")
+      path.startsWith("/staffs/meet") ||
+      path.startsWith("/student/courses/lessons") ||
+      path.includes("/courses/lessons")
     ) {
       return true;
     }
