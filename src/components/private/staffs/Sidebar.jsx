@@ -44,6 +44,7 @@ const adminNavSections = [
       { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
       { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/manage-guardians" },
       { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
+      { label: "Subject Modules", icon: AcademicCapIcon, destination: "/staffs/subject-modules" },
     ],
   },
   {
@@ -97,6 +98,7 @@ const cooNavSections = [
       { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
       { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/manage-guardians" },
       { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
+      { label: "Subject Modules", icon: AcademicCapIcon, destination: "/staffs/subject-modules" },
     ],
   },
   {
@@ -150,6 +152,7 @@ const csaNavSections = [
       { label: "Manage Students", icon: UserGroupIcon, destination: "/staffs/manage-students" },
       { label: "Manage Guardian", icon: ShieldCheckIcon, destination: "/staffs/manage-guardians" },
       { label: "Manage Courses", icon: BookOpenIcon, destination: "/staffs/manage-courses" },
+      { label: "Subject Modules", icon: AcademicCapIcon, destination: "/staffs/subject-modules" },
     ],
   },
   {
@@ -200,6 +203,7 @@ const tutorNavSections = [
     icon: AcademicCapIcon,
     items: [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/tutor/master-class" },
+      { label: "Subject Modules", icon: AcademicCapIcon, destination: "/staffs/subject-modules" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/tutor/calendar" },
     ],
   },

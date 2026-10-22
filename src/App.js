@@ -123,6 +123,7 @@ const StudentAssessments = lazy(() => import("./pages/Students/StudentAssessment
 const StudentAssessmentTaker = lazy(() => import("./pages/Students/StudentAssessmentTaker.jsx"));
 const StudentSurvey = lazy(() => import("./pages/Students/StudentSurvey.jsx"));
 const AdminSurveyAnalytics = lazy(() => import("./pages/staffs/admin/AdminSurveyAnalytics.jsx"));
+const AdminSubjectModules = lazy(() => import("./pages/staffs/admin/AdminSubjectModules.jsx"));
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
@@ -308,6 +309,7 @@ function App() {
               <Route path="/staffs/student-schedule" element={<StaffStudentSchedule />} />
               <Route path="/staffs/calendar" element={<AdminCalendar />} />
               <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
+              <Route path="/staffs/subject-modules" element={<AdminSubjectModules />} />
               <Route path="/staffs/manage-exams" element={<ExamManagement />} />
               <Route path="/staffs/school-tests" element={<SchoolCognitiveTests />} />
               <Route path="/staffs/manage-exams/question" element={<ExamQuestion />} />

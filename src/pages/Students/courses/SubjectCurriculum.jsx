@@ -9,11 +9,7 @@ import {
   PlayCircle,
   CheckCircle2,
   Clock,
-  Award,
   ArrowLeft,
-  FileText,
-  HelpCircle,
-  Flame,
   AlertCircle
 } from "lucide-react";
 
