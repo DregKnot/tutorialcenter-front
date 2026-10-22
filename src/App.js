@@ -113,12 +113,18 @@ const BlogManagement = lazy(() => import("./pages/staffs/admin/BlogManagement.js
 const AuditLog = lazy(() => import("./pages/staffs/admin/AuditLog.jsx"));
 const AdminCalendar = lazy(() => import("./pages/staffs/admin/AdminCalendar.jsx"));
 const BadgeDemo = lazy(() => import("./pages/public/BadgeDemo.jsx"));
+const StudentCourses = lazy(() => import("./pages/Students/courses/StudentCourses.jsx"));
+const SubjectCurriculum = lazy(() => import("./pages/Students/courses/SubjectCurriculum.jsx"));
+const LessonPlayer = lazy(() => import("./pages/Students/courses/LessonPlayer.jsx"));
+const LessonQuizTaker = lazy(() => import("./pages/Students/courses/LessonQuizTaker.jsx"));
 const StudentAchievements = lazy(() => import("./pages/Students/StudentAchievements.jsx"));
 const TutorAssessments = lazy(() => import("./pages/staffs/tutor/TutorAssessments.jsx"));
 const StudentAssessments = lazy(() => import("./pages/Students/StudentAssessments.jsx"));
 const StudentAssessmentTaker = lazy(() => import("./pages/Students/StudentAssessmentTaker.jsx"));
 const StudentSurvey = lazy(() => import("./pages/Students/StudentSurvey.jsx"));
 const AdminSurveyAnalytics = lazy(() => import("./pages/staffs/admin/AdminSurveyAnalytics.jsx"));
+const AdminSubjectModules = lazy(() => import("./pages/staffs/admin/AdminSubjectModules.jsx"));
+const ModelCreation = lazy(() => import("./pages/staffs/admin/ModelCreation.jsx"));
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
@@ -238,6 +244,10 @@ function App() {
               <Route path="/student/games" element={<StudentGames />} />
               <Route path="/student/exams" element={<StudentExam />} />
               <Route path="/student/achievements" element={<StudentAchievements />} />
+              <Route path="/student/courses" element={<StudentCourses />} />
+              <Route path="/student/courses/subject/:subjectId" element={<SubjectCurriculum />} />
+              <Route path="/student/courses/lessons/:lessonId" element={<LessonPlayer />} />
+              <Route path="/student/courses/quizzes/:quizId" element={<LessonQuizTaker />} />
               <Route path="/student/assessments" element={<StudentAssessments />} />
               <Route path="/student/assessments/:id" element={<StudentAssessmentTaker />} />
               <Route path="/student/scholarship" element={<StudentScholarship />} />
@@ -300,6 +310,11 @@ function App() {
               <Route path="/staffs/student-schedule" element={<StaffStudentSchedule />} />
               <Route path="/staffs/calendar" element={<AdminCalendar />} />
               <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
+              <Route path="/staffs/subject-modules" element={<AdminSubjectModules />} />
+              <Route path="/staffs/model-creation" element={<ModelCreation />} />
+              <Route path="/staffs/model-creation/:subjectId" element={<ModelCreation />} />
+              <Route path="/staffs/module-creation" element={<ModelCreation />} />
+              <Route path="/staffs/module-creation/:subjectId" element={<ModelCreation />} />
               <Route path="/staffs/manage-exams" element={<ExamManagement />} />
               <Route path="/staffs/school-tests" element={<SchoolCognitiveTests />} />
               <Route path="/staffs/manage-exams/question" element={<ExamQuestion />} />

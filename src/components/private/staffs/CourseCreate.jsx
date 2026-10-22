@@ -149,7 +149,7 @@ export default function CourseCreate({ isOpen, onClose, onSuccess, showToast }) 
             </div>
             <div>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight">CREATE COURSE</h2>
-              <p className="text-[#BB9E7F] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Curriculum Architect</p>
+              <p className="text-[#BB9E7F] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Course Package Manager</p>
             </div>
           </div>
           <button 

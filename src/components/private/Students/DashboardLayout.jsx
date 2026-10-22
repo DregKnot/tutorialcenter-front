@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "./Sidebar.jsx";
-import RightPanel from "./RightPanel.jsx";
 import MobileHeader from "./MobileHeader.jsx";
 import MobileBottomNav from "./MobileBottomNav.jsx";
 import { BellIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
@@ -27,20 +26,10 @@ export default function DashboardLayout({
     const saved = localStorage.getItem("student_left_collapsed");
     return saved !== null ? JSON.parse(saved) : false;
   });
-  const [rightCollapsed, setRightCollapsed] = useState(() => {
-    const saved = localStorage.getItem("student_right_collapsed");
-    return saved !== null ? JSON.parse(saved) : false;
-  });
-
   const handleSetLeftCollapsed = (val) => {
     const finalVal = isExamActive ? true : val;
     setLeftCollapsed(finalVal);
     localStorage.setItem("student_left_collapsed", JSON.stringify(finalVal));
-  };
-
-  const handleSetRightCollapsed = (val) => {
-    setRightCollapsed(val);
-    localStorage.setItem("student_right_collapsed", JSON.stringify(val));
   };
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { 
@@ -89,9 +78,6 @@ export default function DashboardLayout({
     };
   }, [fetchUnreadCount]);
 
-  // Default to the standard RightPanel if no custom one is provided
-  const RightPanelToRender = CustomRightPanel || RightPanel;
-
   return (
     <div className="min-h-screen bg-[#E6E9EC] dark:bg-gray-900 flex flex-col lg:block">
       {/* ===== MOBILE HEADER ===== */}
@@ -108,13 +94,6 @@ export default function DashboardLayout({
         {!hideSidebar && (
           <Sidebar collapsed={isExamActive ? true : leftCollapsed} setCollapsed={handleSetLeftCollapsed} isExamActive={isExamActive} />
         )}
-
-        {!isExamActive && !hideRightPanel && (
-          <RightPanelToRender
-            collapsed={rightCollapsed}
-            setCollapsed={handleSetRightCollapsed}
-          />
-        )}
       </div>
 
       {/* ===== UNIFIED MAIN CONTENT ===== */}
@@ -125,7 +104,6 @@ export default function DashboardLayout({
           lg:p-6 lg:pt-2
           transition-all duration-300
           ${hideSidebar ? "lg:ml-0" : (isExamActive ? "lg:ml-20" : (leftCollapsed ? "lg:ml-20" : "lg:ml-64"))}
-          ${(hideRightPanel || isExamActive) ? "lg:mr-0" : (rightCollapsed ? "lg:mr-0" : "lg:mr-80")}
         `}
       >
         {/* Desktop Header Row (Hidden on mobile) */}

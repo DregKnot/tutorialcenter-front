@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import axios from "axios";
 import { 
@@ -27,6 +28,7 @@ import { isReadOnlyStaff } from "../../../utils/roleUtils.js";
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
 export default function CoursesManagement() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("courses"); // "courses" | "subjects"
   const [activeView, setActiveView] = useState("main"); // "main" | "edit" | "disenrolled"
   const [courses, setCourses] = useState([]);
@@ -473,6 +475,19 @@ export default function CoursesManagement() {
                                         <button 
                                           onClick={(e) => { 
                                             e.stopPropagation(); 
+                                            setActiveMenu(null);
+                                            navigate(`/staffs/model-creation/${subject.id}`);
+                                          }}
+                                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all text-left group/item"
+                                        >
+                                          <div className="w-8 h-8 bg-[#0F2843]/10 rounded-lg flex items-center justify-center text-[#0F2843] dark:text-[#BB9E7F] group-hover/item:bg-[#0F2843] group-hover/item:text-white transition-all">
+                                            <BookOpenIcon className="w-4 h-4" />
+                                          </div>
+                                          <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Model Creation</span>
+                                        </button>
+                                        <button 
+                                          onClick={(e) => { 
+                                            e.stopPropagation(); 
                                             setSelectedSubject(subject);
                                             setInitialEditItem({ type: "subject", data: subject });
                                             setActiveTab("subjects");
@@ -580,6 +595,10 @@ export default function CoursesManagement() {
           setActiveTab("subjects");
           setActiveView("edit");
           setIsSubjectDetailModalOpen(false);
+        }}
+        onOpenCurriculum={(subject) => {
+          setIsSubjectDetailModalOpen(false);
+          navigate(`/staffs/model-creation/${subject.id}`);
         }}
       />
     </StaffDashboardLayout>

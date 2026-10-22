@@ -159,7 +159,7 @@ export default function SubjectCreate({ isOpen, onClose, onSuccess, courses, sho
             </div>
             <div>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight uppercase">FORGE SUBJECT</h2>
-              <p className="text-[#BB9E7F] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Knowledge Module Architect</p>
+              <p className="text-[#BB9E7F] text-[10px] font-black uppercase tracking-[0.2em] mt-1">Subject Management</p>
             </div>
           </div>
           <button onClick={onClose} className="p-4 hover:bg-[#E83831] rounded-2xl transition-all group active:scale-90 shadow-lg hover:shadow-red-900/20">
