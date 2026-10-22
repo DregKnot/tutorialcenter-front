@@ -475,16 +475,15 @@ export default function CoursesManagement() {
                                         <button 
                                           onClick={(e) => { 
                                             e.stopPropagation(); 
-                                            setSelectedSubject(subject);
-                                            setIsCurriculumStudioOpen(true);
                                             setActiveMenu(null);
+                                            navigate(`/staffs/model-creation/${subject.id}`);
                                           }}
                                           className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-xl transition-all text-left group/item"
                                         >
                                           <div className="w-8 h-8 bg-[#0F2843]/10 rounded-lg flex items-center justify-center text-[#0F2843] dark:text-[#BB9E7F] group-hover/item:bg-[#0F2843] group-hover/item:text-white transition-all">
                                             <BookOpenIcon className="w-4 h-4" />
                                           </div>
-                                          <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Curriculum</span>
+                                          <span className="text-[10px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Model Creation</span>
                                         </button>
                                         <button 
                                           onClick={(e) => { 
