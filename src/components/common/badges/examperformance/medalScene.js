@@ -1,3 +1,5 @@
+import { createDiamondTrophy } from "./diamondTrophy.js";
+
 export const FINISHES = {
   bronze: { metal: "#bc7746", enamel: "#174c3f", score: "60", name: "Bronze" },
   silver: { metal: "#cbd5e1", enamel: "#254f87", score: "70", name: "Silver" },
@@ -49,35 +51,8 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
   disc(1.16, 0.026, satin, 0.115);
   ring(0.98, 0.035, 0.16);
   ring(0.92, 0.012, 0.16);
-  if (finish.engraved) {
-    add(new THREE.RingGeometry(0.78, 0.90, 96), enamel, 0, 0, 0.1575);
-  } else {
-    disc(0.90, 0.025, enamel, 0.145);
-  }
-  if (finish.engraved) {
-    // The diamond is cut INTO the face plate. Every facet stays below its surface.
-    const face = new THREE.Shape();
-    face.absarc(0, 0, 0.78, 0, Math.PI * 2, false);
-    const outline = [[-0.33,0.49],[0.33,0.49],[0.48,0.23],[0,-0.27],[-0.48,0.23]];
-    const cutout = new THREE.Path();
-    outline.forEach(([x,y], i) => i ? cutout.lineTo(x,y) : cutout.moveTo(x,y));
-    cutout.closePath(); face.holes.push(cutout);
-    const plate = add(new THREE.ExtrudeGeometry(face, { depth:0.05, bevelEnabled:false, curveSegments:48 }), satin, 0, 0, 0.1275);
-    plate.name = "diamond-engraved-face";
-    disc(0.78, 0.012, metal, 0.128);
-    const A=[-0.33,0.49,0.158], B=[0,0.49,0.168], C=[0.33,0.49,0.158];
-    const D=[-0.48,0.23,0.158], E=[-0.17,0.23,0.169], F=[0.17,0.23,0.153], G=[0.48,0.23,0.158], H=[0,-0.27,0.158];
-    [[A,D,E],[A,E,B],[B,E,F],[B,F,C],[C,F,G],[D,H,E],[E,H,F],[F,H,G]].forEach(points => {
-      const center=points.reduce((sum,v)=>sum.map((n,i)=>n+v[i]/3),[0,0,0]);
-      const vertices=points.flatMap(v=>[center[0]+(v[0]-center[0])*0.94,center[1]+(v[1]-center[1])*0.94,v[2]]);
-      const geometry=new THREE.BufferGeometry();
-      geometry.setAttribute("position",new THREE.Float32BufferAttribute(vertices,3));
-      geometry.computeVertexNormals();
-      const facet=add(geometry,satin); facet.name="recessed-diamond-facet";
-    });
-  } else {
-    disc(0.78, 0.025, satin, 0.165);
-  }
+  disc(0.90, 0.025, enamel, 0.145);
+  disc(0.78, 0.025, satin, 0.165);
   ring(0.79, 0.016, 0.18);
   // Machined radial fluting: actual geometry catches the studio lights.
   const ribs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.017, 0.15, 0.035), metal, 72);
@@ -89,6 +64,7 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
     ribs.setMatrixAt(i, ribTransform.matrix);
   }
   medal.add(ribs);
+  const diamondTrophy = finish.engraved ? createDiamondTrophy(THREE, medal, metal) : null;
   // Raised victory cup, with extruded handles, stem and pedestal.
   if (!finish.engraved) {
   const cup = new THREE.Shape();
@@ -158,15 +134,18 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
     sprite.scale.setScalar(0.22); sprite.visible = true; medal.add(sprite);
     return sprite;
   });
-  const updateSparkles = (time, enabled) => glints.forEach((sprite, index) => {
+  const updateSparkles = (time, enabled) => {
+    diamondTrophy?.update(time, enabled);
+    glints.forEach((sprite, index) => {
     const pulse = Math.pow(Math.max(0, Math.sin(time * 1.8 + index * 2.1)), 12);
     sprite.material.opacity = enabled ? pulse : 0;
     sprite.scale.setScalar(0.12 + pulse * 0.16);
-  });
+    });
+  };
 
   medal.position.y = -0.14;
   medal.rotation.set(0.24, -0.48, -0.12);
-  return { scene, camera, medal, updateSparkles, dispose() {
+  return { scene, camera, medal, updateSparkles, updateTrophyGlow: diamondTrophy?.update, dispose() {
     const geometries = new Set(), materials = new Set();
     scene.traverse(object => {
       if (object.geometry) geometries.add(object.geometry);
@@ -174,6 +153,7 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
     });
     geometries.forEach(geometry => geometry.dispose());
     materials.forEach(material => material.dispose());
+    diamondTrophy?.dispose();
     texture.dispose(); reverseTexture.dispose(); glintTexture.dispose(); environment.dispose();
   }};
 }

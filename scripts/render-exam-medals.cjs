@@ -42,11 +42,19 @@ const server = http.createServer((req, res) => {
         renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
         const model = createMedalScene(THREE, RoomEnvironment, renderer, FINISHES[tier]);
         renderer.render(model.scene, model.camera);
-        const result = renderer.domElement.toDataURL('image/png').split(',')[1];
+        const quiet = renderer.domElement.toDataURL('image/png').split(',')[1];
+        let bright = null;
+        if (model.updateTrophyGlow) {
+          model.updateTrophyGlow(1.6, true);
+          renderer.render(model.scene, model.camera);
+          bright = renderer.domElement.toDataURL('image/png').split(',')[1];
+        }
+        const result = { quiet, bright };
         model.dispose(); renderer.dispose(); renderer.forceContextLoss();
         return result;
       }, { tier, folder });
-      fs.writeFileSync(path.join(root, folder, 'renders', `${tier}.png`), Buffer.from(data, 'base64'));
+      fs.writeFileSync(path.join(root, folder, 'renders', `${tier}.png`), Buffer.from(data.quiet, 'base64'));
+      if (data.bright) fs.writeFileSync(path.join(root, folder, 'renders', `${tier}-pulse.png`), Buffer.from(data.bright, 'base64'));
       console.log(`Rendered ${tier}`);
     }
   } finally { if (browser) await browser.close(); server.close(); }
