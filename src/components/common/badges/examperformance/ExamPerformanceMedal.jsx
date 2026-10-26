@@ -6,6 +6,7 @@ import silver from "./renders/silver.png";
 import gold from "./renders/gold.png";
 import platinum from "./renders/platinum.png";
 import diamond from "./renders/diamond.png";
+import diamondPulse from "./renders/diamond-pulse.png";
 import "./examCelebration.css";
 
 const RENDERS = { bronze, silver, gold, platinum, diamond };
@@ -127,6 +128,7 @@ export default function ExamPerformanceMedal({ tier = "gold", size = 180, earned
   return <div className={`${interactive ? "" : "exam-medal--static"} ${className}`} data-motion={spin && earned ? "spin" : "still"} data-sparkles={premiumSparkles ? "true" : "false"} role="img" aria-label={`${finish.name} exam performance medal, ${finish.score}% mastery${earned ? "" : ", locked"}`} style={{ width: size, height: size, position: "relative", filter: earned ? undefined : "grayscale(1) contrast(.75)", opacity: earned ? 1 : 0.4 }}>
     <div className={!ready && spin && earned ? "exam-medal__fallback--spin" : undefined} style={{ position: "absolute", inset: 0, opacity: ready ? 0 : 1 }} aria-hidden="true">
       <img src={RENDERS[tier] || gold} alt="" width={size} height={size} style={{ width: "100%", height: "100%", opacity: ready ? 0 : 1 }} />
+      {!ready && tier === "diamond" && premiumSparkles && <img src={diamondPulse} alt="" className="exam-medal__diamond-pulse" width={size} height={size} />}
       {!ready && premiumSparkles && [[25,29],[76,48],[32,78],[72,22]].map(([left, top], index) =>
         <i key={index} className="exam-medal__glint" style={{ left: `${left}%`, top: `${top}%`, animationDelay: `${index * -1.2}s` }} />)}
     </div>
