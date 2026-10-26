@@ -88,9 +88,53 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
     fold.rotation.z = side * -0.24;
   });
 
+  // Finished reverse: concentric machining and an inset maker's seal.
+  ring(1.20, 0.035, -0.21);
+  ring(0.95, 0.014, -0.212);
+  const reverseLabel = document.createElement("canvas");
+  reverseLabel.width = 512; reverseLabel.height = 512;
+  const reverseCtx = reverseLabel.getContext("2d");
+  reverseCtx.fillStyle = finish.enamel;
+  reverseCtx.textAlign = "center";
+  reverseCtx.font = "bold 120px Georgia"; reverseCtx.fillText("TC", 256, 245);
+  reverseCtx.font = "24px sans-serif"; reverseCtx.fillText("ACADEMIC EXCELLENCE", 256, 300);
+  reverseCtx.font = "18px sans-serif"; reverseCtx.fillText("TUTORIAL CENTER AFRICA", 256, 342);
+  const reverseTexture = new THREE.CanvasTexture(reverseLabel);
+  reverseTexture.colorSpace = THREE.SRGBColorSpace;
+  const reverseSeal = add(new THREE.PlaneGeometry(1.6, 1.6), new THREE.MeshBasicMaterial({ map: reverseTexture, transparent: true }), 0, 0, -0.215);
+  reverseSeal.rotation.y = Math.PI;
+
+  // Small highlights attached to the rim; depth testing hides them behind the metal.
+  const glintCanvas = document.createElement("canvas");
+  glintCanvas.width = 64; glintCanvas.height = 64;
+  const glintCtx = glintCanvas.getContext("2d");
+  const glow = glintCtx.createRadialGradient(32, 32, 0, 32, 32, 30);
+  glow.addColorStop(0, "rgba(255,255,255,1)");
+  glow.addColorStop(0.15, "rgba(255,247,211,.7)");
+  glow.addColorStop(1, "rgba(255,247,211,0)");
+  glintCtx.fillStyle = glow; glintCtx.fillRect(0, 0, 64, 64);
+  glintCtx.fillStyle = "white";
+  glintCtx.beginPath(); glintCtx.moveTo(32, 0); glintCtx.lineTo(35, 29);
+  glintCtx.lineTo(64, 32); glintCtx.lineTo(35, 35); glintCtx.lineTo(32, 64);
+  glintCtx.lineTo(29, 35); glintCtx.lineTo(0, 32); glintCtx.lineTo(29, 29); glintCtx.closePath(); glintCtx.fill();
+  const glintTexture = new THREE.CanvasTexture(glintCanvas);
+  const glints = Array.from({ length: 8 }, (_, i) => {
+    const angle = i * Math.PI * 2 / 8 + 0.2;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glintTexture, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    sprite.position.set(Math.cos(angle) * 1.21, Math.sin(angle) * 1.21, i % 2 ? -0.25 : 0.20);
+    sprite.scale.setScalar(0.22); sprite.visible = false; medal.add(sprite);
+    return sprite;
+  });
+  const updateSparkles = (time, enabled) => glints.forEach((sprite, index) => {
+    const pulse = Math.pow(Math.max(0, Math.sin(time * 1.8 + index * 2.1)), 12);
+    sprite.visible = enabled && pulse > 0.01;
+    sprite.material.opacity = pulse;
+    sprite.scale.setScalar(0.12 + pulse * 0.16);
+  });
+
   medal.position.y = -0.14;
   medal.rotation.set(0.24, -0.48, -0.12);
-  return { scene, camera, medal, dispose() {
+  return { scene, camera, medal, updateSparkles, dispose() {
     const geometries = new Set(), materials = new Set();
     scene.traverse(object => {
       if (object.geometry) geometries.add(object.geometry);
@@ -98,6 +142,6 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
     });
     geometries.forEach(geometry => geometry.dispose());
     materials.forEach(material => material.dispose());
-    texture.dispose(); environment.dispose();
+    texture.dispose(); reverseTexture.dispose(); glintTexture.dispose(); environment.dispose();
   }};
 }

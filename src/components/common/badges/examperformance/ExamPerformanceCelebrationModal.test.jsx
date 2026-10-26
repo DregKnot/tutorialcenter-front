@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import ExamPerformanceCelebrationModal from "./ExamPerformanceCelebrationModal";
 
 describe("ExamPerformanceCelebrationModal Component", () => {
@@ -47,8 +47,8 @@ describe("ExamPerformanceCelebrationModal Component", () => {
     );
 
     expect(screen.getByText(/Exam Performance Milestone • 90% Mastery/i)).toBeInTheDocument();
-    expect(screen.getByText(/Congratulations!/i)).toBeInTheDocument();
-    expect(screen.getByText(/You Unlocked Platinum Master!/i)).toBeInTheDocument();
+    expect(screen.getByText(/Achievement unlocked/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Platinum Master" })).toBeInTheDocument();
     expect(screen.getByText("Return to Trophy Room")).toBeInTheDocument();
     expect(screen.getByText("Replay Celebration")).toBeInTheDocument();
   });
@@ -117,7 +117,7 @@ describe("ExamPerformanceCelebrationModal Component", () => {
     );
 
     expect(screen.getByText(/Exam Performance Milestone • 95% Mastery/i)).toBeInTheDocument();
-    expect(screen.getByText(/You Unlocked Diamond Legend!/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Diamond Legend" })).toBeInTheDocument();
   });
 
   test("calls onClose when pressing Escape key", () => {
@@ -131,5 +131,51 @@ describe("ExamPerformanceCelebrationModal Component", () => {
 
     fireEvent.keyDown(window, { key: "Escape" });
     expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+
+describe("exam ceremony sequence", () => {
+  beforeEach(() => { jest.useFakeTimers(); });
+  afterEach(() => { jest.useRealTimers(); });
+
+  test.each([ ["bronze", false], ["silver", false], ["gold", true], ["platinum", true], ["diamond", true] ])(
+    "%s rotates after the reveal with the correct sparkle treatment", (tier, hasSparkles) => {
+      const { container } = render(<ExamPerformanceCelebrationModal achievement={{ tier }} onClose={() => {}} />);
+      const dialog = screen.getByRole("dialog");
+      const medal = container.querySelector("[data-motion]");
+      expect(dialog).toHaveAttribute("data-phase", "anticipation");
+      expect(medal).toHaveAttribute("data-motion", "still");
+      expect(medal).toHaveAttribute("data-sparkles", "false");
+      act(() => jest.advanceTimersByTime(600));
+      expect(dialog).toHaveAttribute("data-phase", "reveal");
+      expect(medal).toHaveAttribute("data-motion", "still");
+      act(() => jest.advanceTimersByTime(3600));
+      expect(dialog).toHaveAttribute("data-phase", "display");
+      expect(medal).toHaveAttribute("data-motion", "spin");
+      expect(medal).toHaveAttribute("data-sparkles", String(hasSparkles));
+      expect(container.querySelectorAll(".exam-medal__glint").length > 0).toBe(hasSparkles);
+      fireEvent.click(screen.getByText("Replay Celebration"));
+      expect(dialog).toHaveAttribute("data-phase", "anticipation");
+      const replayMedal = container.querySelector("[data-motion]");
+      expect(replayMedal).toHaveAttribute("data-motion", "still");
+      expect(replayMedal).toHaveAttribute("data-sparkles", "false");
+    }
+  );
+
+  test("cleans up pending reveal timers on close", () => {
+    const { unmount } = render(<ExamPerformanceCelebrationModal achievement={{ tier: "gold" }} onClose={() => {}} />);
+    unmount();
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  test("skips the reveal when reduced motion is preferred", () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = jest.fn(() => ({ matches: true, addEventListener: jest.fn(), removeEventListener: jest.fn() }));
+    try {
+      render(<ExamPerformanceCelebrationModal achievement={{ tier: "gold" }} onClose={() => {}} />);
+      expect(screen.getByRole("dialog")).toHaveAttribute("data-phase", "display");
+      expect(jest.getTimerCount()).toBe(0);
+    } finally { window.matchMedia = originalMatchMedia; }
   });
 });

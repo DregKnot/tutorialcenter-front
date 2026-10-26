@@ -1,0 +1,49 @@
+.exam-ceremony { position:fixed; inset:0; z-index:200; overflow-y:auto; overflow-x:hidden; background:#06090f; color:#f8f4eb; isolation:isolate; display:flex; flex-direction:column; font-family:"DM Sans",system-ui,sans-serif; }
+.exam-ceremony__ambience { position:fixed; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(ellipse at 50% 32%,rgba(var(--award-rgb),.09),transparent 53%),linear-gradient(125deg,#090f1c,#06090f 60%); }
+.exam-ceremony__header { display:flex; align-items:center; justify-content:space-between; width:min(1100px,100%); margin:0 auto; padding:24px 28px 0; gap:16px; }
+.exam-ceremony__eyebrow { display:flex; align-items:center; gap:10px; color:var(--award-accent); font-size:10px; letter-spacing:.15em; text-transform:uppercase; }
+.exam-ceremony__close { flex-shrink:0; border:1px solid #ffffff25; background:#ffffff08; color:#e2e8f0; width:42px; height:42px; display:grid; place-items:center; border-radius:50%; cursor:pointer; }
+.exam-ceremony button { transition:background .2s,transform .2s; }
+.exam-ceremony button:hover { background-color:#ffffff16; }
+.exam-ceremony button:focus-visible { outline:2px solid var(--award-accent); outline-offset:5px; }
+.exam-ceremony__main { overflow:hidden; width:100%; margin:auto; display:flex; flex-direction:column; align-items:center; padding:0 24px 24px; }
+.exam-ceremony__stage { position:relative; width:min(540px,100%); height:400px; display:flex; justify-content:center; align-items:center; perspective:1100px; flex-shrink:0; }
+.exam-ceremony__medal { position:relative; z-index:3; filter:drop-shadow(0 28px 20px #0009); opacity:1; transform:translateY(0) scale(1); transition:opacity 1s,transform 1.8s cubic-bezier(.16,1,.3,1); }
+.exam-ceremony[data-phase="anticipation"] .exam-ceremony__medal { opacity:0; transform:translateY(26px) scale(.72) rotateY(-40deg); }
+.exam-ceremony__halo { position:absolute; width:350px; height:350px; border-radius:50%; background:radial-gradient(circle,rgba(var(--award-rgb),.16),transparent 68%); opacity:0; transform:scale(.6); transition:opacity 1.4s,transform 2.8s; }
+.exam-ceremony[data-phase="reveal"] .exam-ceremony__halo { opacity:1; transform:scale(1.25); }
+.exam-ceremony[data-phase="display"] .exam-ceremony__halo { opacity:.6; transform:scale(1); }
+.exam-ceremony__beam { position:absolute; top:-170px; height:500px; width:190px; background:linear-gradient(to bottom,rgba(var(--award-rgb),.13),transparent); filter:blur(18px); clip-path:polygon(43% 0,57% 0,100% 100%,0 100%); transform-origin:top center; transition:opacity 2.5s,transform 3s; opacity:.8; pointer-events:none; }
+.exam-ceremony__beam--left { left:10%; transform:rotate(-18deg); }
+.exam-ceremony__beam--right { right:10%; transform:rotate(18deg); }
+.exam-ceremony[data-phase="reveal"] .exam-ceremony__beam--left { transform:rotate(-4deg); }
+.exam-ceremony[data-phase="reveal"] .exam-ceremony__beam--right { transform:rotate(4deg); }
+.exam-ceremony[data-phase="display"] .exam-ceremony__beam { opacity:.2; }
+.exam-ceremony__orbit { position:absolute; width:330px; height:330px; border:1px solid rgba(var(--award-rgb),.13); border-radius:50%; transform:rotateX(66deg) translateZ(-120px); }
+.exam-ceremony__burst { position:absolute; width:240px; height:240px; border:1px solid rgba(var(--award-rgb),.6); border-radius:50%; opacity:0; pointer-events:none; }
+.exam-ceremony[data-phase="reveal"] .exam-ceremony__burst { animation:exam-award-burst 2s ease-out both; }
+.exam-ceremony__plinth { position:absolute; bottom:43px; width:200px; height:22px; border-radius:50%; background:radial-gradient(ellipse,rgba(var(--award-rgb),.22),transparent 70%); filter:blur(6px); }
+.exam-ceremony__stage-label { position:absolute; bottom:10px; color:#8390a4; font-size:9px; text-transform:uppercase; letter-spacing:.36em; }
+.exam-ceremony__copy { position:relative; text-align:center; max-width:490px; transition:opacity .8s,transform .8s; }
+.exam-ceremony[data-phase="anticipation"] .exam-ceremony__copy { opacity:0; transform:translateY(12px); }
+.exam-ceremony__kicker { color:var(--award-accent); font-size:10px; text-transform:uppercase; letter-spacing:.3em; margin:10px 0 12px; }
+.exam-ceremony__copy h2 { font-family:Georgia,"Times New Roman",serif; font-weight:400; font-size:clamp(38px,5vw,54px); letter-spacing:-.035em; line-height:1.1; margin:0; }
+.exam-ceremony__distinction { font-size:11px; color:#d7dfec; letter-spacing:.16em; text-transform:uppercase; margin:15px 0 12px; }
+.exam-ceremony__description { font-size:13px; line-height:1.8; color:#8d9bb0; max-width:440px; margin:0 auto; }
+.exam-ceremony__actions { display:flex; justify-content:center; align-items:center; gap:12px; margin-top:26px; }
+.exam-ceremony__actions button { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:14px 19px; font-size:12px; font-weight:600; cursor:pointer; border-radius:9px; }
+.exam-ceremony__return { border:1px solid rgba(var(--award-rgb),.5); background:rgba(var(--award-rgb),.12); color:#f8f4eb; }
+.exam-ceremony__replay { border:1px solid #ffffff12; background:transparent; color:#a8b3c5; }
+.exam-ceremony__footer { flex-shrink:0; padding:16px 20px 22px; text-align:center; font-size:9px; text-transform:uppercase; letter-spacing:.2em; color:#657084; }
+.exam-ceremony__footer span { margin:0 12px; color:var(--award-accent); }
+@keyframes exam-award-burst { 0% { transform:scale(.6); opacity:0; } 18% { opacity:.65; } 100% { transform:scale(1.9); opacity:0; } }
+.exam-medal__fallback--spin { animation:exam-medal-turn 16s linear infinite; transform-style:preserve-3d; }
+@keyframes exam-medal-turn { from { transform:perspective(900px) rotateY(0deg); } to { transform:perspective(900px) rotateY(360deg); } }
+.exam-medal__glint { position:absolute; width:17px; height:17px; color:#fff8d9; opacity:0; animation:exam-medal-glint 4.8s ease-in-out infinite; filter:drop-shadow(0 0 5px #fff5c4); pointer-events:none; }
+.exam-medal__glint::before,.exam-medal__glint::after { content:""; position:absolute; background:currentColor; border-radius:50%; }
+.exam-medal__glint::before { left:45%; top:0; width:10%; height:100%; }
+.exam-medal__glint::after { top:45%; left:0; height:10%; width:100%; }
+@keyframes exam-medal-glint { 0%,45%,85%,100% { opacity:0; transform:scale(.3) rotate(0); } 63% { opacity:1; transform:scale(1) rotate(18deg); } }
+@media(max-width:600px) { .exam-ceremony__header { padding:16px 16px 0; } .exam-ceremony__eyebrow { font-size:8px; letter-spacing:.08em; } .exam-ceremony__stage { height:330px; } .exam-ceremony__medal { zoom:.82; } .exam-ceremony__actions { flex-direction:column; gap:8px; margin-top:20px; } .exam-ceremony__actions button { width:100%; } .exam-ceremony__copy { max-width:340px; } .exam-ceremony__footer { font-size:8px; letter-spacing:.1em; } }
+@media(max-height:760px) and (min-width:601px) { .exam-ceremony__stage { height:310px; } .exam-ceremony__medal { zoom:.8; } .exam-ceremony__copy h2 { font-size:42px; } .exam-ceremony__actions { margin-top:18px; } }
+@media(prefers-reduced-motion:reduce) { .exam-ceremony *, .exam-medal__fallback--spin, .exam-medal__glint { animation:none!important; transition:none!important; } .exam-medal__glint { display:none; } }
