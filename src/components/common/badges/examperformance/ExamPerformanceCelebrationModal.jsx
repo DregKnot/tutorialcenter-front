@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { X, RotateCcw, ArrowLeft, Trophy, Sparkles } from "lucide-react";
-import TCMedal from "../TCMedal";
+import ExamPerformanceMedal from "./ExamPerformanceMedal";
 
 const hash = (v) => {
   const sine = Math.sin(v * 12.9898) * 43758.5453;
@@ -302,14 +302,12 @@ export default function ExamPerformanceCelebrationModal({
             : "opacity-0 scale-90 -translate-y-8 pointer-events-none"
         }`}
       >
-        {/* Floating Grand Medal with 3D Sculpted Victory Cup & Ordered Wings */}
+        {/* Studio-lit minted medal with a raised victory cup */}
         <div className="py-2 transform transition-transform hover:scale-105 duration-300 drop-shadow-[0_25px_50px_rgba(0,0,0,0.8)]">
-          <TCMedal
+          <ExamPerformanceMedal
             tier={tierKey}
-            gemColor={config.gemColor}
-            useTrophyCup={true}
-            size={220}
-            glow={true}
+            size={280}
+            animated={true}
           />
         </div>
 

@@ -5,6 +5,7 @@ import {
   Lock, Compass, GraduationCap, CheckSquare
 } from 'lucide-react';
 import TCMedal from './TCMedal';
+import ExamPerformanceMedal from './examperformance/ExamPerformanceMedal';
 import BaseBadge3D from './BaseBadge3D';
 import FirstStepBadge from './onboardingmedals/FirstStepBadge';
 import WelcomeAboardBadge from './onboardingmedals/WelcomeAboardBadge';
@@ -308,6 +309,8 @@ export default function AchievementVisualRenderer({
             <SurveyPioneerBadge size={size} earned={true} animated={animated} />
           ) : code === "onboarding.first_step" ? (
             <FirstStepBadge size={size} earned={true} />
+          ) : category === "exam_performance" ? (
+            <ExamPerformanceMedal tier={medalTier} size={size} earned={true} animated={animated} />
           ) : isMedal ? (
             <TCMedal 
               tier={medalTier} 
@@ -391,6 +394,8 @@ export default function AchievementVisualRenderer({
             <SurveyPioneerBadge size={size} earned={false} />
           ) : code === "onboarding.first_step" ? (
             <FirstStepBadge size={size} earned={false} />
+          ) : category === "exam_performance" ? (
+            <ExamPerformanceMedal tier={medalTier} size={size} earned={false} />
           ) : isMedal ? (
             <TCMedal 
               tier={medalTier} 
