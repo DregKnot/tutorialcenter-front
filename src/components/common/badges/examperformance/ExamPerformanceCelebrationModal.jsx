@@ -60,7 +60,7 @@ export default function ExamPerformanceCelebrationModal({ achievement, onClose }
     ["diamond", "platinum", "gold", "silver"].find(value => code.includes(value)) || "bronze";
   const config = TIER_CONFIG[tier];
   const premium = ["gold", "platinum", "diamond"].includes(tier);
-  const showcasing = phase === "display";
+  const showcasing = phase !== "anticipation";
 
   useEffect(() => {
     const query = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -72,8 +72,8 @@ export default function ExamPerformanceCelebrationModal({ achievement, onClose }
   useEffect(() => {
     if (reducedMotion) { setPhase("display"); return undefined; }
     setPhase("anticipation");
-    const reveal = setTimeout(() => setPhase("reveal"), 600);
-    const settle = setTimeout(() => setPhase("display"), 4200);
+    const reveal = setTimeout(() => setPhase("reveal"), 120);
+    const settle = setTimeout(() => setPhase("display"), 900);
     return () => { clearTimeout(reveal); clearTimeout(settle); };
   }, [replay, tier, achievement?.id, reducedMotion]);
 
@@ -111,14 +111,14 @@ export default function ExamPerformanceCelebrationModal({ achievement, onClose }
       </header>
 
       <main className="exam-ceremony__main">
-        <div key={replay} className="exam-ceremony__stage" aria-hidden="true">
+        <div className="exam-ceremony__stage" aria-hidden="true">
           <div className="exam-ceremony__beam exam-ceremony__beam--left" />
           <div className="exam-ceremony__beam exam-ceremony__beam--right" />
           <div className="exam-ceremony__halo" />
           <div className="exam-ceremony__orbit" />
           <div className="exam-ceremony__burst" />
           <div className="exam-ceremony__medal">
-            <ExamPerformanceMedal tier={tier} size={360} animated={showcasing}
+            <ExamPerformanceMedal tier={tier} size={360} interactive
               spin={showcasing} sparkles={showcasing && premium} />
           </div>
           <div className="exam-ceremony__plinth" />

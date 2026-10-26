@@ -1,4 +1,5 @@
 import React from 'react';
+import { CelebrationActivityContext } from '../../../context/CelebrationActivityContext';
 import { 
   UserPlus, UserCheck, BookOpen, Play, Target, Award, Flame,
   Clock, Zap, TrendingUp, Crown, Trophy, Sparkles,
@@ -223,6 +224,8 @@ export default function AchievementVisualRenderer({
   onClick = null,
   className = "",
 }) {
+  const celebrationActive = React.useContext(CelebrationActivityContext);
+  const shouldAnimate = animated && !celebrationActive;
   if (!achievement) return null;
 
   const count = Number(earnedCount ?? achievement.earned_count ?? achievement.awards?.length ?? 1);
@@ -258,39 +261,39 @@ export default function AchievementVisualRenderer({
       {earned ? (
         <div className="relative flex items-center justify-center">
           {code === "practice.education_legend" ? (
-            <EducationLegendMedal size={size} earned={true} count="25,000" animated={animated} />
+            <EducationLegendMedal size={size} earned={true} count="25,000" animated={shouldAnimate} />
           ) : code === "practice.master_scholar" ? (
-            <MasterScholarMedal size={size} earned={true} count="10,000" animated={animated} />
+            <MasterScholarMedal size={size} earned={true} count="10,000" animated={shouldAnimate} />
           ) : code === "practice.learning_machine" ? (
-            <LearningMachineMedal size={size} earned={true} count="5,000" animated={animated} />
+            <LearningMachineMedal size={size} earned={true} count="5,000" animated={shouldAnimate} />
           ) : code === "practice.practice_champion" ? (
-            <PracticeChampionMedal size={size} earned={true} count="2,500" animated={animated} />
+            <PracticeChampionMedal size={size} earned={true} count="2,500" animated={shouldAnimate} />
           ) : code === "practice.academic_hero" ? (
-            <AcademicHeroMedal size={size} earned={true} count="1,000" animated={animated} />
+            <AcademicHeroMedal size={size} earned={true} count="1,000" animated={shouldAnimate} />
           ) : code === "practice.study_warrior" ? (
-            <StudyWarriorMedal size={size} earned={true} count={500} animated={animated} />
+            <StudyWarriorMedal size={size} earned={true} count={500} animated={shouldAnimate} />
           ) : code === "practice.knowledge_hunter" ? (
-            <KnowledgeHunterMedal size={size} earned={true} count={250} animated={animated} />
+            <KnowledgeHunterMedal size={size} earned={true} count={250} animated={shouldAnimate} />
           ) : code === "practice.question_challenger" ? (
-            <QuestionChallengerMedal size={size} earned={true} count={100} animated={animated} />
+            <QuestionChallengerMedal size={size} earned={true} count={100} animated={shouldAnimate} />
           ) : code === "practice.question_explorer" ? (
-            <QuestionExplorerMedal size={size} earned={true} count={50} animated={animated} />
+            <QuestionExplorerMedal size={size} earned={true} count={50} animated={shouldAnimate} />
           ) : (code === "streak.year_of_excellence" || code === "streak.365_day_excellence" || code === "year_of_excellence") ? (
-            <YearOfExcellenceBadge size={size} earned={true} count={365} animated={animated} />
+            <YearOfExcellenceBadge size={size} earned={true} count={365} animated={shouldAnimate} />
           ) : (code === "streak.study_legend" || code === "streak.180_day_legend" || code === "study_legend") ? (
-            <StudyLegendBadge size={size} earned={true} count={180} animated={animated} />
+            <StudyLegendBadge size={size} earned={true} count={180} animated={shouldAnimate} />
           ) : (code === "streak.academic_marathoner" || code === "streak.100_day_marathon" || code === "academic_marathoner") ? (
-            <AcademicMarathonerBadge size={size} earned={true} count={100} animated={animated} />
+            <AcademicMarathonerBadge size={size} earned={true} count={100} animated={shouldAnimate} />
           ) : (code === "streak.learning_machine" || code === "streak.60_day_machine" || code === "streak_learning_machine") ? (
-            <LearningMachineStreakBadge size={size} earned={true} count={60} animated={animated} />
+            <LearningMachineStreakBadge size={size} earned={true} count={60} animated={shouldAnimate} />
           ) : (code === "streak.monthly_achiever" || code === "streak.30_day_blaze" || code === "monthly_achiever") ? (
-            <MonthlyAchieverBadge size={size} earned={true} count={30} animated={animated} />
+            <MonthlyAchieverBadge size={size} earned={true} count={30} animated={shouldAnimate} />
           ) : (code === "streak.weekly_warrior" || code === "streak.14_day_warrior" || code === "weekly_warrior") ? (
-            <WeeklyWarriorBadge size={size} earned={true} count={14} animated={animated} />
+            <WeeklyWarriorBadge size={size} earned={true} count={14} animated={shouldAnimate} />
           ) : (code === "streak.study_habit_builder" || code === "streak.7_day_blaze" || code === "study_habit_builder") ? (
-            <StudyHabitBuilderBadge size={size} earned={true} count={7} animated={animated} />
+            <StudyHabitBuilderBadge size={size} earned={true} count={7} animated={shouldAnimate} />
           ) : (code === "streak.consistent_learner" || code === "streak.3_day_flame" || code === "consistent_learner") ? (
-            <ConsistentLearnerBadge size={size} earned={true} count={3} animated={animated} />
+            <ConsistentLearnerBadge size={size} earned={true} count={3} animated={shouldAnimate} />
           ) : (code === "onboarding.learning_begins" || code === "learning_begins") ? (
             <LearningBeginsBadge size={size} earned={true} />
           ) : code === "onboarding.first_achievement" ? (
@@ -306,13 +309,14 @@ export default function AchievementVisualRenderer({
           ) : code === "onboarding.welcome_aboard" ? (
             <WelcomeAboardBadge size={size} earned={true} />
           ) : (code === "special_event.survey_pioneer" || code === "survey_pioneer") ? (
-            <SurveyPioneerBadge size={size} earned={true} animated={animated} />
+            <SurveyPioneerBadge size={size} earned={true} animated={shouldAnimate} />
           ) : code === "onboarding.first_step" ? (
             <FirstStepBadge size={size} earned={true} />
           ) : category === "exam_performance" ? (
-            <ExamPerformanceMedal tier={medalTier} size={size} earned={true} animated={animated} />
+            <ExamPerformanceMedal tier={medalTier} size={size} earned={true} animated={shouldAnimate} />
           ) : isMedal ? (
-            <TCMedal 
+            <TCMedal
+              animated={shouldAnimate}
               tier={medalTier} 
               gemColor={gemColor} 
               Icon={IconComponent} 
@@ -397,7 +401,8 @@ export default function AchievementVisualRenderer({
           ) : category === "exam_performance" ? (
             <ExamPerformanceMedal tier={medalTier} size={size} earned={false} />
           ) : isMedal ? (
-            <TCMedal 
+            <TCMedal
+              animated={shouldAnimate}
               tier={medalTier} 
               gemColor="darkBlue" 
               Icon={IconComponent} 

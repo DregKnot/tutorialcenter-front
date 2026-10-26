@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { CelebrationActivityContext } from './CelebrationActivityContext';
 import AchievementCelebrationModal from '../components/common/AchievementCelebrationModal';
 import { Sparkles, X } from 'lucide-react';
 
@@ -94,6 +95,7 @@ export const AchievementProvider = ({ children }) => {
         triggerToast,
       }}
     >
+      <CelebrationActivityContext.Provider value={Boolean(activeModal)}>
       {children}
 
       {/* Global Celebration Modal */}
@@ -133,6 +135,7 @@ export const AchievementProvider = ({ children }) => {
           </div>
         ))}
       </div>
+      </CelebrationActivityContext.Provider>
     </AchievementContext.Provider>
   );
 };
