@@ -147,10 +147,10 @@ describe("exam ceremony sequence", () => {
       expect(dialog).toHaveAttribute("data-phase", "anticipation");
       expect(medal).toHaveAttribute("data-motion", "still");
       expect(medal).toHaveAttribute("data-sparkles", "false");
-      act(() => jest.advanceTimersByTime(600));
+      act(() => jest.advanceTimersByTime(120));
       expect(dialog).toHaveAttribute("data-phase", "reveal");
-      expect(medal).toHaveAttribute("data-motion", "still");
-      act(() => jest.advanceTimersByTime(3600));
+      expect(medal).toHaveAttribute("data-motion", "spin");
+      act(() => jest.advanceTimersByTime(780));
       expect(dialog).toHaveAttribute("data-phase", "display");
       expect(medal).toHaveAttribute("data-motion", "spin");
       expect(medal).toHaveAttribute("data-sparkles", String(hasSparkles));
@@ -158,6 +158,7 @@ describe("exam ceremony sequence", () => {
       fireEvent.click(screen.getByText("Replay Celebration"));
       expect(dialog).toHaveAttribute("data-phase", "anticipation");
       const replayMedal = container.querySelector("[data-motion]");
+      expect(replayMedal).toBe(medal);
       expect(replayMedal).toHaveAttribute("data-motion", "still");
       expect(replayMedal).toHaveAttribute("data-sparkles", "false");
     }

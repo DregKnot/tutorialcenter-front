@@ -3,7 +3,7 @@ export const FINISHES = {
   silver: { metal: "#cbd5e1", enamel: "#254f87", score: "70", name: "Silver" },
   gold: { metal: "#e7b94f", enamel: "#9c293e", score: "80", name: "Gold" },
   platinum: { metal: "#dae8ed", enamel: "#087e8b", score: "90", name: "Platinum" },
-  diamond: { metal: "#d8edff", enamel: "#387fbb", score: "95", name: "Diamond" },
+  diamond: { metal: "#d8edff", enamel: "#387fbb", score: "95", name: "Diamond", engraved: true },
 };
 
 
@@ -49,16 +49,48 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
   disc(1.16, 0.026, satin, 0.115);
   ring(0.98, 0.035, 0.16);
   ring(0.92, 0.012, 0.16);
-  disc(0.90, 0.025, enamel, 0.145);
-  disc(0.78, 0.025, satin, 0.165);
+  if (finish.engraved) {
+    add(new THREE.RingGeometry(0.78, 0.90, 96), enamel, 0, 0, 0.1575);
+  } else {
+    disc(0.90, 0.025, enamel, 0.145);
+  }
+  if (finish.engraved) {
+    // The diamond is cut INTO the face plate. Every facet stays below its surface.
+    const face = new THREE.Shape();
+    face.absarc(0, 0, 0.78, 0, Math.PI * 2, false);
+    const outline = [[-0.33,0.49],[0.33,0.49],[0.48,0.23],[0,-0.27],[-0.48,0.23]];
+    const cutout = new THREE.Path();
+    outline.forEach(([x,y], i) => i ? cutout.lineTo(x,y) : cutout.moveTo(x,y));
+    cutout.closePath(); face.holes.push(cutout);
+    const plate = add(new THREE.ExtrudeGeometry(face, { depth:0.05, bevelEnabled:false, curveSegments:48 }), satin, 0, 0, 0.1275);
+    plate.name = "diamond-engraved-face";
+    disc(0.78, 0.012, metal, 0.128);
+    const A=[-0.33,0.49,0.158], B=[0,0.49,0.168], C=[0.33,0.49,0.158];
+    const D=[-0.48,0.23,0.158], E=[-0.17,0.23,0.169], F=[0.17,0.23,0.153], G=[0.48,0.23,0.158], H=[0,-0.27,0.158];
+    [[A,D,E],[A,E,B],[B,E,F],[B,F,C],[C,F,G],[D,H,E],[E,H,F],[F,H,G]].forEach(points => {
+      const center=points.reduce((sum,v)=>sum.map((n,i)=>n+v[i]/3),[0,0,0]);
+      const vertices=points.flatMap(v=>[center[0]+(v[0]-center[0])*0.94,center[1]+(v[1]-center[1])*0.94,v[2]]);
+      const geometry=new THREE.BufferGeometry();
+      geometry.setAttribute("position",new THREE.Float32BufferAttribute(vertices,3));
+      geometry.computeVertexNormals();
+      const facet=add(geometry,satin); facet.name="recessed-diamond-facet";
+    });
+  } else {
+    disc(0.78, 0.025, satin, 0.165);
+  }
   ring(0.79, 0.016, 0.18);
   // Machined radial fluting: actual geometry catches the studio lights.
+  const ribs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.017, 0.15, 0.035), metal, 72);
+  const ribTransform = new THREE.Object3D();
   for (let i = 0; i < 72; i += 1) {
     const angle = i / 72 * Math.PI * 2;
-    const rib = add(new THREE.BoxGeometry(0.017, 0.15, 0.035), metal, Math.sin(angle) * 1.095, Math.cos(angle) * 1.095, 0.15);
-    rib.rotation.z = -angle;
+    ribTransform.position.set(Math.sin(angle) * 1.095, Math.cos(angle) * 1.095, 0.15);
+    ribTransform.rotation.z = -angle; ribTransform.updateMatrix();
+    ribs.setMatrixAt(i, ribTransform.matrix);
   }
+  medal.add(ribs);
   // Raised victory cup, with extruded handles, stem and pedestal.
+  if (!finish.engraved) {
   const cup = new THREE.Shape();
   cup.moveTo(-0.34, 0.46); cup.lineTo(0.34, 0.46);
   cup.bezierCurveTo(0.32, 0.08, 0.12, 0.02, 0.055, 0.01);
@@ -70,6 +102,7 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
   [-1, 1].forEach(side => {
     add(new THREE.TorusGeometry(0.15, 0.035, 12, 32), metal, side * 0.32, 0.32, 0.23);
   });
+  }
   // Printed score is backed by a raised metallic cartouche.
   const plaque = add(new THREE.BoxGeometry(0.78, 0.27, 0.045), metal, 0, -0.49, 0.20);
   const label = document.createElement("canvas"); label.width = 512; label.height = 160;
@@ -122,13 +155,12 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
     const angle = i * Math.PI * 2 / 8 + 0.2;
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glintTexture, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
     sprite.position.set(Math.cos(angle) * 1.21, Math.sin(angle) * 1.21, i % 2 ? -0.25 : 0.20);
-    sprite.scale.setScalar(0.22); sprite.visible = false; medal.add(sprite);
+    sprite.scale.setScalar(0.22); sprite.visible = true; medal.add(sprite);
     return sprite;
   });
   const updateSparkles = (time, enabled) => glints.forEach((sprite, index) => {
     const pulse = Math.pow(Math.max(0, Math.sin(time * 1.8 + index * 2.1)), 12);
-    sprite.visible = enabled && pulse > 0.01;
-    sprite.material.opacity = pulse;
+    sprite.material.opacity = enabled ? pulse : 0;
     sprite.scale.setScalar(0.12 + pulse * 0.16);
   });
 

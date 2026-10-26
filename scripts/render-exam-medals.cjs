@@ -31,11 +31,12 @@ const server = http.createServer((req, res) => {
     });
     const page = await browser.newPage();
     await page.goto(`http://127.0.0.1:${server.address().port}`);
-    for (const tier of ['bronze', 'silver', 'gold', 'platinum', 'diamond']) {
+    for (const tier of (process.argv[2] ? [process.argv[2]] : ['bronze', 'silver', 'gold', 'platinum', 'diamond'])) {
       const data = await page.evaluate(async ({ tier, folder }) => {
         const THREE = await import('/node_modules/three/build/three.module.js');
         const { RoomEnvironment } = await import('/node_modules/three/examples/jsm/environments/RoomEnvironment.js');
         const { FINISHES, createMedalScene } = await import(`/${folder}/medalScene.js`);
+        if (!FINISHES[tier]) throw new Error("Unknown medal tier");
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         renderer.setSize(640, 640); renderer.setPixelRatio(1);
         renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
