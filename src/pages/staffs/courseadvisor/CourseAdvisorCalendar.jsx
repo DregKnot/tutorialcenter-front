@@ -251,20 +251,29 @@ export default function CourseAdvisorCalendar() {
     };
 
     try {
-      try {
-        await axios.post(`${API_BASE_URL}/api/staffs/classes/session/recording`, payload, { headers });
-      } catch (err1) {
-        console.warn("Primary staffs recording endpoint not found, trying without 's':", err1?.message);
+      const endpoints = [
+        `${API_BASE_URL}/api/staffs/classes/session/recording`,
+        `${API_BASE_URL}/api/advisor/classes/session/recording`,
+        `${API_BASE_URL}/api/staff/classes/session/recording`,
+      ];
+      let saved = false;
+      let lastError = null;
+
+      for (const endpoint of endpoints) {
         try {
-          await axios.post(`${API_BASE_URL}/api/classes/session/recording`, payload, { headers });
-        } catch (err2) {
-          console.warn("Standard route not found, trying advisor route:", err2?.message);
-          try {
-            await axios.post(`${API_BASE_URL}/api/advisor/classes/session/recording`, payload, { headers });
-          } catch (err3) {
-            await axios.post(`${API_BASE_URL}/api/staff/classes/session/recording`, payload, { headers });
+          await axios.post(endpoint, payload, { headers });
+          saved = true;
+          break;
+        } catch (err) {
+          lastError = err;
+          if (err?.response?.status && err.response.status !== 404) {
+            break;
           }
         }
+      }
+
+      if (!saved && lastError) {
+        throw lastError;
       }
       
       setToast({ type: "success", message: "Recording link updated successfully!" });

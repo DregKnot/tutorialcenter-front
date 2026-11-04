@@ -109,7 +109,7 @@ export default function GuardianDashboard() {
             email: ward.email,
           });
         } else if (ward.tel) {
-          await axios.post(`${API_BASE_URL}/api/Students/resend-phone-otp`, {
+          await axios.post(`${API_BASE_URL}/api/students/resend-phone-otp`, {
             tel: ward.tel,
           });
         }
@@ -181,7 +181,9 @@ export default function GuardianDashboard() {
   // Dynamic Subscription Lifecycle Calculation (Model A)
   const totalPlanDays = subscription?.billing_cycle === 'annual'
     ? 365
-    : (subscription?.billing_cycle === 'quarterly' || subscription?.billing_cycle === 'semi-annual' ? 90 : 30);
+    : (subscription?.billing_cycle === 'semi_annual' || subscription?.billing_cycle === 'semi-annual'
+        ? 180
+        : (subscription?.billing_cycle === 'quarterly' ? 90 : 30));
   const daysLeft = typeof subscription?.days_left === 'number' ? subscription.days_left : 0;
   const daysUsed = Math.max(0, Math.min(totalPlanDays, totalPlanDays - daysLeft));
   const elapsedCyclePct = Math.min(100, Math.max(0, Math.round((daysUsed / totalPlanDays) * 100)));

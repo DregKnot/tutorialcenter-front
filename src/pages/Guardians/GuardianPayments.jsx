@@ -392,12 +392,15 @@ export default function GuardianPayments() {
       });
       await fetchWardDetails();
     } catch (err) {
-      console.warn("[GuardianPayments] Backend verify-paystack fallback or warning:", err.response?.data || err);
+      console.error("[GuardianPayments] Backend verify-paystack error:", err.response?.data || err);
+      const errMsg =
+        err.response?.data?.message ||
+        err.message ||
+        `Payment verification could not be confirmed. If you were debited, please contact support with reference: ${reference}`;
       setPaymentMessage({
-        type: 'success',
-        text: 'Payment received! Your ward training subscription is active.'
+        type: 'error',
+        text: errMsg
       });
-      await fetchWardDetails();
     } finally {
       setProcessingPayment(false);
     }
