@@ -206,7 +206,7 @@ export const GuardianRegistration = () => {
           date_of_birth: formData.date_of_birth,
           location: formData.location,
           address: formData.address,
-          password: formData.password,
+
           guardian_id: response.data.guardian.id,
           referral_code: formData.referral_code.trim(),
           students: []
@@ -237,7 +237,7 @@ export const GuardianRegistration = () => {
     if (verifiedVia === "email") {
       setToast({ type: "success", message: "Check your email for verification instructions." });
       setTimeout(() => {
-        navigate(`/register/guardian/addstudent`);
+        navigate(`/register/guardian/email/verify?email=${encodeURIComponent(formData.email.trim())}`);
       }, 1500);
     } else {
       navigate(`/register/guardian/phone/verify?tel=${encodeURIComponent(formData.tel)}`);

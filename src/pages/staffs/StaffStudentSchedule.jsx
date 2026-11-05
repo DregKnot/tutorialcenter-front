@@ -329,9 +329,12 @@ export default function StaffStudentSchedule() {
       });
       setExpandedClassIds(initialExpanded);
 
-      // Extract live notifications
+      // Extract live notifications (only from live or completed sessions, never from upcoming/scheduled)
       const logs = [];
       allSessionsList.forEach((ses) => {
+        const sesState = getSessionClassState(ses);
+        if (sesState === "scheduled") return;
+
         const attends = ses.attendances || [];
         attends.forEach((att) => {
           if (att.joined_at) {
@@ -487,15 +490,26 @@ export default function StaffStudentSchedule() {
 
   // Build attendance detail for a specific student in a class session
   const getStudentAttendanceInfo = (student, session) => {
+    const sessionState = getSessionClassState(session);
+
+    // If class has not started yet (scheduled/upcoming), strictly enforce scheduled status with zero presence
+    if (sessionState === "scheduled") {
+      return {
+        status: "scheduled",
+        joined_at: null,
+        left_at: null,
+        rejoin_count: 0,
+        duration_minutes: 0,
+        is_clean_exit: false,
+      };
+    }
+
     const attendances = session.attendances || [];
     const attRecord = attendances.find((a) => a.student_id === student.id || a.student?.id === student.id);
-    const sessionState = getSessionClassState(session);
 
     if (!attRecord) {
       let defaultStatus = "absent";
-      if (sessionState === "scheduled") {
-        defaultStatus = "scheduled";
-      } else if (sessionState === "live") {
+      if (sessionState === "live") {
         defaultStatus = "not_joined";
       }
 

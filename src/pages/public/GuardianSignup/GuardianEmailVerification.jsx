@@ -15,8 +15,14 @@ export default function GuardianEmailVerification() {
 
   // Extract token and email from URL query parameters
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
-  const email = searchParams.get("email");
+  const token = searchParams.get("token") || "";
+  const emailParam = searchParams.get("email");
+  const storedGuardian = (() => {
+    try { return JSON.parse(localStorage.getItem("guardianStudents") || "{}"); } catch { return {}; }
+  })();
+  const email = emailParam || localStorage.getItem("guardianEmail") || storedGuardian.email || "";
+  const [inputToken, setInputToken] = useState(token);
+
 
   // Timer effect for resend OTP functionality
   useEffect(() => {
@@ -31,12 +37,17 @@ export default function GuardianEmailVerification() {
   // Handle form submission and OTP verification
   const handleSubmit = async (e) => {
     e.preventDefault(); 
+    const activeToken = (token || inputToken).trim();
+    if (!activeToken) {
+      setToast({ type: "error", message: "Please enter your verification token." });
+      return;
+    }
     setLoading(true);
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/guardians/verify-email`,
         {
-          token: token,
+          token: activeToken,
         },
       );
 
@@ -161,6 +172,19 @@ export default function GuardianEmailVerification() {
                       )}
                     </p>
                   </div>
+
+                  {!token && (
+                    <div className="space-y-1 text-left">
+                      <label className="text-xs font-bold text-gray-700">Verification Token / Code</label>
+                      <input
+                        type="text"
+                        value={inputToken}
+                        onChange={(e) => setInputToken(e.target.value)}
+                        placeholder="Paste verification token or enter code"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-[#09314F] focus:border-transparent"
+                      />
+                    </div>
+                  )}
 
                   <button
                     type="submit"

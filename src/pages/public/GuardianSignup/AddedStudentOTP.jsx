@@ -75,20 +75,40 @@ export default function AddedStudentOTP() {
   }, [currentIndex]);
 
   const updateLocalStorageVerification = (index) => {
+    const currentStudent = students[index];
+    if (!currentStudent) return;
+
     const stored = localStorage.getItem("guardianStudents");
     if (stored) {
-      const parsed = JSON.parse(stored);
-      const currentStudent = students[index];
-      // Match the student based on name and contact (which was stored in the 'email' field)
-      const studentToUpdate = parsed.students.find(s => 
-        s.name === currentStudent.name && 
-        (s.email ? s.email.trim() : "") === currentStudent.contact
-      );
-      
-      if (studentToUpdate) {
-        studentToUpdate.verified = true;
-        localStorage.setItem("guardianStudents", JSON.stringify(parsed));
-      }
+      try {
+        const parsed = JSON.parse(stored);
+        const studentToUpdate = parsed.students?.find(s => 
+          s.name === currentStudent.name && 
+          (s.email ? s.email.trim() : "") === currentStudent.contact
+        );
+        
+        if (studentToUpdate) {
+          studentToUpdate.verified = true;
+          studentToUpdate.is_verified = true;
+          localStorage.setItem("guardianStudents", JSON.stringify(parsed));
+        }
+      } catch (e) {}
+    }
+
+    const storedBiodata = localStorage.getItem("guardianStudentsBiodata");
+    if (storedBiodata) {
+      try {
+        const parsedBio = JSON.parse(storedBiodata);
+        const bioStudent = parsedBio?.find(s =>
+          (s.email && s.email.trim() === currentStudent.contact) ||
+          s.name === currentStudent.name
+        );
+        if (bioStudent) {
+          bioStudent.verified = true;
+          bioStudent.is_verified = true;
+          localStorage.setItem("guardianStudentsBiodata", JSON.stringify(parsedBio));
+        }
+      } catch (e) {}
     }
   };
 
@@ -134,7 +154,7 @@ export default function AddedStudentOTP() {
           token: otpCode,
         });
       } else {
-        await axios.post(`${API_BASE_URL}/api/Students/verify-phone`, {
+        await axios.post(`${API_BASE_URL}/api/students/verify-phone`, {
           tel: currentStudent.contact,
           otp: otpCode,
         });
@@ -181,7 +201,7 @@ export default function AddedStudentOTP() {
           email: currentStudent.contact,
         });
       } else {
-        await axios.post(`${API_BASE_URL}/api/Students/resend-phone-otp`, {
+        await axios.post(`${API_BASE_URL}/api/students/resend-phone-otp`, {
           tel: currentStudent.contact,
         });
       }

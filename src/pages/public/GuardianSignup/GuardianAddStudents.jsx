@@ -141,7 +141,15 @@ export default function GuardianAddStudents() {
 
     try {
       // Step 2: Retrieve guardian phone saved from earlier registration step
-      const guardianTel = localStorage.getItem("guardianTel");
+      // Step 2: Retrieve guardian info previously saved from registration step
+      const existingGuardian = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("guardianStudents") || "{}");
+        } catch {
+          return {};
+        }
+      })();
+      const guardianTel = existingGuardian.tel || existingGuardian.guardianTel || localStorage.getItem("guardianTel") || "";
 
       // Step 3: Process students — split into email vs phone
       const processedStudents = students.map((s) => {
@@ -160,6 +168,7 @@ export default function GuardianAddStudents() {
       localStorage.setItem(
         "guardianStudents",
         JSON.stringify({
+          ...existingGuardian,
           guardianTel,
           students: processedStudents.map((s) => ({ name: s.name, email: s.email })),
           password,

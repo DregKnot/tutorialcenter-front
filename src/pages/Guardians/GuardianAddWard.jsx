@@ -180,7 +180,7 @@ export default function GuardianAddWard() {
             email: ward.email,
           });
         } else if (ward.tel) {
-          await axios.post(`${API_BASE_URL}/api/Students/resend-phone-otp`, {
+          await axios.post(`${API_BASE_URL}/api/students/resend-phone-otp`, {
             tel: ward.tel,
           });
         }
@@ -1032,7 +1032,7 @@ export default function GuardianAddWard() {
           message: `Verification code resent to ${createdWard.email}`,
         });
       } else if (createdWard.tel) {
-        await axios.post(`${API_BASE_URL}/api/Students/resend-phone-otp`, {
+        await axios.post(`${API_BASE_URL}/api/students/resend-phone-otp`, {
           tel: createdWard.tel,
         });
         setToast({
@@ -1074,7 +1074,7 @@ export default function GuardianAddWard() {
           token: otpCode,
         });
       } else if (createdWard.tel) {
-        await axios.post(`${API_BASE_URL}/api/Students/verify-phone`, {
+        await axios.post(`${API_BASE_URL}/api/students/verify-phone`, {
           tel: createdWard.tel,
           otp: otpCode,
         });

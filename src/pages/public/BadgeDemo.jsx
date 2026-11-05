@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Sparkles, Lock, Unlock, Info
 } from 'lucide-react';
-import TCMedal from '../../components/common/badges/TCMedal';
+import ExamPerformanceMedal from '../../components/common/badges/examperformance/ExamPerformanceMedal';
 import AchievementVisualRenderer, { getAchievementCondition } from '../../components/common/badges/AchievementVisualRenderer';
 import { useAchievement } from '../../context/AchievementContext';
 
@@ -116,7 +116,7 @@ export default function BadgeDemo() {
               Achievement & Medal Studio
             </h1>
             <p className="text-sm text-gray-400 max-w-2xl mx-auto leading-relaxed">
-              100% Vector SVG 3D Medals and Badges engineered with crystal facets, gemstone cores, metallic bevels, and zero CPU animation lag.
+              Explore your achievements, from illustrated badges to sculpted exam medals. Move your pointer over a medal to discover its depth and polished finish.
             </p>
           </div>
 
@@ -125,7 +125,7 @@ export default function BadgeDemo() {
             
             {/* Bronze Tier */}
             <div className="text-center space-y-2 group cursor-pointer" onClick={() => triggerCelebration({ name: "Bronze Master", category: "exam_performance", tier: "bronze", description: "Scored 60%+ on practice exam." })}>
-              <TCMedal 
+              <ExamPerformanceMedal
                 tier="bronze" 
                 gemColor="emerald" 
                 title="Bronze Master" 
@@ -139,7 +139,7 @@ export default function BadgeDemo() {
 
             {/* Silver Tier */}
             <div className="text-center space-y-2 group cursor-pointer" onClick={() => triggerCelebration({ name: "Silver Master", category: "exam_performance", tier: "silver", description: "Scored 70%+ on practice exam." })}>
-              <TCMedal 
+              <ExamPerformanceMedal
                 tier="silver" 
                 gemColor="sapphire" 
                 title="Silver Master" 
@@ -153,7 +153,7 @@ export default function BadgeDemo() {
 
             {/* Gold Tier */}
             <div className="text-center space-y-2 group cursor-pointer" onClick={() => triggerCelebration({ name: "Gold Master", category: "exam_performance", tier: "gold", description: "Scored 80%+ on practice exam." })}>
-              <TCMedal 
+              <ExamPerformanceMedal
                 tier="gold" 
                 gemColor="ruby" 
                 title="Gold Master" 
@@ -167,7 +167,7 @@ export default function BadgeDemo() {
 
             {/* Platinum Tier */}
             <div className="text-center space-y-2 group cursor-pointer" onClick={() => triggerCelebration({ name: "Platinum Master", category: "exam_performance", tier: "platinum", description: "Scored 90%+ on practice exam." })}>
-              <TCMedal 
+              <ExamPerformanceMedal
                 tier="platinum" 
                 gemColor="cyan" 
                 title="Platinum Master" 
@@ -181,7 +181,7 @@ export default function BadgeDemo() {
 
             {/* Diamond Tier */}
             <div className="text-center space-y-2 group cursor-pointer" onClick={() => triggerCelebration({ name: "Diamond Legend", category: "exam_performance", tier: "diamond", description: "Scored 95%+ on practice exam." })}>
-              <TCMedal 
+              <ExamPerformanceMedal
                 tier="diamond" 
                 gemColor="diamond" 
                 title="Diamond Legend" 

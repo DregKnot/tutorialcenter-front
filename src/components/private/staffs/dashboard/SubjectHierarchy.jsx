@@ -4,6 +4,13 @@ import { Icon } from "@iconify/react";
 
 // Color palettes for courses and subject paths
 const PROGRAM_THEMES = {
+  olevel: {
+    name: "O-Level Curriculum",
+    color: "#6366f1", // Indigo
+    gradient: "from-indigo-500 to-purple-600",
+    bgLight: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/60",
+    dot: "bg-indigo-500",
+  },
   waec: {
     name: "WAEC / SSCE",
     color: "#ec4899", // Pink / Coral
@@ -122,14 +129,21 @@ export default function SubjectHierarchy({ payments = [] }) {
   const metrics = useMemo(() => {
     let totalCourseEnrollments = 0;
     let totalSubjectRegistrations = 0;
-    let waecEnrollments = 0;
+    let olevelEnrollments = 0;
 
     coursesData.forEach((c) => {
       const cEnrolled = c.total_course_enrollments || 0;
       totalCourseEnrollments += cEnrolled;
 
-      if ((c.slug || c.title || "").toLowerCase().includes("waec")) {
-        waecEnrollments += cEnrolled;
+      const slugOrTitle = (c.slug || c.title || "").toLowerCase();
+      if (
+        slugOrTitle.includes("waec") ||
+        slugOrTitle.includes("neco") ||
+        slugOrTitle.includes("gce") ||
+        slugOrTitle.includes("o-level") ||
+        slugOrTitle.includes("olevel")
+      ) {
+        olevelEnrollments += cEnrolled;
       }
 
       (c.subjects || []).forEach((s) => {
@@ -137,9 +151,9 @@ export default function SubjectHierarchy({ payments = [] }) {
       });
     });
 
-    const waecShare =
+    const olevelShare =
       totalCourseEnrollments > 0
-        ? ((waecEnrollments / totalCourseEnrollments) * 100).toFixed(1)
+        ? ((olevelEnrollments / totalCourseEnrollments) * 100).toFixed(1)
         : "0.0";
 
     const avgSubjectsPerStudent =
@@ -150,7 +164,8 @@ export default function SubjectHierarchy({ payments = [] }) {
     return {
       totalUniqueStudents: paidStudentsCount,
       totalCourseEnrollments: totalCourseEnrollments || 19,
-      waecShare: `${waecShare}%`,
+      olevelShare: `${olevelShare}%`,
+      waecShare: `${olevelShare}%`,
       avgSubjectsPerStudent,
       totalSubjectRegistrations: totalSubjectRegistrations || 78,
     };
@@ -162,20 +177,48 @@ export default function SubjectHierarchy({ payments = [] }) {
     let totalRegistrations = 0;
 
     coursesData.forEach((course) => {
-      const slugKey = (course.slug || course.title || "").toLowerCase();
-      let themeKey = "waec";
-      if (slugKey.includes("gce")) themeKey = "gce";
-      else if (slugKey.includes("jamb")) themeKey = "jamb";
-      else if (slugKey.includes("neco")) themeKey = "neco";
+      const slugKey = (course.slug || "").toLowerCase();
+      const titleKey = (course.title || course.name || "").toLowerCase();
+
+      const isOLevel =
+        slugKey.includes("waec") ||
+        slugKey.includes("neco") ||
+        slugKey.includes("gce") ||
+        slugKey.includes("o-level") ||
+        slugKey.includes("olevel") ||
+        titleKey.includes("waec") ||
+        titleKey.includes("neco") ||
+        titleKey.includes("gce") ||
+        titleKey.includes("o-level") ||
+        titleKey.includes("olevel");
+
+      let exactTrack = "WAEC";
+      if (slugKey.includes("neco") || titleKey.includes("neco")) exactTrack = "NECO";
+      else if (slugKey.includes("gce") || titleKey.includes("gce")) exactTrack = "GCE";
+      else if (slugKey.includes("waec") || titleKey.includes("waec")) exactTrack = "WAEC";
+      else if (slugKey.includes("jamb") || titleKey.includes("jamb")) exactTrack = "JAMB";
+      else if (course.title) exactTrack = course.title;
+
+      // WAEC, NECO, and GCE show as "O-Level" in the hierarchy
+      const displayCourseTitle = isOLevel ? "O-Level" : (course.title || "JAMB");
+
+      let themeKey = isOLevel ? "olevel" : "jamb";
+      if (exactTrack.toLowerCase().includes("neco")) themeKey = "neco";
+      else if (exactTrack.toLowerCase().includes("gce")) themeKey = "gce";
+      else if (exactTrack.toLowerCase().includes("waec")) themeKey = "waec";
 
       (course.subjects || []).forEach((subject) => {
         totalRegistrations += subject.enrolled_count || 0;
         list.push({
           ...subject,
           course_id: course.id,
-          course_title: course.title,
+          raw_course_title: course.title,
+          course_title: displayCourseTitle, // Displays as "O-Level"
+          display_tier: displayCourseTitle,
+          exact_course: exactTrack, // Exact course tag (WAEC, NECO, GCE, JAMB)
+          is_o_level: isOLevel,
           course_slug: course.slug,
-          theme: PROGRAM_THEMES[themeKey] || PROGRAM_THEMES.waec,
+          theme: PROGRAM_THEMES[themeKey] || PROGRAM_THEMES.olevel || PROGRAM_THEMES.waec,
         });
       });
     });
@@ -196,10 +239,19 @@ export default function SubjectHierarchy({ payments = [] }) {
 
     // Apply search filter and program filter
     return enriched.filter((item) => {
-      const matchesProgram =
-        selectedProgramFilter === "all" ||
-        item.course_slug?.toLowerCase().includes(selectedProgramFilter.toLowerCase()) ||
-        item.course_title?.toLowerCase().includes(selectedProgramFilter.toLowerCase());
+      let matchesProgram = true;
+      if (selectedProgramFilter !== "all") {
+        if (selectedProgramFilter === "olevel") {
+          matchesProgram = item.is_o_level;
+        } else if (selectedProgramFilter === "jamb") {
+          matchesProgram = !item.is_o_level;
+        } else {
+          matchesProgram =
+            item.exact_course?.toLowerCase() === selectedProgramFilter.toLowerCase() ||
+            item.course_slug?.toLowerCase().includes(selectedProgramFilter.toLowerCase()) ||
+            item.raw_course_title?.toLowerCase().includes(selectedProgramFilter.toLowerCase());
+        }
+      }
 
       const q = searchQuery.trim().toLowerCase();
       if (!q) return matchesProgram;
@@ -207,6 +259,8 @@ export default function SubjectHierarchy({ payments = [] }) {
       const matchesQuery =
         item.name?.toLowerCase().includes(q) ||
         item.course_title?.toLowerCase().includes(q) ||
+        item.exact_course?.toLowerCase().includes(q) ||
+        item.raw_course_title?.toLowerCase().includes(q) ||
         (item.departments || []).some((d) => String(d).toLowerCase().includes(q));
 
       return matchesProgram && matchesQuery;
@@ -445,15 +499,15 @@ export default function SubjectHierarchy({ payments = [] }) {
             </div>
           </div>
 
-          {/* Card 3: Top Program Dominance (WAEC) */}
+          {/* Card 3: Top Program Dominance (O-Level: WAEC/NECO/GCE) */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700/80 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col justify-between">
             <div className="flex items-start justify-between">
               <div>
                 <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                  WAEC share
+                  O-Level share
                 </span>
                 <h3 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mt-1">
-                  {metrics.waecShare}
+                  {metrics.olevelShare}
                 </h3>
               </div>
               {/* Sparkline curve 3 */}
@@ -473,9 +527,9 @@ export default function SubjectHierarchy({ payments = [] }) {
             <div className="mt-3 flex items-center gap-1.5">
               <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
                 <Icon icon="heroicons:arrow-trending-up-20-solid" className="w-3 h-3" />
-                +5.1pp
+                WAEC · NECO · GCE
               </span>
-              <span className="text-[11px] text-gray-400">dominant program</span>
+              <span className="text-[11px] text-gray-400">dominant tier</span>
             </div>
           </div>
 
@@ -826,6 +880,7 @@ export default function SubjectHierarchy({ payments = [] }) {
               <div className="flex items-center p-1 bg-gray-100 dark:bg-gray-700/60 rounded-xl border border-gray-200/60 dark:border-gray-600/50 text-xs font-bold">
                 {[
                   { id: "all", label: "All Paths" },
+                  { id: "olevel", label: "O-Level" },
                   { id: "waec", label: "WAEC" },
                   { id: "neco", label: "NECO" },
                   { id: "gce", label: "GCE" },
@@ -903,9 +958,14 @@ export default function SubjectHierarchy({ payments = [] }) {
                         <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
                           <span className={`w-2.5 h-2.5 rounded-full ${theme.dot} shrink-0`} />
                           <div>
-                            <span className="text-sm font-extrabold block">{sub.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-extrabold block">{sub.name}</span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-pink-50 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300 border border-pink-200 dark:border-pink-800">
+                                {sub.exact_course}
+                              </span>
+                            </div>
                             <span className="text-[10px] text-gray-400 font-semibold flex items-center gap-1 mt-0.5">
-                              <span>{sub.course_title}</span>
+                              <span className="font-bold text-indigo-600 dark:text-indigo-400">{sub.course_title}</span>
                               <span>→</span>
                               <span className="uppercase">
                                 {(sub.departments || []).join(", ") || "General"}
@@ -1007,8 +1067,14 @@ export default function SubjectHierarchy({ payments = [] }) {
                     <h3 className="text-lg font-black text-gray-900 dark:text-white">
                       {selectedSubjectModal.name}
                     </h3>
-                    <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
-                      {selectedSubjectModal.course_title || "Program"}
+                    {/* Academic Tier Tag */}
+                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      {selectedSubjectModal.course_title || "O-Level"}
+                    </span>
+                    {/* Exact Course Tag */}
+                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300 border border-pink-300 dark:border-pink-700 shadow-sm flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse"></span>
+                      Exact Course: {selectedSubjectModal.exact_course || selectedSubjectModal.raw_course_title || selectedSubjectModal.course_title}
                     </span>
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">
@@ -1106,11 +1172,16 @@ export default function SubjectHierarchy({ payments = [] }) {
                           </div>
                         </div>
 
-                        <div className="text-right">
-                          <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                            {st.department || "General"}
-                          </span>
-                          <p className="text-[9px] text-gray-400 mt-0.5">
+                        <div className="text-right flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-pink-50 text-pink-700 dark:bg-pink-950 dark:text-pink-300 border border-pink-200 dark:border-pink-800 uppercase">
+                              {selectedSubjectModal.exact_course}
+                            </span>
+                            <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                              {st.department || "General"}
+                            </span>
+                          </div>
+                          <p className="text-[9px] text-gray-400">
                             {st.enrolled_at ? new Date(st.enrolled_at).toLocaleDateString() : "Registered"}
                           </p>
                         </div>
@@ -1191,6 +1262,20 @@ export default function SubjectHierarchy({ payments = [] }) {
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
                   {selectedSubjectModal.description || "Standard syllabus-aligned curriculum subject offered for examination preparation."}
                 </p>
+
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1.5">
+                    Curriculum Hierarchy & Exact Course
+                  </span>
+                  <div className="flex items-center gap-2 flex-wrap mb-4">
+                    <span className="text-xs font-bold px-3 py-1 rounded-xl bg-indigo-50 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      Academic Tier: {selectedSubjectModal.course_title || "O-Level"}
+                    </span>
+                    <span className="text-xs font-black px-3 py-1 rounded-xl bg-pink-50 text-pink-800 dark:bg-pink-950 dark:text-pink-300 border border-pink-200 dark:border-pink-800">
+                      Exact Course: {selectedSubjectModal.exact_course || selectedSubjectModal.raw_course_title}
+                    </span>
+                  </div>
+                </div>
 
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1.5">
