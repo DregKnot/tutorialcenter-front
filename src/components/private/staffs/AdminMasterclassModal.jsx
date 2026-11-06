@@ -99,12 +99,6 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
   const [studentFocused, setStudentFocused] = useState(false);
   const [amountPaid, setAmountPaid] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
-  const [privateSessions, setPrivateSessions] = useState([
-    { session_date: "", start_time: "10:00", end_time: "11:00" },
-    { session_date: "", start_time: "10:00", end_time: "11:00" },
-    { session_date: "", start_time: "10:00", end_time: "11:00" },
-    { session_date: "", start_time: "10:00", end_time: "11:00" },
-  ]);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -551,17 +545,10 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
     if (isPrivate) {
       if (!selectedStudent) newErrors.student_id = "Please select a student for this private class";
       if (!amountPaid || isNaN(amountPaid) || Number(amountPaid) < 0) {
-        newErrors.amount_paid = "Please enter a valid amount paid (>= 0)";
+        newErrors.amount_paid = "Please enter a valid amount paid";
       }
-      const invalidSession = privateSessions.some(
-        (s) => !s.session_date || !s.start_time
-      );
-      if (invalidSession) {
-        newErrors.private_sessions = "Please set date and start time for all 4 private sessions";
-      }
-    } else {
-      if (daySchedules.length === 0) newErrors.days = "Select schedule days";
     }
+    if (daySchedules.length === 0) newErrors.days = "Select schedule days";
 
     console.log("Validation check - newErrors:", newErrors);
     setErrors(newErrors);
@@ -1109,6 +1096,13 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                 </div>
               </div>
 
+              <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-200 font-medium">
+                <Icon icon="mdi:calendar-sync" className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>
+                  Sessions are scheduled between the Start Date & End Date below. You can easily adjust or move individual class dates anytime using the <strong>Reschedule</strong> feature.
+                </span>
+              </div>
+
               <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-300/40 text-[11px] font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
                 <Icon icon="mdi:shield-check" className="w-4 h-4 text-amber-500 shrink-0" />
                 <span>An official payment record (TC-PRIV-...) will be auto-generated in the ledger for this private enrollment.</span>
@@ -1337,90 +1331,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
           </p>
         </div>
 
-        {/* 4-SESSION BUILDER FOR PRIVATE CLASS */}
-        {isPrivate ? (
-          <div className="space-y-4 p-5 rounded-3xl bg-amber-50/40 dark:bg-gray-800/60 border border-amber-200 dark:border-amber-700/50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="w-5 h-5 text-amber-500" />
-                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">
-                  4 Private Sessions Schedule (30-Day Window)
-                </h4>
-              </div>
-              <span className="text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-3 py-1 rounded-full">
-                Quota: 4 Classes
-              </span>
-            </div>
-
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Set specific dates and times for each of the 4 private sessions. Validity is status-driven and will remain active until all sessions conclude.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {privateSessions.map((session, idx) => (
-                <div key={idx} className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">
-                      Session #{idx + 1}
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
-                      1-on-1
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Session Date</label>
-                    <input
-                      type="date"
-                      value={session.session_date}
-                      onChange={(e) => {
-                        const next = [...privateSessions];
-                        next[idx].session_date = e.target.value;
-                        setPrivateSessions(next);
-                        if (errors.private_sessions) setErrors((prev) => ({ ...prev, private_sessions: null }));
-                      }}
-                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Start Time</label>
-                      <input
-                        type="time"
-                        value={session.start_time}
-                        onChange={(e) => {
-                          const next = [...privateSessions];
-                          next[idx].start_time = e.target.value;
-                          setPrivateSessions(next);
-                        }}
-                        className="w-full px-2 py-2 text-xs font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-800 dark:text-white outline-none text-center"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">End Time</label>
-                      <input
-                        type="time"
-                        value={session.end_time}
-                        onChange={(e) => {
-                          const next = [...privateSessions];
-                          next[idx].end_time = e.target.value;
-                          setPrivateSessions(next);
-                        }}
-                        className="w-full px-2 py-2 text-xs font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-800 dark:text-white outline-none text-center"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {errors.private_sessions && (
-              <p className="text-xs text-rose-500 font-semibold">{errors.private_sessions}</p>
-            )}
-          </div>
-        ) : (
-          /* Weekly Schedule */
+        {/* Weekly Schedule */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -1484,7 +1395,6 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
           )}
           {errors.days && <p className="text-red-500 text-xs mt-2">{errors.days}</p>}
         </div>
-        )}
 
         {/* Tutors */}
         <div>
