@@ -165,6 +165,8 @@ const extractFlatSessions = (data) => {
       ...session,
       id: session.id,
       class_id: source.id || session.class_id,
+      is_private: Boolean(source.is_private || session.is_private),
+      private_student: source.private_student || source.privateStudent || session.private_student,
       status: resolvedStatus,
       class: source,
       session_date: dateStr,
@@ -800,6 +802,11 @@ export default function AdminCalendar() {
                             <div className="flex items-center justify-between gap-1">
                               <span className="font-bold text-[10px] opacity-90">{session.starts_at?.slice(0, 5)}</span>
                               <div className="flex items-center gap-1">
+                                {session.is_private && (
+                                  <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500 text-white shadow-xs">
+                                    1-on-1
+                                  </span>
+                                )}
                                 {isCancelled && (
                                   <span className="text-[9px] font-black uppercase px-1 rounded bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200">
                                     Cancelled
@@ -923,6 +930,11 @@ export default function AdminCalendar() {
                                 >
                                   <div className="flex items-center justify-between gap-1 flex-wrap">
                                     <div className="flex items-center gap-1">
+                                      {session.is_private && (
+                                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500 text-white shadow-xs">
+                                          1-on-1
+                                        </span>
+                                      )}
                                       {isCancelled && (
                                         <span className="text-[9px] font-black uppercase px-1 rounded bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-200">
                                           Cancelled

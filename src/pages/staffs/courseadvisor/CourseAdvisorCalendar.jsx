@@ -152,6 +152,8 @@ export default function CourseAdvisorCalendar() {
       list.push({
         ...s,
         id: s.id,
+        is_private: Boolean(source.is_private || s.is_private),
+        private_student: source.private_student || source.privateStudent || s.private_student,
         session_date: dateStr,
         starts_at: s.starts_at ? String(s.starts_at).substring(0, 5) : (s.start_time ? String(s.start_time).substring(0, 5) : "10:00"),
         ends_at: s.ends_at ? String(s.ends_at).substring(0, 5) : (s.end_time ? String(s.end_time).substring(0, 5) : "11:30"),
@@ -208,7 +210,7 @@ export default function CourseAdvisorCalendar() {
   const fetchSchedule = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/advisor/classes/schedule`, {
+      const res = await axios.get(`${API_BASE_URL}/api/advisor/classes/schedule?all=true`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
       const flatList = getFlatSessions(res.data || {});
@@ -750,6 +752,11 @@ export default function CourseAdvisorCalendar() {
                                       {s.class?.title || s.title}
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
+                                      {s.is_private && (
+                                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500 text-white shadow-xs">
+                                          1-on-1
+                                        </span>
+                                      )}
                                       <ClassSessionStatusBadge session={s} size="xs" showScheduled={false} />
                                     </div>
                                   </div>

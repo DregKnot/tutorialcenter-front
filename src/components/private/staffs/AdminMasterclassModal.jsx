@@ -359,6 +359,16 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
           end_time: s.end_time ? s.end_time.substring(0, 5) : "13:00"
         })));
       }
+
+      setIsPrivate(Boolean(editClass.is_private));
+      const privStudent = editClass.private_student || editClass.privateStudent || null;
+      if (privStudent) {
+        setSelectedStudent(privStudent);
+        setStudentSearch(`${privStudent.firstname || ""} ${privStudent.surname || ""}`.trim());
+      } else {
+        setSelectedStudent(null);
+        setStudentSearch("");
+      }
     }
   }, [editClass, courses, fetchSubjects]);
 
@@ -667,6 +677,16 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         end_date: formData.end_date ? formData.end_date.substring(0, 10) : null,
         schedules,
       };
+
+      if (isPrivate) {
+        payload.is_private = true;
+        payload.private_student_id = selectedStudent?.id || null;
+        payload.amount_paid = amountPaid ? Number(amountPaid) : 0;
+        payload.payment_method = paymentMethod || "bank_transfer";
+      } else {
+        payload.is_private = false;
+        payload.private_student_id = null;
+      }
 
       if (staffs.length > 0) {
         payload.staffs = staffs;

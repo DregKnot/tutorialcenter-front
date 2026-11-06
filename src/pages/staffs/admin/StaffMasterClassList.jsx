@@ -93,9 +93,14 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit
             }`} title={cls.title}>
               {cls.title}
             </h3>
-            {cls.is_private && (
+            {Boolean(cls.is_private || cls.is_private === 1 || cls.is_private === "1") && (
               <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
                 Private 1-on-1
+              </span>
+            )}
+            {(cls.private_student || cls.privateStudent) && (
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                Student: {(cls.private_student || cls.privateStudent).firstname} {(cls.private_student || cls.privateStudent).surname}
               </span>
             )}
             {cls.subject?.name && (
