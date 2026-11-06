@@ -337,6 +337,11 @@ export default function StudentClassSchedule() {
                 }
               </span>
               <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                {Boolean(session.is_private || session.class?.is_private) && (
+                  <span className="px-2 py-0.5 bg-amber-500 text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-xs">
+                    Private 1-on-1
+                  </span>
+                )}
                 <ClassSessionStatusBadge session={session} size="xs" showScheduled={false} />
                 {isToday && status !== 'completed' && !isSessionCancelled(session) && (
                   status === 'live' ? (

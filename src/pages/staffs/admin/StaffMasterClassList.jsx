@@ -42,7 +42,7 @@ const getStaffName = (cls) => {
 };
 
 // --- STANDALONE CLASS ROW COMPONENT ---
-function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit }) {
+function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit = true }) {
   const isLinkCopied = copiedLink === cls.id;
   const startDate = cls.start_date || cls.schedules?.[0]?.start_date;
   const endDate = cls.end_date || cls.schedules?.[0]?.end_date;
@@ -93,6 +93,11 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit }) {
             }`} title={cls.title}>
               {cls.title}
             </h3>
+            {cls.is_private && (
+              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                Private 1-on-1
+              </span>
+            )}
             {cls.subject?.name && (
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                 {cls.subject.name}
@@ -217,18 +222,20 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit }) {
           <span>View</span>
         </button>
 
-        {/* Edit Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(cls);
-          }}
-          className="flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-[#0F2843] hover:text-white dark:bg-gray-700 dark:hover:bg-blue-600 rounded-xl transition-all text-gray-700 dark:text-gray-200 font-bold text-xs shadow-xs"
-          title="Edit Master Class"
-        >
-          <Icon icon="mdi:pencil-outline" className="w-3.5 h-3.5" />
-          <span>Edit</span>
-        </button>
+        {/* Edit Button - Restricted to Admins & COOs */}
+        {canEdit && onEdit && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(cls);
+            }}
+            className="flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-[#0F2843] hover:text-white dark:bg-gray-700 dark:hover:bg-blue-600 rounded-xl transition-all text-gray-700 dark:text-gray-200 font-bold text-xs shadow-xs"
+            title="Edit Master Class"
+          >
+            <Icon icon="mdi:pencil-outline" className="w-3.5 h-3.5" />
+            <span>Edit</span>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -249,6 +256,10 @@ export default function MasterClassList() {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
+
+  const storedStaff = JSON.parse(localStorage.getItem("staff_user") || localStorage.getItem("staff_info") || "{}");
+  const staffRole = (storedStaff.role || "").toLowerCase();
+  const canEditClasses = staffRole === "admin" || staffRole === "superadmin" || staffRole === "coo";
 
   // --- FETCHING LOGIC ---
   const fetchClasses = useCallback(async () => {
@@ -378,16 +389,18 @@ export default function MasterClassList() {
             </p>
           </div>
 
-          <button
-            onClick={() => {
-              setEditingClass(null);
-              setShowCreateModal(true);
-            }}
-            className="flex items-center justify-center gap-2.5 px-6 py-3.5 bg-[#0F2843] dark:bg-blue-600 hover:bg-[#1a3d60] dark:hover:bg-blue-500 text-white font-bold rounded-2xl text-sm shadow-md hover:shadow-lg transition-all active:scale-95 whitespace-nowrap"
-          >
-            <PlusIcon className="w-5 h-5" />
-            <span>Schedule Master Class</span>
-          </button>
+          {canEditClasses && (
+            <button
+              onClick={() => {
+                setEditingClass(null);
+                setShowCreateModal(true);
+              }}
+              className="flex items-center justify-center gap-2.5 px-6 py-3.5 bg-[#0F2843] dark:bg-blue-600 hover:bg-[#1a3d60] dark:hover:bg-blue-500 text-white font-bold rounded-2xl text-sm shadow-md hover:shadow-lg transition-all active:scale-95 whitespace-nowrap"
+            >
+              <PlusIcon className="w-5 h-5" />
+              <span>Schedule Master Class</span>
+            </button>
+          )}
         </div>
 
         {/* ========= Filter & Search Controls ========= */}
@@ -437,15 +450,17 @@ export default function MasterClassList() {
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
               {searchQuery ? "No classes match your search query." : "Get started by scheduling your first masterclass."}
             </p>
-            <button
-              onClick={() => {
-                setEditingClass(null);
-                setShowCreateModal(true);
-              }}
-              className="mt-5 px-6 py-3 bg-[#0F2843] dark:bg-blue-600 text-white font-bold text-sm rounded-xl shadow hover:bg-opacity-90"
-            >
-              Schedule Master Class
-            </button>
+            {canEditClasses && (
+              <button
+                onClick={() => {
+                  setEditingClass(null);
+                  setShowCreateModal(true);
+                }}
+                className="mt-5 px-6 py-3 bg-[#0F2843] dark:bg-blue-600 text-white font-bold text-sm rounded-xl shadow hover:bg-opacity-90"
+              >
+                Schedule Master Class
+              </button>
+            )}
           </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm p-3">
@@ -457,7 +472,8 @@ export default function MasterClassList() {
                   copiedLink={copiedLink}
                   onCopyLink={handleCopyLink}
                   onSelectDetail={setSelectedClassDetail}
-                  onEdit={handleEditClass}
+                  onEdit={canEditClasses ? handleEditClass : null}
+                  canEdit={canEditClasses}
                 />
               ))}
             </div>
@@ -470,12 +486,12 @@ export default function MasterClassList() {
         <MasterClassDetailModal
           cls={selectedClassDetail}
           onClose={() => setSelectedClassDetail(null)}
-          onEdit={(target) => handleEditClass(target)}
-          onConditionUpdated={(updatedClass) => {
+          onEdit={canEditClasses ? (target) => handleEditClass(target) : null}
+          onConditionUpdated={canEditClasses ? (updatedClass) => {
             setClasses((prev) => prev.map((c) => (c.id === updatedClass.id ? { ...c, ...updatedClass } : c)));
             setSelectedClassDetail(updatedClass);
-          }}
-          canManageCondition={true}
+          } : null}
+          canManageCondition={canEditClasses}
         />
       )}
     </StaffDashboardLayout>

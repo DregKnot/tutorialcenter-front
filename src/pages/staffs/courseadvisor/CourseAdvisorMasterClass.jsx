@@ -1131,7 +1131,7 @@ export default function CourseAdvisorMasterClass() {
               message: `Master class condition updated to "${updatedClass.status.toUpperCase()}"!`,
             });
           }}
-          canManageCondition={true}
+          canManageCondition={false}
         />
       )}
     </StaffDashboardLayout>
