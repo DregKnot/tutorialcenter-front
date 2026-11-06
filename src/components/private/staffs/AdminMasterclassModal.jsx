@@ -87,6 +87,43 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
     description: "",
   });
 
+    // --- PRIVATE CLASS STATE ---
+  const [isPrivate, setIsPrivate] = useState(Boolean(editClass?.is_private));
+  const [studentsList, setStudentsList] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(editClass?.private_student || null);
+  const [studentSearch, setStudentSearch] = useState(
+    editClass?.private_student
+      ? `${editClass.private_student.firstname || ""} ${editClass.private_student.surname || ""}`.trim()
+      : ""
+  );
+  const [studentFocused, setStudentFocused] = useState(false);
+  const [amountPaid, setAmountPaid] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [privateSessions, setPrivateSessions] = useState([
+    { session_date: "", start_time: "10:00", end_time: "11:00" },
+    { session_date: "", start_time: "10:00", end_time: "11:00" },
+    { session_date: "", start_time: "10:00", end_time: "11:00" },
+    { session_date: "", start_time: "10:00", end_time: "11:00" },
+  ]);
+
+  const fetchStudents = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/students/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.data?.students || res.data?.data || [];
+      setStudentsList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch students for private class:", err);
+    }
+  }, [API_BASE_URL, token]);
+
+  useEffect(() => {
+    if (isPrivate && studentsList.length === 0) {
+      fetchStudents();
+    }
+  }, [isPrivate, studentsList.length, fetchStudents]);
+
   const [daySchedules, setDaySchedules] = useState([
     { day: "monday", start_time: "12:00", end_time: "12:30" },
   ]);
@@ -511,7 +548,20 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
     if (!hasTutors)
       newErrors.tutor_ids = "At least one tutor is required";
 
-    if (daySchedules.length === 0) newErrors.days = "Select schedule days";
+    if (isPrivate) {
+      if (!selectedStudent) newErrors.student_id = "Please select a student for this private class";
+      if (!amountPaid || isNaN(amountPaid) || Number(amountPaid) < 0) {
+        newErrors.amount_paid = "Please enter a valid amount paid (>= 0)";
+      }
+      const invalidSession = privateSessions.some(
+        (s) => !s.session_date || !s.start_time
+      );
+      if (invalidSession) {
+        newErrors.private_sessions = "Please set date and start time for all 4 private sessions";
+      }
+    } else {
+      if (daySchedules.length === 0) newErrors.days = "Select schedule days";
+    }
 
     console.log("Validation check - newErrors:", newErrors);
     setErrors(newErrors);
@@ -917,6 +967,156 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
           )}
         </div>
 
+        {/* PRIVATE CLASS (1-ON-1) TOGGLE & CONFIGURATION */}
+        <div className="p-5 rounded-3xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/50 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-2xl ${isPrivate ? "bg-amber-500 text-white shadow-md shadow-amber-500/30" : "bg-gray-100 dark:bg-gray-700 text-gray-500"}`}>
+                <Icon icon={isPrivate ? "mdi:account-star" : "mdi:account-group"} className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-base font-black text-gray-900 dark:text-white">
+                    {isPrivate ? "Private 1-on-1 Master Class" : "Standard Group Master Class"}
+                  </h4>
+                  {isPrivate && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white">
+                      Exclusive 1-on-1
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {isPrivate
+                    ? "4 bespoke sessions with status-driven validity & zero student data leakage"
+                    : "Open cohort masterclass with recurring weekly schedule"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsPrivate(!isPrivate)}
+              className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                isPrivate ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-600"
+              }`}
+            >
+              <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                isPrivate ? "translate-x-5" : "translate-x-0"
+              }`} />
+            </button>
+          </div>
+
+          {isPrivate && (
+            <div className="mt-4 pt-4 border-t border-amber-200/60 dark:border-amber-700/40 space-y-4 animate-in fade-in duration-300">
+              {/* Student Picker */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-2">
+                  Select Private Student *
+                </label>
+                <div className="relative">
+                  <div className="flex items-center gap-3 rounded-2xl px-5 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700">
+                    <UserCircleIcon className="w-5 h-5 text-amber-500" />
+                    <input
+                      type="text"
+                      placeholder="Search registered student by name or email..."
+                      value={studentSearch}
+                      onChange={(e) => {
+                        setStudentSearch(e.target.value);
+                        setSelectedStudent(null);
+                      }}
+                      onFocus={() => setStudentFocused(true)}
+                      onBlur={() => setTimeout(() => setStudentFocused(false), 250)}
+                      className="flex-1 bg-transparent text-sm font-semibold outline-none text-gray-900 dark:text-white placeholder:text-gray-400"
+                    />
+                    {selectedStudent && (
+                      <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 text-xs font-black rounded-full uppercase">
+                        ID: #{selectedStudent.id}
+                      </span>
+                    )}
+                  </div>
+
+                  {studentFocused && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-[150] max-h-48 overflow-y-auto">
+                      {studentsList
+                        .filter((st) => {
+                          const q = studentSearch.toLowerCase();
+                          const name = `${st.firstname || ""} ${st.surname || ""}`.toLowerCase();
+                          const email = (st.email || "").toLowerCase();
+                          return name.includes(q) || email.includes(q);
+                        })
+                        .map((st) => (
+                          <button
+                            key={st.id}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setSelectedStudent(st);
+                              setStudentSearch(`${st.firstname || ""} ${st.surname || ""}`.trim());
+                              setStudentFocused(false);
+                              if (errors.student_id) setErrors((prev) => ({ ...prev, student_id: null }));
+                            }}
+                            className="w-full text-left px-5 py-3 hover:bg-amber-50 dark:hover:bg-gray-700 border-b last:border-0 border-gray-100 dark:border-gray-700/40 flex items-center justify-between text-sm"
+                          >
+                            <div>
+                              <span className="font-bold text-gray-900 dark:text-white">
+                                {st.firstname} {st.surname}
+                              </span>
+                              <span className="text-xs text-gray-400 block">{st.email}</span>
+                            </div>
+                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">Select</span>
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+                {errors.student_id && <p className="text-xs text-rose-500 mt-1 font-semibold">{errors.student_id}</p>}
+              </div>
+
+              {/* Amount Paid & Payment Method */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-2">
+                    Amount Paid (₦) *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 50000"
+                    value={amountPaid}
+                    onChange={(e) => {
+                      setAmountPaid(e.target.value);
+                      if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+                    }}
+                    className="w-full px-5 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-2xl text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                  {errors.amount_paid && <p className="text-xs text-rose-500 mt-1 font-semibold">{errors.amount_paid}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-2">
+                    Payment Method
+                  </label>
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-2xl text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                    <option value="bank_transfer">Direct Bank Transfer</option>
+                    <option value="card">Card Payment</option>
+                    <option value="pos">POS Terminal</option>
+                    <option value="manual">Manual / Cash</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-300/40 text-[11px] font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                <Icon icon="mdi:shield-check" className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>An official payment record (TC-PRIV-...) will be auto-generated in the ledger for this private enrollment.</span>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Course Selection */}
         <div className="space-y-3">
           <label className={`text-[11px] font-black uppercase tracking-widest px-1 ${labelColor}`}>Course Selection</label>
@@ -1137,7 +1337,90 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
           </p>
         </div>
 
-        {/* Weekly Schedule */}
+        {/* 4-SESSION BUILDER FOR PRIVATE CLASS */}
+        {isPrivate ? (
+          <div className="space-y-4 p-5 rounded-3xl bg-amber-50/40 dark:bg-gray-800/60 border border-amber-200 dark:border-amber-700/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-amber-500" />
+                <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">
+                  4 Private Sessions Schedule (30-Day Window)
+                </h4>
+              </div>
+              <span className="text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-3 py-1 rounded-full">
+                Quota: 4 Classes
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Set specific dates and times for each of the 4 private sessions. Validity is status-driven and will remain active until all sessions conclude.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {privateSessions.map((session, idx) => (
+                <div key={idx} className="p-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">
+                      Session #{idx + 1}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
+                      1-on-1
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Session Date</label>
+                    <input
+                      type="date"
+                      value={session.session_date}
+                      onChange={(e) => {
+                        const next = [...privateSessions];
+                        next[idx].session_date = e.target.value;
+                        setPrivateSessions(next);
+                        if (errors.private_sessions) setErrors((prev) => ({ ...prev, private_sessions: null }));
+                      }}
+                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Start Time</label>
+                      <input
+                        type="time"
+                        value={session.start_time}
+                        onChange={(e) => {
+                          const next = [...privateSessions];
+                          next[idx].start_time = e.target.value;
+                          setPrivateSessions(next);
+                        }}
+                        className="w-full px-2 py-2 text-xs font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-800 dark:text-white outline-none text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">End Time</label>
+                      <input
+                        type="time"
+                        value={session.end_time}
+                        onChange={(e) => {
+                          const next = [...privateSessions];
+                          next[idx].end_time = e.target.value;
+                          setPrivateSessions(next);
+                        }}
+                        className="w-full px-2 py-2 text-xs font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 text-gray-800 dark:text-white outline-none text-center"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {errors.private_sessions && (
+              <p className="text-xs text-rose-500 font-semibold">{errors.private_sessions}</p>
+            )}
+          </div>
+        ) : (
+          /* Weekly Schedule */
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -1201,6 +1484,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
           )}
           {errors.days && <p className="text-red-500 text-xs mt-2">{errors.days}</p>}
         </div>
+        )}
 
         {/* Tutors */}
         <div>
