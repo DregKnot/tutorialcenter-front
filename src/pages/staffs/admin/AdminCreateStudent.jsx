@@ -1027,7 +1027,11 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
                   <div className="relative">
                     <select
                       value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPaymentMethod(val);
+                        if (val === "free_grant") setAmount("0");
+                      }}
                       className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0B2740] py-3 px-4 pr-10 text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 appearance-none transition-all"
                     >
                       <option value="bank_transfer">Direct Bank Transfer</option>
@@ -1035,6 +1039,7 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
                       <option value="cash">Cash Deposit</option>
                       <option value="card">Online Card</option>
                       <option value="manual">Manual Admin Entry</option>
+                      <option value="free_grant">Free Grant (Scholarship / Waived)</option>
                     </select>
                     <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
@@ -1486,7 +1491,11 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
             <div className="relative">
               <select
                 value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPaymentMethod(val);
+                  if (val === "free_grant") setAmount("0");
+                }}
                 className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 pr-10 text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 appearance-none transition-all"
               >
                 <option value="bank_transfer">Direct Bank Transfer</option>
@@ -1494,6 +1503,7 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
                 <option value="cash">Cash Deposit</option>
                 <option value="card">Online Card</option>
                 <option value="manual">Manual Admin Entry</option>
+                <option value="free_grant">Free Grant (Scholarship / Waived)</option>
               </select>
               <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
@@ -3675,7 +3685,12 @@ export default function AdminCreateStudent() {
                               <select
                                 name="payment_method"
                                 value={formData.payment_method}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                  handleChange(e);
+                                  if (e.target.value === "free_grant") {
+                                    setFormData(prev => ({ ...prev, amount_paid: "0" }));
+                                  }
+                                }}
                                 className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#06243A] py-3.5 px-4 pr-10 text-sm font-medium text-gray-700 dark:text-white focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 appearance-none transition-all"
                               >
                                 <option value="bank_transfer">Bank Transfer</option>
@@ -3683,6 +3698,7 @@ export default function AdminCreateStudent() {
                                 <option value="cash">Cash Payment</option>
                                 <option value="direct_deposit">Direct Bank Deposit</option>
                                 <option value="manual">Manual Admin Entry</option>
+                                <option value="free_grant">Free Grant (100% Scholarship / Waived)</option>
                               </select>
                               <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                             </div>

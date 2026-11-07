@@ -214,6 +214,7 @@ const extractFlatSessions = (data) => {
   } else if (data && typeof data === 'object') {
     if (Array.isArray(data.classes)) data.classes.forEach(processClassItem);
     if (Array.isArray(data.data)) data.data.forEach(item => (item.schedules || item.subject_id ? processClassItem(item) : pushSession(item)));
+    if (Array.isArray(data.all_sessions)) data.all_sessions.forEach(s => pushSession(s));
     if (Array.isArray(data.sessions)) data.sessions.forEach(s => pushSession(s));
     if (Array.isArray(data.today_classes)) data.today_classes.forEach(s => pushSession(s));
     if (Array.isArray(data.upcoming_sessions)) data.upcoming_sessions.forEach(s => pushSession(s));
@@ -282,7 +283,7 @@ export default function AdminCalendar() {
         });
       }
 
-      const flatList = extractFlatSessions(res.data?.classes || res.data || {});
+      const flatList = extractFlatSessions(res.data || {});
       setSessions(flatList);
     } catch (error) {
       console.error("Failed to fetch admin calendar schedules:", error);
@@ -491,14 +492,14 @@ export default function AdminCalendar() {
 
     const days = [];
     for (let i = firstDay - 1; i >= 0; i--) {
-      days.push({ day: prevMonthDays - i, isCurrentMonth: false, date: new Date(year, month - 1, prevMonthDays - i) });
+      days.push({ day: prevMonthDays - i, isCurrentMonth: false, date: new Date(year, month - 1, prevMonthDays - i, 12, 0, 0) });
     }
     for (let i = 1; i <= totalDays; i++) {
-      days.push({ day: i, isCurrentMonth: true, date: new Date(year, month, i) });
+      days.push({ day: i, isCurrentMonth: true, date: new Date(year, month, i, 12, 0, 0) });
     }
     const remaining = 42 - days.length;
     for (let i = 1; i <= remaining; i++) {
-      days.push({ day: i, isCurrentMonth: false, date: new Date(year, month + 1, i) });
+      days.push({ day: i, isCurrentMonth: false, date: new Date(year, month + 1, i, 12, 0, 0) });
     }
     return days;
   }, [currentDate]);
@@ -506,11 +507,13 @@ export default function AdminCalendar() {
   // Week days generator (Monday-first)
   const weekDays = useMemo(() => {
     const curr = new Date(currentDate);
+    curr.setHours(12, 0, 0, 0);
     const dayIndex = (curr.getDay() + 6) % 7; // Monday = 0, ..., Sunday = 6
     const first = curr.getDate() - dayIndex;
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(curr);
       d.setDate(first + i);
+      d.setHours(12, 0, 0, 0);
       return d;
     });
   }, [currentDate]);
@@ -628,11 +631,11 @@ export default function AdminCalendar() {
         </div>
 
         {/* CONTROLS & FILTER BAR */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 mb-6 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           {/* Left: Date navigation */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700 shadow-inner">
+          <div className="flex items-center justify-between sm:justify-start gap-3 w-full md:w-auto">
+            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700 shadow-inner shrink-0">
               <button
                 onClick={handlePrev}
                 className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-200 transition-all active:scale-95"
@@ -655,14 +658,14 @@ export default function AdminCalendar() {
               </button>
             </div>
 
-            <h2 className="text-lg sm:text-xl font-extrabold text-[#09314F] dark:text-white tracking-tight">
+            <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-[#09314F] dark:text-white tracking-tight truncate">
               {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
             </h2>
           </div>
 
           {/* Center: Search & Filters */}
-          <div className="flex flex-wrap items-center gap-2.5 flex-1 max-w-xl">
-            <div className="relative flex-1 min-w-[160px]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:flex-1 md:max-w-xl">
+            <div className="relative flex-1 min-w-[150px]">
               <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
@@ -673,38 +676,40 @@ export default function AdminCalendar() {
               />
             </div>
 
-            {/* Subject Filter */}
-            <select
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              className="py-2 px-3 text-xs sm:text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none font-medium cursor-pointer"
-            >
-              <option value="all">All Subjects</option>
-              {availableSubjects.map(sub => (
-                <option key={sub} value={sub}>{sub}</option>
-              ))}
-            </select>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2.5">
+              {/* Subject Filter */}
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="w-full sm:w-auto py-2 px-3 text-xs sm:text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none font-medium cursor-pointer"
+              >
+                <option value="all">All Subjects</option>
+                {availableSubjects.map(sub => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
 
-            {/* Tutor Filter */}
-            <select
-              value={selectedTutor}
-              onChange={(e) => setSelectedTutor(e.target.value)}
-              className="py-2 px-3 text-xs sm:text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none font-medium cursor-pointer"
-            >
-              <option value="all">All Tutors</option>
-              {availableTutors.map(tut => (
-                <option key={tut} value={tut}>{tut}</option>
-              ))}
-            </select>
+              {/* Tutor Filter */}
+              <select
+                value={selectedTutor}
+                onChange={(e) => setSelectedTutor(e.target.value)}
+                className="w-full sm:w-auto py-2 px-3 text-xs sm:text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none font-medium cursor-pointer"
+              >
+                <option value="all">All Tutors</option>
+                {availableTutors.map(tut => (
+                  <option key={tut} value={tut}>{tut}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Right: View Mode Toggle */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 self-start sm:self-auto shadow-inner">
+          <div className="flex items-center justify-between sm:justify-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700 w-full sm:w-auto shadow-inner">
             {["month", "week", "day", "list"].map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
+                className={`flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
                   viewMode === mode
                     ? "bg-white dark:bg-gray-700 text-[#09314F] dark:text-white shadow-md scale-100"
                     : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
@@ -727,9 +732,10 @@ export default function AdminCalendar() {
 
         {/* --- 1. MONTH VIEW --- */}
         {!loading && viewMode === "month" && (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-            {/* Days Header */}
-            <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 text-center py-3">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-x-auto scrollbar-thin">
+            <div className="min-w-[650px] sm:min-w-[750px] md:min-w-0">
+              {/* Days Header */}
+              <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 text-center py-3">
               {DAYS_OF_WEEK.map((day) => (
                 <div key={day} className="text-xs font-extrabold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                   {day}
@@ -852,6 +858,7 @@ export default function AdminCalendar() {
                   </div>
                 );
               })}
+            </div>
             </div>
           </div>
         )}

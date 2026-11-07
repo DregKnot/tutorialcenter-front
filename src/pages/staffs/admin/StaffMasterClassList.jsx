@@ -33,6 +33,16 @@ const formatTime = (timeStr) => {
   return `${h12}:${m}${ampm}`;
 };
 
+const calculateEndTime = (timeStr, durationMinutes = 90) => {
+  if (!timeStr) return "";
+  const [h, m] = timeStr.split(":").map(Number);
+  if (isNaN(h)) return "";
+  const totalMins = h * 60 + (m || 0) + Number(durationMinutes || 90);
+  const endH = Math.floor(totalMins / 60) % 24;
+  const endM = totalMins % 60;
+  return formatTime(`${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`);
+};
+
 const getStaffName = (cls) => {
   const staff = cls.staffs?.[0];
   if (!staff) return "Unassigned";
@@ -52,6 +62,17 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit
   const isProposed = statusStr === "proposed" || statusStr === "rescheduled";
   const isActive = statusStr === "active";
   
+  const isPrivate = Boolean(
+    cls.is_private === true || 
+    cls.is_private === 1 || 
+    cls.is_private === "1" || 
+    cls.is_private === "true" || 
+    cls.private_student_id
+  );
+  const privateStudent = cls.private_student || cls.privateStudent || null;
+  const privEnrollment = cls.private_enrollment || cls.privateEnrollment || null;
+  const isFreeGrant = privEnrollment?.payment_method === "free_grant" || privEnrollment?.amount_paid === 0;
+
   let link = cls.class_link;
   if (!link && cls.schedules && cls.schedules.length > 0) {
      for (let sched of cls.schedules) {
@@ -65,21 +86,33 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit
   return (
     <div 
       onClick={() => onSelectDetail(cls)}
-      className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 border-b border-gray-100 dark:border-gray-700/40 last:border-0 hover:bg-gray-50/80 dark:hover:bg-gray-700/30 transition-all rounded-2xl group cursor-pointer"
+      className={`flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700/40 last:border-0 hover:bg-gray-50/80 dark:hover:bg-gray-700/30 transition-all rounded-2xl group cursor-pointer ${
+        isPrivate 
+          ? "border-l-4 border-l-amber-500 bg-amber-500/[0.02]" 
+          : ""
+      }`}
     >
-      {/* Left Side: Avatar + Title + Instructor */}
-      <div className="flex items-center gap-4 min-w-[260px] flex-1">
+      {/* Left Side: Avatar + Title + Instructor + Badges */}
+      <div className="flex items-start sm:items-center gap-3.5 min-w-[260px] flex-1">
         <div className="relative flex-shrink-0">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm ${
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm transition-transform group-hover:scale-105 ${
             isCancelled
               ? "bg-gradient-to-tr from-rose-600 to-rose-700 text-white"
               : isProposed
               ? "bg-gradient-to-tr from-amber-500 to-amber-600 text-white"
+              : isPrivate
+              ? "bg-gradient-to-tr from-amber-600 to-[#0F2843] text-white ring-2 ring-amber-400/40"
               : isActive 
               ? "bg-gradient-to-tr from-blue-600 to-indigo-500 text-white" 
               : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
           }`}>
-            {cls.title ? cls.title.substring(0, 2).toUpperCase() : "MC"}
+            {isPrivate ? (
+              <Icon icon="mdi:account-school" className="w-6 h-6 text-amber-200" />
+            ) : cls.title ? (
+              cls.title.substring(0, 2).toUpperCase()
+            ) : (
+              "MC"
+            )}
           </div>
           <span className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-800 ${
             isCancelled ? "bg-rose-500" : isProposed ? "bg-amber-500" : isActive ? "bg-emerald-500" : "bg-gray-400"
@@ -93,26 +126,40 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit
             }`} title={cls.title}>
               {cls.title}
             </h3>
-            {Boolean(cls.is_private || cls.is_private === 1 || cls.is_private === "1") && (
-              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
-                Private 1-on-1
+
+            {isPrivate && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">
+                <Icon icon="mdi:account-lock" className="w-3 h-3" />
+                <span>Private 1-on-1</span>
               </span>
             )}
-            {(cls.private_student || cls.privateStudent) && (
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-                Student: {(cls.private_student || cls.privateStudent).firstname} {(cls.private_student || cls.privateStudent).surname}
+
+            {privateStudent && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 shadow-2xs">
+                <Icon icon="mdi:account-outline" className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                <span>Student: {privateStudent.firstname} {privateStudent.surname}</span>
               </span>
             )}
+
+            {isFreeGrant && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                <Icon icon="mdi:gift-outline" className="w-3 h-3" />
+                <span>Free Grant</span>
+              </span>
+            )}
+
             {cls.subject?.name && (
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                 {cls.subject.name}
               </span>
             )}
+
             {isCancelled && (
               <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50">
                 Cancelled
               </span>
             )}
+
             {isProposed && (
               <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
                 Proposed
@@ -128,9 +175,9 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit
       </div>
 
       {/* Middle Side: Date Range (Start Date -> End Date) & Weekly Schedule */}
-      <div className="flex flex-wrap items-center gap-4 lg:gap-6 min-w-[320px] flex-1">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 lg:gap-6 min-w-[280px] sm:min-w-[320px] flex-1">
         {/* Start Date & End Date Timeline */}
-        <div className={`flex flex-col px-3.5 py-2 rounded-xl border min-w-[200px] ${
+        <div className={`flex flex-col px-3.5 py-2 rounded-xl border flex-1 sm:flex-initial min-w-[190px] ${
           isProposed 
             ? "bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40" 
             : isCancelled
@@ -149,25 +196,41 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit
         </div>
 
         {/* Weekly Schedule Days & Times */}
-        <div className="flex flex-col justify-center min-w-[140px]">
+        <div className="flex flex-col justify-center flex-1 sm:flex-initial min-w-[140px]">
           <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400 mb-1">
             <ClockIcon className="w-3.5 h-3.5 text-emerald-500" />
             <span>Weekly Schedule</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {cls.schedules && cls.schedules.length > 0 ? (
-              cls.schedules.map((s, idx) => (
-                <span 
-                  key={idx} 
-                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold ${
-                    isCancelled 
-                      ? "bg-gray-100 dark:bg-gray-700 text-gray-400 line-through" 
-                      : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
-                  }`}
-                >
-                  {s.day_of_week.substring(0, 3).toUpperCase()}: {formatTime(s.start_time)}
-                </span>
-              ))
+              cls.schedules.map((s, idx) => {
+                const startTimeFormatted = formatTime(s.start_time);
+                const endTimeFormatted = s.end_time 
+                  ? formatTime(s.end_time) 
+                  : calculateEndTime(s.start_time, s.duration_minutes || 90);
+
+                return (
+                  <span 
+                    key={idx} 
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold shadow-2xs ${
+                      isCancelled 
+                        ? "bg-gray-100 dark:bg-gray-700 text-gray-400 line-through" 
+                        : "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/40"
+                    }`}
+                    title={`${s.day_of_week} from ${startTimeFormatted} to ${endTimeFormatted}`}
+                  >
+                    <span className="font-black text-emerald-800 dark:text-emerald-300">
+                      {s.day_of_week.substring(0, 3).toUpperCase()}:
+                    </span>
+                    <span>{startTimeFormatted}</span>
+                    {endTimeFormatted && (
+                      <span className="text-emerald-600/70 dark:text-emerald-400/70 text-[10px] font-medium">
+                        - {endTimeFormatted}
+                      </span>
+                    )}
+                  </span>
+                );
+              })
             ) : (
               <span className="text-xs text-gray-400 italic">No schedule</span>
             )}
@@ -176,27 +239,27 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit
       </div>
 
       {/* Right Side: Links & Actions */}
-      <div className="flex items-center justify-between lg:justify-end gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100 dark:border-gray-700/40">
+      <div className="flex items-center justify-between sm:justify-end gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100 dark:border-gray-700/40">
         {/* Join Link */}
         {link && !isCancelled ? (
-          <div className="flex items-center gap-1.5 bg-blue-50/70 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
+          <div className="flex items-center gap-1.5 bg-blue-50/80 dark:bg-blue-900/30 px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-800/50 shadow-2xs">
             <VideoCameraIcon className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
             <a
               href={link}
               target="_blank"
               rel="noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline truncate max-w-[90px] lg:max-w-[110px]"
-              title={link}
+              className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline"
+              title="Open meeting link in new tab"
             >
-              {link.replace(/^https?:\/\//, '')}
+              Zoom
             </a>
             <button 
               onClick={(e) => {
                 e.stopPropagation();
                 onCopyLink(link, cls.id);
               }}
-              className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800/40 rounded-md transition-colors"
+              className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800/60 rounded-md transition-colors"
               title="Copy class link"
             >
               <Icon 
@@ -206,7 +269,7 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit
             </button>
           </div>
         ) : isCancelled ? (
-          <span className="text-[11px] font-bold text-rose-500 dark:text-rose-400 px-2 flex items-center gap-1">
+          <span className="text-[11px] font-bold text-rose-500 dark:text-rose-400 px-2 py-1.5 flex items-center gap-1 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-900/50">
             <Icon icon="mdi:video-off-outline" className="w-3.5 h-3.5" />
             <span>Closed</span>
           </span>
@@ -220,10 +283,10 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit
             e.stopPropagation();
             onSelectDetail(cls);
           }}
-          className="flex items-center gap-1 px-3 py-2 bg-blue-50/80 hover:bg-[#0F2843] hover:text-white dark:bg-blue-950/30 dark:hover:bg-blue-600 text-[#0F2843] dark:text-blue-300 rounded-xl transition-all font-bold text-xs shadow-xs"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-50/80 hover:bg-[#0F2843] hover:text-white dark:bg-blue-950/30 dark:hover:bg-blue-600 text-[#0F2843] dark:text-blue-300 rounded-xl transition-all font-bold text-xs shadow-xs"
           title="View Master Class Details & Conditions"
         >
-          <Icon icon="mdi:eye-outline" className="w-3.5 h-3.5" />
+          <Icon icon="mdi:eye-outline" className="w-4 h-4" />
           <span>View</span>
         </button>
 
@@ -234,10 +297,10 @@ function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit
               e.stopPropagation();
               onEdit(cls);
             }}
-            className="flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-[#0F2843] hover:text-white dark:bg-gray-700 dark:hover:bg-blue-600 rounded-xl transition-all text-gray-700 dark:text-gray-200 font-bold text-xs shadow-xs"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 hover:bg-[#0F2843] hover:text-white dark:bg-gray-700 dark:hover:bg-blue-600 rounded-xl transition-all text-gray-700 dark:text-gray-200 font-bold text-xs shadow-xs"
             title="Edit Master Class"
           >
-            <Icon icon="mdi:pencil-outline" className="w-3.5 h-3.5" />
+            <Icon icon="mdi:pencil-outline" className="w-4 h-4" />
             <span>Edit</span>
           </button>
         )}

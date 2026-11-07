@@ -56,6 +56,7 @@ function canResendReceipt(payment) {
 // Check if a payment record is a free grant, fee waiver, complimentary access, or scholarship
 export function isFreeGrant(payment) {
   if (!payment) return false;
+  if (payment.payment_method === "free_grant" || payment.gateway === "free_grant" || payment.gateway === "admin_grant") return true;
   // STRICT FINANCIAL TRUTH: Any transaction with a positive monetary amount (> 0)
   // is an official paid transaction (revenue) regardless of gateway tag or recovery notes!
   if (Number(payment.amount) > 0) return false;

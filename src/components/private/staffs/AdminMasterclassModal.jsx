@@ -360,7 +360,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         })));
       }
 
-      setIsPrivate(Boolean(editClass.is_private));
+      const isPriv = Boolean(editClass.is_private);
+      setIsPrivate(isPriv);
       const privStudent = editClass.private_student || editClass.privateStudent || null;
       if (privStudent) {
         setSelectedStudent(privStudent);
@@ -368,6 +369,17 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
       } else {
         setSelectedStudent(null);
         setStudentSearch("");
+      }
+
+      if (isPriv) {
+        const privEnroll = editClass.private_enrollment || editClass.privateEnrollment || null;
+        const pMethod = privEnroll?.payment_method || (Number(privEnroll?.amount_paid) === 0 ? "free_grant" : "bank_transfer");
+        setPaymentMethod(pMethod);
+        if (pMethod === "free_grant" || Number(privEnroll?.amount_paid) === 0) {
+          setAmountPaid("Free");
+        } else if (privEnroll?.amount_paid) {
+          setAmountPaid(String(privEnroll.amount_paid));
+        }
       }
     }
   }, [editClass, courses, fetchSubjects]);
@@ -554,8 +566,10 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
 
     if (isPrivate) {
       if (!selectedStudent) newErrors.student_id = "Please select a student for this private class";
-      if (!amountPaid || isNaN(amountPaid) || Number(amountPaid) < 0) {
-        newErrors.amount_paid = "Please enter a valid amount paid";
+      if (paymentMethod !== "free_grant") {
+        if (!amountPaid || isNaN(amountPaid) || Number(amountPaid) < 0) {
+          newErrors.amount_paid = "Please enter a valid amount paid";
+        }
       }
     }
     if (daySchedules.length === 0) newErrors.days = "Select schedule days";
@@ -681,8 +695,9 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
       if (isPrivate) {
         payload.is_private = true;
         payload.private_student_id = selectedStudent?.id || null;
-        payload.amount_paid = amountPaid ? Number(amountPaid) : 0;
+        payload.amount_paid = paymentMethod === "free_grant" ? 0 : (amountPaid ? Number(amountPaid) : 0);
         payload.payment_method = paymentMethod || "bank_transfer";
+        payload.notes = paymentMethod === "free_grant" ? "Free Grant / Scholarship enrollment" : null;
       } else {
         payload.is_private = false;
         payload.private_student_id = null;
@@ -1085,17 +1100,29 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                   <label className="block text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-2">
                     Amount Paid (₦) *
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="e.g. 50000"
-                    value={amountPaid}
-                    onChange={(e) => {
-                      setAmountPaid(e.target.value);
-                      if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
-                    }}
-                    className="w-full px-5 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-2xl text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
-                  />
+                  {paymentMethod === "free_grant" ? (
+                    <div className="w-full px-5 py-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700/60 rounded-2xl flex items-center justify-between text-emerald-800 dark:text-emerald-300 font-extrabold text-sm">
+                      <div className="flex items-center gap-2">
+                        <Icon icon="mdi:gift-outline" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        <span>FREE (₦0.00)</span>
+                      </div>
+                      <span className="text-[10px] font-black bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Free Grant
+                      </span>
+                    </div>
+                  ) : (
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 50000"
+                      value={amountPaid}
+                      onChange={(e) => {
+                        setAmountPaid(e.target.value);
+                        if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+                      }}
+                      className="w-full px-5 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-2xl text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  )}
                   {errors.amount_paid && <p className="text-xs text-rose-500 mt-1 font-semibold">{errors.amount_paid}</p>}
                 </div>
 
@@ -1105,13 +1132,23 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                   </label>
                   <select
                     value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-2xl text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPaymentMethod(val);
+                      if (val === "free_grant") {
+                        setAmountPaid("Free");
+                        if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
+                      } else if (amountPaid === "Free") {
+                        setAmountPaid("");
+                      }
+                    }}
+                    className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-2xl text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
                   >
                     <option value="bank_transfer">Direct Bank Transfer</option>
                     <option value="card">Card Payment</option>
                     <option value="pos">POS Terminal</option>
                     <option value="manual">Manual / Cash</option>
+                    <option value="free_grant">Free Grant (100% Scholarship / Waived)</option>
                   </select>
                 </div>
               </div>
