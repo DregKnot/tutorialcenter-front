@@ -1096,7 +1096,7 @@ export default function StudentCalendar() {
                               </div>
                               <div className="min-w-0">
                                 <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block leading-tight">
-                                  Dedicated Mentorship
+                                  Dedicated Coaching
                                 </span>
                                 {tutorName && (
                                   <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-300 truncate block">
@@ -1250,7 +1250,7 @@ export default function StudentCalendar() {
                         Private 1-on-1 Session
                       </span>
                       <span className="text-xs font-bold text-gray-700 dark:text-gray-200">
-                        Dedicated Mentorship & Coaching
+                        Dedicated Coaching
                       </span>
                     </div>
                   </div>
