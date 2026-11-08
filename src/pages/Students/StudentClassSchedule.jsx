@@ -18,7 +18,6 @@ import ClassSessionStatusBadge, {
   isSessionProposed,
   hasSessionRecording,
 } from "../../components/common/ClassSessionStatusBadge.jsx";
-import MasterClassDetailModal from "../../components/private/staffs/MasterClassDetailModal.jsx";
 
 export default function StudentClassSchedule() {
   const { token: authToken } = useAuth();
@@ -43,7 +42,6 @@ export default function StudentClassSchedule() {
   
   // State
   const [expandedSessionId, setExpandedSessionId] = useState(null);
-  const [selectedClassModal, setSelectedClassModal] = useState(null);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   // Responsive Breakpoints
@@ -205,13 +203,6 @@ export default function StudentClassSchedule() {
     return date.toLocaleDateString(undefined, {
       weekday: "long", month: "short", day: "numeric", year: "numeric",
     });
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "—";
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return "—";
-    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   };
 
   const formatTime = (time) => {
@@ -852,8 +843,6 @@ export default function StudentClassSchedule() {
                   cls.is_private === "true" || 
                   cls.private_student_id
                 );
-                const startDate = cls.start_date || cls.schedules?.[0]?.start_date;
-                const endDate = cls.end_date || cls.schedules?.[0]?.end_date;
                 const tutorName = cls.staffs?.[0]?.name || 
                   (cls.staffs?.[0]?.firstname ? `${cls.staffs[0].firstname} ${cls.staffs[0].surname || ''}`.trim() : "Faculty Tutor");
                 const privEnrollment = cls.private_enrollment || cls.privateEnrollment || null;
@@ -862,8 +851,7 @@ export default function StudentClassSchedule() {
                 return (
                   <div 
                     key={cls.id}
-                    onClick={() => setSelectedClassModal(cls)}
-                    className={`p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#09314F]/60 border shadow-sm hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5 group cursor-pointer ${
+                    className={`p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#09314F]/60 border shadow-sm hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5 group ${
                       isPrivate 
                         ? "border-amber-400/60 dark:border-amber-500/40 bg-gradient-to-br from-amber-500/[0.04] to-transparent ring-1 ring-amber-400/20" 
                         : "border-gray-100 dark:border-[#09314F]"
@@ -922,21 +910,8 @@ export default function StudentClassSchedule() {
                       </div>
                     </div>
 
-                    {/* Middle: Duration Timeline + Weekly Schedule + Quota */}
+                    {/* Middle: Weekly Schedule + Quota */}
                     <div className="flex flex-wrap items-center gap-3 sm:gap-4 lg:gap-6 min-w-[280px] sm:min-w-[320px] flex-1">
-                      {/* Timeline */}
-                      <div className="flex flex-col px-3.5 py-2 rounded-xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/80 dark:bg-gray-800/40 min-w-[180px]">
-                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400 mb-0.5">
-                          <CalendarIcon className="w-3.5 h-3.5 text-blue-500" />
-                          <span>Duration Timeline</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs font-extrabold text-gray-800 dark:text-gray-200">
-                          <span>{formatDate(startDate)}</span>
-                          <span className="text-gray-400 font-normal">to</span>
-                          <span>{formatDate(endDate)}</span>
-                        </div>
-                      </div>
-
                       {/* Weekly schedule */}
                       <div className="flex flex-col min-w-[130px]">
                         <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400 mb-1">
@@ -971,17 +946,6 @@ export default function StudentClassSchedule() {
 
                     {/* Right: Actions */}
                     <div className="flex items-center gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100 dark:border-gray-800 justify-end">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedClassModal(cls);
-                        }}
-                        className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-[#09314F] dark:text-white font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all"
-                      >
-                        <Icon icon="mdi:eye-outline" className="w-4 h-4 text-[#BB9E7F]" />
-                        <span>View Details</span>
-                      </button>
-
                       {(cls.class_link || cls.zoom_join_url) && (
                         <button
                           onClick={(e) => {
@@ -1164,14 +1128,6 @@ export default function StudentClassSchedule() {
               Force Reconnect
             </button>
           </div>
-        )}
-
-        {/* Master Class Detail Modal */}
-        {selectedClassModal && (
-          <MasterClassDetailModal
-            cls={selectedClassModal}
-            onClose={() => setSelectedClassModal(null)}
-          />
         )}
 
       </div>

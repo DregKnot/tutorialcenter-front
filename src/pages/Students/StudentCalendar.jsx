@@ -12,7 +12,6 @@ import ClassSessionStatusBadge, {
   getSessionCardStyles,
   SubjectBadge,
 } from "../../components/common/ClassSessionStatusBadge.jsx";
-import MasterClassDetailModal from "../../components/private/staffs/MasterClassDetailModal.jsx";
 
 // SVG Icons to avoid import issues
 const ChevronLeftIcon = () => (
@@ -79,8 +78,6 @@ export default function StudentCalendar() {
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
 
   const [sessions, setSessions] = useState([]);
-  const [enrolledClasses, setEnrolledClasses] = useState([]);
-  const [selectedClassModal, setSelectedClassModal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
   const [subscriptionExpiredMessage, setSubscriptionExpiredMessage] = useState("");
@@ -246,12 +243,6 @@ export default function StudentCalendar() {
         );
       }
       console.log("📅 [StudentCalendar] Raw Class Schedule API Response:", res.data);
-      const rawData = res.data?.data || res.data || {};
-      const enrolledCls = Array.isArray(rawData.classes) 
-        ? rawData.classes 
-        : (Array.isArray(res.data?.classes) ? res.data.classes : []);
-      setEnrolledClasses(enrolledCls);
-
       const flatList = getFlatSessions(res.data);
       console.log("📅 [StudentCalendar] Flattened Sessions List for Calendar:", flatList);
       setSessions(flatList);
@@ -1125,7 +1116,7 @@ export default function StudentCalendar() {
           (selectedSession.class?.staffs?.[0]?.firstname ? `${selectedSession.class.staffs[0].firstname} ${selectedSession.class.staffs[0].surname || ''}`.trim() : null) || 
           "Assigned Tutor";
         const subject = selectedSession.subject_name || selectedSession.subject?.name || selectedSession.class?.subject?.name || "General";
-        const targetCls = enrolledClasses.find(c => c.id === (selectedSession.class_id || selectedSession.class?.id)) || selectedSession.class;
+        const privEnrollment = selectedSession.private_enrollment || selectedSession.class?.private_enrollment || selectedSession.class?.privateEnrollment || null;
 
         return (
           <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -1179,9 +1170,9 @@ export default function StudentCalendar() {
                       </span>
                     </div>
                   </div>
-                  {targetCls?.private_enrollment && (
+                  {privEnrollment && (
                     <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-900 dark:text-amber-100 text-[10px] font-black tracking-wider uppercase border border-amber-400/40">
-                      {targetCls.private_enrollment.sessions_completed || 0}/{targetCls.private_enrollment.session_quota || 7} Done
+                      {privEnrollment.sessions_completed || 0}/{privEnrollment.session_quota || 7} Done
                     </span>
                   )}
                 </div>
@@ -1299,21 +1290,6 @@ export default function StudentCalendar() {
                     </button>
                   )
                 )}
-
-                {/* View Full Master Class Details Button */}
-                {targetCls && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedSession(null);
-                      setSelectedClassModal(targetCls);
-                    }}
-                    className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-[#09314F] dark:text-white font-bold rounded-xl active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
-                  >
-                    <Icon icon="mdi:eye-outline" className="w-4 h-4 text-[#BB9E7F]" />
-                    <span>View Full Master Class Details</span>
-                  </button>
-                )}
               </div>
 
               <button
@@ -1328,14 +1304,6 @@ export default function StudentCalendar() {
       })()}
       {/* Optional: Add New Event Modal */}
       {/* <AddNewEventModal isOpen={...} onClose={...} /> */}
-
-      {/* Master Class Detail Modal */}
-      {selectedClassModal && (
-        <MasterClassDetailModal
-          cls={selectedClassModal}
-          onClose={() => setSelectedClassModal(null)}
-        />
-      )}
 
       <EmbeddedVideoModal 
         videoUrl={watchingVideoUrl} 
