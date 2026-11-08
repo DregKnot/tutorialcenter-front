@@ -31,7 +31,8 @@ export default function StudentClassSchedule() {
     today_classes: [],
     week_schedule: {},
     upcoming_sessions: [],
-    older_sessions: []
+    older_sessions: [],
+    classes: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -55,6 +56,7 @@ export default function StudentClassSchedule() {
   
   // Collapse States
   const [isWeeklyOpen, setIsWeeklyOpen] = useState(true);
+  const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
   const [isOlderOpen, setIsOlderOpen] = useState(false);
 
   /* =============================
@@ -97,7 +99,8 @@ export default function StudentClassSchedule() {
         today_classes: Array.isArray(data.today_classes) ? data.today_classes : [],
         week_schedule: data.week_schedule || {},
         upcoming_sessions: Array.isArray(data.upcoming_sessions) ? data.upcoming_sessions : [],
-        older_sessions: Array.isArray(data.older_sessions) ? data.older_sessions : []
+        older_sessions: Array.isArray(data.older_sessions) ? data.older_sessions : [],
+        classes: Array.isArray(data.classes) ? data.classes : []
       });
       console.log("Fetched Data:", data);
       console.groupEnd();
@@ -120,12 +123,36 @@ export default function StudentClassSchedule() {
     fetchStudentSchedule();
   }, [fetchStudentSchedule]);
 
+  const filteredClasses = useMemo(() => {
+    let list = Array.isArray(scheduleData.classes) ? [...scheduleData.classes] : [];
+    if (searchTerm && searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      list = list.filter(c => {
+        const title = (c.title || "").toLowerCase();
+        const subject = (c.subject?.name || "").toLowerCase();
+        const tutor = (c.staffs?.[0]?.name || c.staffs?.[0]?.firstname || "").toLowerCase();
+        return title.includes(term) || subject.includes(term) || tutor.includes(term);
+      });
+    }
+    return list;
+  }, [scheduleData.classes, searchTerm]);
+
   const groupedSessions = useMemo(() => {
     // Flatten week_schedule object into an array if it has date keys
     const weeklyArray = Object.values(scheduleData.week_schedule).flat();
 
+    const todayDate = new Date().toISOString().substring(0, 10);
     let today = [...scheduleData.today_classes];
-    let weekly = weeklyArray.length > 0 ? [...weeklyArray] : [...scheduleData.upcoming_sessions];
+    let weekly = [...weeklyArray];
+
+    // Upcoming sessions beyond this week
+    let upcoming = (scheduleData.upcoming_sessions || []).filter(s => {
+      if (!s.session_date) return true;
+      const isPastOrToday = s.session_date <= todayDate;
+      const isInWeekly = weekly.some(w => (w.id && w.id === s.id) || (w.session_date === s.session_date && w.starts_at === s.starts_at && w.title === s.title));
+      return !isPastOrToday && !isInWeekly;
+    });
+
     let older = [...scheduleData.older_sessions];
 
     if (searchTerm && searchTerm.trim()) {
@@ -138,6 +165,7 @@ export default function StudentClassSchedule() {
       };
       today = today.filter(matches);
       weekly = weekly.filter(matches);
+      upcoming = upcoming.filter(matches);
       older = older.filter(matches);
     }
 
@@ -145,9 +173,10 @@ export default function StudentClassSchedule() {
     const sortByTime = (a, b) => (a.starts_at || "").localeCompare(b.starts_at || "");
     today.sort(sortByTime);
     weekly.sort((a,b) => (a.session_date || "").localeCompare(b.session_date || "") || sortByTime(a,b));
+    upcoming.sort((a,b) => (a.session_date || "").localeCompare(b.session_date || "") || sortByTime(a,b));
     older.sort((a,b) => (b.session_date || "").localeCompare(a.session_date || "")); // Newest older first
 
-    return { today, weekly, older };
+    return { today, weekly, upcoming, older };
   }, [scheduleData, searchTerm]);
 
   /* =============================
@@ -789,6 +818,159 @@ export default function StudentClassSchedule() {
           </div>
         )}
 
+        {/* ========= My Master Classes (Enrolled Classes Cards) ========= */}
+        {filteredClasses && filteredClasses.length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center justify-between gap-3 mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-2.5 h-2.5 bg-[#BB9E7F] rounded-full"></div>
+                <h2 className="text-[12px] font-black text-[#BB9E7F] uppercase tracking-[0.3em] pl-1 whitespace-nowrap">
+                  MY ENROLLED MASTER CLASSES
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-50 dark:bg-[#09314F] text-[#09314F] dark:text-blue-300 border border-blue-100 dark:border-blue-900/40">
+                  {filteredClasses.length} {filteredClasses.length === 1 ? "Class" : "Classes"}
+                </span>
+              </div>
+              <div className="h-[1px] flex-1 bg-gray-100 dark:bg-gray-800"></div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {filteredClasses.map((cls) => {
+                const isPrivate = Boolean(
+                  cls.is_private === true || 
+                  cls.is_private === 1 || 
+                  cls.is_private === "1" || 
+                  cls.is_private === "true" || 
+                  cls.private_student_id
+                );
+                const tutorName = cls.staffs?.[0]?.name || 
+                  (cls.staffs?.[0]?.firstname ? `${cls.staffs[0].firstname} ${cls.staffs[0].surname || ''}`.trim() : "Faculty Tutor");
+                const privEnrollment = cls.private_enrollment || cls.privateEnrollment || null;
+                const isFreeGrant = privEnrollment?.payment_method === "free_grant" || privEnrollment?.amount_paid === 0;
+
+                return (
+                  <div 
+                    key={cls.id}
+                    className={`p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#09314F]/60 border shadow-sm hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-5 group ${
+                      isPrivate 
+                        ? "border-amber-400/60 dark:border-amber-500/40 bg-gradient-to-br from-amber-500/[0.04] to-transparent ring-1 ring-amber-400/20" 
+                        : "border-gray-100 dark:border-[#09314F]"
+                    }`}
+                  >
+                    {/* Left: Avatar/Icon + Title + Badges + Instructor */}
+                    <div className="flex items-start sm:items-center gap-4 min-w-[260px] flex-1">
+                      <div className="relative shrink-0">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm transition-transform group-hover:scale-105 ${
+                          isPrivate
+                            ? "bg-gradient-to-tr from-amber-600 to-[#0F2843] text-white ring-2 ring-amber-400/40"
+                            : "bg-gradient-to-tr from-blue-600 to-indigo-500 text-white"
+                        }`}>
+                          {isPrivate ? (
+                            <Icon icon="mdi:account-school" className="w-6 h-6 text-amber-200" />
+                          ) : cls.title ? (
+                            cls.title.substring(0, 2).toUpperCase()
+                          ) : (
+                            "MC"
+                          )}
+                        </div>
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-800 bg-emerald-500" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white truncate" title={cls.title}>
+                            {cls.title}
+                          </h3>
+
+                          {isPrivate && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">
+                              <Icon icon="mdi:account-lock" className="w-3 h-3" />
+                              <span>Private 1-on-1</span>
+                            </span>
+                          )}
+
+                          {isFreeGrant && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                              <Icon icon="mdi:gift-outline" className="w-3 h-3" />
+                              <span>Free Grant</span>
+                            </span>
+                          )}
+
+                          {cls.subject?.name && (
+                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                              {cls.subject.name}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <UserIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                          <span className="truncate font-semibold">{tutorName}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Middle: Weekly Schedule + Quota */}
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 lg:gap-6 min-w-[280px] sm:min-w-[320px] flex-1">
+                      {/* Weekly schedule */}
+                      <div className="flex flex-col min-w-[130px]">
+                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400 mb-1">
+                          <ClockIcon className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Weekly Schedule</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {cls.schedules && cls.schedules.length > 0 ? (
+                            cls.schedules.map((sc, i) => (
+                              <span key={i} className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40">
+                                {String(sc.day_of_week || '').slice(0,3).toUpperCase()}: {formatTime(sc.start_time || sc.starts_at)}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">Self-scheduled</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quota Progress */}
+                      {isPrivate && privEnrollment && (
+                        <div className="flex flex-col min-w-[120px]">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-0.5">
+                            Sessions Quota
+                          </span>
+                          <span className="text-xs font-black text-gray-800 dark:text-gray-200">
+                            {privEnrollment.sessions_completed || 0} of {privEnrollment.session_quota || 7} Completed
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100 dark:border-gray-800 justify-end">
+                      {(cls.class_link || cls.zoom_join_url) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isSubscriptionExpired) {
+                              navigate('/student/payments');
+                              return;
+                            }
+                            const link = cls.class_link || cls.zoom_join_url;
+                            if (link) window.open(link, "_blank", "noopener,noreferrer");
+                          }}
+                          className="px-4 py-2.5 rounded-xl bg-[#09314F] hover:bg-black text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                        >
+                          <Icon icon="logos:zoom" className="w-4 h-4" />
+                          <span>Classroom</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ========= Controls Bar ========= */}
         <div className="flex flex-col md:flex-row items-center gap-4 mb-10">
           <div className="relative flex-1 group">
@@ -842,7 +1024,7 @@ export default function StudentClassSchedule() {
               className="flex items-center gap-4 mb-6 cursor-pointer group/header"
               onClick={() => setIsWeeklyOpen(!isWeeklyOpen)}
             >
-              <h2 className="text-[12px] font-black text-[#BB9E7F] uppercase tracking-[0.3em] pl-2 whitespace-nowrap">WEEKLY SCHEDULE</h2>
+              <h2 className="text-[12px] font-black text-[#BB9E7F] uppercase tracking-[0.3em] pl-2 whitespace-nowrap">THIS WEEK'S SCHEDULE</h2>
               {(!isHighRes && !isMobile) && (
                 <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic hidden md:inline">— Click any session for more details</span>
               )}
@@ -859,6 +1041,40 @@ export default function StudentClassSchedule() {
                 ) : (
                   <div className="p-10 text-center bg-gray-50/20 rounded-[30px] border border-dashed border-gray-100">
                     <p className="font-bold text-gray-400 text-xs italic">No other sessions scheduled for this week</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming Section (Next Week & Beyond) */}
+          <div>
+            <div 
+              className="flex items-center gap-4 mb-6 cursor-pointer group/header"
+              onClick={() => setIsUpcomingOpen(!isUpcomingOpen)}
+            >
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                <h2 className="text-[12px] font-black text-[#BB9E7F] uppercase tracking-[0.3em] whitespace-nowrap">
+                  UPCOMING SESSIONS (NEXT WEEK & BEYOND)
+                </h2>
+              </div>
+              {(!isHighRes && !isMobile) && (
+                <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest italic hidden md:inline">— Click any session for more details</span>
+              )}
+              <div className="h-[1px] flex-1 bg-gray-100 group-hover/header:bg-[#BB9E7F]/30 transition-all"></div>
+              {isUpcomingOpen ? <ChevronUpIcon className="w-4 h-4 text-gray-400" /> : <ChevronDownIcon className="w-4 h-4 text-gray-400" />}
+            </div>
+            
+            {isUpcomingOpen && (
+              <div className="flex flex-col animate-in fade-in slide-in-from-top-2 duration-300">
+                {groupedSessions.upcoming.length > 0 ? (
+                  groupedSessions.upcoming.map(session => (
+                    <ClassRow key={session.id} session={session} isToday={false} />
+                  ))
+                ) : (
+                  <div className="p-10 text-center bg-gray-50/20 rounded-[30px] border border-dashed border-gray-100">
+                    <p className="font-bold text-gray-400 text-xs italic">No future sessions scheduled beyond this week</p>
                   </div>
                 )}
               </div>

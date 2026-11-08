@@ -674,6 +674,16 @@ export default function CourseAdvisorMasterClass() {
                             <span className="px-3 py-1 rounded-xl bg-[#09314F]/10 dark:bg-white/10 text-[#09314F] dark:text-[#C5A97A] text-[10px] font-black uppercase tracking-wider">
                               {cls.subject?.name || "Subject"}
                             </span>
+                            {Boolean(cls.is_private || cls.is_private === 1 || cls.is_private === "1") && (
+                              <span className="px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                                Private 1-on-1
+                              </span>
+                            )}
+                            {(cls.private_student || cls.privateStudent) && (
+                              <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                                {(cls.private_student || cls.privateStudent).firstname} {(cls.private_student || cls.privateStudent).surname}
+                              </span>
+                            )}
                             {isClassCancelled && (
                               <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50">
                                 Cancelled

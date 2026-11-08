@@ -88,6 +88,17 @@ export default function MasterClassDetailModal({
   const startDate = classData.start_date || classData.schedules?.[0]?.start_date;
   const endDate = classData.end_date || classData.schedules?.[0]?.end_date;
 
+  const isPrivate = Boolean(
+    classData.is_private === true || 
+    classData.is_private === 1 || 
+    classData.is_private === "1" || 
+    classData.is_private === "true" || 
+    classData.private_student_id
+  );
+  const privateStudent = classData.private_student || classData.privateStudent || null;
+  const privEnrollment = classData.private_enrollment || classData.privateEnrollment || null;
+  const isFreeGrant = privEnrollment?.payment_method === "free_grant" || privEnrollment?.amount_paid === 0;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -176,6 +187,12 @@ export default function MasterClassDetailModal({
                     Active
                   </span>
                 )}
+                {isPrivate && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">
+                    <Icon icon="mdi:account-lock" className="w-3 h-3" />
+                    Private 1-on-1
+                  </span>
+                )}
                 {!isCancelled && !isProposed && !isActive && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gray-500/20 text-gray-300 border border-gray-400/40 capitalize">
                     {currentStatus}
@@ -185,6 +202,44 @@ export default function MasterClassDetailModal({
             </div>
           </div>
         </div>
+
+        {/* Private Student Banner */}
+        {isPrivate && privateStudent && (
+          <div className="mx-6 sm:mx-8 mt-5 p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50/50 dark:from-amber-950/40 dark:to-orange-950/20 border border-amber-300 dark:border-amber-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+                {privateStudent.firstname ? privateStudent.firstname[0] : "S"}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="text-sm font-black text-amber-950 dark:text-amber-100">
+                    {privateStudent.firstname} {privateStudent.surname}
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200">
+                    Private Student
+                  </span>
+                </div>
+                <div className="text-xs text-amber-800/80 dark:text-amber-300/80 flex items-center gap-3 mt-0.5 flex-wrap">
+                  {privateStudent.email && <span>{privateStudent.email}</span>}
+                  {privateStudent.tel && <span>• {privateStudent.tel}</span>}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-center">
+              {isFreeGrant ? (
+                <div className="px-3 py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
+                  <Icon icon="mdi:gift-outline" className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>Free Grant</span>
+                </div>
+              ) : privEnrollment?.amount_paid ? (
+                <div className="px-3 py-1.5 rounded-xl bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-black shadow-2xs">
+                  ₦{Number(privEnrollment.amount_paid).toLocaleString()} Paid
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         {/* Condition Alert Banners */}
         {isCancelled && (

@@ -18,7 +18,7 @@ export default function MobilePaymentCard({
           </h3>
 
           <p className="text-sm text-gray-500 dark:text-gray-300 capitalize">
-            {payment.payment_method}
+            {payment.payment_method === 'free_grant' ? 'Free Grant' : (payment.payment_method?.replace(/_/g, ' ') || 'Online')}
           </p>
         </div>
 

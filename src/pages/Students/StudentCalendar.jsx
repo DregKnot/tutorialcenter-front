@@ -155,22 +155,34 @@ export default function StudentCalendar() {
 
   // Helper to flatten tiered schedule API response safely
   const getFlatSessions = (data) => {
-    const normalizeSession = (s) => {
+    if (!data) return [];
+
+    const normalizeSession = (s, parentClass = null) => {
       if (!s) return null;
+      const cls = parentClass || s.class || null;
+      const isPriv = Boolean(
+        s.is_private === true || 
+        s.is_private === 1 || 
+        s.is_private === "1" || 
+        cls?.is_private === true || 
+        cls?.is_private === 1 || 
+        cls?.is_private === "1" || 
+        cls?.private_student_id
+      );
       return {
         ...s,
+        is_private: isPriv,
+        class: cls || s.class,
         session_date: s.session_date ? getAfricanDateYMD(s.session_date) : getAfricanDateYMD(),
       };
     };
 
-    if (Array.isArray(data)) {
-      return data.map(normalizeSession).filter(Boolean);
-    }
     const list = [];
     
-    const addSession = (s) => {
+    const addSession = (s, parentClass = null) => {
       if (!s) return;
-      const normalized = normalizeSession(s);
+      const normalized = normalizeSession(s, parentClass);
+      if (!normalized) return;
       const isDuplicate = list.some(item => {
         if (normalized.id && item.id) return item.id === normalized.id;
         return item.title === normalized.title && item.session_date === normalized.session_date && item.starts_at === normalized.starts_at;
@@ -178,18 +190,40 @@ export default function StudentCalendar() {
       if (!isDuplicate) list.push(normalized);
     };
 
-    if (data.next_class) addSession(data.next_class);
-    if (Array.isArray(data.today_classes)) data.today_classes.forEach(addSession);
-    if (data.week_schedule) {
-      Object.values(data.week_schedule).forEach(sessionsArray => {
-        if (Array.isArray(sessionsArray)) sessionsArray.forEach(addSession);
+    if (Array.isArray(data)) {
+      data.forEach(item => addSession(item));
+      return list;
+    }
+
+    // Process classes array (with nested schedules and sessions)
+    if (Array.isArray(data.classes)) {
+      data.classes.forEach(cls => {
+        if (Array.isArray(cls.sessions)) {
+          cls.sessions.forEach(sess => addSession(sess, cls));
+        }
+        if (Array.isArray(cls.schedules)) {
+          cls.schedules.forEach(sched => {
+            if (Array.isArray(sched.sessions)) {
+              sched.sessions.forEach(sess => addSession(sess, cls));
+            }
+          });
+        }
       });
     }
-    if (Array.isArray(data.upcoming_sessions)) data.upcoming_sessions.forEach(addSession);
-    if (Array.isArray(data.past_sessions)) data.past_sessions.forEach(addSession);
-    if (Array.isArray(data.older_sessions)) data.older_sessions.forEach(addSession);
-    if (Array.isArray(data.history)) data.history.forEach(addSession);
-    if (Array.isArray(data.sessions)) data.sessions.forEach(addSession);
+
+    if (data.next_class) addSession(data.next_class);
+    if (Array.isArray(data.next_classes)) data.next_classes.forEach(s => addSession(s));
+    if (Array.isArray(data.today_classes)) data.today_classes.forEach(s => addSession(s));
+    if (data.week_schedule && typeof data.week_schedule === "object") {
+      Object.values(data.week_schedule).forEach(sessionsArray => {
+        if (Array.isArray(sessionsArray)) sessionsArray.forEach(s => addSession(s));
+      });
+    }
+    if (Array.isArray(data.upcoming_sessions)) data.upcoming_sessions.forEach(s => addSession(s));
+    if (Array.isArray(data.past_sessions)) data.past_sessions.forEach(s => addSession(s));
+    if (Array.isArray(data.older_sessions)) data.older_sessions.forEach(s => addSession(s));
+    if (Array.isArray(data.history)) data.history.forEach(s => addSession(s));
+    if (Array.isArray(data.sessions)) data.sessions.forEach(s => addSession(s));
     
     return list;
   };
@@ -209,9 +243,7 @@ export default function StudentCalendar() {
         );
       }
       console.log("📅 [StudentCalendar] Raw Class Schedule API Response:", res.data);
-      const data = res.data?.data || res.data?.sessions || res.data?.schedule || res.data || [];
-      console.log("📅 [StudentCalendar] Extracted Calendar Data Structure:", data);
-      const flatList = getFlatSessions(data);
+      const flatList = getFlatSessions(res.data);
       console.log("📅 [StudentCalendar] Flattened Sessions List for Calendar:", flatList);
       setSessions(flatList);
     } catch (error) {
@@ -602,6 +634,7 @@ export default function StudentCalendar() {
                               const cancelled = isSessionCancelled(s);
                               const proposed = isSessionProposed(s);
                               const hasRec = hasSessionRecording(s);
+                              const isPrivate = Boolean(s.is_private || s.class?.is_private);
 
                               return (
                                 <button
@@ -614,6 +647,8 @@ export default function StudentCalendar() {
                                   className={`w-full text-left px-2 py-1 text-[10px] font-bold rounded border transition-opacity flex items-center justify-between gap-1 ${
                                     cancelled
                                       ? "bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 line-through opacity-75 cursor-not-allowed select-none"
+                                      : isPrivate
+                                      ? "bg-amber-50 text-amber-950 border-amber-400 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-500/70 shadow-2xs hover:opacity-90 ring-1 ring-amber-400/30"
                                       : proposed
                                       ? "bg-white text-amber-900 border-amber-400 dark:bg-[#09314F] dark:text-[#E5C378] dark:border-[#BFA15F] hover:opacity-85"
                                       : "bg-white text-emerald-900 border-emerald-500/80 dark:bg-[#09314F] dark:text-emerald-300 dark:border-emerald-500/60 hover:opacity-85"
@@ -621,6 +656,11 @@ export default function StudentCalendar() {
                                 >
                                   <span className="truncate flex-1">{s.class?.title || s.title}</span>
                                   <div className="flex items-center gap-0.5 shrink-0">
+                                    {isPrivate && !cancelled && (
+                                      <span className="text-[8px] font-black uppercase text-amber-800 dark:text-amber-200 px-1 py-0.2 rounded bg-amber-200/80 dark:bg-amber-900/60 border border-amber-300/80 dark:border-amber-700">
+                                        1:1
+                                      </span>
+                                    )}
                                     {cancelled && (
                                       <span className="text-[8px] font-black uppercase text-rose-600 dark:text-rose-400 no-underline">
                                         CAN
@@ -716,6 +756,7 @@ export default function StudentCalendar() {
                               const cancelled = isSessionCancelled(s);
                               const proposed = isSessionProposed(s);
                               const hasRec = hasSessionRecording(s);
+                              const isPrivate = Boolean(s.is_private || s.class?.is_private);
 
                               return (
                                 <button
@@ -725,6 +766,8 @@ export default function StudentCalendar() {
                                   className={`w-full text-left p-2.5 rounded-xl border shadow-sm transition-all ${
                                     cancelled
                                       ? "bg-rose-50/90 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 opacity-80 cursor-not-allowed select-none line-through"
+                                      : isPrivate
+                                      ? "bg-amber-50/90 text-amber-950 border-amber-400 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-500/70 hover:shadow-md cursor-pointer ring-1 ring-amber-400/30"
                                       : proposed
                                       ? "bg-white text-amber-900 border-amber-400 dark:bg-[#09314F] dark:text-[#E5C378] dark:border-[#BFA15F] hover:shadow-md cursor-pointer"
                                       : "bg-white text-emerald-900 border-emerald-500/80 dark:bg-[#09314F] dark:text-emerald-300 dark:border-emerald-500/60 hover:shadow-md cursor-pointer"
@@ -733,6 +776,11 @@ export default function StudentCalendar() {
                                   <div className="flex items-center justify-between gap-2">
                                     <span className={`text-xs font-extrabold truncate ${cancelled ? "line-through opacity-75" : ""}`}>{s.class?.title || s.title}</span>
                                     <div className="flex items-center gap-1 shrink-0">
+                                      {isPrivate && !cancelled && (
+                                        <span className="text-[9px] font-black uppercase text-white px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-500 to-amber-600 shadow-2xs">
+                                          1-on-1
+                                        </span>
+                                      )}
                                       <ClassSessionStatusBadge session={s} size="xs" showScheduled={false} />
                                     </div>
                                   </div>
@@ -765,6 +813,7 @@ export default function StudentCalendar() {
                                   const cancelled = isSessionCancelled(s);
                                   const proposed = isSessionProposed(s);
                                   const hasRec = hasSessionRecording(s);
+                                  const isPrivate = Boolean(s.is_private || s.class?.is_private);
 
                                   return (
                                     <button
@@ -774,6 +823,8 @@ export default function StudentCalendar() {
                                       className={`w-full text-left p-1 text-[9px] font-bold rounded border truncate transition-all flex items-center justify-between gap-1 ${
                                         cancelled
                                           ? "opacity-75 line-through bg-rose-50 border-rose-300 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60 cursor-not-allowed select-none"
+                                          : isPrivate
+                                          ? "bg-amber-50 border-amber-400 text-amber-950 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-500/70 hover:opacity-90 ring-1 ring-amber-400/30"
                                           : proposed
                                           ? "bg-white border-amber-400 text-amber-900 dark:bg-[#09314F] dark:text-[#E5C378] dark:border-[#BFA15F] hover:opacity-90"
                                           : "bg-white border-emerald-400 text-emerald-900 dark:bg-[#09314F] dark:text-emerald-300 dark:border-emerald-500/60 hover:opacity-90"
@@ -781,6 +832,11 @@ export default function StudentCalendar() {
                                     >
                                       <span className="truncate flex-1">{s.class?.title || s.title}</span>
                                       <div className="flex items-center gap-0.5 shrink-0">
+                                        {isPrivate && !cancelled && (
+                                          <span className="text-[8px] font-black text-amber-800 dark:text-amber-200 px-1 py-0.2 rounded bg-amber-200/80 dark:bg-amber-900/60 border border-amber-300/80 uppercase">
+                                            1:1
+                                          </span>
+                                        )}
                                         {cancelled && <span className="text-[8px] font-black text-rose-600 uppercase">CAN</span>}
                                         {proposed && !cancelled && <span className="text-[8px] font-black text-amber-700 dark:text-[#E5C378] uppercase">PROP</span>}
                                         {hasRec && <Icon icon="lucide:play-circle" className="w-2.5 h-2.5 text-purple-600 shrink-0" />}
@@ -1048,142 +1104,204 @@ export default function StudentCalendar() {
       )}
 
       {/* ====== SESSION DETAIL MODAL (Preserved & Styled) ====== */}
-      {selectedSession && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedSession(null)} />
-          <div className="relative bg-white dark:bg-[#09314F] rounded-3xl p-6 md:p-8 w-[90%] max-w-md shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 border border-gray-150 dark:border-[#1a4a75]">
-            <div className="flex items-center gap-3.5 mb-4">
-              <div className="w-11 h-11 rounded-full bg-[#09314F] dark:bg-black/20 flex items-center justify-center text-white font-extrabold text-sm shrink-0">
-                {getInitials(selectedSession.class?.title || selectedSession.title)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <ClassSessionStatusBadge session={selectedSession} size="xs" showScheduled={true} />
-                </div>
-                <h3 className={`text-base font-extrabold text-[#09314F] dark:text-white leading-tight ${
-                  isSessionCancelled(selectedSession) ? "line-through text-rose-700 dark:text-rose-400" : ""
+      {selectedSession && (() => {
+        const isPrivate = Boolean(
+          selectedSession.is_private || 
+          selectedSession.class?.is_private ||
+          selectedSession.class?.private_student_id
+        );
+        const tutor = selectedSession.tutor?.name || 
+          selectedSession.tutor_name || 
+          selectedSession.class?.staffs?.[0]?.name || 
+          (selectedSession.class?.staffs?.[0]?.firstname ? `${selectedSession.class.staffs[0].firstname} ${selectedSession.class.staffs[0].surname || ''}`.trim() : null) || 
+          "Assigned Tutor";
+        const subject = selectedSession.subject_name || selectedSession.subject?.name || selectedSession.class?.subject?.name || "General";
+        const privEnrollment = selectedSession.private_enrollment || selectedSession.class?.private_enrollment || selectedSession.class?.privateEnrollment || null;
+
+        return (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedSession(null)} />
+            <div className="relative bg-white dark:bg-[#09314F] rounded-3xl p-6 md:p-8 w-[90%] max-w-md shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 border border-gray-150 dark:border-[#1a4a75]">
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-white font-extrabold text-sm shrink-0 shadow-sm ${
+                  isPrivate
+                    ? "bg-gradient-to-tr from-amber-600 to-[#0F2843] ring-2 ring-amber-400/40"
+                    : "bg-[#09314F] dark:bg-black/20"
                 }`}>
-                  {selectedSession.class?.title || selectedSession.title || "Master Class"}
-                </h3>
-              </div>
-            </div>
-
-            {isSessionCancelled(selectedSession) && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-center gap-2 text-xs font-bold text-rose-700 dark:text-rose-300">
-                <Icon icon="lucide:ban" className="w-4 h-4 text-rose-500 shrink-0" />
-                <span>This session was cancelled by the academy. Classroom access is disabled.</span>
-              </div>
-            )}
-            {isSessionProposed(selectedSession) && !isSessionCancelled(selectedSession) && (
-              <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-900/60 flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
-                <Icon icon="lucide:clock" className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>This class is proposed and tentative, but you can still join when it starts.</span>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2">
-                <span className="text-xs font-bold text-gray-400 dark:text-blue-300">Date:</span>
-                <span className="text-xs font-extrabold text-[#09314F] dark:text-white">
-                  {selectedSession.session_date ? new Date(selectedSession.session_date).toLocaleDateString("en-US", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }) : "Scheduled Date"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2">
-                <span className="text-xs font-bold text-gray-400 dark:text-blue-300">Time:</span>
-                <span className="text-xs font-extrabold text-[#09314F] dark:text-white">
-                  {formatTimeRange(selectedSession.starts_at, selectedSession.ends_at)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2 gap-4">
-                <span className="text-xs font-bold text-gray-400 dark:text-blue-300 shrink-0">Class Access:</span>
-                {isSessionCancelled(selectedSession) ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60">
-                    <Icon icon="lucide:ban" className="w-3 h-3 text-rose-600" />
-                    Session Cancelled
-                  </span>
-                ) : selectedSession.class_link || selectedSession.id ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                    <Icon icon="lucide:shield-check" className="w-3 h-3 text-emerald-600" />
-                    In-App Classroom Protected
-                  </span>
-                ) : (
-                  <span className="text-xs text-gray-300 dark:text-gray-500 italic">No link assigned</span>
-                )}
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-xs font-bold text-gray-400 dark:text-blue-300 shrink-0">Video Recording:</span>
-                {selectedSession.recording_link || selectedSession.recording_url ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">
-                    <Icon icon="lucide:video" className="w-3 h-3 text-purple-600" />
-                    Available In App
-                  </span>
-                ) : (
-                  <span className="text-xs text-gray-300 dark:text-gray-500 italic">No video uploaded yet</span>
-                )}
-              </div>
-            </div>
-
-            {/* Action button: Cancelled, Expired, Recorded Class if past, else Join Class */}
-            <div className="mt-6">
-              {isSessionCancelled(selectedSession) ? (
-                <div className="w-full py-3.5 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-extrabold rounded-xl text-center text-xs uppercase tracking-wider border border-rose-200 dark:border-rose-900">
-                  Session Cancelled
+                  {isPrivate ? (
+                    <Icon icon="mdi:account-school" className="w-5 h-5 text-amber-200" />
+                  ) : (
+                    getInitials(selectedSession.class?.title || selectedSession.title)
+                  )}
                 </div>
-              ) : isSubscriptionExpired ? (
-                <button
-                  onClick={() => {
-                    setSelectedSession(null);
-                    navigate('/student/payments');
-                  }}
-                  className="w-full py-3.5 bg-gradient-to-r from-[#E83831] to-red-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
-                >
-                  <Icon icon="solar:lock-bold" className="w-4 h-4" />
-                  Subscription Expired — Renew to Join
-                </button>
-              ) : isPastSession(selectedSession) ? (
-                selectedSession.recording_link || selectedSession.recording_url ? (
-                  <button
-                    onClick={() => handleWatchVideo(selectedSession.recording_link || selectedSession.recording_url)}
-                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
-                  >
-                    <Icon icon="lucide:play-circle" className="w-4 h-4" />
-                    Watch Recorded Class
-                  </button>
-                ) : (
-                  <a
-                    href="/student/recorded-classes"
-                    className="w-full py-3.5 bg-purple-700 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
-                  >
-                    <Icon icon="lucide:film" className="w-4 h-4" />
-                    Go to Recorded Classes
-                  </a>
-                )
-              ) : (
-                (selectedSession.class_link || selectedSession.id) && (
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                    {isPrivate && (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-2xs">
+                        Private 1-on-1
+                      </span>
+                    )}
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+                      {subject}
+                    </span>
+                    <ClassSessionStatusBadge session={selectedSession} size="xs" showScheduled={true} />
+                  </div>
+                  <h3 className={`text-base font-extrabold text-[#09314F] dark:text-white leading-tight ${
+                    isSessionCancelled(selectedSession) ? "line-through text-rose-700 dark:text-rose-400" : ""
+                  }`}>
+                    {selectedSession.class?.title || selectedSession.title || "Master Class"}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Private 1-on-1 Banner */}
+              {isPrivate && (
+                <div className="mb-4 p-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-400/40 dark:border-amber-500/30 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <Icon icon="mdi:account-lock" className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-200 block">
+                        Private 1-on-1 Session
+                      </span>
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-200">
+                        Dedicated Mentorship & Coaching
+                      </span>
+                    </div>
+                  </div>
+                  {privEnrollment && (
+                    <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-900 dark:text-amber-100 text-[10px] font-black tracking-wider uppercase border border-amber-400/40">
+                      {privEnrollment.sessions_completed || 0}/{privEnrollment.session_quota || 7} Done
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {isSessionCancelled(selectedSession) && (
+                <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-center gap-2 text-xs font-bold text-rose-700 dark:text-rose-300">
+                  <Icon icon="lucide:ban" className="w-4 h-4 text-rose-500 shrink-0" />
+                  <span>This session was cancelled by the academy. Classroom access is disabled.</span>
+                </div>
+              )}
+              {isSessionProposed(selectedSession) && !isSessionCancelled(selectedSession) && (
+                <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-900/60 flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+                  <Icon icon="lucide:clock" className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>This class is proposed and tentative, but you can still join when it starts.</span>
+                </div>
+              )}
+
+              <div className="space-y-3.5">
+                <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2">
+                  <span className="text-xs font-bold text-gray-400 dark:text-blue-300">Tutor:</span>
+                  <span className="text-xs font-extrabold text-[#09314F] dark:text-white flex items-center gap-1.5">
+                    <Icon icon="solar:user-bold" className="w-3.5 h-3.5 text-[#BB9E7F]" />
+                    <span>{tutor}</span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2">
+                  <span className="text-xs font-bold text-gray-400 dark:text-blue-300">Date:</span>
+                  <span className="text-xs font-extrabold text-[#09314F] dark:text-white">
+                    {selectedSession.session_date ? new Date(selectedSession.session_date).toLocaleDateString("en-US", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }) : "Scheduled Date"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2">
+                  <span className="text-xs font-bold text-gray-400 dark:text-blue-300">Time:</span>
+                  <span className="text-xs font-extrabold text-[#09314F] dark:text-white">
+                    {formatTimeRange(selectedSession.starts_at, selectedSession.ends_at)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-50 dark:border-white/5 pb-2 gap-4">
+                  <span className="text-xs font-bold text-gray-400 dark:text-blue-300 shrink-0">Class Access:</span>
+                  {isSessionCancelled(selectedSession) ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60">
+                      <Icon icon="lucide:ban" className="w-3 h-3 text-rose-600" />
+                      Session Cancelled
+                    </span>
+                  ) : selectedSession.class_link || selectedSession.id ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                      <Icon icon="lucide:shield-check" className="w-3 h-3 text-emerald-600" />
+                      In-App Classroom Protected
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-300 dark:text-gray-500 italic">No link assigned</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs font-bold text-gray-400 dark:text-blue-300 shrink-0">Video Recording:</span>
+                  {selectedSession.recording_link || selectedSession.recording_url ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">
+                      <Icon icon="lucide:video" className="w-3 h-3 text-purple-600" />
+                      Available In App
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-300 dark:text-gray-500 italic">No video uploaded yet</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Action button: Cancelled, Expired, Recorded Class if past, else Join Class */}
+              <div className="mt-6 space-y-2.5">
+                {isSessionCancelled(selectedSession) ? (
+                  <div className="w-full py-3.5 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-extrabold rounded-xl text-center text-xs uppercase tracking-wider border border-rose-200 dark:border-rose-900">
+                    Session Cancelled
+                  </div>
+                ) : isSubscriptionExpired ? (
                   <button
                     onClick={() => {
-                      const sessionToJoin = selectedSession;
                       setSelectedSession(null);
-                      handleJoinClass(sessionToJoin);
+                      navigate('/student/payments');
                     }}
-                    className="w-full py-3.5 bg-[#09314F] dark:bg-blue-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
+                    className="w-full py-3.5 bg-gradient-to-r from-[#E83831] to-red-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
                   >
-                    <Icon icon="logos:zoom" className="w-4 h-4" />
-                    Join Class Now
+                    <Icon icon="solar:lock-bold" className="w-4 h-4" />
+                    Subscription Expired — Renew to Join
                   </button>
-                )
-              )}
-            </div>
+                ) : isPastSession(selectedSession) ? (
+                  selectedSession.recording_link || selectedSession.recording_url ? (
+                    <button
+                      onClick={() => handleWatchVideo(selectedSession.recording_link || selectedSession.recording_url)}
+                      className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
+                    >
+                      <Icon icon="lucide:play-circle" className="w-4 h-4" />
+                      Watch Recorded Class
+                    </button>
+                  ) : (
+                    <a
+                      href="/student/recorded-classes"
+                      className="w-full py-3.5 bg-purple-700 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
+                    >
+                      <Icon icon="lucide:film" className="w-4 h-4" />
+                      Go to Recorded Classes
+                    </a>
+                  )
+                ) : (
+                  (selectedSession.class_link || selectedSession.id) && (
+                    <button
+                      onClick={() => {
+                        const sessionToJoin = selectedSession;
+                        setSelectedSession(null);
+                        handleJoinClass(sessionToJoin);
+                      }}
+                      className="w-full py-3.5 bg-[#09314F] dark:bg-blue-600 text-white font-extrabold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md"
+                    >
+                      <Icon icon="logos:zoom" className="w-4 h-4" />
+                      Join Class Now
+                    </button>
+                  )
+                )}
+              </div>
 
-            <button
-              onClick={() => setSelectedSession(null)}
-              className="mt-3 w-full py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200 font-bold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider"
-            >
-              Close
-            </button>
+              <button
+                onClick={() => setSelectedSession(null)}
+                className="mt-3 w-full py-2.5 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200 font-bold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-xs uppercase tracking-wider"
+              >
+                Close
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
       {/* Optional: Add New Event Modal */}
       {/* <AddNewEventModal isOpen={...} onClose={...} /> */}
 
