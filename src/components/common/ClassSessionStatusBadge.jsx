@@ -68,6 +68,22 @@ export const isSessionLiveNow = (session) => {
   return currentMins >= startMins && currentMins <= endMins;
 };
 
+export const isSessionPrivate = (session) => {
+  if (!session) return false;
+  return Boolean(
+    session.is_private === true ||
+    session.is_private === 1 ||
+    session.is_private === "1" ||
+    session.is_private === "true" ||
+    session.class?.is_private === true ||
+    session.class?.is_private === 1 ||
+    session.class?.is_private === "1" ||
+    session.class?.is_private === "true" ||
+    session.private_student_id ||
+    session.class?.private_student_id
+  );
+};
+
 /**
  * Metadata & Vector Iconography for subjects (e.g. distinguishing Further Maths vs Maths)
  */
@@ -230,6 +246,7 @@ export const getSessionCardStyles = (session) => {
       status: "cancelled",
       isCancelled: true,
       isProposed: false,
+      isPrivate: false,
       isActive: false,
       // Card Container: Completely red & unclickable
       cardBg: "bg-rose-50/95 dark:bg-rose-950/40",
@@ -249,11 +266,38 @@ export const getSessionCardStyles = (session) => {
     };
   }
 
+  if (isSessionPrivate(session)) {
+    const isProposed = isSessionProposed(session);
+    return {
+      status: isProposed ? "proposed_private" : "private",
+      isCancelled: false,
+      isProposed: isProposed,
+      isPrivate: true,
+      isActive: true,
+      // Card Container: Amber border with warm tint and golden ring
+      cardBg: "bg-white dark:bg-[#09314F] bg-gradient-to-br from-amber-500/[0.06] to-transparent",
+      cardBorder: "border-amber-400 dark:border-amber-500/70 ring-1 ring-amber-400/20",
+      cardHover: "hover:border-amber-500 hover:shadow-lg dark:hover:border-amber-400 cursor-pointer",
+      cardClickable: true,
+      // Accents: Amber / Gold
+      accentText: "text-amber-600 dark:text-amber-400",
+      accentBorder: "border-amber-400/60 dark:border-amber-500/50",
+      titleClass: "text-[#09314F] dark:text-white",
+      timeText: "text-amber-700 dark:text-amber-300",
+      subjectBadge: "bg-amber-50/90 dark:bg-amber-950/40 text-amber-800 dark:text-[#E5C378] border-amber-300 dark:border-[#BFA15F]/50",
+      statusBadge: "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-[#E5C378] dark:border-amber-800/70",
+      // Action Button: Vibrant Amber Gradient Join button
+      actionButtonClass: "w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 uppercase tracking-wider transition-all active:scale-[0.98]",
+      actionText: "Join Class Now",
+    };
+  }
+
   if (isSessionProposed(session)) {
     return {
       status: "proposed",
       isCancelled: false,
       isProposed: true,
+      isPrivate: false,
       isActive: false,
       // Card Container: White with Yellow / Dusty Gold accents
       cardBg: "bg-white dark:bg-[#09314F]",
@@ -346,15 +390,17 @@ export default function ClassSessionStatusBadge({
   size = "md",
   className = "",
   showScheduled = false,
+  showPrivate = true,
 }) {
   const isCancelled = propStatus ? (propStatus === "cancelled" || propStatus === "canceled") : isSessionCancelled(session);
   const isProposed = propStatus ? (propStatus === "proposed") : isSessionProposed(session);
   const isRescheduled = propStatus ? (propStatus === "rescheduled") : isSessionRescheduled(session);
   const hasRecording = propHasRecording !== undefined ? propHasRecording : hasSessionRecording(session);
+  const isPrivate = showPrivate && !isCancelled && isSessionPrivate(session);
 
   const shouldShowScheduled = showScheduled && !isCancelled && !isProposed && !isRescheduled && !hasRecording;
 
-  if (!isCancelled && !isProposed && !isRescheduled && !hasRecording && !shouldShowScheduled) {
+  if (!isCancelled && !isProposed && !isRescheduled && !hasRecording && !shouldShowScheduled && !isPrivate) {
     return null;
   }
 
@@ -381,6 +427,16 @@ export default function ClassSessionStatusBadge({
         >
           <Icon icon="lucide:x-circle" className={`${iconSizes} text-rose-600 dark:text-rose-400 shrink-0`} />
           <span>Cancelled</span>
+        </span>
+      )}
+
+      {isPrivate && (
+        <span
+          className={`inline-flex items-center font-black uppercase tracking-wider rounded-md bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs ${sizeClasses}`}
+          title="Private 1-on-1 Session"
+        >
+          <Icon icon="mdi:account-lock" className={`${iconSizes} text-white shrink-0`} />
+          <span>Private 1-on-1</span>
         </span>
       )}
 

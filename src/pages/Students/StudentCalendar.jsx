@@ -164,14 +164,19 @@ export default function StudentCalendar() {
         s.is_private === true || 
         s.is_private === 1 || 
         s.is_private === "1" || 
+        s.is_private === "true" || 
+        s.private_student_id || 
         cls?.is_private === true || 
         cls?.is_private === 1 || 
         cls?.is_private === "1" || 
+        cls?.is_private === "true" || 
         cls?.private_student_id
       );
       return {
         ...s,
         is_private: isPriv,
+        private_student_id: s.private_student_id || cls?.private_student_id || null,
+        private_enrollment: s.private_enrollment || cls?.private_enrollment || cls?.privateEnrollment || null,
         class: cls || s.class,
         session_date: s.session_date ? getAfricanDateYMD(s.session_date) : getAfricanDateYMD(),
       };
@@ -936,12 +941,28 @@ export default function StudentCalendar() {
                         getSessionsForDate(selectedMobileDate).map((s, sIdx) => {
                           const cardStyles = getSessionCardStyles(s);
                           const cancelled = isSessionCancelled(s);
+                          const isPrivate = Boolean(
+                            s.is_private === true || 
+                            s.is_private === 1 || 
+                            s.is_private === "1" || 
+                            s.is_private === "true" || 
+                            s.class?.is_private === true || 
+                            s.class?.is_private === 1 || 
+                            s.class?.is_private === "1" || 
+                            s.class?.is_private === "true" || 
+                            s.private_student_id || 
+                            s.class?.private_student_id
+                          );
                           return (
                             <div
                               key={s.id || sIdx}
                               onClick={() => !cancelled && setSelectedSession(s)}
                               className={`flex flex-col p-4 rounded-2xl border ${cardStyles.cardBg} ${cardStyles.cardBorder} shadow-sm transition-all ${
                                 cancelled ? "cursor-not-allowed opacity-80" : "active:scale-[0.98] cursor-pointer"
+                              } ${
+                                isPrivate && !cancelled
+                                  ? "border-amber-400 dark:border-amber-500/70 bg-gradient-to-br from-amber-500/[0.06] to-transparent ring-1 ring-amber-400/20"
+                                  : ""
                               }`}
                             >
                               <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
@@ -953,7 +974,7 @@ export default function StudentCalendar() {
                               </h4>
                               {s.starts_at && (
                                 <p className={`text-xs font-semibold mt-1.5 flex items-center gap-1.5 ${cardStyles.timeText}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${cancelled ? "bg-rose-500" : cardStyles.isProposed ? "bg-amber-500" : "bg-emerald-500"}`} />
+                                  <span className={`w-1.5 h-1.5 rounded-full ${cancelled ? "bg-rose-500" : cardStyles.isProposed || isPrivate ? "bg-amber-500" : "bg-emerald-500"}`} />
                                   {formatTimeRange(s.starts_at, s.ends_at)}
                                 </p>
                               )}
@@ -1008,29 +1029,92 @@ export default function StudentCalendar() {
                   const cardStyles = getSessionCardStyles(s);
                   const past = isPastSession(s);
                   const cancelled = isSessionCancelled(s);
+                  const isPrivate = Boolean(
+                    s.is_private === true || 
+                    s.is_private === 1 || 
+                    s.is_private === "1" || 
+                    s.is_private === "true" || 
+                    s.class?.is_private === true || 
+                    s.class?.is_private === 1 || 
+                    s.class?.is_private === "1" || 
+                    s.class?.is_private === "true" || 
+                    s.private_student_id || 
+                    s.class?.private_student_id
+                  );
+                  const privEnrollment = s.private_enrollment || s.class?.private_enrollment || s.class?.privateEnrollment || null;
+                  const isFreeGrant = privEnrollment?.payment_method === "free_grant" || privEnrollment?.amount_paid === 0;
+                  const tutorName = s.tutor?.name || 
+                    s.tutor_name || 
+                    s.staff?.name || 
+                    s.class?.staffs?.[0]?.name || 
+                    (s.class?.staffs?.[0]?.firstname ? `${s.class.staffs[0].firstname} ${s.class.staffs[0].surname || ''}`.trim() : null);
                   const recUrl = s.recording_link || s.recording_url || s.recorded_url || s.video_url;
 
                   return (
                     <div
                       key={s.id || idx}
+                      onClick={() => {
+                        if (!cancelled) {
+                          setSelectedDateModal(null);
+                          setSelectedSession(s);
+                        }
+                      }}
                       className={`p-5 rounded-2xl border flex flex-col justify-between shadow-sm transition-all space-y-4 ${cardStyles.cardBg} ${cardStyles.cardBorder} ${
                         cancelled
                           ? "cursor-not-allowed opacity-85 select-none"
-                          : cardStyles.cardHover
+                          : `${cardStyles.cardHover} cursor-pointer`
+                      } ${
+                        isPrivate && !cancelled
+                          ? "border-amber-400 dark:border-amber-500/70 bg-gradient-to-br from-amber-500/[0.06] to-transparent ring-1 ring-amber-400/20"
+                          : ""
                       }`}
                     >
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                           <SubjectBadge session={s} />
-                          <ClassSessionStatusBadge session={s} size="xs" showScheduled={true} />
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {isFreeGrant && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                                <Icon icon="mdi:gift-outline" className="w-3 h-3" />
+                                <span>Free Grant</span>
+                              </span>
+                            )}
+                            <ClassSessionStatusBadge session={s} size="xs" showScheduled={true} />
+                          </div>
                         </div>
                         
                         <h3 className={`text-base font-extrabold leading-snug ${cardStyles.titleClass}`}>
                           {s.class?.title || s.title || "Master Class"}
                         </h3>
 
+                        {/* Dedicated 1-on-1 info pill */}
+                        {isPrivate && (
+                          <div className="mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-400/30 dark:border-amber-500/20 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+                                <Icon icon="mdi:account-school" className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 block leading-tight">
+                                  Dedicated Mentorship
+                                </span>
+                                {tutorName && (
+                                  <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-300 truncate block">
+                                    {tutorName}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {privEnrollment && (
+                              <span className="shrink-0 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-900 dark:text-amber-100 text-[10px] font-black tracking-wider uppercase border border-amber-400/40">
+                                {privEnrollment.sessions_completed || 0}/{privEnrollment.session_quota || 7} Done
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {s.starts_at && (
-                          <div className={`flex items-center gap-1.5 text-xs font-semibold mt-2 ${cardStyles.timeText}`}>
+                          <div className={`flex items-center gap-1.5 text-xs font-semibold mt-2 ${isPrivate ? "text-amber-700 dark:text-amber-300" : cardStyles.timeText}`}>
                             <Icon icon="lucide:clock" className="w-3.5 h-3.5 shrink-0" />
                             <span>{formatTimeRange(s.starts_at, s.ends_at)}</span>
                           </div>
@@ -1038,7 +1122,7 @@ export default function StudentCalendar() {
                       </div>
 
                       {/* Action Button */}
-                      <div className="pt-3 border-t border-black/5 dark:border-white/10">
+                      <div className="pt-3 border-t border-black/5 dark:border-white/10" onClick={(e) => e.stopPropagation()}>
                         {cancelled ? (
                           <div className={cardStyles.actionButtonClass}>
                             Session Cancelled
@@ -1071,7 +1155,7 @@ export default function StudentCalendar() {
                               className={cardStyles.actionButtonClass}
                             >
                               <Icon icon="logos:zoom" className="w-4 h-4" />
-                              Join Class Now
+                              <span>{isPrivate ? "Join Private Class Now" : "Join Class Now"}</span>
                             </button>
                           ) : (
                             <div className="text-center py-2 text-xs font-bold text-gray-400 dark:text-gray-500 italic">

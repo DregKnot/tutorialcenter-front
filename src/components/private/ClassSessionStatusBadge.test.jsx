@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import ClassSessionStatusBadge, {
   isSessionCancelled,
   isSessionProposed,
+  isSessionPrivate,
   hasSessionRecording,
   getSubjectMetadata,
   getSessionCardStyles,
@@ -87,11 +88,29 @@ describe("ClassSessionStatusBadge and Helpers", () => {
     expect(furtherMeta.isAdvanced).toBe(true);
   });
 
-  test("returns correct status-driven card styles for Active, Proposed, and Cancelled", () => {
+  test("correctly identifies private sessions", () => {
+    expect(isSessionPrivate({ is_private: true })).toBe(true);
+    expect(isSessionPrivate({ is_private: 1 })).toBe(true);
+    expect(isSessionPrivate({ class: { is_private: true } })).toBe(true);
+    expect(isSessionPrivate({ class: { private_student_id: 42 } })).toBe(true);
+    expect(isSessionPrivate({ status: "scheduled" })).toBe(false);
+  });
+
+  test("renders Private 1-on-1 badge when session is private", () => {
+    render(<ClassSessionStatusBadge session={{ status: "scheduled", is_private: true }} />);
+    expect(screen.getByText(/Private 1-on-1/i)).toBeInTheDocument();
+  });
+
+  test("returns correct status-driven card styles for Active, Proposed, Private, and Cancelled", () => {
     const activeStyles = getSessionCardStyles({ status: "scheduled" });
     expect(activeStyles.status).toBe("active");
     expect(activeStyles.cardBorder).toContain("border-emerald");
     expect(activeStyles.cardClickable).toBe(true);
+
+    const privateStyles = getSessionCardStyles({ status: "scheduled", is_private: true });
+    expect(privateStyles.status).toBe("private");
+    expect(privateStyles.cardBorder).toContain("border-amber");
+    expect(privateStyles.cardClickable).toBe(true);
 
     const proposedStyles = getSessionCardStyles({ status: "proposed" });
     expect(proposedStyles.status).toBe("proposed");
