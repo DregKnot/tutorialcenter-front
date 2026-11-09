@@ -101,9 +101,17 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
   const [advisorRole, setAdvisorRole] = useState("advisor");
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Subject Management modal state (Administrator only: Add, Substitute, Remove)
+  const [subjectModalAction, setSubjectModalAction] = useState(null); // 'swap' | 'add' | 'remove' | null
+  const [targetCourseForSubject, setTargetCourseForSubject] = useState(null);
+  const [targetSubjectToActOn, setTargetSubjectToActOn] = useState(null);
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
+  const [subjectActionReason, setSubjectActionReason] = useState("");
+
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
   const staffRole = (localStorage.getItem("staff_role") || "").toLowerCase();
+  const isAdmin = staffRole === "admin";
   const isPreview = isReadOnlyStaff(staffRole);
 
   const isAdvisor = staffRole === "advisor" || staffRole === "course_advisor" || staffRole === "course advisor";
@@ -271,6 +279,133 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
     }
   };
 
+  // Helper to derive available subjects for a course (JAMB from Course 1, others strictly from Course 4 - GCE)
+  const getAvailableSubjectsForCourse = (courseObj) => {
+    if (!courseObj) return [];
+    const isJamb = 
+      String(courseObj.courseId) === '1' ||
+      courseObj.courseTitle?.toUpperCase().includes('JAMB') ||
+      courseObj.courseSlug?.toLowerCase() === 'jamb';
+
+    let targetCourseSubjects = [];
+    if (isJamb) {
+      const jambCourse = allCourses.find(c => String(c.id) === '1' || c.slug === 'jamb' || c.title?.toUpperCase().includes('JAMB'));
+      targetCourseSubjects = (jambCourse?.subjects && jambCourse.subjects.length > 0)
+        ? jambCourse.subjects
+        : (courseObj.availableSubjects || allSubjects);
+    } else {
+      // Non-JAMB courses (WAEC, NECO, GCE) strictly source subjects from Course ID 4 (GCE)
+      const gceCourse = allCourses.find(c => String(c.id) === '4' || c.slug === 'gce' || c.title?.toUpperCase().includes('GCE'));
+      targetCourseSubjects = (gceCourse?.subjects && gceCourse.subjects.length > 0)
+        ? gceCourse.subjects
+        : (courseObj.availableSubjects || allSubjects);
+    }
+
+    const enrolledInCourse = (courseObj.currentEnrolledIds || []).map(String);
+
+    return targetCourseSubjects.filter(s => {
+      const sId = String(s.id);
+      return !enrolledInCourse.includes(sId);
+    });
+  };
+
+  // Open Add Subject Modal (Admin Only)
+  const handleOpenAddSubjectModal = (courseObj) => {
+    setTargetCourseForSubject(courseObj);
+    setTargetSubjectToActOn(null);
+    setSelectedSubjectId("");
+    setSubjectActionReason("");
+    setSubjectModalAction('add');
+  };
+
+  // Open Subject Swap Modal (Admin Only)
+  const handleOpenSwapSubjectModal = (subjectObj, courseObj) => {
+    setTargetCourseForSubject(courseObj);
+    setTargetSubjectToActOn(subjectObj);
+    setSelectedSubjectId("");
+    setSubjectActionReason("");
+    setSubjectModalAction('swap');
+  };
+
+  // Open Subject Remove Modal (Admin Only)
+  const handleOpenRemoveSubjectModal = (subjectObj, courseObj) => {
+    setTargetCourseForSubject(courseObj);
+    setTargetSubjectToActOn(subjectObj);
+    setSelectedSubjectId("");
+    setSubjectActionReason("");
+    setSubjectModalAction('remove');
+  };
+
+  // Submit Subject Action (Add, Swap, or Remove - Admin Only)
+  const handleSubjectAction = async (e) => {
+    e.preventDefault();
+    if (!isAdmin) {
+      setToast({ type: "error", message: "Only administrators are authorized to manage subjects." });
+      return;
+    }
+
+    if (!subjectActionReason.trim() || subjectActionReason.trim().length < 5) {
+      setToast({ type: "error", message: "A valid reason (minimum 5 characters) is mandatory. The student will see this note upon login." });
+      return;
+    }
+
+    let payload = {
+      action: subjectModalAction,
+      reason: subjectActionReason.trim(),
+    };
+
+    if (subjectModalAction === 'add') {
+      if (!selectedSubjectId) {
+        setToast({ type: "error", message: "Please select a subject to add." });
+        return;
+      }
+      payload.course_enrollment_id = targetCourseForSubject?.courseEnrollmentId;
+      payload.new_subject_id = selectedSubjectId;
+    } else if (subjectModalAction === 'swap') {
+      if (!targetSubjectToActOn?.id) {
+        setToast({ type: "error", message: "Please select an existing subject to replace." });
+        return;
+      }
+      if (!selectedSubjectId) {
+        setToast({ type: "error", message: "Please select a replacement subject." });
+        return;
+      }
+      payload.course_enrollment_id = targetCourseForSubject?.courseEnrollmentId || null;
+      payload.old_subject_id = targetSubjectToActOn.id;
+      payload.new_subject_id = selectedSubjectId;
+    } else if (subjectModalAction === 'remove') {
+      if (!targetSubjectToActOn?.id) {
+        setToast({ type: "error", message: "Please select a subject to remove." });
+        return;
+      }
+      payload.course_enrollment_id = targetCourseForSubject?.courseEnrollmentId || null;
+      payload.old_subject_id = targetSubjectToActOn.id;
+    }
+
+    setActionLoading(true);
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/api/admin/students/${studentId}/change-subject`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setToast({ type: "success", message: res.data?.message || "Subject enrollment updated successfully!" });
+      setSubjectModalAction(null);
+      setTargetCourseForSubject(null);
+      setTargetSubjectToActOn(null);
+      setSelectedSubjectId("");
+      setSubjectActionReason("");
+      fetchStudentDetails();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      console.error(err);
+      setToast({ type: "error", message: err.response?.data?.message || "Failed to update subject enrollment." });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleApproveEnrollment = async (enrollmentId) => {
     if (!enrollmentId) return;
     setActionLoading(true);
@@ -357,6 +492,18 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
 
   const enrolledSubjects = student?.enrolled_subjects || student?.enrolled_subject || studentInfo?.enrolled_subjects || studentInfo?.enrolled_subject || student?.subjects || [];
   const enrolledCourses = student?.courses || student?.course_enrollments || studentInfo?.courses || studentInfo?.course_enrollments || [];
+  
+  // Find standalone subjects that are not in any course enrollment
+  const subjectIdsInCourses = enrolledCourses.flatMap(ce => (ce?.subjects || []).map(s => String(s?.subject_id || s?.subject?.id || s?.id)));
+  const standaloneSubjects = enrolledSubjects.filter(sub => {
+    const sId = String(typeof sub === 'object' ? (sub?.subject_id || sub?.id) : sub);
+    return !subjectIdsInCourses.includes(sId);
+  });
+
+  // Derive available candidate subjects for Add or Swap action
+  const availableActionSubjects = (targetCourseForSubject && (subjectModalAction === 'add' || subjectModalAction === 'swap'))
+    ? getAvailableSubjectsForCourse(targetCourseForSubject)
+    : [];
   const paymentsList = student?.payments || studentInfo?.payments || [];
   const hasSuccessfulPayment = paymentsList.some(p => p.status === 'successful' || p.status === 'paid');
 
@@ -763,41 +910,221 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                   )}
                 </div>
               )}
-              {(enrolledSubjects.length > 0 || enrolledCourses.length > 0) ? (
-                <div className="space-y-3">
-                  {/* Display Courses if available */}
-                  {enrolledCourses.length > 0 && (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-                      <p className="text-[11px] font-black uppercase text-gray-400 tracking-wider mb-2.5">Enrolled Courses ({enrolledCourses.length})</p>
-                      <div className="flex flex-wrap gap-2">
-                        {enrolledCourses.map((ce, idx) => {
-                          const cId = typeof ce === 'object' ? (ce?.course_id || ce?.id) : ce;
-                          const foundCourse = allCourses.find(c => String(c.id) === String(cId) || String(c.course_id) === String(cId));
-                          const courseName = ce?.title || ce?.name || ce?.course?.title || ce?.course?.name || foundCourse?.title || foundCourse?.name || `Course #${cId}`;
-                          return (
-                            <span key={idx} className="px-3 py-1.5 bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-white rounded-lg text-xs font-bold border border-[#0F2843]/20 dark:border-white/20 flex items-center gap-1.5">
-                              <Icon icon="heroicons:academic-cap-solid" className="w-3.5 h-3.5" />
-                              {courseName}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+              {(enrolledCourses.length > 0 || enrolledSubjects.length > 0) ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-black uppercase text-gray-400 tracking-wider">
+                      Enrolled Courses & Subjects ({enrolledCourses.length > 0 ? `${enrolledCourses.length} ${enrolledCourses.length === 1 ? 'Course' : 'Courses'}` : `${enrolledSubjects.length} Subjects`})
+                    </p>
+                    {isAdmin && (
+                      <span className="text-[10px] text-gray-400 font-semibold flex items-center gap-1">
+                        <Icon icon="heroicons:arrow-path" className="w-3 h-3 text-[#BB9E7F]" />
+                        Click icon to swap subject
+                      </span>
+                    )}
+                  </div>
 
-                  {/* Display Enrolled Subjects */}
-                  {enrolledSubjects.length > 0 && (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-                      <p className="text-[11px] font-black uppercase text-gray-400 tracking-wider mb-2.5">Enrolled Subjects ({enrolledSubjects.length})</p>
-                      <div className="flex flex-wrap gap-2">
-                        {enrolledSubjects.map((sub, idx) => {
+                  {/* Render Courses with their nested Subjects */}
+                  {enrolledCourses.map((ce, cIdx) => {
+                    const cId = typeof ce === 'object' ? (ce?.course_id || ce?.id) : ce;
+                    const foundCourse = allCourses.find(c => String(c.id) === String(cId) || String(c.course_id) === String(cId));
+                    const courseTitle = ce?.title || ce?.name || ce?.course_information?.title || ce?.course_information?.name || ce?.course?.title || ce?.course?.name || foundCourse?.title || foundCourse?.name || `Course #${cId}`;
+                    const courseCode = ce?.enrollment_code || '';
+                    const courseSubjects = Array.isArray(ce?.subjects) ? ce.subjects : [];
+                    const courseAvailableSubjects = Array.isArray(ce?.available_subjects) && ce.available_subjects.length > 0
+                      ? ce.available_subjects
+                      : (foundCourse?.subjects || []);
+
+                    const courseSlug = (ce?.course_information?.slug || ce?.slug || foundCourse?.slug || '').toLowerCase();
+                    const isJamb = String(cId) === '1' || courseTitle.toLowerCase().includes('jamb') || courseSlug.includes('jamb');
+                    const maxSubjects = isJamb ? 4 : 9;
+                    const currentSubjectCount = courseSubjects.length;
+                    const hasReachedMax = currentSubjectCount >= maxSubjects;
+
+                    return (
+                      <div 
+                        key={ce?.enrollment_id || cIdx} 
+                        className="p-4 bg-gray-50/90 dark:bg-gray-800/80 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-3 shadow-xs"
+                      >
+                        {/* Course Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200/60 dark:border-gray-700/60 pb-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-[#0F2843] dark:bg-white text-white dark:text-[#0F2843] flex items-center justify-center shadow-xs">
+                              <Icon icon="heroicons:academic-cap-solid" className="w-4 h-4" />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black uppercase tracking-tight text-[#0F2843] dark:text-white">
+                                {courseTitle}
+                              </span>
+                              {courseCode && (
+                                <span className="text-[10px] text-gray-400 font-mono font-bold">
+                                  ({courseCode})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                              hasReachedMax
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                : "bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-gray-300 border-[#0F2843]/15 dark:border-white/15"
+                            }`}>
+                              {currentSubjectCount} / {maxSubjects} Subjects {hasReachedMax && "(Max Limit)"}
+                            </span>
+                            {isAdmin && (
+                              hasReachedMax ? (
+                                <span 
+                                  className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-not-allowed select-none"
+                                  title={`Maximum limit of ${maxSubjects} subjects reached for ${isJamb ? 'JAMB' : 'O-Levels'}. You can still substitute or remove subjects.`}
+                                >
+                                  <Icon icon="heroicons:lock-closed-solid" className="w-3.5 h-3.5" />
+                                  <span>Max Reached ({maxSubjects})</span>
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenAddSubjectModal({
+                                    courseEnrollmentId: ce?.enrollment_id || ce?.id,
+                                    courseId: cId,
+                                    courseTitle: courseTitle,
+                                    courseSlug: ce?.course_information?.slug || ce?.slug || foundCourse?.slug,
+                                    availableSubjects: courseAvailableSubjects.length > 0 ? courseAvailableSubjects : allSubjects,
+                                    currentEnrolledIds: courseSubjects.map(cs => String(cs?.subject_id || cs?.subject?.id || cs?.id)),
+                                    currentSubjectCount,
+                                    maxSubjects,
+                                    isJamb,
+                                  })}
+                                  className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-xs"
+                                  title={`Add subject to ${courseTitle} (${currentSubjectCount}/${maxSubjects} selected)`}
+                                >
+                                  <Icon icon="heroicons:plus-solid" className="w-3.5 h-3.5" />
+                                  <span>Add Subject ({currentSubjectCount}/{maxSubjects})</span>
+                                </button>
+                              )
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Subjects Registered Under this Course */}
+                        {courseSubjects.length > 0 ? (
+                          <div className="flex flex-wrap gap-2 pt-0.5">
+                            {courseSubjects.map((sub, sIdx) => {
+                              const sId = typeof sub === 'object' ? (sub?.subject_id || sub?.subject?.id || sub?.id) : sub;
+                              const foundSubject = allSubjects.find(s => String(s.id) === String(sId) || String(s.subject_id) === String(sId));
+                              const rawSubName = sub?.name || sub?.title || sub?.subject?.name || sub?.subject?.title || foundSubject?.name || foundSubject?.title || `Subject #${sId}`;
+                              const subName = rawSubName.toLowerCase() === "furher mathematics" ? "Further Mathematics" : rawSubName;
+
+                              return (
+                                <span 
+                                  key={sIdx} 
+                                  className="px-3 py-1.5 bg-[#BB9E7F]/15 text-[#BB9E7F] dark:text-[#d4b592] rounded-xl text-xs font-bold border border-[#BB9E7F]/30 shadow-xs flex items-center gap-2 group hover:border-[#BB9E7F]/60 transition-all"
+                                >
+                                  <Icon icon="heroicons:book-open-solid" className="w-3.5 h-3.5 text-[#BB9E7F] shrink-0" />
+                                  <span className="truncate max-w-[200px]">{subName}</span>
+                                  {isAdmin && (
+                                    <div className="flex items-center gap-0.5 ml-1 border-l border-[#BB9E7F]/30 pl-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenSwapSubjectModal({
+                                          id: sId,
+                                          name: subName,
+                                        }, {
+                                          courseEnrollmentId: ce?.enrollment_id || ce?.id,
+                                          courseId: cId,
+                                          courseTitle: courseTitle,
+                                          courseSlug: ce?.course_information?.slug || ce?.slug || foundCourse?.slug,
+                                          availableSubjects: courseAvailableSubjects.length > 0 ? courseAvailableSubjects : allSubjects,
+                                          currentEnrolledIds: courseSubjects.map(cs => String(cs?.subject_id || cs?.subject?.id || cs?.id)),
+                                        })}
+                                        className="p-1 hover:bg-[#BB9E7F]/30 dark:hover:bg-white/10 rounded-md text-[#BB9E7F] dark:text-[#d4b592] hover:text-[#0F2843] dark:hover:text-white transition-all active:scale-90"
+                                        title={`Substitute / Swap ${courseTitle} — ${subName}`}
+                                      >
+                                        <Icon icon="heroicons:arrow-path" className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenRemoveSubjectModal({
+                                          id: sId,
+                                          name: subName,
+                                        }, {
+                                          courseEnrollmentId: ce?.enrollment_id || ce?.id,
+                                          courseId: cId,
+                                          courseTitle: courseTitle,
+                                        })}
+                                        className="p-1 hover:bg-rose-500/20 rounded-md text-rose-500 hover:text-rose-600 transition-all active:scale-90"
+                                        title={`Delete / Remove ${courseTitle} — ${subName}`}
+                                      >
+                                        <Icon icon="heroicons:trash" className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  )}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 italic">No subjects registered under this course.</p>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Render any Standalone Subjects not inside course enrollments */}
+                  {standaloneSubjects.length > 0 && (
+                    <div className="p-4 bg-gray-50/90 dark:bg-gray-800/80 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-3 shadow-xs">
+                      <div className="flex items-center justify-between border-b border-gray-200/60 dark:border-gray-700/60 pb-2.5">
+                        <span className="text-xs font-black uppercase tracking-tight text-[#0F2843] dark:text-white">
+                          Additional Enrolled Subjects
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-gray-300">
+                          {standaloneSubjects.length}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-0.5">
+                        {standaloneSubjects.map((sub, idx) => {
                           const sId = typeof sub === 'object' ? (sub?.subject_id || sub?.id) : sub;
                           const foundSubject = allSubjects.find(s => String(s.id) === String(sId) || String(s.subject_id) === String(sId));
                           const subName = sub?.title || sub?.name || sub?.subject?.title || sub?.subject?.name || sub?.subject_name || foundSubject?.title || foundSubject?.name || `Subject #${sId}`;
                           return (
-                            <span key={idx} className="px-3 py-1.5 bg-[#BB9E7F]/15 text-[#BB9E7F] dark:text-[#d4b592] rounded-lg text-xs font-bold border border-[#BB9E7F]/30 shadow-sm flex items-center gap-1.5">
+                            <span key={idx} className="px-3 py-1.5 bg-[#BB9E7F]/15 text-[#BB9E7F] dark:text-[#d4b592] rounded-xl text-xs font-bold border border-[#BB9E7F]/30 shadow-xs flex items-center gap-2">
                               <Icon icon="heroicons:book-open-solid" className="w-3.5 h-3.5" />
-                              {subName}
+                              <span>{subName}</span>
+                              {isAdmin && (
+                                <div className="flex items-center gap-0.5 ml-1 border-l border-[#BB9E7F]/30 pl-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenSwapSubjectModal({
+                                      id: sId,
+                                      name: subName,
+                                    }, {
+                                      courseEnrollmentId: null,
+                                      courseId: null,
+                                      courseTitle: null,
+                                      availableSubjects: allSubjects,
+                                      currentEnrolledIds: standaloneSubjects.map(ss => String(typeof ss === 'object' ? (ss?.subject_id || ss?.id) : ss)),
+                                    })}
+                                    className="p-1 hover:bg-[#BB9E7F]/30 dark:hover:bg-white/10 rounded-md text-[#BB9E7F] dark:text-[#d4b592] hover:text-[#0F2843] dark:hover:text-white transition-all active:scale-90"
+                                    title={`Substitute ${subName}`}
+                                  >
+                                    <Icon icon="heroicons:arrow-path" className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenRemoveSubjectModal({
+                                      id: sId,
+                                      name: subName,
+                                    }, {
+                                      courseEnrollmentId: null,
+                                      courseId: null,
+                                      courseTitle: null,
+                                    })}
+                                    className="p-1 hover:bg-rose-500/20 rounded-md text-rose-500 hover:text-rose-600 transition-all active:scale-90"
+                                    title={`Remove ${subName}`}
+                                  >
+                                    <Icon icon="heroicons:trash" className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
                             </span>
                           );
                         })}
@@ -1139,6 +1466,230 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                   className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
                 >
                   {actionLoading ? "Assigning..." : "Assign Advisor"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* MODAL: MANAGE ENROLLED SUBJECT (ADD, SUBSTITUTE, REMOVE - ADMIN ONLY) */}
+      {subjectModalAction && (targetCourseForSubject || targetSubjectToActOn) && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 backdrop-blur-md px-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#131320] w-full max-w-lg rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-200 dark:border-gray-700 space-y-6 text-[#0F2843] dark:text-gray-100">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                  subjectModalAction === 'add'
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                    : subjectModalAction === 'remove'
+                    ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
+                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                }`}>
+                  <Icon 
+                    icon={
+                      subjectModalAction === 'add' 
+                        ? "heroicons:plus-circle-20-solid" 
+                        : subjectModalAction === 'remove' 
+                        ? "heroicons:trash-20-solid" 
+                        : "heroicons:arrow-path-rounded-square-20-solid"
+                    } 
+                    className="w-5 h-5" 
+                  />
+                </div>
+                <div>
+                  <h3 className="text-base font-black uppercase tracking-tight">
+                    {subjectModalAction === 'add' && "Add Subject to Enrollment"}
+                    {subjectModalAction === 'swap' && "Substitute Enrolled Subject"}
+                    {subjectModalAction === 'remove' && "Remove Subject from Enrollment"}
+                  </h3>
+                  <p className="text-[11px] text-gray-400 font-bold">
+                    {targetCourseForSubject?.courseTitle ? `${targetCourseForSubject.courseTitle} • ` : ""}
+                    Student: {studentInfo?.firstname || "student"}
+                  </p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => {
+                  setSubjectModalAction(null);
+                  setTargetCourseForSubject(null);
+                  setTargetSubjectToActOn(null);
+                  setSelectedSubjectId("");
+                  setSubjectActionReason("");
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
+              >
+                <Icon icon="heroicons:x-mark-20-solid" className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubjectAction} className="space-y-4">
+              {/* If Swap or Remove: Show subject being removed/disenrolled */}
+              {(subjectModalAction === 'swap' || subjectModalAction === 'remove') && targetSubjectToActOn && (
+                <div className="p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-2xl">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                      <Icon icon="heroicons:minus-circle-solid" className="w-3.5 h-3.5" />
+                      <span>{subjectModalAction === 'swap' ? "Subject Being Replaced" : "Subject to be Removed"}</span>
+                    </div>
+                    {targetCourseForSubject?.courseTitle && (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-200/60 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200">
+                        {targetCourseForSubject.courseTitle}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-base font-extrabold text-rose-900 dark:text-rose-200">
+                    {targetCourseForSubject?.courseTitle ? `${targetCourseForSubject.courseTitle} — ` : ""}{targetSubjectToActOn.name}
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                    {subjectModalAction === 'swap'
+                      ? `The student will be disenrolled from all active sessions and unsubmitted assessments for this subject under ${targetCourseForSubject?.courseTitle || 'this course'}.`
+                      : `The student will be disenrolled from all active classes and unsubmitted assessments for this subject under ${targetCourseForSubject?.courseTitle || 'this course'}. Historical submissions and grades are preserved.`}
+                  </p>
+                </div>
+              )}
+
+              {/* Add Subject Info / Limit Banner */}
+              {subjectModalAction === 'add' && targetCourseForSubject && (
+                <div className="flex items-center justify-between p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                      <Icon icon="heroicons:information-circle-solid" className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-emerald-950 dark:text-emerald-200">
+                        Curriculum Limit: {targetCourseForSubject.isJamb ? "JAMB (Maximum 4 Subjects)" : "O-Levels (Maximum 9 Subjects)"}
+                      </p>
+                      <p className="text-[10px] text-emerald-800/80 dark:text-emerald-300/80">
+                        Student currently has {targetCourseForSubject.currentSubjectCount ?? 0} subject{(targetCourseForSubject.currentSubjectCount ?? 0) === 1 ? '' : 's'} enrolled.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-black bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                    {(targetCourseForSubject.currentSubjectCount ?? 0) + 1} / {targetCourseForSubject.maxSubjects ?? (targetCourseForSubject.isJamb ? 4 : 9)}
+                  </span>
+                </div>
+              )}
+
+              {/* If Add or Swap: Show subject selection */}
+              {(subjectModalAction === 'add' || subjectModalAction === 'swap') && (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5 ml-1">
+                    <label className="text-[11px] font-bold text-gray-400">
+                      {subjectModalAction === 'add' ? "Select Subject to Add *" : `Select Replacement Subject ${targetCourseForSubject?.courseTitle ? `for ${targetCourseForSubject.courseTitle}` : ""} *`}
+                    </label>
+                    {targetCourseForSubject?.courseTitle && (
+                      <span className="text-[10px] text-gray-400 font-bold">
+                        Course: {targetCourseForSubject.courseTitle}
+                      </span>
+                    )}
+                  </div>
+                  <select
+                    value={selectedSubjectId}
+                    onChange={(e) => setSelectedSubjectId(e.target.value)}
+                    required
+                    className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                  >
+                    <option value="" disabled>Choose subject from curriculum...</option>
+                    {availableActionSubjects.map((s) => {
+                      const rawName = s.name || s.title || "";
+                      const cleanedName = rawName.toLowerCase() === "furher mathematics" ? "Further Mathematics" : rawName;
+                      const displayName = targetCourseForSubject?.courseTitle ? `${targetCourseForSubject.courseTitle} — ${cleanedName}` : cleanedName;
+                      return (
+                        <option key={s.id} value={s.id}>
+                          {displayName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  {availableActionSubjects.length === 0 && (
+                    <p className="text-[10px] text-amber-500 mt-1 ml-1">
+                      No other unassigned subjects available for {targetCourseForSubject?.courseTitle || 'this course'}.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Mandatory Reason */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5 ml-1">
+                  <label className="text-[11px] font-bold text-gray-400">
+                    Mandatory Reason for {subjectModalAction === 'add' ? 'Addition' : (subjectModalAction === 'remove' ? 'Removal' : 'Substitution')} *
+                  </label>
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                    Visible to Student
+                  </span>
+                </div>
+                <textarea
+                  value={subjectActionReason}
+                  onChange={(e) => setSubjectActionReason(e.target.value)}
+                  required
+                  rows={3}
+                  placeholder={
+                    subjectModalAction === 'add'
+                      ? `Explain why this subject is being added to ${studentInfo?.firstname || 'the student'}'s enrollment (e.g. Student selected 3 subjects at registration because 4th was unavailable, adding the 4th now)...`
+                      : subjectModalAction === 'remove'
+                      ? `Explain why this subject is being removed from ${studentInfo?.firstname || 'the student'}'s enrollment (e.g. Student requested removal of subject combination)...`
+                      : `Explain why this subject change was requested (e.g. Student requested switch to replacement subject)...`
+                  }
+                  className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl p-3.5 text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none resize-none"
+                />
+                <p className="text-[10px] text-gray-400 ml-1 mt-1">
+                  This note is audited and will be shown to {studentInfo?.firstname || "the student"} in a notification popup upon their next login.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubjectModalAction(null);
+                    setTargetCourseForSubject(null);
+                    setTargetSubjectToActOn(null);
+                    setSelectedSubjectId("");
+                    setSubjectActionReason("");
+                  }}
+                  className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={
+                    actionLoading || 
+                    subjectActionReason.trim().length < 5 ||
+                    ((subjectModalAction === 'add' || subjectModalAction === 'swap') && !selectedSubjectId)
+                  }
+                  className={`flex-1 py-3 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
+                    subjectModalAction === 'add'
+                      ? "bg-emerald-600 hover:bg-emerald-700"
+                      : subjectModalAction === 'remove'
+                      ? "bg-rose-600 hover:bg-rose-700"
+                      : "bg-[#0F2843] dark:bg-white dark:text-[#0F2843]"
+                  }`}
+                >
+                  {actionLoading ? "Processing..." : (
+                    <>
+                      <Icon 
+                        icon={
+                          subjectModalAction === 'add' 
+                            ? "heroicons:plus-solid" 
+                            : subjectModalAction === 'remove' 
+                            ? "heroicons:trash-solid" 
+                            : "heroicons:arrow-path"
+                        } 
+                        className="w-4 h-4" 
+                      />
+                      <span>
+                        {subjectModalAction === 'add' && "Confirm & Add Subject"}
+                        {subjectModalAction === 'swap' && "Confirm Substitution"}
+                        {subjectModalAction === 'remove' && "Confirm & Remove Subject"}
+                      </span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
