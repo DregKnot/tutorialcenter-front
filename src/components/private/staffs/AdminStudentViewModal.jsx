@@ -424,17 +424,35 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
     return !subjectIdsInCourses.includes(sId);
   });
 
-  // Calculate replacement options specifically for the subject being changed
-  const replacementOptions = subjectToChange ? (
-    (subjectToChange.availableSubjects && subjectToChange.availableSubjects.length > 0 
-      ? subjectToChange.availableSubjects 
-      : allSubjects
-    ).filter(s => {
+  // Derive available replacement subjects:
+  // JAMB courses come from Course ID 1 (JAMB), while all non-JAMB courses (WAEC, NECO, GCE, etc.) strictly pull from Course ID 4 (GCE)
+  const replacementOptions = subjectToChange ? (() => {
+    const isJamb = 
+      String(subjectToChange.courseId) === '1' ||
+      subjectToChange.courseTitle?.toUpperCase().includes('JAMB') ||
+      subjectToChange.courseSlug?.toLowerCase() === 'jamb';
+
+    let targetCourseSubjects = [];
+    if (isJamb) {
+      const jambCourse = allCourses.find(c => String(c.id) === '1' || c.slug === 'jamb' || c.title?.toUpperCase().includes('JAMB'));
+      targetCourseSubjects = (jambCourse?.subjects && jambCourse.subjects.length > 0)
+        ? jambCourse.subjects
+        : (subjectToChange.availableSubjects || allSubjects);
+    } else {
+      // Non-JAMB courses (WAEC, NECO, GCE) strictly source replacement subjects from Course ID 4 (GCE)
+      const gceCourse = allCourses.find(c => String(c.id) === '4' || c.slug === 'gce' || c.title?.toUpperCase().includes('GCE'));
+      targetCourseSubjects = (gceCourse?.subjects && gceCourse.subjects.length > 0)
+        ? gceCourse.subjects
+        : (subjectToChange.availableSubjects || allSubjects);
+    }
+
+    const enrolledInCourse = (subjectToChange.currentEnrolledIds || []).map(String);
+
+    return targetCourseSubjects.filter(s => {
       const sId = String(s.id);
-      const enrolledInCourse = (subjectToChange.currentEnrolledIds || []).map(String);
       return !enrolledInCourse.includes(sId);
-    })
-  ) : [];
+    });
+  })() : [];
   const paymentsList = student?.payments || studentInfo?.payments || [];
   const hasSuccessfulPayment = paymentsList.some(p => p.status === 'successful' || p.status === 'paid');
 
@@ -899,7 +917,8 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                             {courseSubjects.map((sub, sIdx) => {
                               const sId = typeof sub === 'object' ? (sub?.subject_id || sub?.subject?.id || sub?.id) : sub;
                               const foundSubject = allSubjects.find(s => String(s.id) === String(sId) || String(s.subject_id) === String(sId));
-                              const subName = sub?.name || sub?.title || sub?.subject?.name || sub?.subject?.title || foundSubject?.name || foundSubject?.title || `Subject #${sId}`;
+                              const rawSubName = sub?.name || sub?.title || sub?.subject?.name || sub?.subject?.title || foundSubject?.name || foundSubject?.title || `Subject #${sId}`;
+                              const subName = rawSubName.toLowerCase() === "furher mathematics" ? "Further Mathematics" : rawSubName;
 
                               return (
                                 <span 
@@ -915,7 +934,9 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                                         id: sId,
                                         name: subName,
                                         courseEnrollmentId: ce?.enrollment_id || ce?.id,
+                                        courseId: cId,
                                         courseTitle: courseTitle,
+                                        courseSlug: ce?.course_information?.slug || ce?.slug || foundCourse?.slug,
                                         availableSubjects: courseAvailableSubjects.length > 0 ? courseAvailableSubjects : allSubjects,
                                         currentEnrolledIds: courseSubjects.map(cs => String(cs?.subject_id || cs?.subject?.id || cs?.id)),
                                       })}
@@ -1363,7 +1384,7 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                   )}
                 </div>
                 <p className="text-base font-extrabold text-rose-900 dark:text-rose-200">
-                  {subjectToChange.courseTitle ? `${subjectToChange.courseTitle} — ` : ""}{subjectToChange.name}
+                  {subjectToChange.courseTitle ? `${subjectToChange.courseTitle} — ` : ""}{subjectToChange.name?.toLowerCase() === "furher mathematics" ? "Further Mathematics" : subjectToChange.name}
                 </p>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                   The student will be disenrolled from all active sessions and unsubmitted assessments for this subject under {subjectToChange.courseTitle || 'this course'}.
@@ -1389,11 +1410,16 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                   className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
                 >
                   <option value="" disabled>Choose replacement subject...</option>
-                  {replacementOptions.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {subjectToChange.courseTitle ? `${subjectToChange.courseTitle} — ` : ""}{s.name || s.title}
-                    </option>
-                  ))}
+                  {replacementOptions.map((s) => {
+                    const rawName = s.name || s.title || "";
+                    const cleanedName = rawName.toLowerCase() === "furher mathematics" ? "Further Mathematics" : rawName;
+                    const displayName = subjectToChange.courseTitle ? `${subjectToChange.courseTitle} — ${cleanedName}` : cleanedName;
+                    return (
+                      <option key={s.id} value={s.id}>
+                        {displayName}
+                      </option>
+                    );
+                  })}
                 </select>
                 {replacementOptions.length === 0 && (
                   <p className="text-[10px] text-amber-500 mt-1 ml-1">No other unassigned subjects available for {subjectToChange.courseTitle || 'this course'}.</p>
