@@ -7,8 +7,12 @@ export default function SubjectChangeNotificationModal({ change, onClose, onAckn
 
   if (!change) return null;
 
-  const oldSubjectName = change.old_subject?.name || change.oldSubject?.name || "Previous Subject";
-  const newSubjectName = change.new_subject?.name || change.newSubject?.name || "New Subject";
+  const courseTitle = change.course_enrollment?.course?.title || change.courseEnrollment?.course?.title || change.course_title || "";
+  const rawOldName = change.old_subject?.name || change.oldSubject?.name || "Previous Subject";
+  const rawNewName = change.new_subject?.name || change.newSubject?.name || "New Subject";
+
+  const oldSubjectName = courseTitle ? `${courseTitle} — ${rawOldName}` : rawOldName;
+  const newSubjectName = courseTitle ? `${courseTitle} — ${rawNewName}` : rawNewName;
   const adminName = change.changed_by_staff 
     ? `${change.changed_by_staff.firstname || ''} ${change.changed_by_staff.surname || ''}`.trim()
     : (change.changedByStaff 
@@ -50,10 +54,12 @@ export default function SubjectChangeNotificationModal({ change, onClose, onAckn
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight mt-1">
-              Subject Combination Updated
+              {courseTitle ? `${courseTitle} Subject Updated` : "Subject Combination Updated"}
             </h2>
             <p className="text-xs text-gray-400 font-medium mt-0.5">
-              An administrator has updated your enrolled subjects.
+              {courseTitle 
+                ? `An administrator has updated your enrolled subjects for ${courseTitle}.` 
+                : "An administrator has updated your enrolled subjects."}
             </p>
           </div>
         </div>
@@ -126,3 +132,4 @@ export default function SubjectChangeNotificationModal({ change, onClose, onAckn
     </div>
   );
 }
+

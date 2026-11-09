@@ -307,6 +307,7 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
       const res = await axios.post(
         `${API_BASE_URL}/api/admin/students/${studentId}/change-subject`,
         {
+          course_enrollment_id: subjectToChange.courseEnrollmentId || null,
           old_subject_id: subjectToChange.id,
           new_subject_id: selectedNewSubjectId,
           reason: changeReason.trim(),
@@ -414,14 +415,26 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
   const isSuspended = !!student?.deleted_at || !!studentInfo?.deleted_at || student?.account_status === "suspended" || student?.banned === 1;
 
   const enrolledSubjects = student?.enrolled_subjects || student?.enrolled_subject || studentInfo?.enrolled_subjects || studentInfo?.enrolled_subject || student?.subjects || [];
-  const activeEnrolledSubjectIds = enrolledSubjects.map(sub => {
-    const sId = typeof sub === 'object' ? (sub?.subject_id || sub?.id) : sub;
-    return String(sId);
-  });
-  const availableReplacementSubjects = allSubjects.filter(s => {
-    return !activeEnrolledSubjectIds.includes(String(s.id));
-  });
   const enrolledCourses = student?.courses || student?.course_enrollments || studentInfo?.courses || studentInfo?.course_enrollments || [];
+  
+  // Find standalone subjects that are not in any course enrollment
+  const subjectIdsInCourses = enrolledCourses.flatMap(ce => (ce?.subjects || []).map(s => String(s?.subject_id || s?.subject?.id || s?.id)));
+  const standaloneSubjects = enrolledSubjects.filter(sub => {
+    const sId = String(typeof sub === 'object' ? (sub?.subject_id || sub?.id) : sub);
+    return !subjectIdsInCourses.includes(sId);
+  });
+
+  // Calculate replacement options specifically for the subject being changed
+  const replacementOptions = subjectToChange ? (
+    (subjectToChange.availableSubjects && subjectToChange.availableSubjects.length > 0 
+      ? subjectToChange.availableSubjects 
+      : allSubjects
+    ).filter(s => {
+      const sId = String(s.id);
+      const enrolledInCourse = (subjectToChange.currentEnrolledIds || []).map(String);
+      return !enrolledInCourse.includes(sId);
+    })
+  ) : [];
   const paymentsList = student?.payments || studentInfo?.payments || [];
   const hasSuccessfulPayment = paymentsList.some(p => p.status === 'successful' || p.status === 'paid');
 
@@ -828,57 +841,134 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                   )}
                 </div>
               )}
-              {(enrolledSubjects.length > 0 || enrolledCourses.length > 0) ? (
-                <div className="space-y-3">
-                  {/* Display Courses if available */}
-                  {enrolledCourses.length > 0 && (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-                      <p className="text-[11px] font-black uppercase text-gray-400 tracking-wider mb-2.5">Enrolled Courses ({enrolledCourses.length})</p>
-                      <div className="flex flex-wrap gap-2">
-                        {enrolledCourses.map((ce, idx) => {
-                          const cId = typeof ce === 'object' ? (ce?.course_id || ce?.id) : ce;
-                          const foundCourse = allCourses.find(c => String(c.id) === String(cId) || String(c.course_id) === String(cId));
-                          const courseName = ce?.title || ce?.name || ce?.course?.title || ce?.course?.name || foundCourse?.title || foundCourse?.name || `Course #${cId}`;
-                          return (
-                            <span key={idx} className="px-3 py-1.5 bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-white rounded-lg text-xs font-bold border border-[#0F2843]/20 dark:border-white/20 flex items-center gap-1.5">
-                              <Icon icon="heroicons:academic-cap-solid" className="w-3.5 h-3.5" />
-                              {courseName}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+              {(enrolledCourses.length > 0 || enrolledSubjects.length > 0) ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-black uppercase text-gray-400 tracking-wider">
+                      Enrolled Courses & Subjects ({enrolledCourses.length > 0 ? `${enrolledCourses.length} ${enrolledCourses.length === 1 ? 'Course' : 'Courses'}` : `${enrolledSubjects.length} Subjects`})
+                    </p>
+                    {isAdmin && (
+                      <span className="text-[10px] text-gray-400 font-semibold flex items-center gap-1">
+                        <Icon icon="heroicons:arrow-path" className="w-3 h-3 text-[#BB9E7F]" />
+                        Click icon to swap subject
+                      </span>
+                    )}
+                  </div>
 
-                  {/* Display Enrolled Subjects */}
-                  {enrolledSubjects.length > 0 && (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-2.5">
-                        <p className="text-[11px] font-black uppercase text-gray-400 tracking-wider">
-                          Enrolled Subjects ({enrolledSubjects.length})
-                        </p>
-                        {isAdmin && (
-                          <span className="text-[10px] text-gray-400 font-semibold flex items-center gap-1">
-                            <Icon icon="heroicons:arrow-path" className="w-3 h-3 text-[#BB9E7F]" />
-                            Click icon to swap subject
+                  {/* Render Courses with their nested Subjects */}
+                  {enrolledCourses.map((ce, cIdx) => {
+                    const cId = typeof ce === 'object' ? (ce?.course_id || ce?.id) : ce;
+                    const foundCourse = allCourses.find(c => String(c.id) === String(cId) || String(c.course_id) === String(cId));
+                    const courseTitle = ce?.title || ce?.name || ce?.course_information?.title || ce?.course_information?.name || ce?.course?.title || ce?.course?.name || foundCourse?.title || foundCourse?.name || `Course #${cId}`;
+                    const courseCode = ce?.enrollment_code || '';
+                    const courseSubjects = Array.isArray(ce?.subjects) ? ce.subjects : [];
+                    const courseAvailableSubjects = Array.isArray(ce?.available_subjects) && ce.available_subjects.length > 0
+                      ? ce.available_subjects
+                      : (foundCourse?.subjects || []);
+
+                    return (
+                      <div 
+                        key={ce?.enrollment_id || cIdx} 
+                        className="p-4 bg-gray-50/90 dark:bg-gray-800/80 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-3 shadow-xs"
+                      >
+                        {/* Course Header */}
+                        <div className="flex items-center justify-between border-b border-gray-200/60 dark:border-gray-700/60 pb-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-[#0F2843] dark:bg-white text-white dark:text-[#0F2843] flex items-center justify-center shadow-xs">
+                              <Icon icon="heroicons:academic-cap-solid" className="w-4 h-4" />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black uppercase tracking-tight text-[#0F2843] dark:text-white">
+                                {courseTitle}
+                              </span>
+                              {courseCode && (
+                                <span className="text-[10px] text-gray-400 font-mono font-bold">
+                                  ({courseCode})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-gray-300 border border-[#0F2843]/15 dark:border-white/15">
+                            {courseSubjects.length} {courseSubjects.length === 1 ? 'Subject' : 'Subjects'}
                           </span>
+                        </div>
+
+                        {/* Subjects Registered Under this Course */}
+                        {courseSubjects.length > 0 ? (
+                          <div className="flex flex-wrap gap-2 pt-0.5">
+                            {courseSubjects.map((sub, sIdx) => {
+                              const sId = typeof sub === 'object' ? (sub?.subject_id || sub?.subject?.id || sub?.id) : sub;
+                              const foundSubject = allSubjects.find(s => String(s.id) === String(sId) || String(s.subject_id) === String(sId));
+                              const subName = sub?.name || sub?.title || sub?.subject?.name || sub?.subject?.title || foundSubject?.name || foundSubject?.title || `Subject #${sId}`;
+
+                              return (
+                                <span 
+                                  key={sIdx} 
+                                  className="px-3 py-1.5 bg-[#BB9E7F]/15 text-[#BB9E7F] dark:text-[#d4b592] rounded-xl text-xs font-bold border border-[#BB9E7F]/30 shadow-xs flex items-center gap-2 group hover:border-[#BB9E7F]/60 transition-all"
+                                >
+                                  <Icon icon="heroicons:book-open-solid" className="w-3.5 h-3.5 text-[#BB9E7F] shrink-0" />
+                                  <span className="truncate max-w-[200px]">{subName}</span>
+                                  {isAdmin && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenChangeSubjectModal({
+                                        id: sId,
+                                        name: subName,
+                                        courseEnrollmentId: ce?.enrollment_id || ce?.id,
+                                        courseTitle: courseTitle,
+                                        availableSubjects: courseAvailableSubjects.length > 0 ? courseAvailableSubjects : allSubjects,
+                                        currentEnrolledIds: courseSubjects.map(cs => String(cs?.subject_id || cs?.subject?.id || cs?.id)),
+                                      })}
+                                      className="ml-0.5 p-1 hover:bg-[#BB9E7F]/30 dark:hover:bg-white/10 rounded-md text-[#BB9E7F] dark:text-[#d4b592] hover:text-[#0F2843] dark:hover:text-white transition-all active:scale-90"
+                                      title={`Swap ${courseTitle} - ${subName}`}
+                                    >
+                                      <Icon icon="heroicons:arrow-path" className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 italic">No subjects registered under this course.</p>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {enrolledSubjects.map((sub, idx) => {
+                    );
+                  })}
+
+                  {/* Render any Standalone Subjects not inside course enrollments */}
+                  {standaloneSubjects.length > 0 && (
+                    <div className="p-4 bg-gray-50/90 dark:bg-gray-800/80 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-3 shadow-xs">
+                      <div className="flex items-center justify-between border-b border-gray-200/60 dark:border-gray-700/60 pb-2.5">
+                        <span className="text-xs font-black uppercase tracking-tight text-[#0F2843] dark:text-white">
+                          Additional Enrolled Subjects
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-gray-300">
+                          {standaloneSubjects.length}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-0.5">
+                        {standaloneSubjects.map((sub, idx) => {
                           const sId = typeof sub === 'object' ? (sub?.subject_id || sub?.id) : sub;
                           const foundSubject = allSubjects.find(s => String(s.id) === String(sId) || String(s.subject_id) === String(sId));
                           const subName = sub?.title || sub?.name || sub?.subject?.title || sub?.subject?.name || sub?.subject_name || foundSubject?.title || foundSubject?.name || `Subject #${sId}`;
                           return (
-                            <span key={idx} className="px-3 py-1.5 bg-[#BB9E7F]/15 text-[#BB9E7F] dark:text-[#d4b592] rounded-lg text-xs font-bold border border-[#BB9E7F]/30 shadow-sm flex items-center gap-2">
+                            <span key={idx} className="px-3 py-1.5 bg-[#BB9E7F]/15 text-[#BB9E7F] dark:text-[#d4b592] rounded-xl text-xs font-bold border border-[#BB9E7F]/30 shadow-xs flex items-center gap-2">
                               <Icon icon="heroicons:book-open-solid" className="w-3.5 h-3.5" />
                               <span>{subName}</span>
                               {isAdmin && (
                                 <button
                                   type="button"
-                                  onClick={() => handleOpenChangeSubjectModal({ id: sId, name: subName })}
-                                  className="ml-0.5 p-1 hover:bg-[#BB9E7F]/30 dark:hover:bg-white/10 rounded-md text-[#BB9E7F] dark:text-[#d4b592] hover:text-[#0F2843] dark:hover:text-white transition-all active:scale-90"
-                                  title={`Swap ${subName} for another subject`}
+                                  onClick={() => handleOpenChangeSubjectModal({
+                                    id: sId,
+                                    name: subName,
+                                    courseEnrollmentId: null,
+                                    courseTitle: null,
+                                    availableSubjects: allSubjects,
+                                    currentEnrolledIds: standaloneSubjects.map(ss => String(typeof ss === 'object' ? (ss?.subject_id || ss?.id) : ss)),
+                                  })}
+                                  className="ml-0.5 p-1 hover:bg-[#BB9E7F]/30 dark:hover:bg-white/10 rounded-md text-[#BB9E7F] dark:text-[#d4b592] transition-all active:scale-90"
+                                  title={`Swap ${subName}`}
                                 >
                                   <Icon icon="heroicons:arrow-path" className="w-3.5 h-3.5" />
                                 </button>
@@ -1241,7 +1331,9 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                 </div>
                 <div>
                   <h3 className="text-base font-black uppercase tracking-tight">Change Enrolled Subject</h3>
-                  <p className="text-[11px] text-gray-400 font-bold">Replace subject for {studentInfo?.firstname || "student"}</p>
+                  <p className="text-[11px] text-gray-400 font-bold">
+                    Replace subject for {studentInfo?.firstname || "student"} {subjectToChange.courseTitle ? `under ${subjectToChange.courseTitle}` : ""}
+                  </p>
                 </div>
               </div>
               <button 
@@ -1259,23 +1351,37 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
             <form onSubmit={handleChangeSubject} className="space-y-4">
               {/* Current subject being removed */}
               <div className="p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-2xl">
-                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-1">
-                  <Icon icon="heroicons:minus-circle-solid" className="w-3.5 h-3.5" />
-                  <span>Subject Being Removed</span>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                    <Icon icon="heroicons:minus-circle-solid" className="w-3.5 h-3.5" />
+                    <span>Subject Being Removed</span>
+                  </div>
+                  {subjectToChange.courseTitle && (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-200/60 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200">
+                      {subjectToChange.courseTitle}
+                    </span>
+                  )}
                 </div>
-                <p className="text-sm font-extrabold text-rose-900 dark:text-rose-200">
-                  {subjectToChange.name}
+                <p className="text-base font-extrabold text-rose-900 dark:text-rose-200">
+                  {subjectToChange.courseTitle ? `${subjectToChange.courseTitle} — ` : ""}{subjectToChange.name}
                 </p>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                  The student will be disenrolled from all active sessions and unsubmitted assessments for this subject.
+                  The student will be disenrolled from all active sessions and unsubmitted assessments for this subject under {subjectToChange.courseTitle || 'this course'}.
                 </p>
               </div>
 
               {/* New replacement subject select */}
               <div>
-                <label className="text-[11px] font-bold text-gray-400 ml-1 block mb-1.5">
-                  Select Replacement Subject *
-                </label>
+                <div className="flex items-center justify-between mb-1.5 ml-1">
+                  <label className="text-[11px] font-bold text-gray-400">
+                    Select Replacement Subject {subjectToChange.courseTitle ? `for ${subjectToChange.courseTitle}` : ""} *
+                  </label>
+                  {subjectToChange.courseTitle && (
+                    <span className="text-[10px] text-gray-400 font-bold">
+                      Parent: {subjectToChange.courseTitle}
+                    </span>
+                  )}
+                </div>
                 <select
                   value={selectedNewSubjectId}
                   onChange={(e) => setSelectedNewSubjectId(e.target.value)}
@@ -1283,14 +1389,14 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                   className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
                 >
                   <option value="" disabled>Choose replacement subject...</option>
-                  {availableReplacementSubjects.map((s) => (
+                  {replacementOptions.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name || s.title}
+                      {subjectToChange.courseTitle ? `${subjectToChange.courseTitle} — ` : ""}{s.name || s.title}
                     </option>
                   ))}
                 </select>
-                {availableReplacementSubjects.length === 0 && (
-                  <p className="text-[10px] text-amber-500 mt-1 ml-1">No other unassigned subjects available to select.</p>
+                {replacementOptions.length === 0 && (
+                  <p className="text-[10px] text-amber-500 mt-1 ml-1">No other unassigned subjects available for {subjectToChange.courseTitle || 'this course'}.</p>
                 )}
               </div>
 
@@ -1309,7 +1415,7 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                   onChange={(e) => setChangeReason(e.target.value)}
                   required
                   rows={3}
-                  placeholder="Explain why this subject change was requested (e.g. Student requested switch from Economics to Government for Humanities stream)..."
+                  placeholder={`Explain why this subject change was requested (e.g. Student requested switch from ${subjectToChange.courseTitle ? `${subjectToChange.courseTitle} ` : ''}${subjectToChange.name} to replacement subject)...`}
                   className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl p-3.5 text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none resize-none"
                 />
                 <p className="text-[10px] text-gray-400 ml-1 mt-1">
