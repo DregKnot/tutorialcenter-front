@@ -935,6 +935,12 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                       ? ce.available_subjects
                       : (foundCourse?.subjects || []);
 
+                    const courseSlug = (ce?.course_information?.slug || ce?.slug || foundCourse?.slug || '').toLowerCase();
+                    const isJamb = String(cId) === '1' || courseTitle.toLowerCase().includes('jamb') || courseSlug.includes('jamb');
+                    const maxSubjects = isJamb ? 4 : 9;
+                    const currentSubjectCount = courseSubjects.length;
+                    const hasReachedMax = currentSubjectCount >= maxSubjects;
+
                     return (
                       <div 
                         key={ce?.enrollment_id || cIdx} 
@@ -958,26 +964,43 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-gray-300 border border-[#0F2843]/15 dark:border-white/15">
-                              {courseSubjects.length} {courseSubjects.length === 1 ? 'Subject' : 'Subjects'}
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                              hasReachedMax
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                : "bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-gray-300 border-[#0F2843]/15 dark:border-white/15"
+                            }`}>
+                              {currentSubjectCount} / {maxSubjects} Subjects {hasReachedMax && "(Max Limit)"}
                             </span>
                             {isAdmin && (
-                              <button
-                                type="button"
-                                onClick={() => handleOpenAddSubjectModal({
-                                  courseEnrollmentId: ce?.enrollment_id || ce?.id,
-                                  courseId: cId,
-                                  courseTitle: courseTitle,
-                                  courseSlug: ce?.course_information?.slug || ce?.slug || foundCourse?.slug,
-                                  availableSubjects: courseAvailableSubjects.length > 0 ? courseAvailableSubjects : allSubjects,
-                                  currentEnrolledIds: courseSubjects.map(cs => String(cs?.subject_id || cs?.subject?.id || cs?.id)),
-                                })}
-                                className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-xs"
-                                title={`Add subject to ${courseTitle}`}
-                              >
-                                <Icon icon="heroicons:plus-solid" className="w-3.5 h-3.5" />
-                                <span>Add Subject</span>
-                              </button>
+                              hasReachedMax ? (
+                                <span 
+                                  className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-not-allowed select-none"
+                                  title={`Maximum limit of ${maxSubjects} subjects reached for ${isJamb ? 'JAMB' : 'O-Levels'}. You can still substitute or remove subjects.`}
+                                >
+                                  <Icon icon="heroicons:lock-closed-solid" className="w-3.5 h-3.5" />
+                                  <span>Max Reached ({maxSubjects})</span>
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenAddSubjectModal({
+                                    courseEnrollmentId: ce?.enrollment_id || ce?.id,
+                                    courseId: cId,
+                                    courseTitle: courseTitle,
+                                    courseSlug: ce?.course_information?.slug || ce?.slug || foundCourse?.slug,
+                                    availableSubjects: courseAvailableSubjects.length > 0 ? courseAvailableSubjects : allSubjects,
+                                    currentEnrolledIds: courseSubjects.map(cs => String(cs?.subject_id || cs?.subject?.id || cs?.id)),
+                                    currentSubjectCount,
+                                    maxSubjects,
+                                    isJamb,
+                                  })}
+                                  className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-xs"
+                                  title={`Add subject to ${courseTitle} (${currentSubjectCount}/${maxSubjects} selected)`}
+                                >
+                                  <Icon icon="heroicons:plus-solid" className="w-3.5 h-3.5" />
+                                  <span>Add Subject ({currentSubjectCount}/{maxSubjects})</span>
+                                </button>
+                              )
                             )}
                           </div>
                         </div>
@@ -1525,6 +1548,28 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                       ? `The student will be disenrolled from all active sessions and unsubmitted assessments for this subject under ${targetCourseForSubject?.courseTitle || 'this course'}.`
                       : `The student will be disenrolled from all active classes and unsubmitted assessments for this subject under ${targetCourseForSubject?.courseTitle || 'this course'}. Historical submissions and grades are preserved.`}
                   </p>
+                </div>
+              )}
+
+              {/* Add Subject Info / Limit Banner */}
+              {subjectModalAction === 'add' && targetCourseForSubject && (
+                <div className="flex items-center justify-between p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                      <Icon icon="heroicons:information-circle-solid" className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-emerald-950 dark:text-emerald-200">
+                        Curriculum Limit: {targetCourseForSubject.isJamb ? "JAMB (Maximum 4 Subjects)" : "O-Levels (Maximum 9 Subjects)"}
+                      </p>
+                      <p className="text-[10px] text-emerald-800/80 dark:text-emerald-300/80">
+                        Student currently has {targetCourseForSubject.currentSubjectCount ?? 0} subject{(targetCourseForSubject.currentSubjectCount ?? 0) === 1 ? '' : 's'} enrolled.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-black bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                    {(targetCourseForSubject.currentSubjectCount ?? 0) + 1} / {targetCourseForSubject.maxSubjects ?? (targetCourseForSubject.isJamb ? 4 : 9)}
+                  </span>
                 </div>
               )}
 
