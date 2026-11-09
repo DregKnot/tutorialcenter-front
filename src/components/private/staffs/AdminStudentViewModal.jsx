@@ -101,11 +101,12 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
   const [advisorRole, setAdvisorRole] = useState("advisor");
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Subject swap / change state (Administrator only)
-  const [showChangeSubjectModal, setShowChangeSubjectModal] = useState(false);
-  const [subjectToChange, setSubjectToChange] = useState(null);
-  const [selectedNewSubjectId, setSelectedNewSubjectId] = useState("");
-  const [changeReason, setChangeReason] = useState("");
+  // Subject Management modal state (Administrator only: Add, Substitute, Remove)
+  const [subjectModalAction, setSubjectModalAction] = useState(null); // 'swap' | 'add' | 'remove' | null
+  const [targetCourseForSubject, setTargetCourseForSubject] = useState(null);
+  const [targetSubjectToActOn, setTargetSubjectToActOn] = useState(null);
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
+  const [subjectActionReason, setSubjectActionReason] = useState("");
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
   const token = localStorage.getItem("staff_token");
@@ -278,53 +279,128 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
     }
   };
 
-  // Open Subject Swap Modal (Admin Only)
-  const handleOpenChangeSubjectModal = (subjectObj) => {
-    setSubjectToChange(subjectObj);
-    setSelectedNewSubjectId("");
-    setChangeReason("");
-    setShowChangeSubjectModal(true);
+  // Helper to derive available subjects for a course (JAMB from Course 1, others strictly from Course 4 - GCE)
+  const getAvailableSubjectsForCourse = (courseObj) => {
+    if (!courseObj) return [];
+    const isJamb = 
+      String(courseObj.courseId) === '1' ||
+      courseObj.courseTitle?.toUpperCase().includes('JAMB') ||
+      courseObj.courseSlug?.toLowerCase() === 'jamb';
+
+    let targetCourseSubjects = [];
+    if (isJamb) {
+      const jambCourse = allCourses.find(c => String(c.id) === '1' || c.slug === 'jamb' || c.title?.toUpperCase().includes('JAMB'));
+      targetCourseSubjects = (jambCourse?.subjects && jambCourse.subjects.length > 0)
+        ? jambCourse.subjects
+        : (courseObj.availableSubjects || allSubjects);
+    } else {
+      // Non-JAMB courses (WAEC, NECO, GCE) strictly source subjects from Course ID 4 (GCE)
+      const gceCourse = allCourses.find(c => String(c.id) === '4' || c.slug === 'gce' || c.title?.toUpperCase().includes('GCE'));
+      targetCourseSubjects = (gceCourse?.subjects && gceCourse.subjects.length > 0)
+        ? gceCourse.subjects
+        : (courseObj.availableSubjects || allSubjects);
+    }
+
+    const enrolledInCourse = (courseObj.currentEnrolledIds || []).map(String);
+
+    return targetCourseSubjects.filter(s => {
+      const sId = String(s.id);
+      return !enrolledInCourse.includes(sId);
+    });
   };
 
-  // Submit Subject Swap (Admin Only)
-  const handleChangeSubject = async (e) => {
+  // Open Add Subject Modal (Admin Only)
+  const handleOpenAddSubjectModal = (courseObj) => {
+    setTargetCourseForSubject(courseObj);
+    setTargetSubjectToActOn(null);
+    setSelectedSubjectId("");
+    setSubjectActionReason("");
+    setSubjectModalAction('add');
+  };
+
+  // Open Subject Swap Modal (Admin Only)
+  const handleOpenSwapSubjectModal = (subjectObj, courseObj) => {
+    setTargetCourseForSubject(courseObj);
+    setTargetSubjectToActOn(subjectObj);
+    setSelectedSubjectId("");
+    setSubjectActionReason("");
+    setSubjectModalAction('swap');
+  };
+
+  // Open Subject Remove Modal (Admin Only)
+  const handleOpenRemoveSubjectModal = (subjectObj, courseObj) => {
+    setTargetCourseForSubject(courseObj);
+    setTargetSubjectToActOn(subjectObj);
+    setSelectedSubjectId("");
+    setSubjectActionReason("");
+    setSubjectModalAction('remove');
+  };
+
+  // Submit Subject Action (Add, Swap, or Remove - Admin Only)
+  const handleSubjectAction = async (e) => {
     e.preventDefault();
-    if (!subjectToChange?.id) {
-      setToast({ type: "error", message: "Please select an existing subject to replace." });
+    if (!isAdmin) {
+      setToast({ type: "error", message: "Only administrators are authorized to manage subjects." });
       return;
     }
-    if (!selectedNewSubjectId) {
-      setToast({ type: "error", message: "Please select a replacement subject." });
+
+    if (!subjectActionReason.trim() || subjectActionReason.trim().length < 5) {
+      setToast({ type: "error", message: "A valid reason (minimum 5 characters) is mandatory. The student will see this note upon login." });
       return;
     }
-    if (!changeReason.trim() || changeReason.trim().length < 5) {
-      setToast({ type: "error", message: "A valid reason for changing the subject combination is mandatory (min 5 characters)." });
-      return;
+
+    let payload = {
+      action: subjectModalAction,
+      reason: subjectActionReason.trim(),
+    };
+
+    if (subjectModalAction === 'add') {
+      if (!selectedSubjectId) {
+        setToast({ type: "error", message: "Please select a subject to add." });
+        return;
+      }
+      payload.course_enrollment_id = targetCourseForSubject?.courseEnrollmentId;
+      payload.new_subject_id = selectedSubjectId;
+    } else if (subjectModalAction === 'swap') {
+      if (!targetSubjectToActOn?.id) {
+        setToast({ type: "error", message: "Please select an existing subject to replace." });
+        return;
+      }
+      if (!selectedSubjectId) {
+        setToast({ type: "error", message: "Please select a replacement subject." });
+        return;
+      }
+      payload.course_enrollment_id = targetCourseForSubject?.courseEnrollmentId || null;
+      payload.old_subject_id = targetSubjectToActOn.id;
+      payload.new_subject_id = selectedSubjectId;
+    } else if (subjectModalAction === 'remove') {
+      if (!targetSubjectToActOn?.id) {
+        setToast({ type: "error", message: "Please select a subject to remove." });
+        return;
+      }
+      payload.course_enrollment_id = targetCourseForSubject?.courseEnrollmentId || null;
+      payload.old_subject_id = targetSubjectToActOn.id;
     }
 
     setActionLoading(true);
     try {
       const res = await axios.post(
         `${API_BASE_URL}/api/admin/students/${studentId}/change-subject`,
-        {
-          course_enrollment_id: subjectToChange.courseEnrollmentId || null,
-          old_subject_id: subjectToChange.id,
-          new_subject_id: selectedNewSubjectId,
-          reason: changeReason.trim(),
-        },
+        payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setToast({ type: "success", message: res.data?.message || "Subject combination updated successfully!" });
-      setShowChangeSubjectModal(false);
-      setSubjectToChange(null);
-      setSelectedNewSubjectId("");
-      setChangeReason("");
+      setToast({ type: "success", message: res.data?.message || "Subject enrollment updated successfully!" });
+      setSubjectModalAction(null);
+      setTargetCourseForSubject(null);
+      setTargetSubjectToActOn(null);
+      setSelectedSubjectId("");
+      setSubjectActionReason("");
       fetchStudentDetails();
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error(err);
-      setToast({ type: "error", message: err.response?.data?.message || "Failed to update subject combination." });
+      setToast({ type: "error", message: err.response?.data?.message || "Failed to update subject enrollment." });
     } finally {
       setActionLoading(false);
     }
@@ -424,35 +500,10 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
     return !subjectIdsInCourses.includes(sId);
   });
 
-  // Derive available replacement subjects:
-  // JAMB courses come from Course ID 1 (JAMB), while all non-JAMB courses (WAEC, NECO, GCE, etc.) strictly pull from Course ID 4 (GCE)
-  const replacementOptions = subjectToChange ? (() => {
-    const isJamb = 
-      String(subjectToChange.courseId) === '1' ||
-      subjectToChange.courseTitle?.toUpperCase().includes('JAMB') ||
-      subjectToChange.courseSlug?.toLowerCase() === 'jamb';
-
-    let targetCourseSubjects = [];
-    if (isJamb) {
-      const jambCourse = allCourses.find(c => String(c.id) === '1' || c.slug === 'jamb' || c.title?.toUpperCase().includes('JAMB'));
-      targetCourseSubjects = (jambCourse?.subjects && jambCourse.subjects.length > 0)
-        ? jambCourse.subjects
-        : (subjectToChange.availableSubjects || allSubjects);
-    } else {
-      // Non-JAMB courses (WAEC, NECO, GCE) strictly source replacement subjects from Course ID 4 (GCE)
-      const gceCourse = allCourses.find(c => String(c.id) === '4' || c.slug === 'gce' || c.title?.toUpperCase().includes('GCE'));
-      targetCourseSubjects = (gceCourse?.subjects && gceCourse.subjects.length > 0)
-        ? gceCourse.subjects
-        : (subjectToChange.availableSubjects || allSubjects);
-    }
-
-    const enrolledInCourse = (subjectToChange.currentEnrolledIds || []).map(String);
-
-    return targetCourseSubjects.filter(s => {
-      const sId = String(s.id);
-      return !enrolledInCourse.includes(sId);
-    });
-  })() : [];
+  // Derive available candidate subjects for Add or Swap action
+  const availableActionSubjects = (targetCourseForSubject && (subjectModalAction === 'add' || subjectModalAction === 'swap'))
+    ? getAvailableSubjectsForCourse(targetCourseForSubject)
+    : [];
   const paymentsList = student?.payments || studentInfo?.payments || [];
   const hasSuccessfulPayment = paymentsList.some(p => p.status === 'successful' || p.status === 'paid');
 
@@ -890,7 +941,7 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                         className="p-4 bg-gray-50/90 dark:bg-gray-800/80 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-3 shadow-xs"
                       >
                         {/* Course Header */}
-                        <div className="flex items-center justify-between border-b border-gray-200/60 dark:border-gray-700/60 pb-2.5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200/60 dark:border-gray-700/60 pb-2.5">
                           <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-lg bg-[#0F2843] dark:bg-white text-white dark:text-[#0F2843] flex items-center justify-center shadow-xs">
                               <Icon icon="heroicons:academic-cap-solid" className="w-4 h-4" />
@@ -906,9 +957,29 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                               )}
                             </div>
                           </div>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-gray-300 border border-[#0F2843]/15 dark:border-white/15">
-                            {courseSubjects.length} {courseSubjects.length === 1 ? 'Subject' : 'Subjects'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-gray-300 border border-[#0F2843]/15 dark:border-white/15">
+                              {courseSubjects.length} {courseSubjects.length === 1 ? 'Subject' : 'Subjects'}
+                            </span>
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenAddSubjectModal({
+                                  courseEnrollmentId: ce?.enrollment_id || ce?.id,
+                                  courseId: cId,
+                                  courseTitle: courseTitle,
+                                  courseSlug: ce?.course_information?.slug || ce?.slug || foundCourse?.slug,
+                                  availableSubjects: courseAvailableSubjects.length > 0 ? courseAvailableSubjects : allSubjects,
+                                  currentEnrolledIds: courseSubjects.map(cs => String(cs?.subject_id || cs?.subject?.id || cs?.id)),
+                                })}
+                                className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all active:scale-95 shadow-xs"
+                                title={`Add subject to ${courseTitle}`}
+                              >
+                                <Icon icon="heroicons:plus-solid" className="w-3.5 h-3.5" />
+                                <span>Add Subject</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Subjects Registered Under this Course */}
@@ -928,23 +999,41 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                                   <Icon icon="heroicons:book-open-solid" className="w-3.5 h-3.5 text-[#BB9E7F] shrink-0" />
                                   <span className="truncate max-w-[200px]">{subName}</span>
                                   {isAdmin && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenChangeSubjectModal({
-                                        id: sId,
-                                        name: subName,
-                                        courseEnrollmentId: ce?.enrollment_id || ce?.id,
-                                        courseId: cId,
-                                        courseTitle: courseTitle,
-                                        courseSlug: ce?.course_information?.slug || ce?.slug || foundCourse?.slug,
-                                        availableSubjects: courseAvailableSubjects.length > 0 ? courseAvailableSubjects : allSubjects,
-                                        currentEnrolledIds: courseSubjects.map(cs => String(cs?.subject_id || cs?.subject?.id || cs?.id)),
-                                      })}
-                                      className="ml-0.5 p-1 hover:bg-[#BB9E7F]/30 dark:hover:bg-white/10 rounded-md text-[#BB9E7F] dark:text-[#d4b592] hover:text-[#0F2843] dark:hover:text-white transition-all active:scale-90"
-                                      title={`Swap ${courseTitle} - ${subName}`}
-                                    >
-                                      <Icon icon="heroicons:arrow-path" className="w-3.5 h-3.5" />
-                                    </button>
+                                    <div className="flex items-center gap-0.5 ml-1 border-l border-[#BB9E7F]/30 pl-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenSwapSubjectModal({
+                                          id: sId,
+                                          name: subName,
+                                        }, {
+                                          courseEnrollmentId: ce?.enrollment_id || ce?.id,
+                                          courseId: cId,
+                                          courseTitle: courseTitle,
+                                          courseSlug: ce?.course_information?.slug || ce?.slug || foundCourse?.slug,
+                                          availableSubjects: courseAvailableSubjects.length > 0 ? courseAvailableSubjects : allSubjects,
+                                          currentEnrolledIds: courseSubjects.map(cs => String(cs?.subject_id || cs?.subject?.id || cs?.id)),
+                                        })}
+                                        className="p-1 hover:bg-[#BB9E7F]/30 dark:hover:bg-white/10 rounded-md text-[#BB9E7F] dark:text-[#d4b592] hover:text-[#0F2843] dark:hover:text-white transition-all active:scale-90"
+                                        title={`Substitute / Swap ${courseTitle} — ${subName}`}
+                                      >
+                                        <Icon icon="heroicons:arrow-path" className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenRemoveSubjectModal({
+                                          id: sId,
+                                          name: subName,
+                                        }, {
+                                          courseEnrollmentId: ce?.enrollment_id || ce?.id,
+                                          courseId: cId,
+                                          courseTitle: courseTitle,
+                                        })}
+                                        className="p-1 hover:bg-rose-500/20 rounded-md text-rose-500 hover:text-rose-600 transition-all active:scale-90"
+                                        title={`Delete / Remove ${courseTitle} — ${subName}`}
+                                      >
+                                        <Icon icon="heroicons:trash" className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
                                   )}
                                 </span>
                               );
@@ -978,21 +1067,40 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                               <Icon icon="heroicons:book-open-solid" className="w-3.5 h-3.5" />
                               <span>{subName}</span>
                               {isAdmin && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenChangeSubjectModal({
-                                    id: sId,
-                                    name: subName,
-                                    courseEnrollmentId: null,
-                                    courseTitle: null,
-                                    availableSubjects: allSubjects,
-                                    currentEnrolledIds: standaloneSubjects.map(ss => String(typeof ss === 'object' ? (ss?.subject_id || ss?.id) : ss)),
-                                  })}
-                                  className="ml-0.5 p-1 hover:bg-[#BB9E7F]/30 dark:hover:bg-white/10 rounded-md text-[#BB9E7F] dark:text-[#d4b592] transition-all active:scale-90"
-                                  title={`Swap ${subName}`}
-                                >
-                                  <Icon icon="heroicons:arrow-path" className="w-3.5 h-3.5" />
-                                </button>
+                                <div className="flex items-center gap-0.5 ml-1 border-l border-[#BB9E7F]/30 pl-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenSwapSubjectModal({
+                                      id: sId,
+                                      name: subName,
+                                    }, {
+                                      courseEnrollmentId: null,
+                                      courseId: null,
+                                      courseTitle: null,
+                                      availableSubjects: allSubjects,
+                                      currentEnrolledIds: standaloneSubjects.map(ss => String(typeof ss === 'object' ? (ss?.subject_id || ss?.id) : ss)),
+                                    })}
+                                    className="p-1 hover:bg-[#BB9E7F]/30 dark:hover:bg-white/10 rounded-md text-[#BB9E7F] dark:text-[#d4b592] hover:text-[#0F2843] dark:hover:text-white transition-all active:scale-90"
+                                    title={`Substitute ${subName}`}
+                                  >
+                                    <Icon icon="heroicons:arrow-path" className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenRemoveSubjectModal({
+                                      id: sId,
+                                      name: subName,
+                                    }, {
+                                      courseEnrollmentId: null,
+                                      courseId: null,
+                                      courseTitle: null,
+                                    })}
+                                    className="p-1 hover:bg-rose-500/20 rounded-md text-rose-500 hover:text-rose-600 transition-all active:scale-90"
+                                    title={`Remove ${subName}`}
+                                  >
+                                    <Icon icon="heroicons:trash" className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               )}
                             </span>
                           );
@@ -1341,27 +1449,52 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
           </div>
         </div>
       )}
-      {/* MODAL: SWAP / CHANGE ENROLLED SUBJECT (ADMIN ONLY) */}
-      {showChangeSubjectModal && subjectToChange && (
+      {/* MODAL: MANAGE ENROLLED SUBJECT (ADD, SUBSTITUTE, REMOVE - ADMIN ONLY) */}
+      {subjectModalAction && (targetCourseForSubject || targetSubjectToActOn) && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 backdrop-blur-md px-4 animate-in fade-in">
           <div className="bg-white dark:bg-[#131320] w-full max-w-lg rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-200 dark:border-gray-700 space-y-6 text-[#0F2843] dark:text-gray-100">
+            
+            {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center">
-                  <Icon icon="heroicons:arrow-path-rounded-square-20-solid" className="w-5 h-5" />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                  subjectModalAction === 'add'
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                    : subjectModalAction === 'remove'
+                    ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
+                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                }`}>
+                  <Icon 
+                    icon={
+                      subjectModalAction === 'add' 
+                        ? "heroicons:plus-circle-20-solid" 
+                        : subjectModalAction === 'remove' 
+                        ? "heroicons:trash-20-solid" 
+                        : "heroicons:arrow-path-rounded-square-20-solid"
+                    } 
+                    className="w-5 h-5" 
+                  />
                 </div>
                 <div>
-                  <h3 className="text-base font-black uppercase tracking-tight">Change Enrolled Subject</h3>
+                  <h3 className="text-base font-black uppercase tracking-tight">
+                    {subjectModalAction === 'add' && "Add Subject to Enrollment"}
+                    {subjectModalAction === 'swap' && "Substitute Enrolled Subject"}
+                    {subjectModalAction === 'remove' && "Remove Subject from Enrollment"}
+                  </h3>
                   <p className="text-[11px] text-gray-400 font-bold">
-                    Replace subject for {studentInfo?.firstname || "student"} {subjectToChange.courseTitle ? `under ${subjectToChange.courseTitle}` : ""}
+                    {targetCourseForSubject?.courseTitle ? `${targetCourseForSubject.courseTitle} • ` : ""}
+                    Student: {studentInfo?.firstname || "student"}
                   </p>
                 </div>
               </div>
               <button 
                 type="button"
                 onClick={() => {
-                  setShowChangeSubjectModal(false);
-                  setSubjectToChange(null);
+                  setSubjectModalAction(null);
+                  setTargetCourseForSubject(null);
+                  setTargetSubjectToActOn(null);
+                  setSelectedSubjectId("");
+                  setSubjectActionReason("");
                 }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-white"
               >
@@ -1369,79 +1502,93 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
               </button>
             </div>
 
-            <form onSubmit={handleChangeSubject} className="space-y-4">
-              {/* Current subject being removed */}
-              <div className="p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-2xl">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400">
-                    <Icon icon="heroicons:minus-circle-solid" className="w-3.5 h-3.5" />
-                    <span>Subject Being Removed</span>
+            <form onSubmit={handleSubjectAction} className="space-y-4">
+              {/* If Swap or Remove: Show subject being removed/disenrolled */}
+              {(subjectModalAction === 'swap' || subjectModalAction === 'remove') && targetSubjectToActOn && (
+                <div className="p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-2xl">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                      <Icon icon="heroicons:minus-circle-solid" className="w-3.5 h-3.5" />
+                      <span>{subjectModalAction === 'swap' ? "Subject Being Replaced" : "Subject to be Removed"}</span>
+                    </div>
+                    {targetCourseForSubject?.courseTitle && (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-200/60 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200">
+                        {targetCourseForSubject.courseTitle}
+                      </span>
+                    )}
                   </div>
-                  {subjectToChange.courseTitle && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-200/60 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200">
-                      {subjectToChange.courseTitle}
-                    </span>
-                  )}
+                  <p className="text-base font-extrabold text-rose-900 dark:text-rose-200">
+                    {targetCourseForSubject?.courseTitle ? `${targetCourseForSubject.courseTitle} — ` : ""}{targetSubjectToActOn.name}
+                  </p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                    {subjectModalAction === 'swap'
+                      ? `The student will be disenrolled from all active sessions and unsubmitted assessments for this subject under ${targetCourseForSubject?.courseTitle || 'this course'}.`
+                      : `The student will be disenrolled from all active classes and unsubmitted assessments for this subject under ${targetCourseForSubject?.courseTitle || 'this course'}. Historical submissions and grades are preserved.`}
+                  </p>
                 </div>
-                <p className="text-base font-extrabold text-rose-900 dark:text-rose-200">
-                  {subjectToChange.courseTitle ? `${subjectToChange.courseTitle} — ` : ""}{subjectToChange.name?.toLowerCase() === "furher mathematics" ? "Further Mathematics" : subjectToChange.name}
-                </p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                  The student will be disenrolled from all active sessions and unsubmitted assessments for this subject under {subjectToChange.courseTitle || 'this course'}.
-                </p>
-              </div>
+              )}
 
-              {/* New replacement subject select */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5 ml-1">
-                  <label className="text-[11px] font-bold text-gray-400">
-                    Select Replacement Subject {subjectToChange.courseTitle ? `for ${subjectToChange.courseTitle}` : ""} *
-                  </label>
-                  {subjectToChange.courseTitle && (
-                    <span className="text-[10px] text-gray-400 font-bold">
-                      Parent: {subjectToChange.courseTitle}
-                    </span>
+              {/* If Add or Swap: Show subject selection */}
+              {(subjectModalAction === 'add' || subjectModalAction === 'swap') && (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5 ml-1">
+                    <label className="text-[11px] font-bold text-gray-400">
+                      {subjectModalAction === 'add' ? "Select Subject to Add *" : `Select Replacement Subject ${targetCourseForSubject?.courseTitle ? `for ${targetCourseForSubject.courseTitle}` : ""} *`}
+                    </label>
+                    {targetCourseForSubject?.courseTitle && (
+                      <span className="text-[10px] text-gray-400 font-bold">
+                        Course: {targetCourseForSubject.courseTitle}
+                      </span>
+                    )}
+                  </div>
+                  <select
+                    value={selectedSubjectId}
+                    onChange={(e) => setSelectedSubjectId(e.target.value)}
+                    required
+                    className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
+                  >
+                    <option value="" disabled>Choose subject from curriculum...</option>
+                    {availableActionSubjects.map((s) => {
+                      const rawName = s.name || s.title || "";
+                      const cleanedName = rawName.toLowerCase() === "furher mathematics" ? "Further Mathematics" : rawName;
+                      const displayName = targetCourseForSubject?.courseTitle ? `${targetCourseForSubject.courseTitle} — ${cleanedName}` : cleanedName;
+                      return (
+                        <option key={s.id} value={s.id}>
+                          {displayName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  {availableActionSubjects.length === 0 && (
+                    <p className="text-[10px] text-amber-500 mt-1 ml-1">
+                      No other unassigned subjects available for {targetCourseForSubject?.courseTitle || 'this course'}.
+                    </p>
                   )}
                 </div>
-                <select
-                  value={selectedNewSubjectId}
-                  onChange={(e) => setSelectedNewSubjectId(e.target.value)}
-                  required
-                  className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none"
-                >
-                  <option value="" disabled>Choose replacement subject...</option>
-                  {replacementOptions.map((s) => {
-                    const rawName = s.name || s.title || "";
-                    const cleanedName = rawName.toLowerCase() === "furher mathematics" ? "Further Mathematics" : rawName;
-                    const displayName = subjectToChange.courseTitle ? `${subjectToChange.courseTitle} — ${cleanedName}` : cleanedName;
-                    return (
-                      <option key={s.id} value={s.id}>
-                        {displayName}
-                      </option>
-                    );
-                  })}
-                </select>
-                {replacementOptions.length === 0 && (
-                  <p className="text-[10px] text-amber-500 mt-1 ml-1">No other unassigned subjects available for {subjectToChange.courseTitle || 'this course'}.</p>
-                )}
-              </div>
+              )}
 
               {/* Mandatory Reason */}
               <div>
                 <div className="flex items-center justify-between mb-1.5 ml-1">
                   <label className="text-[11px] font-bold text-gray-400">
-                    Mandatory Reason for Change *
+                    Mandatory Reason for {subjectModalAction === 'add' ? 'Addition' : (subjectModalAction === 'remove' ? 'Removal' : 'Substitution')} *
                   </label>
                   <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
                     Visible to Student
                   </span>
                 </div>
                 <textarea
-                  value={changeReason}
-                  onChange={(e) => setChangeReason(e.target.value)}
+                  value={subjectActionReason}
+                  onChange={(e) => setSubjectActionReason(e.target.value)}
                   required
                   rows={3}
-                  placeholder={`Explain why this subject change was requested (e.g. Student requested switch from ${subjectToChange.courseTitle ? `${subjectToChange.courseTitle} ` : ''}${subjectToChange.name} to replacement subject)...`}
+                  placeholder={
+                    subjectModalAction === 'add'
+                      ? `Explain why this subject is being added to ${studentInfo?.firstname || 'the student'}'s enrollment (e.g. Student selected 3 subjects at registration because 4th was unavailable, adding the 4th now)...`
+                      : subjectModalAction === 'remove'
+                      ? `Explain why this subject is being removed from ${studentInfo?.firstname || 'the student'}'s enrollment (e.g. Student requested removal of subject combination)...`
+                      : `Explain why this subject change was requested (e.g. Student requested switch to replacement subject)...`
+                  }
                   className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl p-3.5 text-sm font-medium text-gray-700 dark:text-gray-200 focus:border-[#0F2843] outline-none resize-none"
                 />
                 <p className="text-[10px] text-gray-400 ml-1 mt-1">
@@ -1454,8 +1601,11 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                 <button
                   type="button"
                   onClick={() => {
-                    setShowChangeSubjectModal(false);
-                    setSubjectToChange(null);
+                    setSubjectModalAction(null);
+                    setTargetCourseForSubject(null);
+                    setTargetSubjectToActOn(null);
+                    setSelectedSubjectId("");
+                    setSubjectActionReason("");
                   }}
                   className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
                 >
@@ -1463,10 +1613,38 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
                 </button>
                 <button
                   type="submit"
-                  disabled={actionLoading || !selectedNewSubjectId || changeReason.trim().length < 5}
-                  className="flex-1 py-3 bg-[#0F2843] dark:bg-white text-white dark:text-[#0F2843] rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  disabled={
+                    actionLoading || 
+                    subjectActionReason.trim().length < 5 ||
+                    ((subjectModalAction === 'add' || subjectModalAction === 'swap') && !selectedSubjectId)
+                  }
+                  className={`flex-1 py-3 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
+                    subjectModalAction === 'add'
+                      ? "bg-emerald-600 hover:bg-emerald-700"
+                      : subjectModalAction === 'remove'
+                      ? "bg-rose-600 hover:bg-rose-700"
+                      : "bg-[#0F2843] dark:bg-white dark:text-[#0F2843]"
+                  }`}
                 >
-                  {actionLoading ? "Processing..." : "Confirm Subject Change"}
+                  {actionLoading ? "Processing..." : (
+                    <>
+                      <Icon 
+                        icon={
+                          subjectModalAction === 'add' 
+                            ? "heroicons:plus-solid" 
+                            : subjectModalAction === 'remove' 
+                            ? "heroicons:trash-solid" 
+                            : "heroicons:arrow-path"
+                        } 
+                        className="w-4 h-4" 
+                      />
+                      <span>
+                        {subjectModalAction === 'add' && "Confirm & Add Subject"}
+                        {subjectModalAction === 'swap' && "Confirm Substitution"}
+                        {subjectModalAction === 'remove' && "Confirm & Remove Subject"}
+                      </span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
