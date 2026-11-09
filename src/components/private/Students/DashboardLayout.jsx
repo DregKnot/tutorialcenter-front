@@ -7,6 +7,7 @@ import MobileBottomNav from "./MobileBottomNav.jsx";
 import { BellIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import InactivityModal from "./InactivityModal";
 import VerificationModal from "./VerificationModal";
+import SubjectChangeNotificationModal from "./SubjectChangeNotificationModal.jsx";
 import { useAuth } from "../../../context/AuthContext";
 import NotificationsDropdown from "./NotificationsDropdown";
 
@@ -52,6 +53,7 @@ export default function DashboardLayout({
   const hasDismissedAlert = sessionStorage.getItem('phoneAlertDismissed') === 'true';
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || "http://tutorialcenter-back.test" || "http://localhost:8000";
+  const [pendingSubjectChange, setPendingSubjectChange] = useState(null);
 
   const fetchUnreadCount = useCallback(async () => {
     if (!token) return;
@@ -65,18 +67,38 @@ export default function DashboardLayout({
     }
   }, [API_BASE_URL, token]);
 
+  const fetchPendingSubjectChanges = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/subject-changes/pending`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const list = res.data?.pending_changes || [];
+      if (list.length > 0) {
+        setPendingSubjectChange(list[0]);
+      } else {
+        setPendingSubjectChange(null);
+      }
+    } catch (error) {
+      console.warn("Failed to check pending subject changes:", error);
+    }
+  }, [API_BASE_URL, token]);
+
   useEffect(() => {
     fetchUnreadCount();
+    fetchPendingSubjectChanges();
     
     const toggleHandler = () => setIsNotificationsOpen(prev => !prev);
     window.addEventListener('toggleNotifications', toggleHandler);
     window.addEventListener('updateUnreadCount', fetchUnreadCount);
+    window.addEventListener('checkPendingSubjectChanges', fetchPendingSubjectChanges);
     
     return () => {
       window.removeEventListener('toggleNotifications', toggleHandler);
       window.removeEventListener('updateUnreadCount', fetchUnreadCount);
+      window.removeEventListener('checkPendingSubjectChanges', fetchPendingSubjectChanges);
     };
-  }, [fetchUnreadCount]);
+  }, [fetchUnreadCount, fetchPendingSubjectChanges]);
 
   return (
     <div className="min-h-screen bg-[#E6E9EC] dark:bg-gray-900 flex flex-col lg:block">
@@ -177,6 +199,19 @@ export default function DashboardLayout({
       </div>
       <InactivityModal />
       <VerificationModal />
+
+      {pendingSubjectChange && (
+        <SubjectChangeNotificationModal
+          change={pendingSubjectChange}
+          onClose={() => setPendingSubjectChange(null)}
+          onAcknowledge={() => {
+            setPendingSubjectChange(null);
+            fetchPendingSubjectChanges();
+          }}
+          token={token}
+          API_BASE_URL={API_BASE_URL}
+        />
+      )}
     </div>
   );
 }
