@@ -119,14 +119,10 @@ export default function AdminSessionActionModal({
 
   if (!isOpen || !session) return null;
 
-  // Check if session is live right now
-  const isLive = isSessionLiveNow ? isSessionLiveNow(session) : false;
-
-  // Helper: check if session has already started or is currently live
-  const isStartedOrLive = isLive ||
-    Boolean(session?.started_at) ||
-    Boolean(session?.started_by_staff_id) ||
-    ["started", "live", "in_progress", "completed"].includes(session?.status?.toLowerCase());
+  // Check if session is actively live right now (past classes CAN be rescheduled!)
+  const isLive = (isSessionLiveNow ? isSessionLiveNow(session) : false) ||
+    ["started", "live", "in_progress"].includes(session?.status?.toLowerCase()) ||
+    (Boolean(session?.started_at) && !session?.ended_at && !["cancelled", "rescheduled", "completed"].includes(session?.status?.toLowerCase()));
 
   // Helper: Client-side clash detection against all loaded sessions
   const findLocalClashes = (targetDate, targetStart, targetEnd) => {
@@ -229,9 +225,9 @@ export default function AdminSessionActionModal({
   const handleCheckReschedule = async () => {
     setErrorMessage("");
 
-    // Rule: Started or live classes cannot be rescheduled
-    if (isStartedOrLive) {
-      setErrorMessage("This class session has already started or elapsed and cannot be rescheduled.");
+    // Rule: Currently live / ongoing classes cannot be rescheduled while in session
+    if (isLive) {
+      setErrorMessage("This class session is currently live and ongoing and cannot be rescheduled while in progress.");
       return;
     }
 
@@ -576,13 +572,23 @@ export default function AdminSessionActionModal({
           {/* ═════════════════════════════════════════════════════════════════ */}
           {mode === "reschedule" && step === "pick_time" && (
             <div className="space-y-5">
-              {isStartedOrLive ? (
+              {isLive ? (
                 <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-900 flex items-start gap-3">
                   <ExclamationTriangleIcon className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
                   <div className="text-xs text-rose-900 dark:text-rose-200 leading-relaxed">
-                    <p className="font-extrabold text-sm">Cannot Reschedule: Class Has Already Started</p>
+                    <p className="font-extrabold text-sm">Cannot Reschedule: Class Is Currently Live</p>
                     <p className="mt-0.5">
-                      According to academy policy, a class session that has already started, is live, or has already elapsed cannot be rescheduled.
+                      According to academy policy, a class session that is actively live and in progress cannot be rescheduled.
+                    </p>
+                  </div>
+                </div>
+              ) : isPast ? (
+                <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-start gap-3">
+                  <ClockIcon className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                    <p className="font-bold">Rescheduling Past / Missed Session</p>
+                    <p className="mt-0.5 text-amber-800/80 dark:text-amber-300/80">
+                      This session was scheduled in the past. Select a new date (today or in the future) and time to reschedule it.
                     </p>
                   </div>
                 </div>
@@ -840,10 +846,10 @@ export default function AdminSessionActionModal({
             ) : step === "pick_time" ? (
               <button
                 type="button"
-                disabled={submitting || isStartedOrLive}
+                disabled={submitting || isLive}
                 onClick={handleCheckReschedule}
                 className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-95 text-white font-extrabold text-xs shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                title={isStartedOrLive ? "Started or live classes cannot be rescheduled" : "Check clash and reschedule"}
+                title={isLive ? "Live classes cannot be rescheduled while in progress" : "Check clash and reschedule"}
               >
                 {submitting ? (
                   <>

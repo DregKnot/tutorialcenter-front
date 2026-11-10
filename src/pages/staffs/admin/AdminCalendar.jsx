@@ -1709,13 +1709,11 @@ export default function AdminCalendar() {
 
                   {/* Cancel / Reschedule Management Actions */}
                   <div className="flex items-center gap-2">
-                    {/* Check if session is live, started, or elapsed */}
+                    {/* Check if session is actively live right now (past sessions CAN be rescheduled!) */}
                     {(() => {
-                      const isStartedOrLive = isSessionLiveNow(selectedSession) ||
-                        Boolean(selectedSession.started_at) ||
-                        Boolean(selectedSession.started_by_staff_id) ||
-                        ["started", "live", "in_progress", "completed"].includes(selectedSession.status?.toLowerCase()) ||
-                        (isSessionInPast(selectedSession) && !isSessionCancelled(selectedSession) && selectedSession.status !== "rescheduled");
+                      const isLive = isSessionLiveNow(selectedSession) ||
+                        ["started", "live", "in_progress"].includes(selectedSession.status?.toLowerCase()) ||
+                        (Boolean(selectedSession.started_at) && !selectedSession.ended_at && !["cancelled", "rescheduled", "completed"].includes(selectedSession.status?.toLowerCase()));
 
                       return (
                         <>
@@ -1723,16 +1721,16 @@ export default function AdminCalendar() {
                           {!isSessionCancelled(selectedSession) && (
                             <>
                               <button
-                                disabled={isStartedOrLive}
-                                onClick={() => !isStartedOrLive && handleOpenRescheduleSession(selectedSession)}
+                                disabled={isLive}
+                                onClick={() => !isLive && handleOpenRescheduleSession(selectedSession)}
                                 className={`px-3.5 py-2.5 border text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 ${
-                                  isStartedOrLive
+                                  isLive
                                     ? "bg-gray-100 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
                                     : "bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 active:scale-95 cursor-pointer"
                                 }`}
                                 title={
-                                  isStartedOrLive
-                                    ? "This class session has already started or elapsed and cannot be rescheduled."
+                                  isLive
+                                    ? "This class session is currently live and ongoing and cannot be rescheduled while in progress."
                                     : "Reschedule this session to a new date and time"
                                 }
                               >

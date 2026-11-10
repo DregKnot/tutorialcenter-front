@@ -203,7 +203,7 @@ describe("AdminSessionActionModal Component", () => {
       expect(screen.getByRole("button", { name: /verify & reschedule/i })).toBeInTheDocument();
     });
 
-    test("prevents rescheduling when class has already started", () => {
+    test("prevents rescheduling when class is currently live or in progress", () => {
       const startedSession = {
         ...mockActiveSession,
         started_at: "2026-11-10 10:05:00",
@@ -223,9 +223,35 @@ describe("AdminSessionActionModal Component", () => {
         />
       );
 
-      expect(screen.getByText(/Cannot Reschedule: Class Has Already Started/i)).toBeInTheDocument();
+      expect(screen.getByText(/Cannot Reschedule: Class Is Currently Live/i)).toBeInTheDocument();
       const verifyBtn = screen.getByRole("button", { name: /verify & reschedule/i });
       expect(verifyBtn).toBeDisabled();
+    });
+
+    test("allows rescheduling for a past missed session", () => {
+      const pastSession = {
+        ...mockActiveSession,
+        session_date: "2020-01-01",
+        status: "scheduled",
+      };
+
+      render(
+        <AdminSessionActionModal
+          isOpen={true}
+          mode="reschedule"
+          session={pastSession}
+          allSessions={[pastSession]}
+          onClose={mockOnClose}
+          onSuccess={mockOnSuccess}
+          API_BASE_URL="http://test.api"
+          token="test-token"
+        />
+      );
+
+      expect(screen.queryByText(/Cannot Reschedule/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/Rescheduling Past \/ Missed Session/i)).toBeInTheDocument();
+      const verifyBtn = screen.getByRole("button", { name: /verify & reschedule/i });
+      expect(verifyBtn).not.toBeDisabled();
     });
   });
 });
