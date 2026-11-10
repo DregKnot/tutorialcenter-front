@@ -78,8 +78,8 @@ export default function AdminSessionActionModal({
   }, []);
 
   const [newDate, setNewDate] = useState("");
-  const [newStartTime, setNewStartTime] = useState("10:00");
-  const [newEndTime, setNewEndTime] = useState("11:30");
+  const [newStartTime, setNewStartTime] = useState("17:00");
+  const [newEndTime, setNewEndTime] = useState("19:00");
   const [rescheduleReason, setRescheduleReason] = useState("");
 
   // Clashing sessions list
@@ -111,8 +111,24 @@ export default function AdminSessionActionModal({
         ? session.session_date 
         : todayYMD;
       setNewDate(initialDate);
-      setNewStartTime(session.starts_at || "10:00");
-      setNewEndTime(session.ends_at || addMinutesToTime(session.starts_at || "10:00", 90));
+
+      // All classes start at 5:00 PM (17:00) everyday:
+      // If the session's previous time was already 5:00 PM or later, preserve it; otherwise start from 17:00
+      const rawStart = session.starts_at ? session.starts_at.slice(0, 5) : "17:00";
+      const start = (rawStart && rawStart >= "17:00") ? rawStart : "17:00";
+
+      let end = "19:00";
+      if (session.starts_at && session.ends_at) {
+        const [sH, sM] = session.starts_at.slice(0, 5).split(":").map(Number);
+        const [eH, eM] = session.ends_at.slice(0, 5).split(":").map(Number);
+        const duration = (eH * 60 + eM) - (sH * 60 + sM);
+        end = duration > 0 ? addMinutesToTime(start, duration) : addMinutesToTime(start, 120);
+      } else {
+        end = addMinutesToTime(start, 120);
+      }
+
+      setNewStartTime(start);
+      setNewEndTime(end);
       setRescheduleReason(pastSession ? "Rescheduled from past missed session" : "");
     }
   }, [session, mode, todayYMD]);
@@ -669,20 +685,21 @@ export default function AdminSessionActionModal({
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { label: "10:00 AM - 11:30 AM", start: "10:00", end: "11:30" },
-                    { label: "12:00 PM - 1:30 PM", start: "12:00", end: "13:30" },
-                    { label: "2:00 PM - 3:30 PM", start: "14:00", end: "15:30" },
-                    { label: "4:00 PM - 5:30 PM", start: "16:00", end: "17:30" },
+                    { label: "5:00 PM - 6:30 PM", start: "17:00", end: "18:30" },
+                    { label: "5:00 PM - 7:00 PM", start: "17:00", end: "19:00" },
+                    { label: "6:30 PM - 8:00 PM", start: "18:30", end: "20:00" },
+                    { label: "7:00 PM - 8:30 PM", start: "19:00", end: "20:30" },
+                    { label: "7:00 PM - 9:00 PM", start: "19:00", end: "21:00" },
                   ].map((preset) => (
                     <button
-                      key={preset.start}
+                      key={`${preset.start}-${preset.end}`}
                       type="button"
                       onClick={() => {
                         setNewStartTime(preset.start);
                         setNewEndTime(preset.end);
                       }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                        newStartTime === preset.start
+                        newStartTime === preset.start && newEndTime === preset.end
                           ? "bg-[#09314F] text-white border-[#09314F] dark:bg-blue-600 dark:border-blue-500 shadow-sm"
                           : "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100"
                       }`}

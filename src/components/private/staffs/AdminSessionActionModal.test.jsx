@@ -28,8 +28,8 @@ describe("AdminSessionActionModal Component", () => {
     subject_name: "Physics",
     topic: "Thermodynamics & Heat Transfer",
     session_date: "2099-10-15",
-    starts_at: "10:00",
-    ends_at: "11:30",
+    starts_at: "17:00",
+    ends_at: "19:00",
     class_tier: "JAMB / O-Levels",
     tutor: { id: 5, name: "Engr. Adebayo", initials: "EA" },
   };
@@ -39,8 +39,8 @@ describe("AdminSessionActionModal Component", () => {
     subject_name: "Chemistry",
     topic: "Organic Hydrocarbons",
     session_date: "2099-10-16",
-    starts_at: "10:00",
-    ends_at: "11:30",
+    starts_at: "17:00",
+    ends_at: "19:00",
     class_tier: "JAMB / O-Levels",
     tutor: { id: 8, name: "Dr. Dele Okafor", initials: "DO" },
   };

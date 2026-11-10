@@ -119,7 +119,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
   }, [isPrivate, studentsList.length, fetchStudents]);
 
   const [daySchedules, setDaySchedules] = useState([
-    { day: "monday", start_time: "12:00", end_time: "12:30" },
+    { day: "monday", start_time: "17:00", end_time: "19:00" },
   ]);
 
   /* =============================
@@ -355,8 +355,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
       if (editClass.schedules && editClass.schedules.length > 0) {
         setDaySchedules(editClass.schedules.map(s => ({
           day: s.day_of_week,
-          start_time: s.start_time ? s.start_time.substring(0, 5) : "12:00",
-          end_time: s.end_time ? s.end_time.substring(0, 5) : "13:00"
+          start_time: s.start_time ? s.start_time.substring(0, 5) : "17:00",
+          end_time: s.end_time ? s.end_time.substring(0, 5) : "19:00"
         })));
       }
 
@@ -493,8 +493,8 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         ...daySchedules,
         {
           day: dayValue,
-          start_time: "12:00",
-          end_time: "12:30",
+          start_time: "17:00",
+          end_time: "19:00",
         },
       ]);
     }

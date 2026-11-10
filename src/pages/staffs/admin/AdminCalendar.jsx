@@ -157,8 +157,8 @@ const extractFlatSessions = (data) => {
     const rawDate = session.session_date || session.date || session.scheduled_date || session.start_date || session.created_at;
     const dateStr = rawDate ? getAfricanDateYMD(rawDate) : getAfricanDateYMD();
     
-    const startTime = session.starts_at || session.start_time || "10:00";
-    const endTime = session.ends_at || session.end_time || "11:30";
+    const startTime = session.starts_at || session.start_time || "17:00";
+    const endTime = session.ends_at || session.end_time || "19:00";
 
     const resolvedStatus = session.status || source.status || "active";
     list.push({
@@ -170,8 +170,8 @@ const extractFlatSessions = (data) => {
       status: resolvedStatus,
       class: source,
       session_date: dateStr,
-      starts_at: startTime ? startTime.substring(0, 5) : "10:00",
-      ends_at: endTime ? endTime.substring(0, 5) : "11:30",
+      starts_at: startTime ? startTime.substring(0, 5) : "17:00",
+      ends_at: endTime ? endTime.substring(0, 5) : "19:00",
       topic: session.topic || session.title || source.title || `${subject} Master Class`,
       subject_name: subject,
       subject: source.subject || session.subject,
