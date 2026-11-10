@@ -122,6 +122,12 @@ export default function AdminSessionActionModal({
   // Check if session is live right now
   const isLive = isSessionLiveNow ? isSessionLiveNow(session) : false;
 
+  // Helper: check if session has already started or is currently live
+  const isStartedOrLive = isLive ||
+    Boolean(session?.started_at) ||
+    Boolean(session?.started_by_staff_id) ||
+    ["started", "live", "in_progress", "completed"].includes(session?.status?.toLowerCase());
+
   // Helper: Client-side clash detection against all loaded sessions
   const findLocalClashes = (targetDate, targetStart, targetEnd) => {
     const [startH, startM] = targetStart.split(":").map(Number);
@@ -150,8 +156,8 @@ export default function AdminSessionActionModal({
 
   // ── 1. CANCEL SUBMISSION ───────────────────────────────────────────────────
   const handleConfirmCancel = async () => {
-    if (isLive) {
-      setErrorMessage("Live classes cannot be cancelled by Admin. Only the Course Advisor can conclude an active session.");
+    if (isLive || ["started", "live", "in_progress"].includes(session?.status?.toLowerCase())) {
+      setErrorMessage("Live or ongoing classes cannot be cancelled by Admin. Only the Course Advisor can conclude an active session.");
       return;
     }
 
@@ -173,25 +179,24 @@ export default function AdminSessionActionModal({
       try {
         await axios.patch(
           `${API_BASE_URL}/api/admin/sessions/${session.id}/cancel`,
-          { reason: finalReason },
+          { session_id: session.id, reason: finalReason },
           { headers: authHeaders }
         );
       } catch (primaryErr) {
-        // Fallback endpoint variations if backend routes differ
+        // Fallback endpoint variations if backend routes differ (always pass session.id, never class.id)
         try {
           await axios.post(
             `${API_BASE_URL}/api/admin/classes/sessions/${session.id}/cancel`,
-            { reason: finalReason },
+            { session_id: session.id, reason: finalReason },
             { headers: authHeaders }
           );
         } catch (secondaryErr) {
-          // Additional fallback for classes schedule update
-          await axios.patch(
-            `${API_BASE_URL}/api/admin/classes/${session.class_id || session.id}/cancel`,
+          // Additional fallback for direct session route
+          await axios.post(
+            `${API_BASE_URL}/api/admin/sessions/${session.id}/cancel`,
             { session_id: session.id, reason: finalReason },
             { headers: authHeaders }
           ).catch(() => {
-            // If backend mock/endpoint is not yet wired, we still accept optimistic UI
             console.warn("Backend cancel route fallback activated");
           });
         }
@@ -223,6 +228,12 @@ export default function AdminSessionActionModal({
   // ── 2. RESCHEDULE CHECK / PROCEED ─────────────────────────────────────────
   const handleCheckReschedule = async () => {
     setErrorMessage("");
+
+    // Rule: Started or live classes cannot be rescheduled
+    if (isStartedOrLive) {
+      setErrorMessage("This class session has already started or elapsed and cannot be rescheduled.");
+      return;
+    }
 
     // Validation
     if (!newDate) {
@@ -260,6 +271,7 @@ export default function AdminSessionActionModal({
         const res = await axios.post(
           `${API_BASE_URL}/api/admin/sessions/${session.id}/check-clash`,
           {
+            session_id: session.id,
             new_date: newDate,
             new_start_time: newStartTime,
             new_end_time: newEndTime,
@@ -305,6 +317,8 @@ export default function AdminSessionActionModal({
     setErrorMessage("");
 
     const payload = {
+      session_id: session.id,
+      class_id: session.class_id,
       new_date: newDate,
       new_start_time: newStartTime,
       new_end_time: newEndTime,
@@ -327,7 +341,7 @@ export default function AdminSessionActionModal({
           { headers: authHeaders }
         );
       } catch (err) {
-        // Fallback route variations
+        // Fallback route variations (always with session.id, never class.id)
         try {
           await axios.post(
             `${API_BASE_URL}/api/admin/classes/sessions/${session.id}/reschedule`,
@@ -335,9 +349,9 @@ export default function AdminSessionActionModal({
             { headers: authHeaders }
           );
         } catch (secondaryErr) {
-          await axios.patch(
-            `${API_BASE_URL}/api/admin/classes/${session.class_id || session.id}/reschedule`,
-            { session_id: session.id, ...payload },
+          await axios.post(
+            `${API_BASE_URL}/api/admin/sessions/${session.id}/reschedule`,
+            payload,
             { headers: authHeaders }
           ).catch(() => {
             console.warn("Backend reschedule fallback activated");
@@ -562,15 +576,27 @@ export default function AdminSessionActionModal({
           {/* ═════════════════════════════════════════════════════════════════ */}
           {mode === "reschedule" && step === "pick_time" && (
             <div className="space-y-5">
-              <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 flex items-start gap-3">
-                <InformationCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                <div className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
-                  <p className="font-bold">Select New Day & Time Slot</p>
-                  <p className="mt-0.5 text-blue-800/80 dark:text-blue-300/80">
-                    Pick a new date and desired time. The system will automatically verify whether another class is already occupying that slot before confirming.
-                  </p>
+              {isStartedOrLive ? (
+                <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-900 flex items-start gap-3">
+                  <ExclamationTriangleIcon className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-rose-900 dark:text-rose-200 leading-relaxed">
+                    <p className="font-extrabold text-sm">Cannot Reschedule: Class Has Already Started</p>
+                    <p className="mt-0.5">
+                      According to academy policy, a class session that has already started, is live, or has already elapsed cannot be rescheduled.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 flex items-start gap-3">
+                  <InformationCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+                    <p className="font-bold">Select New Day & Time Slot</p>
+                    <p className="mt-0.5 text-blue-800/80 dark:text-blue-300/80">
+                      Pick a new date and desired time. The system will automatically verify whether another class is already occupying that slot before confirming.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* 1. Date Picker */}
               <div>
@@ -814,9 +840,10 @@ export default function AdminSessionActionModal({
             ) : step === "pick_time" ? (
               <button
                 type="button"
-                disabled={submitting}
+                disabled={submitting || isStartedOrLive}
                 onClick={handleCheckReschedule}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-95 text-white font-extrabold text-xs shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-95 text-white font-extrabold text-xs shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={isStartedOrLive ? "Started or live classes cannot be rescheduled" : "Check clash and reschedule"}
               >
                 {submitting ? (
                   <>

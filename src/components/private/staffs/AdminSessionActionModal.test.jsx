@@ -202,5 +202,30 @@ describe("AdminSessionActionModal Component", () => {
       expect(await screen.findByText("Reschedule Master Class")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /verify & reschedule/i })).toBeInTheDocument();
     });
+
+    test("prevents rescheduling when class has already started", () => {
+      const startedSession = {
+        ...mockActiveSession,
+        started_at: "2026-11-10 10:05:00",
+        status: "started",
+      };
+
+      render(
+        <AdminSessionActionModal
+          isOpen={true}
+          mode="reschedule"
+          session={startedSession}
+          allSessions={[startedSession]}
+          onClose={mockOnClose}
+          onSuccess={mockOnSuccess}
+          API_BASE_URL="http://test.api"
+          token="test-token"
+        />
+      );
+
+      expect(screen.getByText(/Cannot Reschedule: Class Has Already Started/i)).toBeInTheDocument();
+      const verifyBtn = screen.getByRole("button", { name: /verify & reschedule/i });
+      expect(verifyBtn).toBeDisabled();
+    });
   });
 });

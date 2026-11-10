@@ -186,41 +186,35 @@ const extractFlatSessions = (data) => {
 
   const processClassItem = (cls) => {
     if (!cls) return;
-    let extractedCount = 0;
     if (Array.isArray(cls.schedules)) {
       cls.schedules.forEach(sched => {
         if (Array.isArray(sched.sessions)) {
           sched.sessions.forEach(session => {
             pushSession(session, cls);
-            extractedCount++;
           });
         }
       });
-    }
-    // If no nested sessions were found in schedules, extract class directly
-    if (extractedCount === 0) {
-      pushSession(cls);
     }
   };
 
   if (Array.isArray(data)) {
     data.forEach(item => {
-      if (item.schedules || item.subject_id) {
+      if (item.schedules) {
         processClassItem(item);
-      } else {
+      } else if (item.session_date || item.starts_at) {
         pushSession(item);
       }
     });
   } else if (data && typeof data === 'object') {
     if (Array.isArray(data.classes)) data.classes.forEach(processClassItem);
-    if (Array.isArray(data.data)) data.data.forEach(item => (item.schedules || item.subject_id ? processClassItem(item) : pushSession(item)));
+    if (Array.isArray(data.data)) data.data.forEach(item => (item.schedules ? processClassItem(item) : (item.session_date || item.starts_at ? pushSession(item) : null)));
     if (Array.isArray(data.all_sessions)) data.all_sessions.forEach(s => pushSession(s));
     if (Array.isArray(data.sessions)) data.sessions.forEach(s => pushSession(s));
     if (Array.isArray(data.today_classes)) data.today_classes.forEach(s => pushSession(s));
     if (Array.isArray(data.upcoming_sessions)) data.upcoming_sessions.forEach(s => pushSession(s));
     if (Array.isArray(data.past_sessions)) data.past_sessions.forEach(s => pushSession(s));
     if (Array.isArray(data.history)) data.history.forEach(s => pushSession(s));
-    if (data.next_class) pushSession(data.next_class);
+    if (data.next_class && (data.next_class.session_date || data.next_class.starts_at)) pushSession(data.next_class);
     if (data.week_schedule && typeof data.week_schedule === 'object') {
       Object.values(data.week_schedule).forEach(arr => {
         if (Array.isArray(arr)) arr.forEach(s => pushSession(s));
@@ -261,6 +255,7 @@ export default function AdminCalendar() {
   const [selectedDateForModal, setSelectedDateForModal] = useState(null); // Date cell popup
   const [modalTab, setModalTab] = useState("overview"); // 'overview', 'tutor', 'recordings'
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCancelled, setShowCancelled] = useState(false);
   const [copiedLink, setCopiedLink] = useState(null);
   const [toast, setToast] = useState(null);
 
@@ -319,9 +314,15 @@ export default function AdminCalendar() {
     return Array.from(set).sort();
   }, [sessions]);
 
+  // Total count of cancelled sessions
+  const cancelledCount = useMemo(() => sessions.filter(isSessionCancelled).length, [sessions]);
+
   // Filtered sessions
   const filteredSessions = useMemo(() => {
     return sessions.filter(s => {
+      // By default, hide cancelled sessions from calendar grid so they do not occupy time slots
+      if (!showCancelled && isSessionCancelled(s)) return false;
+
       const matchSearch = !searchQuery || 
         s.topic?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.subject_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -332,7 +333,7 @@ export default function AdminCalendar() {
 
       return matchSearch && matchSubject && matchTutor;
     });
-  }, [sessions, searchQuery, selectedSubject, selectedTutor]);
+  }, [sessions, searchQuery, selectedSubject, selectedTutor, showCancelled]);
 
   // Tutor Activity Insights for Selected Session
   const tutorTrackRecord = useMemo(() => {
@@ -447,6 +448,26 @@ export default function AdminCalendar() {
   const handleOpenRescheduleSession = (session) => {
     setActionModalSession(session);
     setActionModalMode("reschedule");
+  };
+
+  const handleDeleteSession = async (session) => {
+    if (!session || !session.id) return;
+    if (!window.confirm(`Permanently remove this session (${session.topic}) from the academy schedule? This will free up the time slot completely.`)) {
+      return;
+    }
+    try {
+      await axios.delete(`${API_BASE_URL}/api/admin/sessions/${session.id}`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      setSelectedSession(null);
+      setToast({ message: "Class session permanently removed from academy schedule.", type: "success" });
+      setTimeout(() => setToast(null), 4000);
+      fetchAllSchedules();
+    } catch (err) {
+      console.error("Failed to delete class session:", err);
+      setToast({ message: err.response?.data?.message || "Failed to remove class session.", type: "error" });
+      setTimeout(() => setToast(null), 4000);
+    }
   };
 
   const handleActionSuccess = ({ action, session: updatedSession, replacedSessionId, message }) => {
@@ -700,6 +721,21 @@ export default function AdminCalendar() {
                   <option key={tut} value={tut}>{tut}</option>
                 ))}
               </select>
+
+              {/* Toggle Cancelled Sessions */}
+              <button
+                type="button"
+                onClick={() => setShowCancelled(prev => !prev)}
+                className={`w-full sm:w-auto py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 ${
+                  showCancelled
+                    ? "bg-rose-50 border-rose-300 text-rose-700 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300 shadow-sm"
+                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
+                }`}
+                title={showCancelled ? "Hide cancelled sessions to prevent grid clutter" : "Display cancelled sessions on the timetable"}
+              >
+                <Icon icon={showCancelled ? "lucide:eye-off" : "lucide:eye"} className="w-3.5 h-3.5" />
+                <span>{showCancelled ? "Hide Cancelled" : `Cancelled (${cancelledCount})`}</span>
+              </button>
             </div>
           </div>
 
@@ -1673,56 +1709,82 @@ export default function AdminCalendar() {
 
                   {/* Cancel / Reschedule Management Actions */}
                   <div className="flex items-center gap-2">
-                    {/* If NOT cancelled: allow Reschedule & Cancel (including past sessions for record keeping) */}
-                    {!isSessionCancelled(selectedSession) && (
-                      <>
-                        <button
-                          onClick={() => handleOpenRescheduleSession(selectedSession)}
-                          className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
-                          title={
-                            isSessionInPast(selectedSession)
-                              ? "Reschedule this missed past session to a future date and time"
-                              : "Reschedule this session to a new date and time"
-                          }
-                        >
-                          <Icon icon="lucide:calendar-clock" className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                          <span>Reschedule</span>
-                        </button>
+                    {/* Check if session is live, started, or elapsed */}
+                    {(() => {
+                      const isStartedOrLive = isSessionLiveNow(selectedSession) ||
+                        Boolean(selectedSession.started_at) ||
+                        Boolean(selectedSession.started_by_staff_id) ||
+                        ["started", "live", "in_progress", "completed"].includes(selectedSession.status?.toLowerCase()) ||
+                        (isSessionInPast(selectedSession) && !isSessionCancelled(selectedSession) && selectedSession.status !== "rescheduled");
 
-                        <button
-                          onClick={() => handleOpenCancelSession(selectedSession)}
-                          disabled={isSessionLiveNow(selectedSession)}
-                          className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                          title={
-                            isSessionLiveNow(selectedSession)
-                              ? "Live classes cannot be cancelled by Admin. Only the Course Advisor can conclude live calls."
-                              : isSessionInPast(selectedSession)
-                              ? "Mark this past class session as cancelled for record purposes"
-                              : "Cancel this class session"
-                          }
-                        >
-                          <Icon icon="lucide:ban" className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                          <span>{isSessionInPast(selectedSession) ? "Mark Cancelled" : "Cancel Class"}</span>
-                        </button>
-                      </>
-                    )}
+                      return (
+                        <>
+                          {/* If NOT cancelled: allow Reschedule & Cancel according to policy */}
+                          {!isSessionCancelled(selectedSession) && (
+                            <>
+                              <button
+                                disabled={isStartedOrLive}
+                                onClick={() => !isStartedOrLive && handleOpenRescheduleSession(selectedSession)}
+                                className={`px-3.5 py-2.5 border text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 ${
+                                  isStartedOrLive
+                                    ? "bg-gray-100 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
+                                    : "bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 active:scale-95 cursor-pointer"
+                                }`}
+                                title={
+                                  isStartedOrLive
+                                    ? "This class session has already started or elapsed and cannot be rescheduled."
+                                    : "Reschedule this session to a new date and time"
+                                }
+                              >
+                                <Icon icon="lucide:calendar-clock" className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                <span>Reschedule</span>
+                              </button>
 
-                    {/* If ALREADY cancelled: show cancelled badge AND allow rescheduling to a new date/time */}
-                    {isSessionCancelled(selectedSession) && (
-                      <div className="flex items-center gap-2">
-                        <span className="px-3.5 py-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-xl flex items-center gap-1.5">
-                          <Icon icon="lucide:ban" className="w-4 h-4" /> Cancelled
-                        </span>
-                        <button
-                          onClick={() => handleOpenRescheduleSession(selectedSession)}
-                          className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
-                          title="Reschedule this cancelled class to a new date and time"
-                        >
-                          <Icon icon="lucide:calendar-clock" className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                          <span>Reschedule to New Time</span>
-                        </button>
-                      </div>
-                    )}
+                              <button
+                                onClick={() => handleOpenCancelSession(selectedSession)}
+                                disabled={isSessionLiveNow(selectedSession)}
+                                className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                title={
+                                  isSessionLiveNow(selectedSession)
+                                    ? "Live classes cannot be cancelled by Admin. Only the Course Advisor can conclude live calls."
+                                    : isSessionInPast(selectedSession)
+                                    ? "Mark this past class session as cancelled for record purposes"
+                                    : "Cancel this class session"
+                                }
+                              >
+                                <Icon icon="lucide:ban" className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                                <span>{isSessionInPast(selectedSession) ? "Mark Cancelled" : "Cancel Class"}</span>
+                              </button>
+                            </>
+                          )}
+
+                          {/* If ALREADY cancelled: show cancelled badge, allow rescheduling, or permanently delete */}
+                          {isSessionCancelled(selectedSession) && (
+                            <div className="flex items-center gap-2">
+                              <span className="px-3.5 py-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-xl flex items-center gap-1.5">
+                                <Icon icon="lucide:ban" className="w-4 h-4" /> Cancelled
+                              </span>
+                              <button
+                                onClick={() => handleOpenRescheduleSession(selectedSession)}
+                                className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                                title="Reschedule this cancelled class to a new date and time"
+                              >
+                                <Icon icon="lucide:calendar-clock" className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                <span>Reschedule</span>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSession(selectedSession)}
+                                className="px-3 py-2 bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/40 dark:hover:bg-rose-900/70 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+                                title="Permanently delete this cancelled session to clear the schedule slot"
+                              >
+                                <Icon icon="lucide:trash-2" className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {!isSessionCancelled(selectedSession) && selectedSession.class_link && (
