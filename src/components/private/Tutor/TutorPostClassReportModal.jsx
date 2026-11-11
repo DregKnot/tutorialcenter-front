@@ -343,7 +343,7 @@ export default function TutorPostClassReportModal({
         </div>
 
         {/* FORM BODY */}
-        <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-gray-800 dark:text-gray-100">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-black dark:text-white">
           
           {error && (
             <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center gap-2">
@@ -367,28 +367,28 @@ export default function TutorPostClassReportModal({
               <div className="space-y-3 pb-5 border-b border-gray-100 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">1</span>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#09314F] dark:text-white">Attendance</h3>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-black dark:text-white">Attendance</h3>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-3">
-                  <p className="text-xs font-bold text-gray-600 dark:text-gray-300">How many students attended the class?</p>
+                  <p className="text-xs font-bold text-black dark:text-white">How many students attended the class?</p>
                   
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Present:</span>
+                      <span className="text-xs font-bold text-black dark:text-white">Present:</span>
                       <input
                         type="number"
                         min="0"
                         value={formData.presentCount}
                         onChange={(e) => setFormData({ ...formData, presentCount: e.target.value })}
-                        className="w-24 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-center font-black text-sm text-[#09314F] dark:text-[#C5A97A] focus:ring-2 focus:ring-[#C5A97A] outline-none"
+                        className="w-24 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-center font-black text-sm text-black dark:text-white focus:ring-2 focus:ring-[#C5A97A] outline-none"
                         placeholder="0"
                       />
                     </div>
                   </div>
 
                   <div className="pt-2">
-                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Were there any notable attendance issues?</p>
+                    <p className="text-xs font-bold text-black dark:text-white mb-2">Were there any notable attendance issues?</p>
                     <div className="flex items-center gap-3 flex-wrap">
                       <button
                         type="button"
@@ -396,7 +396,7 @@ export default function TutorPostClassReportModal({
                         className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
                           !formData.hasAttendanceIssues
                             ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
-                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                            : "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600 hover:border-gray-400"
                         }`}
                       >
                         <span className={`w-4 h-4 rounded flex items-center justify-center border ${
@@ -415,7 +415,7 @@ export default function TutorPostClassReportModal({
                         className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
                           formData.hasAttendanceIssues
                             ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
-                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                            : "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600 hover:border-gray-400"
                         }`}
                       >
                         <span className={`w-4 h-4 rounded flex items-center justify-center border ${
@@ -435,7 +435,7 @@ export default function TutorPostClassReportModal({
                         placeholder="e.g. 3 students joined 25 mins late due to network glitch"
                         value={formData.attendanceIssuesDetail}
                         onChange={(e) => setFormData({ ...formData, attendanceIssuesDetail: e.target.value })}
-                        className="mt-2 w-full px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs"
+                        className="mt-2 w-full px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-black dark:text-white"
                       />
                     )}
                   </div>
@@ -446,12 +446,12 @@ export default function TutorPostClassReportModal({
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">2</span>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#09314F] dark:text-white">Lesson Delivery</h3>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-black dark:text-white">Lesson Delivery</h3>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-bold text-black dark:text-white mb-1">
                       What specific aspect(s) of the topic did you cover today? <span className="text-rose-500">*</span>
                     </label>
                     <textarea
@@ -460,12 +460,12 @@ export default function TutorPostClassReportModal({
                       placeholder="e.g. Covered Organic Chemistry: IUPAC nomenclature, Alkyl groups, and structural isomers."
                       value={formData.aspectsCovered}
                       onChange={(e) => setFormData({ ...formData, aspectsCovered: e.target.value })}
-                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
+                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
                     />
                   </div>
 
                   <div className="bg-gray-50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-2">
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                    <label className="block text-xs font-bold text-black dark:text-white">
                       Was the planned lesson completed?
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -477,7 +477,7 @@ export default function TutorPostClassReportModal({
                           className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${
                             formData.completionStatus === st
                               ? "bg-[#09314F] text-white dark:bg-[#C5A97A] dark:text-[#09314F]"
-                              : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+                              : "bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-200 dark:border-gray-700"
                           }`}
                         >
                           {st}
@@ -487,7 +487,7 @@ export default function TutorPostClassReportModal({
 
                     {formData.completionStatus !== "Fully" && (
                       <div className="pt-2">
-                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-bold text-black dark:text-white mb-1">
                           If partially completed, what was left and why?
                         </label>
                         <textarea
@@ -495,7 +495,7 @@ export default function TutorPostClassReportModal({
                           placeholder="e.g. Reaction mechanisms left for next session to allow thorough exercise drills."
                           value={formData.leftReason}
                           onChange={(e) => setFormData({ ...formData, leftReason: e.target.value })}
-                          className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs"
+                          className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-black dark:text-white"
                         />
                       </div>
                     )}
@@ -514,26 +514,26 @@ export default function TutorPostClassReportModal({
               <div className="space-y-3 pb-5 border-b border-gray-100 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">3</span>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#09314F] dark:text-white">Student Understanding</h3>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-black dark:text-white">Student Understanding</h3>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-bold text-black dark:text-white mb-1">
                       What evidence did you observe that students understood the lesson?
                     </label>
-                    <p className="text-[10px] text-gray-400 mb-1">(e.g., correctly answered questions, completed exercises, explained concepts.)</p>
+                    <p className="text-[10px] text-black/70 dark:text-white/70 mb-1">(e.g., correctly answered questions, completed exercises, explained concepts.)</p>
                     <textarea
                       rows={2}
                       placeholder="e.g. 80% of students solved live calculation problems on Zoom whiteboard within 2 minutes."
                       value={formData.evidenceObserved}
                       onChange={(e) => setFormData({ ...formData, evidenceObserved: e.target.value })}
-                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
+                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-bold text-black dark:text-white mb-1">
                       Which concept(s) did students struggle with?
                     </label>
                     <textarea
@@ -541,12 +541,12 @@ export default function TutorPostClassReportModal({
                       placeholder="e.g. Finding the longest carbon chain with branching radicals."
                       value={formData.struggledConcepts}
                       onChange={(e) => setFormData({ ...formData, struggledConcepts: e.target.value })}
-                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
+                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-bold text-black dark:text-white mb-1">
                       Which student(s) require additional attention or support?
                     </label>
                     <textarea
@@ -554,7 +554,7 @@ export default function TutorPostClassReportModal({
                       placeholder="e.g. Daniel O. and Grace A. (hesitant during question rounds)."
                       value={formData.studentsNeedingAttention}
                       onChange={(e) => setFormData({ ...formData, studentsNeedingAttention: e.target.value })}
-                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
+                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
                     />
                   </div>
                 </div>
@@ -564,12 +564,12 @@ export default function TutorPostClassReportModal({
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">4</span>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#09314F] dark:text-white">Student Engagement</h3>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-black dark:text-white">Student Engagement</h3>
                 </div>
 
                 <div className="space-y-3">
                   <div className="bg-gray-50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-2">
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                    <label className="block text-xs font-bold text-black dark:text-white">
                       How actively did students participate?
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -581,7 +581,7 @@ export default function TutorPostClassReportModal({
                           className={`py-2 rounded-xl text-xs font-black transition-all ${
                             formData.participationLevel === lvl
                               ? "bg-[#09314F] text-white dark:bg-[#C5A97A] dark:text-[#09314F]"
-                              : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+                              : "bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-200 dark:border-gray-700"
                           }`}
                         >
                           {lvl}
@@ -591,7 +591,7 @@ export default function TutorPostClassReportModal({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-bold text-black dark:text-white mb-1">
                       What did students respond particularly well to?
                     </label>
                     <textarea
@@ -599,12 +599,12 @@ export default function TutorPostClassReportModal({
                       placeholder="e.g. Worked past JAMB questions on the interactive slide deck."
                       value={formData.respondedWellTo}
                       onChange={(e) => setFormData({ ...formData, respondedWellTo: e.target.value })}
-                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs"
+                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs text-black dark:text-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-bold text-black dark:text-white mb-1">
                       Were there any issues affecting participation or concentration?
                     </label>
                     <textarea
@@ -612,7 +612,7 @@ export default function TutorPostClassReportModal({
                       placeholder="e.g. Minor audio lag for 2 students initially, resolved after rejoin."
                       value={formData.issuesAffectingConcentration}
                       onChange={(e) => setFormData({ ...formData, issuesAffectingConcentration: e.target.value })}
-                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs"
+                      className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs text-black dark:text-white"
                     />
                   </div>
                 </div>
@@ -629,12 +629,12 @@ export default function TutorPostClassReportModal({
               <div className="space-y-3 pb-5 border-b border-gray-100 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">5</span>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#09314F] dark:text-white">Assessment</h3>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-black dark:text-white">Assessment</h3>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <span className="text-xs font-black text-gray-800 dark:text-white">Did you assess students' understanding today?</span>
+                    <span className="text-xs font-black text-black dark:text-white">Did you assess students' understanding today?</span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -642,7 +642,7 @@ export default function TutorPostClassReportModal({
                         className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
                           formData.assessedToday
                             ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
-                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                            : "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600 hover:border-gray-400"
                         }`}
                       >
                         <span className={`w-4 h-4 rounded flex items-center justify-center border ${
@@ -661,7 +661,7 @@ export default function TutorPostClassReportModal({
                         className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
                           !formData.assessedToday
                             ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
-                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                            : "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600 hover:border-gray-400"
                         }`}
                       >
                         <span className={`w-4 h-4 rounded flex items-center justify-center border ${
@@ -678,7 +678,7 @@ export default function TutorPostClassReportModal({
 
                   {formData.assessedToday && (
                     <div className="pt-2 border-t border-gray-200 dark:border-gray-800">
-                      <p className="text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">If yes, what was the general performance?</p>
+                      <p className="text-xs font-bold text-black dark:text-white mb-2">If yes, what was the general performance?</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {["Excellent", "Good", "Average", "Poor"].map((perf) => (
                           <button
@@ -688,7 +688,7 @@ export default function TutorPostClassReportModal({
                             className={`py-1.5 rounded-xl text-xs font-black transition-all ${
                               formData.generalPerformance === perf
                                 ? "bg-emerald-600 text-white"
-                                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+                                : "bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-200 dark:border-gray-700"
                             }`}
                           >
                             {perf}
@@ -704,11 +704,11 @@ export default function TutorPostClassReportModal({
               <div className="space-y-3 pb-5 border-b border-gray-100 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">6</span>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#09314F] dark:text-white">Class Challenges</h3>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-black dark:text-white">Class Challenges</h3>
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300">What was the biggest challenge encountered during the class?</p>
+                  <p className="text-xs font-bold text-black dark:text-white">What was the biggest challenge encountered during the class?</p>
                   
                   <div className="flex flex-wrap gap-2">
                     {challengeOptions.map((c) => {
@@ -721,7 +721,7 @@ export default function TutorPostClassReportModal({
                           className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
                             isSel
                               ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
-                              : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                              : "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600 hover:border-gray-400"
                           }`}
                         >
                           <span className={`w-4 h-4 rounded flex items-center justify-center border ${
@@ -743,18 +743,18 @@ export default function TutorPostClassReportModal({
                       placeholder="Specify other challenge..."
                       value={formData.otherChallengeDetail}
                       onChange={(e) => setFormData({ ...formData, otherChallengeDetail: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs"
+                      className="w-full px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-black dark:text-white"
                     />
                   )}
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Briefly explain:</label>
+                    <label className="block text-xs font-bold text-black dark:text-white mb-1">Briefly explain:</label>
                     <textarea
                       rows={2}
                       placeholder="e.g. Time management was tight due to detailed breakdown of organic functional groups."
                       value={formData.challengeExplanation}
                       onChange={(e) => setFormData({ ...formData, challengeExplanation: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs"
+                      className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs text-black dark:text-white"
                     />
                   </div>
                 </div>
@@ -764,12 +764,12 @@ export default function TutorPostClassReportModal({
               <div className="space-y-3 pb-5 border-b border-gray-100 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#09314F] dark:bg-[#C5A97A] text-white dark:text-[#09314F] text-[10px] font-black flex items-center justify-center">7</span>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#09314F] dark:text-white">Next Step</h3>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-black dark:text-white">Next Step</h3>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-bold text-black dark:text-white mb-1">
                       What should be done in the next class to improve students' learning?
                     </label>
                     <textarea
@@ -777,12 +777,12 @@ export default function TutorPostClassReportModal({
                       placeholder="e.g. Conduct a 10-minute speed drill on IUPAC naming before beginning reaction mechanisms."
                       value={formData.improvementPlan}
                       onChange={(e) => setFormData({ ...formData, improvementPlan: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs"
+                      className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs text-black dark:text-white"
                     />
                   </div>
 
                   <div className="bg-gray-50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-3">
-                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300">Is any intervention or support from Tutorial Center required?</p>
+                    <p className="text-xs font-bold text-black dark:text-white">Is any intervention or support from Tutorial Center required?</p>
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
@@ -790,7 +790,7 @@ export default function TutorPostClassReportModal({
                         className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
                           !formData.supportRequired
                             ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
-                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                            : "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600 hover:border-gray-400"
                         }`}
                       >
                         <span className={`w-4 h-4 rounded flex items-center justify-center border ${
@@ -809,7 +809,7 @@ export default function TutorPostClassReportModal({
                         className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 border ${
                           formData.supportRequired
                             ? "bg-[#09314F] text-white border-[#09314F] dark:bg-white dark:text-[#09314F] dark:border-white shadow-sm"
-                            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                            : "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600 hover:border-gray-400"
                         }`}
                       >
                         <span className={`w-4 h-4 rounded flex items-center justify-center border ${
@@ -829,7 +829,7 @@ export default function TutorPostClassReportModal({
                         placeholder="If yes, what specifically is required from management/advisors?"
                         value={formData.supportDetail}
                         onChange={(e) => setFormData({ ...formData, supportDetail: e.target.value })}
-                        className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs mt-2"
+                        className="w-full p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-black dark:text-white mt-2"
                       />
                     )}
                   </div>
@@ -838,12 +838,12 @@ export default function TutorPostClassReportModal({
 
               {/* TUTOR'S OVERALL ASSESSMENT */}
               <div className="space-y-3">
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#09314F] dark:text-[#C5A97A]">
+                <h3 className="text-sm font-black uppercase tracking-wider text-black dark:text-white">
                   Tutor's Overall Assessment
                 </h3>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-xs font-bold text-black dark:text-white mb-1">
                     In one or two sentences, what is the most important thing management should know about today's class? <span className="text-rose-500">*</span>
                   </label>
                   <textarea
@@ -852,27 +852,27 @@ export default function TutorPostClassReportModal({
                     placeholder="e.g. Class was productive and engaged; students showed strong enthusiasm for problem-solving drills."
                     value={formData.managementSummary}
                     onChange={(e) => setFormData({ ...formData, managementSummary: e.target.value })}
-                    className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
+                    className="w-full p-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C5A97A]"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">Tutor's Name/Signature:</label>
+                    <label className="block text-[11px] font-bold text-black dark:text-white mb-1">Tutor's Name/Signature:</label>
                     <input
                       type="text"
                       value={formData.tutorSignature}
                       onChange={(e) => setFormData({ ...formData, tutorSignature: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs font-bold"
+                      className="w-full px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-xs font-bold text-black dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-500 mb-1">Submission Date/Time:</label>
+                    <label className="block text-[11px] font-bold text-black dark:text-white mb-1">Submission Date/Time:</label>
                     <input
                       type="text"
                       disabled
                       value={new Date().toLocaleString()}
-                      className="w-full px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-xs text-gray-400 font-mono"
+                      className="w-full px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-xs text-black/70 dark:text-white/70 font-mono"
                     />
                   </div>
                 </div>
@@ -889,7 +889,7 @@ export default function TutorPostClassReportModal({
             <button
               type="button"
               onClick={() => setCurrentStep(currentStep - 1)}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+              className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-xs text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
             >
               Previous Section
             </button>
@@ -897,7 +897,7 @@ export default function TutorPostClassReportModal({
             <button
               type="button"
               onClick={handleCloseOrSkip}
-              className="px-4 py-2.5 rounded-xl text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+              className="px-4 py-2.5 rounded-xl text-black/70 hover:text-black dark:text-white/70 dark:hover:text-white font-bold text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
             >
               Remind Me Later / Skip
             </button>

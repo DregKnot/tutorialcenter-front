@@ -50,19 +50,19 @@ export default function InactivityModal() {
             <ExclamationTriangleIcon className="w-10 h-10 text-[#E83831]" />
           </div>
 
-          <h2 className="text-3xl font-black text-[#09314F] dark:text-white uppercase italic tracking-tighter mb-4">
+          <h2 className="text-3xl font-black text-black dark:text-white uppercase italic tracking-tighter mb-4">
             ARE YOU STILL <span className="text-[#BB9E7F] not-italic">THERE?</span>
           </h2>
           
-          <p className="text-gray-500 dark:text-blue-200 font-bold text-sm leading-relaxed mb-8">
-            You've been inactive for more than <span className="text-[#09314F] dark:text-white">3 minutes</span>. 
+          <p className="text-black dark:text-white opacity-80 font-bold text-sm leading-relaxed mb-8">
+            You've been inactive for more than <span className="font-extrabold text-black dark:text-white underline">3 minutes</span>. 
             For your security, we'll log you out unless you choose to stay.
           </p>
 
           {/* Timer Display */}
           <div className="flex items-center gap-3 px-6 py-3 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 mb-8">
             <ClockIcon className="w-5 h-5 text-[#BB9E7F]" />
-            <span className="text-lg font-black text-[#09314F] dark:text-white font-mono">
+            <span className="text-lg font-black text-black dark:text-white font-mono">
               Auto-logout in: {formatTime(timeLeft)}
             </span>
           </div>

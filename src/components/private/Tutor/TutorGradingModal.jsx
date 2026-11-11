@@ -297,7 +297,7 @@ export default function TutorGradingModal({
             
             {/* Filter Tabs */}
             <div className="p-4 border-b border-gray-100 dark:border-white/10 space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-200">
+              <div className="flex items-center justify-between text-xs font-bold text-black dark:text-white">
                 <span>Student Submissions ({submissions.length})</span>
                 <span className="text-[11px] text-[#C5A97A] font-black">
                   {submissions.filter((s) => s.status === "graded").length} Graded
@@ -313,7 +313,7 @@ export default function TutorGradingModal({
                     className={`px-3 py-1 rounded-xl text-[11px] font-bold capitalize transition flex-shrink-0 ${
                       statusFilter === tab
                         ? "bg-[#0F2843] text-white dark:bg-[#C5A97A] dark:text-[#0F2843]"
-                        : "bg-white dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"
+                        : "bg-white dark:bg-white/5 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-white/10"
                     }`}
                   >
                     {tab.replace("_", " ")}
@@ -325,12 +325,12 @@ export default function TutorGradingModal({
             {/* List */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
               {loadingList ? (
-                <div className="p-8 text-center text-xs text-gray-400">
+                <div className="p-8 text-center text-xs text-black dark:text-white opacity-70">
                   <div className="w-6 h-6 border-2 border-[#0F2843] dark:border-[#C5A97A] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                   Loading submissions...
                 </div>
               ) : filteredSubmissions.length === 0 ? (
-                <div className="p-8 text-center text-xs text-gray-400">
+                <div className="p-8 text-center text-xs text-black dark:text-white opacity-70">
                   No submissions match filter.
                 </div>
               ) : (
@@ -352,14 +352,14 @@ export default function TutorGradingModal({
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-[#C5A97A] flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-[#0F2843]/10 dark:bg-white/10 text-black dark:text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
                           {studentName.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                          <h4 className="text-xs font-bold text-black dark:text-white truncate">
                             {studentName}
                           </h4>
-                          <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                          <p className="text-[10px] text-black/70 dark:text-white/70 flex items-center gap-1">
                             <ClockIcon className="w-3 h-3" />
                             {sub.submitted_at
                               ? new Date(sub.submitted_at).toLocaleDateString("en-GB", {
@@ -382,9 +382,9 @@ export default function TutorGradingModal({
                           {sub.status.replace("_", " ")}
                         </span>
                         {sub.score !== null && sub.score !== undefined && (
-                          <div className="text-[11px] font-black text-gray-700 dark:text-gray-200 mt-1">
+                          <div className="text-[11px] font-black text-black dark:text-white mt-1">
                             {sub.score}/{sub.total_marks || assessment.total_marks}
-                            <span className="text-gray-400 text-[9px] ml-1">
+                            <span className="text-black/60 dark:text-white/60 text-[9px] ml-1">
                               ({Math.round(sub.percentage || 0)}%)
                             </span>
                           </div>
@@ -400,12 +400,12 @@ export default function TutorGradingModal({
           {/* RIGHT COLUMN: DETAILED GRADING DESK (8 COLS) */}
           <div className={`lg:col-span-8 flex flex-col overflow-hidden bg-white dark:bg-[#09314F] ${selectedSubmissionId ? "flex" : "hidden lg:flex"}`}>
             {loadingDetail ? (
-              <div className="flex-1 flex items-center justify-center p-8 text-center text-xs text-gray-400">
+              <div className="flex-1 flex items-center justify-center p-8 text-center text-xs text-black dark:text-white opacity-70">
                 <div className="w-8 h-8 border-2 border-[#0F2843] dark:border-[#C5A97A] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                 Loading submission answers...
               </div>
             ) : !submissionDetail ? (
-              <div className="flex-1 flex items-center justify-center p-8 text-center text-xs text-gray-400">
+              <div className="flex-1 flex items-center justify-center p-8 text-center text-xs text-black dark:text-white opacity-70">
                 Select a student submission from the left roster to begin grading.
               </div>
             ) : (
@@ -418,7 +418,7 @@ export default function TutorGradingModal({
                     <button
                       type="button"
                       onClick={() => setSelectedSubmissionId(null)}
-                      className="lg:hidden px-2.5 py-1.5 rounded-xl bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-[#C5A97A] text-xs font-bold flex items-center gap-1 hover:bg-[#0F2843] hover:text-white transition"
+                      className="lg:hidden px-2.5 py-1.5 rounded-xl bg-[#0F2843]/10 dark:bg-white/10 text-black dark:text-white text-xs font-bold flex items-center gap-1 hover:bg-[#0F2843] hover:text-white transition"
                     >
                       <span>← Roster</span>
                     </button>
@@ -427,10 +427,10 @@ export default function TutorGradingModal({
                       {(submissionDetail.student?.firstname || "S").charAt(0)}
                     </div>
                     <div>
-                      <h3 className="text-sm font-black text-gray-900 dark:text-white line-clamp-1">
+                      <h3 className="text-sm font-black text-black dark:text-white line-clamp-1">
                         {submissionDetail.student?.firstname} {submissionDetail.student?.surname}
                       </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-300">
+                      <p className="text-xs text-black/70 dark:text-white/70">
                         Status: <span className="font-bold capitalize">{submissionDetail.status}</span> • Current Score:{" "}
                         <span className="font-black text-[#0F2843] dark:text-[#C5A97A]">
                           {submissionDetail.score || 0} / {submissionDetail.total_marks || assessment.total_marks} ({Math.round(submissionDetail.percentage || 0)}%)
@@ -455,7 +455,7 @@ export default function TutorGradingModal({
                 {/* QUESTIONS & ANSWERS SCROLLABLE LIST */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
                   {(!submissionDetail.answers || submissionDetail.answers.length === 0) ? (
-                    <div className="p-8 text-center text-xs text-gray-400">
+                    <div className="p-8 text-center text-xs text-black dark:text-white opacity-70">
                       No answers recorded for this submission.
                     </div>
                   ) : (
@@ -473,7 +473,7 @@ export default function TutorGradingModal({
                           <div className="flex items-start justify-between gap-3 border-b border-gray-200/50 dark:border-white/10 pb-3">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-black text-[#0F2843] dark:text-[#C5A97A]">
+                                <span className="text-xs font-black text-black dark:text-white">
                                   Question #{idx + 1}
                                 </span>
                                 <span
@@ -486,19 +486,19 @@ export default function TutorGradingModal({
                                   {isMcq ? "MCQ (Auto-Scored)" : "Written Essay"}
                                 </span>
                               </div>
-                              <div className="text-sm font-bold text-gray-900 dark:text-white">
+                              <div className="text-sm font-bold text-black dark:text-white">
                                 <MathRenderer text={q.question} />
                               </div>
                             </div>
 
-                            <span className="text-xs font-black text-gray-500 dark:text-gray-300 flex-shrink-0">
+                            <span className="text-xs font-black text-black dark:text-white flex-shrink-0">
                               Max: {q.marks || 0} pts
                             </span>
                           </div>
 
                           {/* Student Answer Display */}
                           <div className="space-y-1.5">
-                            <label className="text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                            <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-wider">
                               Student's Answer:
                             </label>
                             {isMcq ? (
@@ -517,15 +517,15 @@ export default function TutorGradingModal({
                                 </span>
                               </div>
                             ) : (
-                              <div className="p-4 rounded-2xl bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
-                                {ans.answer || <span className="italic text-gray-400">No written answer submitted.</span>}
+                              <div className="p-4 rounded-2xl bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 text-xs text-black dark:text-white whitespace-pre-wrap leading-relaxed">
+                                {ans.answer || <span className="italic text-black/60 dark:text-white/60">No written answer submitted.</span>}
                               </div>
                             )}
                           </div>
 
                           {/* Model Answer for Essay */}
                           {!isMcq && q.explanation && (
-                            <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 text-xs text-amber-900 dark:text-amber-200">
+                            <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 text-xs text-black dark:text-white">
                               <span className="font-bold">Model Answer / Grading Note: </span>
                               <MathRenderer text={q.explanation} />
                             </div>
@@ -534,7 +534,7 @@ export default function TutorGradingModal({
                           {/* Marks & Feedback Input */}
                           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-2">
                             <div className="sm:col-span-1">
-                              <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1">
+                              <label className="block text-xs font-bold text-black dark:text-white mb-1">
                                 Awarded Marks
                               </label>
                               <input
@@ -546,12 +546,12 @@ export default function TutorGradingModal({
                                 onChange={(e) =>
                                   handleGradeChange(ans.question_id, "marks_awarded", e.target.value)
                                 }
-                                className="w-full px-3 py-2 text-xs bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white font-black focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none"
+                                className="w-full px-3 py-2 text-xs bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-black dark:text-white font-black focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none"
                               />
                             </div>
 
                             <div className="sm:col-span-3">
-                              <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1">
+                              <label className="block text-xs font-bold text-black dark:text-white mb-1">
                                 Tutor Feedback / Corrections (Visible to Student)
                               </label>
                               <input
@@ -561,7 +561,7 @@ export default function TutorGradingModal({
                                 onChange={(e) =>
                                   handleGradeChange(ans.question_id, "feedback", e.target.value)
                                 }
-                                className="w-full px-3 py-2 text-xs bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none"
+                                className="w-full px-3 py-2 text-xs bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none"
                               />
                             </div>
                           </div>
@@ -573,7 +573,7 @@ export default function TutorGradingModal({
 
                 {/* BOTTOM GRADING SUBMIT BAR */}
                 <div className="p-4 sm:p-5 border-t border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex items-center justify-between gap-4 flex-shrink-0">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-300">
+                  <div className="text-xs font-medium text-black dark:text-white opacity-80">
                     Grading will update the student's score and send them an in-app & email notification.
                   </div>
 

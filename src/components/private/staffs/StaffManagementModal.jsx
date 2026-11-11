@@ -26,7 +26,7 @@ const ModalInput = ({
 }) => {
   return (
     <div className={`flex flex-col gap-1.5 w-full ${className}`}>
-      <label className="text-[11px] font-bold text-gray-400 ml-1">{label}</label>
+      <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 ml-1">{label}</label>
       <div className="relative group/input">
         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-900 dark:text-gray-300 z-10">
           <Icon icon={icon} className="w-5 h-5" />
@@ -38,7 +38,7 @@ const ModalInput = ({
             value={value || ""}
             onChange={onChange}
             disabled={disabled}
-            className={`w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border ${error ? "border-red-500" : "border-gray-200 dark:border-gray-700"} rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all appearance-none disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50`}
+            className={`w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border ${error ? "border-red-500" : "border-gray-200 dark:border-gray-700"} rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-black dark:text-white focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all appearance-none disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50`}
           >
             <option value="" disabled>{placeholder || `Select ${label}`}</option>
             {options.map(opt => (
@@ -53,7 +53,7 @@ const ModalInput = ({
             onChange={onChange}
             disabled={disabled}
             placeholder={placeholder}
-            className={`w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border ${error ? "border-red-500" : "border-gray-200 dark:border-gray-700"} rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50`}
+            className={`w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border ${error ? "border-red-500" : "border-gray-200 dark:border-gray-700"} rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-black dark:text-white focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50`}
           />
         )}
 
@@ -267,7 +267,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#131320] w-full max-w-[800px] rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] relative text-[#0F2843] dark:text-gray-100 font-sans">
+      <div className="bg-white dark:bg-[#131320] w-full max-w-[800px] rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] relative text-black dark:text-white font-sans">
         
         {/* Main Content Scrollable Area */}
         <div className={`flex-1 overflow-y-auto p-8 md:p-10 ${isSuspended ? "opacity-60 grayscale-[0.2]" : ""}`}>
@@ -549,10 +549,10 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                           <Icon icon="heroicons:academic-cap-solid" className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-black text-gray-800 dark:text-gray-100 truncate">
+                          <p className="text-xs font-black text-black dark:text-white truncate">
                             {cls.title}
                           </p>
-                          <p className="text-[10px] text-gray-400 font-semibold truncate">
+                          <p className="text-[10px] text-gray-500 dark:text-gray-300 font-semibold truncate">
                             {cls.subject?.name || cls.class_type || "Standard Class"}
                           </p>
                         </div>
@@ -565,14 +565,14 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 </div>
               ) : (
                 <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/30 border border-dashed border-gray-200 dark:border-gray-700 text-center">
-                  <p className="text-xs font-semibold text-gray-400">No active classes assigned to this staff member.</p>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">No active classes assigned to this staff member.</p>
                 </div>
               )}
             </div>
 
             {/* Home Address */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-gray-400 ml-1">Home Address</label>
+              <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 ml-1">Home Address</label>
               <textarea 
                 name="address"
                 value={staff.address || ""}
@@ -580,7 +580,7 @@ export default function StaffManagementModal({ staffId, onClose, onSuccess }) {
                 disabled={!isEditing}
                 rows={2}
                 placeholder="Full Home Address"
-                className={`w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border ${errors.address ? "border-red-500" : "border-gray-200 dark:border-gray-700"} rounded-xl px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50 resize-none`}
+                className={`w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border ${errors.address ? "border-red-500" : "border-gray-200 dark:border-gray-700"} rounded-xl px-4 py-3.5 text-sm font-semibold text-black dark:text-white focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50 resize-none`}
               />
               {errors.address && (
                 <p className="text-[11px] text-red-500 font-bold ml-1">{errors.address}</p>

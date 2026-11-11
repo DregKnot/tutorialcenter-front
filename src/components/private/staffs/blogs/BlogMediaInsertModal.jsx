@@ -226,7 +226,7 @@ export default function BlogMediaInsertModal({
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
                   isActive
                     ? "bg-[#0F2843] text-white dark:bg-[#C5A97A] dark:text-[#0F2843] shadow-md"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
+                    : "text-black dark:text-white hover:bg-gray-200 dark:hover:bg-white/10"
                 }`}
               >
                 <IconComp className="w-4 h-4" />
@@ -237,7 +237,7 @@ export default function BlogMediaInsertModal({
         </div>
 
         {/* Source Mode Toggle (Upload vs URL) */}
-        <div className="px-6 pt-4 flex items-center gap-4 text-xs font-bold text-gray-600 dark:text-gray-300">
+        <div className="px-6 pt-4 flex items-center gap-4 text-xs font-bold text-black dark:text-white">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
@@ -278,7 +278,7 @@ export default function BlogMediaInsertModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {sourceMode === "upload" ? (
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5">
+              <label className="block text-xs font-bold text-black dark:text-white mb-1.5">
                 Choose {mediaType === "image" ? "Image (JPG, PNG, WEBP)" : mediaType === "audio" ? "Audio (MP3, WAV, M4A)" : "Video (MP4, WEBM)"}
               </label>
               <input
@@ -291,12 +291,12 @@ export default function BlogMediaInsertModal({
                     : "video/mp4,video/webm,video/ogg"
                 }
                 onChange={handleFileChange}
-                className="w-full text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-[#0F2843] file:text-white dark:file:bg-[#C5A97A] dark:file:text-[#0F2843] hover:file:opacity-90 cursor-pointer border border-gray-200 dark:border-white/10 rounded-2xl p-2 bg-gray-50 dark:bg-white/5"
+                className="w-full text-xs text-black dark:text-white file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-[#0F2843] file:text-white dark:file:bg-[#C5A97A] dark:file:text-[#0F2843] hover:file:opacity-90 cursor-pointer border border-gray-200 dark:border-white/10 rounded-2xl p-2 bg-gray-50 dark:bg-white/5"
               />
             </div>
           ) : (
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5">
+              <label className="block text-xs font-bold text-black dark:text-white mb-1.5">
                 {mediaType === "video" ? "Video URL (YouTube, Vimeo, MP4 link)" : `${mediaType.toUpperCase()} URL`}
               </label>
               <input
@@ -304,13 +304,13 @@ export default function BlogMediaInsertModal({
                 placeholder={mediaType === "video" ? "https://www.youtube.com/watch?v=..." : "https://example.com/media-file..."}
                 value={mediaUrl}
                 onChange={(e) => setMediaUrl(e.target.value)}
-                className="w-full px-4 py-3 text-xs bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A]"
+                className="w-full px-4 py-3 text-xs bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white outline-none focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A]"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5">
+            <label className="block text-xs font-bold text-black dark:text-white mb-1.5">
               {mediaType === "image" ? "Caption / Alt Description (Optional)" : "Title / Label (Optional)"}
             </label>
             <input
@@ -318,7 +318,7 @@ export default function BlogMediaInsertModal({
               placeholder={mediaType === "image" ? "e.g. Figure 1: Diagram of organic synthesis" : "e.g. Episode 3: Physics audio explanation"}
               value={titleOrCaption}
               onChange={(e) => setTitleOrCaption(e.target.value)}
-              className="w-full px-4 py-2.5 text-xs bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white outline-none"
+              className="w-full px-4 py-2.5 text-xs bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white outline-none"
             />
           </div>
 
@@ -327,7 +327,7 @@ export default function BlogMediaInsertModal({
               type="button"
               onClick={handleClose}
               disabled={uploading}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition"
+              className="px-5 py-2.5 rounded-xl text-xs font-bold text-black dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition"
             >
               Cancel
             </button>

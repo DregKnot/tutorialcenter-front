@@ -103,7 +103,7 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
         </div>
       )}
 
-      <div className="exam-scope bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
+      <div className="exam-scope bg-white dark:bg-gray-900 text-black dark:text-white w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
         
         <div className="p-6 bg-[#0F2843] text-white flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -123,7 +123,7 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Exam Body Name</label>
+              <label className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest ml-1">Exam Body Name</label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <InformationCircleIcon className="w-5 h-5" />
@@ -134,13 +134,13 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. JAMB, WAEC, NECO"
                   required
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none transition-all"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Associated Course</label>
+              <label className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest ml-1">Associated Course</label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <BookOpenIcon className="w-5 h-5" />
@@ -149,18 +149,18 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
                   value={courseId}
                   onChange={(e) => setCourseId(e.target.value)}
                   required
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-black dark:text-white outline-none transition-all appearance-none"
                 >
-                  <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select a course</option>
+                  <option value="" className="bg-white dark:bg-gray-800 text-black dark:text-white">Select a course</option>
                   {courses.map(course => (
-                    <option key={course.id} value={course.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{course.title}</option>
+                    <option key={course.id} value={course.id} className="bg-white dark:bg-gray-800 text-black dark:text-white">{course.title}</option>
                   ))}
                 </select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Status</label>
+              <label className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest ml-1">Status</label>
               <div className="flex gap-4">
                 {['active', 'inactive'].map(s => (
                   <button
@@ -170,7 +170,7 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
                     className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all border-2 ${
                       status === s 
                         ? "bg-[#0F2843] dark:bg-blue-600 text-white border-[#0F2843] dark:border-blue-600 shadow-md" 
-                        : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                        : "bg-gray-50 dark:bg-gray-800 text-black dark:text-white border-transparent hover:border-gray-200 dark:hover:border-gray-700"
                     }`}
                   >
                     {s}
@@ -183,7 +183,7 @@ export default function ExamBodyCreateModal({ isOpen, onClose, onSuccess, initia
               <button 
                 type="button" 
                 onClick={onClose}
-                className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all text-xs uppercase tracking-widest border border-transparent dark:border-gray-700"
+                className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-black dark:text-white font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all text-xs uppercase tracking-widest border border-transparent dark:border-gray-700"
               >
                 Cancel
               </button>

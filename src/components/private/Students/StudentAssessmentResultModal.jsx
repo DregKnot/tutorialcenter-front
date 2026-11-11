@@ -85,12 +85,12 @@ export default function StudentAssessmentResultModal({
               )}
             </div>
 
-            <div className="text-4xl sm:text-5xl font-black text-[#0F2843] dark:text-white tracking-tight">
+            <div className="text-4xl sm:text-5xl font-black text-black dark:text-white tracking-tight">
               {score} <span className="text-2xl text-gray-400 font-normal">/ {totalMarks} pts</span>
             </div>
 
-            <p className="text-xs text-gray-500 dark:text-gray-300 font-medium">
-              Overall Percentage: <span className="font-bold text-gray-900 dark:text-white">{percentage}%</span> • Pass Standard: {passMark}%
+            <p className="text-xs text-black dark:text-white opacity-80 font-medium">
+              Overall Percentage: <span className="font-bold text-black dark:text-white">{percentage}%</span> • Pass Standard: {passMark}%
               {isSubmitted && !isGraded && (
                 <span className="block text-[11px] text-amber-600 dark:text-amber-400 mt-1">
                   (Score currently reflects auto-graded MCQs. Final grade will update once tutor grades written essay questions.)
@@ -101,7 +101,7 @@ export default function StudentAssessmentResultModal({
 
           {/* QUESTIONS & ANSWERS REVIEW */}
           <div className="space-y-4">
-            <h3 className="text-sm font-black text-[#0F2843] dark:text-white uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
               <SparklesIcon className="w-4 h-4 text-[#C5A97A]" />
               <span>Questions & Answers Review ({questions.length})</span>
             </h3>
@@ -132,7 +132,7 @@ export default function StudentAssessmentResultModal({
                             {isMcq ? "MCQ" : "Essay"}
                           </span>
                         </div>
-                        <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
+                        <div className="text-xs sm:text-sm font-bold text-black dark:text-white">
                           <MathRenderer text={q.question} />
                         </div>
                       </div>
@@ -146,7 +146,7 @@ export default function StudentAssessmentResultModal({
 
                     {/* Student Answer */}
                     <div className="space-y-1 text-xs">
-                      <span className="text-[11px] font-bold text-gray-500 uppercase">Your Answer:</span>
+                      <span className="text-[11px] font-bold text-black dark:text-white opacity-70 uppercase">Your Answer:</span>
                       {isMcq ? (
                         <div
                           className={`p-3 rounded-2xl border flex items-center justify-between font-bold ${
@@ -163,7 +163,7 @@ export default function StudentAssessmentResultModal({
                           </span>
                         </div>
                       ) : (
-                        <div className="p-3.5 rounded-2xl bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                        <div className="p-3.5 rounded-2xl bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 text-black dark:text-white whitespace-pre-wrap">
                           {ans.answer || <span className="italic text-gray-400">No written answer provided.</span>}
                         </div>
                       )}

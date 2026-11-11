@@ -156,7 +156,7 @@ export default function BlogCategoryModal({
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === "create"
                 ? "bg-[#0F2843] text-white dark:bg-[#C5A97A] dark:text-[#0F2843] shadow-md"
-                : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
+                : "text-black dark:text-white hover:bg-gray-200 dark:hover:bg-white/10"
             }`}
           >
             <Icon icon="lucide:plus-circle" className="w-4 h-4" />
@@ -169,7 +169,7 @@ export default function BlogCategoryModal({
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               activeTab === "manage"
                 ? "bg-[#0F2843] text-white dark:bg-[#C5A97A] dark:text-[#0F2843] shadow-md"
-                : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
+                : "text-black dark:text-white hover:bg-gray-200 dark:hover:bg-white/10"
             }`}
           >
             <Icon icon="lucide:list" className="w-4 h-4" />
@@ -189,7 +189,7 @@ export default function BlogCategoryModal({
         {activeTab === "create" && (
           <form onSubmit={handleCreate} className="p-6 space-y-4">
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-black dark:text-white mb-1.5 uppercase tracking-wider">
                 Category Name *
               </label>
               <input
@@ -198,12 +198,12 @@ export default function BlogCategoryModal({
                 placeholder="e.g. Scholarship News, WAEC Past Questions, Study Hacks..."
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#06243A] rounded-2xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A]"
+                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#06243A] rounded-2xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-black dark:text-white outline-none focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-black dark:text-white mb-1.5 uppercase tracking-wider">
                 Topic Icon / Badge
               </label>
               <div className="grid grid-cols-5 gap-2 pt-1">
@@ -217,7 +217,7 @@ export default function BlogCategoryModal({
                       className={`flex flex-col items-center gap-1 p-2 rounded-xl border text-[10px] font-bold transition-all ${
                         isChosen
                           ? "bg-[#0F2843] text-white dark:bg-[#C5A97A] dark:text-[#0F2843] border-[#0F2843] dark:border-[#C5A97A] shadow-md scale-105"
-                          : "bg-gray-50 dark:bg-[#06243A] text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400"
+                          : "bg-gray-50 dark:bg-[#06243A] text-black dark:text-white border-gray-200 dark:border-gray-700 hover:border-gray-400"
                       }`}
                     >
                       <Icon icon={preset.id} className="w-4 h-4" />
@@ -229,7 +229,7 @@ export default function BlogCategoryModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-black dark:text-white mb-1.5 uppercase tracking-wider">
                 Description (Optional)
               </label>
               <textarea
@@ -237,7 +237,7 @@ export default function BlogCategoryModal({
                 placeholder="Briefly describe what this category covers..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#06243A] rounded-2xl border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] resize-none"
+                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#06243A] rounded-2xl border border-gray-200 dark:border-gray-700 text-xs font-medium text-black dark:text-white outline-none focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] resize-none"
               />
             </div>
 
@@ -246,7 +246,7 @@ export default function BlogCategoryModal({
                 type="button"
                 onClick={handleClose}
                 disabled={submitting}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition"
+                className="px-5 py-2.5 rounded-xl text-xs font-bold text-black dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition"
               >
                 Cancel
               </button>
@@ -292,15 +292,15 @@ export default function BlogCategoryModal({
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                          <h4 className="text-xs font-bold text-black dark:text-white truncate">
                             {c.name}
                           </h4>
-                          <span className="px-2 py-0.5 rounded-full bg-gray-200 dark:bg-white/10 text-[10px] font-black text-gray-600 dark:text-gray-300 flex-shrink-0">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-200 dark:bg-white/10 text-[10px] font-black text-black dark:text-white flex-shrink-0">
                             {c.blogs_count || 0} posts
                           </span>
                         </div>
                         {c.description && (
-                          <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                          <p className="text-[11px] text-gray-600 dark:text-gray-300 truncate mt-0.5">
                             {c.description}
                           </p>
                         )}

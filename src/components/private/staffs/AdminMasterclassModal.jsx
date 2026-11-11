@@ -772,10 +772,10 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
   const isCancelled = formData.status === "cancelled" || formData.status === "canceled";
 
   // Standard blue form factor tokens preserved across all conditions
-  const cardBg = "bg-gray-50 dark:bg-blue-600/10 border-gray-200 dark:border-blue-500/30 text-gray-900 dark:text-white";
-  const inputBg = "bg-white dark:bg-blue-600/20 border-gray-200 dark:border-blue-500/30 text-gray-900 dark:text-white focus:ring-blue-500";
-  const labelColor = "text-gray-500 dark:text-gray-400";
-  const sublabelColor = "text-gray-700 dark:text-gray-300";
+  const cardBg = "bg-gray-50 dark:bg-blue-600/10 border-gray-200 dark:border-blue-500/30 text-black dark:text-white";
+  const inputBg = "bg-white dark:bg-blue-600/20 border-gray-200 dark:border-blue-500/30 text-black dark:text-white focus:ring-blue-500";
+  const labelColor = "text-black dark:text-white";
+  const sublabelColor = "text-black dark:text-white";
   const iconColor = "text-gray-400";
 
   return ReactDOM.createPortal(
@@ -998,7 +998,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="text-base font-black text-gray-900 dark:text-white">
+                  <h4 className="text-base font-black text-black dark:text-white">
                     {isPrivate ? "Private 1-on-1 Master Class" : "Standard Group Master Class"}
                   </h4>
                   {isPrivate && (
@@ -1007,7 +1007,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <p className="text-xs text-black dark:text-white opacity-70 mt-0.5">
                   {isPrivate
                     ? "4 bespoke sessions with status-driven validity & zero student data leakage"
                     : "Open cohort masterclass with recurring weekly schedule"}
@@ -1048,7 +1048,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                       }}
                       onFocus={() => setStudentFocused(true)}
                       onBlur={() => setTimeout(() => setStudentFocused(false), 250)}
-                      className="flex-1 bg-transparent text-sm font-semibold outline-none text-gray-900 dark:text-white placeholder:text-gray-400"
+                      className="flex-1 bg-transparent text-sm font-semibold outline-none text-black dark:text-white placeholder:text-gray-400"
                     />
                     {selectedStudent && (
                       <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 text-xs font-black rounded-full uppercase">
@@ -1080,7 +1080,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                             className="w-full text-left px-5 py-3 hover:bg-amber-50 dark:hover:bg-gray-700 border-b last:border-0 border-gray-100 dark:border-gray-700/40 flex items-center justify-between text-sm"
                           >
                             <div>
-                              <span className="font-bold text-gray-900 dark:text-white">
+                              <span className="font-bold text-black dark:text-white">
                                 {st.firstname} {st.surname}
                               </span>
                               <span className="text-xs text-gray-400 block">{st.email}</span>
@@ -1120,7 +1120,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                         setAmountPaid(e.target.value);
                         if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
                       }}
-                      className="w-full px-5 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-2xl text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full px-5 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-2xl text-sm font-bold text-black dark:text-white outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   )}
                   {errors.amount_paid && <p className="text-xs text-rose-500 mt-1 font-semibold">{errors.amount_paid}</p>}
@@ -1142,7 +1142,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                         setAmountPaid("");
                       }
                     }}
-                    className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-2xl text-sm font-bold text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                    className="w-full px-4 py-3.5 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-2xl text-sm font-bold text-black dark:text-white outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
                   >
                     <option value="bank_transfer">Direct Bank Transfer</option>
                     <option value="card">Card Payment</option>
@@ -1184,7 +1184,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                 onFocus={() => setCourseFocused(true)}
                 onBlur={() => setTimeout(() => setCourseFocused(false), 200)}
                 autoComplete="off"
-                className="flex-1 bg-transparent font-medium outline-none text-gray-900 dark:text-white placeholder:text-gray-400"
+                className="flex-1 bg-transparent font-medium outline-none text-black dark:text-white placeholder:text-gray-400"
               />
               {selectedCourse && (
                 <button
@@ -1315,7 +1315,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                 onBlur={() => setTimeout(() => setSubjectFocused(false), 200)}
                 disabled={!formData.course_id}
                 autoComplete="off"
-                className="flex-1 bg-transparent font-medium outline-none disabled:cursor-not-allowed text-gray-900 dark:text-white placeholder:text-gray-400"
+                className="flex-1 bg-transparent font-medium outline-none disabled:cursor-not-allowed text-black dark:text-white placeholder:text-gray-400"
               />
               {selectedSubject && (
                 <button
@@ -1380,7 +1380,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         {/* Generated Class Title */}
         <div className={`rounded-2xl p-5 border ${cardBg}`}>
           <span className={`block text-xs mb-2 ${labelColor}`}>Generated Class Title</span>
-          <p className="text-base font-semibold text-gray-900 dark:text-white">
+          <p className="text-base font-semibold text-black dark:text-white">
             {selectedSubject 
               ? `${selectedCourse?.title || selectedCourse?.name} - ${selectedSubject.name}` 
               : "JAMB - Geography"
@@ -1409,7 +1409,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                   className={`py-3 rounded-xl text-xs font-medium transition-all ${
                     isActive
                       ? "bg-blue-400 text-white font-bold shadow-sm"
-                      : "bg-gray-100 dark:bg-blue-600/20 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-blue-600/30 border-none"
+                      : "bg-gray-100 dark:bg-blue-600/20 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-blue-600/30 border-none"
                   }`}
                 >
                   {day.label}
@@ -1431,7 +1431,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
                   key={schedule.day}
                   className="grid grid-cols-3 gap-4 items-center py-2"
                 >
-                  <span className="text-sm font-medium capitalize text-gray-900 dark:text-white">
+                  <span className="text-sm font-medium capitalize text-black dark:text-white">
                     {schedule.day}
                   </span>
                   <input
@@ -1464,7 +1464,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
               value={tutorSearch}
               onChange={(e) => handleStaffChange(e, "tutor_ids")}
               placeholder="Search and select tutors"
-              className="flex-1 bg-transparent text-sm italic outline-none text-gray-500 dark:text-white placeholder:text-gray-400"
+              className="flex-1 bg-transparent text-sm italic outline-none text-black dark:text-white placeholder:text-gray-400"
             />
             <datalist id="tutor-list">
               {tutors.map((s) => (
@@ -1497,7 +1497,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
               value={assistantSearch}
               onChange={(e) => handleStaffChange(e, "assistant_ids")}
               placeholder="Search and select assistants (optional)"
-              className="flex-1 bg-transparent text-sm italic outline-none text-gray-500 dark:text-white placeholder:text-gray-400"
+              className="flex-1 bg-transparent text-sm italic outline-none text-black dark:text-white placeholder:text-gray-400"
             />
             <datalist id="assistant-list">
               {assistants.map((s) => (
@@ -1509,7 +1509,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
             {selectedAssistants.map((s) => (
               <div 
                 key={s.id} 
-                className="flex items-center gap-2 px-4 py-2 text-sm rounded-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-full bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
               >
                 {s.name || `${s.firstname} ${s.surname}`}
                 <button type="button" onClick={() => removeStaff(s.id, "assistant_ids")}>
@@ -1532,7 +1532,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
               value={formData.link}
               onChange={handleChange}
               placeholder="https://meet.google.com/ans-baxj-eyc"
-              className="flex-1 bg-transparent text-sm outline-none dark:text-white placeholder:text-gray-400"
+              className="flex-1 bg-transparent text-sm outline-none text-black dark:text-white placeholder:text-gray-400"
             />
           </div>
           {errors.link && <p className="text-red-500 text-xs mt-2">{errors.link}</p>}
@@ -1549,12 +1549,12 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="flex-1 bg-transparent text-sm font-bold outline-none cursor-pointer border-none focus:ring-0 dark:text-white"
+              className="flex-1 bg-transparent text-sm font-bold outline-none cursor-pointer border-none focus:ring-0 text-black dark:text-white"
             >
-              <option value="active" className="dark:bg-[#0a1d3a]">Active (Finalized Schedule)</option>
-              <option value="proposed" className="dark:bg-[#0a1d3a]">Proposed (Liable to Change / Tentative)</option>
-              <option value="cancelled" className="dark:bg-[#0a1d3a]">Cancelled (Suspended / Closed)</option>
-              <option value="inactive" className="dark:bg-[#0a1d3a]">Inactive (Archived)</option>
+              <option value="active" className="text-black dark:bg-[#0a1d3a] dark:text-white">Active (Finalized Schedule)</option>
+              <option value="proposed" className="text-black dark:bg-[#0a1d3a] dark:text-white">Proposed (Liable to Change / Tentative)</option>
+              <option value="cancelled" className="text-black dark:bg-[#0a1d3a] dark:text-white">Cancelled (Suspended / Closed)</option>
+              <option value="inactive" className="text-black dark:bg-[#0a1d3a] dark:text-white">Inactive (Archived)</option>
             </select>
           </div>
         </div>
@@ -1569,7 +1569,7 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
               onChange={handleChange}
               placeholder="Description (optional)"
               rows="3"
-              className="flex-1 bg-transparent text-sm italic outline-none resize-none text-gray-500 dark:text-white placeholder:text-gray-400"
+              className="flex-1 bg-transparent text-sm italic outline-none resize-none text-black dark:text-white placeholder:text-gray-400"
             />
           </div>
         </div>

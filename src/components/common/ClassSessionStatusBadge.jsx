@@ -19,14 +19,13 @@ export const isSessionCancelled = (session) => {
 
 export const isSessionProposed = (session) => {
   if (!session) return false;
+  if (isSessionRescheduled(session)) return false;
   if (session.is_proposed === true) return true;
   const sessionStatus = String(session.status || "").toLowerCase().trim();
   const classStatus = String(session.class?.status || session.class_status || "").toLowerCase().trim();
   return (
     sessionStatus === "proposed" ||
-    sessionStatus === "rescheduled" ||
-    classStatus === "proposed" ||
-    classStatus === "rescheduled"
+    classStatus === "proposed"
   );
 };
 
@@ -245,6 +244,7 @@ export const getSessionCardStyles = (session) => {
     return {
       status: "cancelled",
       isCancelled: true,
+      isRescheduled: false,
       isProposed: false,
       isPrivate: false,
       isActive: false,
@@ -263,6 +263,30 @@ export const getSessionCardStyles = (session) => {
       // Action: Red unclickable disabled pill
       actionButtonClass: "w-full py-2.5 px-4 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-extrabold rounded-xl text-center text-xs uppercase tracking-wider border border-rose-200 dark:border-rose-900 cursor-not-allowed pointer-events-none select-none",
       actionText: "Session Cancelled",
+    };
+  }
+
+  if (isSessionRescheduled(session)) {
+    return {
+      status: "rescheduled",
+      isCancelled: false,
+      isRescheduled: true,
+      isProposed: false,
+      isPrivate: false,
+      isActive: false,
+      // Card Container: Warm Amber
+      cardBg: "bg-amber-50/80 dark:bg-amber-950/30",
+      cardBorder: "border-amber-300 dark:border-amber-800/60",
+      cardHover: "hover:border-amber-400 hover:shadow-md cursor-pointer",
+      cardClickable: true,
+      accentText: "text-amber-700 dark:text-amber-300",
+      accentBorder: "border-amber-300 dark:border-amber-800",
+      titleClass: "text-amber-900 dark:text-amber-100",
+      timeText: "text-amber-700 dark:text-amber-300/90",
+      subjectBadge: "bg-amber-100/90 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800",
+      statusBadge: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/60 dark:text-amber-200",
+      actionButtonClass: "w-full py-2.5 px-4 bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 font-extrabold rounded-xl text-center text-xs uppercase tracking-wider border border-amber-300 dark:border-amber-800",
+      actionText: "Session Rescheduled",
     };
   }
 

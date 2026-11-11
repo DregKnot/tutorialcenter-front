@@ -23,9 +23,9 @@ const ModalInput = ({
 }) => {
   return (
     <div className={`flex flex-col gap-1.5 w-full ${className}`}>
-      <label className="text-[11px] font-bold text-gray-400 ml-1">{label}</label>
+      <label className="text-[11px] font-bold text-black dark:text-white opacity-80 ml-1">{label}</label>
       <div className="relative group/input">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-900 dark:text-gray-300 z-10">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-black dark:text-white opacity-80 z-10">
           <Icon icon={icon} className="w-5 h-5" />
         </div>
         
@@ -35,11 +35,11 @@ const ModalInput = ({
             value={value || ""}
             onChange={onChange}
             disabled={disabled}
-            className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all appearance-none disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50"
+            className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-black dark:text-white focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all appearance-none disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50"
           >
-            <option value="" disabled>{placeholder || `Select ${label}`}</option>
+            <option value="" disabled className="text-black dark:bg-[#1a1a2e] dark:text-white">{placeholder || `Select ${label}`}</option>
             {options.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value} className="text-black dark:bg-[#1a1a2e] dark:text-white">{opt.label}</option>
             ))}
           </select>
         ) : (
@@ -50,7 +50,7 @@ const ModalInput = ({
             onChange={onChange}
             disabled={disabled}
             placeholder={placeholder}
-            className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50"
+            className="w-full bg-[#fcfcfc] dark:bg-[#1a1a2e] border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-10 py-3.5 text-sm font-semibold text-black dark:text-white focus:ring-2 focus:ring-[#0F2843]/10 dark:focus:ring-white/10 focus:border-[#0F2843] dark:focus:border-gray-400 transition-all disabled:bg-gray-50/50 dark:disabled:bg-gray-800/50"
           />
         )}
 
@@ -564,13 +564,13 @@ export default function AdminStudentViewModal({ studentId, onClose, onUpdate, is
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#131320] w-full max-w-[850px] rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] relative text-[#0F2843] dark:text-gray-100 font-sans">
+      <div className="bg-white dark:bg-[#131320] w-full max-w-[850px] rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] relative text-black dark:text-white font-sans">
         
         {/* Main Content Scrollable Area */}
         <div className={`flex-1 overflow-y-auto p-8 md:p-10 ${isSuspended ? "opacity-60 grayscale-[0.2]" : ""}`}>
           
           {/* Header */}
-          <h1 className="text-xl md:text-2xl font-black mb-8 uppercase tracking-tight">
+          <h1 className="text-xl md:text-2xl font-black mb-8 uppercase tracking-tight text-black dark:text-white">
             STUDENT PROFILE: {studentInfo?.firstname} {studentInfo?.surname}
           </h1>
 

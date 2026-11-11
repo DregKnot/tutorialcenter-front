@@ -109,7 +109,7 @@ export default function GuardianDetailsModal({ guardian, isOpen, onClose, onView
       onClick={onClose}
     >
       <div 
-        className="bg-white dark:bg-[#131320] w-full max-w-4xl rounded-[28px] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border border-gray-100 dark:border-gray-800 text-[#0F2843] dark:text-gray-100 font-sans my-auto transition-all"
+        className="bg-white dark:bg-[#131320] w-full max-w-4xl rounded-[28px] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border border-gray-100 dark:border-gray-800 text-black dark:text-white font-sans my-auto transition-all"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header Banner */}
@@ -213,7 +213,7 @@ export default function GuardianDetailsModal({ guardian, isOpen, onClose, onView
               {/* First Name */}
               <div className="p-4 bg-gray-50 dark:bg-[#1a1a2e] rounded-2xl border border-gray-100 dark:border-gray-800">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">First Name</p>
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                <p className="text-sm font-bold text-black dark:text-white">
                   {guardianData.firstname || "Not provided"}
                 </p>
               </div>
@@ -221,7 +221,7 @@ export default function GuardianDetailsModal({ guardian, isOpen, onClose, onView
               {/* Surname */}
               <div className="p-4 bg-gray-50 dark:bg-[#1a1a2e] rounded-2xl border border-gray-100 dark:border-gray-800">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Surname / Last Name</p>
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                <p className="text-sm font-bold text-black dark:text-white">
                   {guardianData.surname || "Not provided"}
                 </p>
               </div>
@@ -229,7 +229,7 @@ export default function GuardianDetailsModal({ guardian, isOpen, onClose, onView
               {/* Gender */}
               <div className="p-4 bg-gray-50 dark:bg-[#1a1a2e] rounded-2xl border border-gray-100 dark:border-gray-800">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Gender</p>
-                <p className="text-sm font-bold capitalize text-gray-800 dark:text-gray-100">
+                <p className="text-sm font-bold capitalize text-black dark:text-white">
                   {guardianData.gender || "Not specified"}
                 </p>
               </div>
@@ -243,7 +243,7 @@ export default function GuardianDetailsModal({ guardian, isOpen, onClose, onView
                       <CheckBadgeIcon className="w-3.5 h-3.5 text-green-500 -mt-1" title="Email verified" />
                     )}
                   </div>
-                  <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate" title={guardianData.email}>
+                  <p className="text-sm font-bold text-black dark:text-white truncate" title={guardianData.email}>
                     {guardianData.email || "Not provided"}
                   </p>
                 </div>
@@ -280,7 +280,7 @@ export default function GuardianDetailsModal({ guardian, isOpen, onClose, onView
                       <CheckBadgeIcon className="w-3.5 h-3.5 text-green-500 -mt-1" title="Phone verified" />
                     )}
                   </div>
-                  <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">
+                  <p className="text-sm font-bold text-black dark:text-white truncate">
                     {guardianData.tel || "Not provided"}
                   </p>
                 </div>
@@ -311,7 +311,7 @@ export default function GuardianDetailsModal({ guardian, isOpen, onClose, onView
               {/* Date of Birth */}
               <div className="p-4 bg-gray-50 dark:bg-[#1a1a2e] rounded-2xl border border-gray-100 dark:border-gray-800">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Date of Birth</p>
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
+                <p className="text-sm font-bold text-black dark:text-white flex items-center gap-1.5">
                   <CalendarIcon className="w-4 h-4 text-gray-400" />
                   {formatDate(guardianData.date_of_birth)}
                 </p>
@@ -320,7 +320,7 @@ export default function GuardianDetailsModal({ guardian, isOpen, onClose, onView
               {/* Location */}
               <div className="p-4 bg-gray-50 dark:bg-[#1a1a2e] rounded-2xl border border-gray-100 dark:border-gray-800">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">State / Location</p>
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1.5 truncate">
+                <p className="text-sm font-bold text-black dark:text-white flex items-center gap-1.5 truncate">
                   <MapPinIcon className="w-4 h-4 text-gray-400" />
                   {guardianData.location || "Not specified"}
                 </p>
@@ -329,7 +329,7 @@ export default function GuardianDetailsModal({ guardian, isOpen, onClose, onView
               {/* Residential Address */}
               <div className="p-4 bg-gray-50 dark:bg-[#1a1a2e] rounded-2xl border border-gray-100 dark:border-gray-800 sm:col-span-2">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Residential Address</p>
-                <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                <p className="text-sm font-semibold text-black dark:text-white">
                   {guardianData.address || "Not provided"}
                 </p>
               </div>

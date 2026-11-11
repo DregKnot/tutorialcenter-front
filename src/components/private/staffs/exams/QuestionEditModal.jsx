@@ -552,7 +552,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
         </div>
       )}
 
-      <div className="exam-scope bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full max-w-5xl max-h-[92vh] rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
+      <div className="exam-scope bg-white dark:bg-gray-900 text-black dark:text-white w-full max-w-5xl max-h-[92vh] rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
         
         {/* Header */}
         <div className="px-10 py-8 bg-[#0F2843] text-white flex items-center justify-between">
@@ -581,8 +581,8 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                   <Icon icon="heroicons:rectangle-group" className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-[#0F2843] dark:text-white uppercase tracking-tight">Group Assets / Context</h3>
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">Shared comprehension text or diagram details</p>
+                  <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-tight">Group Assets / Context</h3>
+                  <p className="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mt-0.5">Shared comprehension text or diagram details</p>
                 </div>
               </div>
 
@@ -591,9 +591,9 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 {selectedGroupId && !isGroupCreationMode && (
                   <div className="md:col-span-2 bg-gradient-to-r from-[#BB9E7F]/5 to-[#76D287]/5 border-2 border-[#BB9E7F]/20 rounded-2xl p-5 mb-2 flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Currently Selected Group</p>
-                      <p className="text-sm font-black text-[#0F2843] dark:text-white mb-2">{groupTitle}</p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold">
+                      <p className="text-[9px] font-black text-black dark:text-white uppercase tracking-widest mb-1">Currently Selected Group</p>
+                      <p className="text-sm font-black text-black dark:text-white mb-2">{groupTitle}</p>
+                      <p className="text-[10px] text-gray-600 dark:text-gray-300 font-bold">
                         <span className="text-[#BB9E7F]">Type:</span> {groupType} | <span className="text-[#BB9E7F]">Sort Order:</span> {groupSortOrder}
                       </p>
                     </div>
@@ -618,7 +618,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 {/* Group Title selection/creation */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-center px-1">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Group Title</label>
+                    <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest">Group Title</label>
                     <button 
                       type="button"
                       onClick={() => {
@@ -653,7 +653,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                             setGroupType("comprehension");
                           }
                         }}
-                        className={`w-full px-6 py-4 rounded-2xl font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-inner transition-all ${
+                        className={`w-full px-6 py-4 rounded-2xl font-black text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-inner transition-all ${
                           selectedGroupId 
                             ? "bg-[#76D287]/10 border-2 border-[#76D287]/40 dark:bg-[#76D287]/20" 
                             : "bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30"
@@ -684,14 +684,14 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                                 className="w-full px-6 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between"
                               >
                                 <div>
-                                  <p className="font-black text-[#0F2843] dark:text-white text-xs">{group.title}</p>
-                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">{group.type || "comprehension"}</p>
+                                  <p className="font-black text-black dark:text-white text-xs">{group.title}</p>
+                                  <p className="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mt-0.5">{group.type || "comprehension"}</p>
                                 </div>
                               </button>
                             ))
                           ) : (
                             <div className="p-4 text-center">
-                              <p className="text-gray-400 text-xs font-bold">No groups found</p>
+                              <p className="text-gray-500 dark:text-gray-400 text-xs font-bold">No groups found</p>
                             </div>
                           )}
                         </div>
@@ -704,7 +704,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                         value={groupTitle}
                         onChange={(e) => setGroupTitle(e.target.value)}
                         placeholder="Enter new group title..."
-                        className="w-full px-6 py-4 bg-white dark:bg-gray-800 border-2 border-[#BB9E7F] rounded-2xl font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-md"
+                        className="w-full px-6 py-4 bg-white dark:bg-gray-800 border-2 border-[#BB9E7F] rounded-2xl font-black text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-md"
                       />
                       <button 
                         type="button"
@@ -718,45 +718,45 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Type</label>
+                  <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Group Type</label>
                   <select 
                     value={groupType}
                     onChange={(e) => setGroupType(e.target.value)}
-                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none appearance-none"
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-black dark:text-white outline-none appearance-none"
                   >
-                    <option value="comprehension" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Comprehension</option>
-                    <option value="instruction" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Instruction</option>
-                    <option value="diagram" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Diagram</option>
-                    <option value="case_study" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Case Study</option>
+                    <option value="comprehension" className="bg-white dark:bg-gray-800 text-black dark:text-white">Comprehension</option>
+                    <option value="instruction" className="bg-white dark:bg-gray-800 text-black dark:text-white">Instruction</option>
+                    <option value="diagram" className="bg-white dark:bg-gray-800 text-black dark:text-white">Diagram</option>
+                    <option value="case_study" className="bg-white dark:bg-gray-800 text-black dark:text-white">Case Study</option>
                   </select>
                 </div>
                 <div className="space-y-3 md:col-span-2">
-                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Sort Order</label>
+                  <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Sort Order</label>
                   <input 
                     type="number"
                     value={groupSortOrder}
                     onChange={(e) => setGroupSortOrder(Number(e.target.value))}
-                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
+                    className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-black dark:text-white outline-none shadow-inner"
                   />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Content / Narrative</label>
-                <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-[#0F2843] dark:text-white">
+                <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Group Content / Narrative</label>
+                <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-black dark:text-white">
                   <ReactQuill 
                     theme="snow" 
                     value={groupContent || ""} 
                     onChange={setGroupContent}
                     modules={quillModules}
                     formats={quillFormats}
-                    className="[&_.ql-editor]:min-h-[220px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white" 
+                    className="[&_.ql-editor]:min-h-[220px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-black dark:[&_.ql-editor]:!text-white" 
                   />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Visual Aid (Optional)</label>
+                <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Group Visual Aid (Optional)</label>
                 <div className={`relative group border-2 border-dashed rounded-[32px] overflow-hidden bg-gray-50 dark:bg-gray-800/30 transition-all ${
                   groupImagePreview ? "border-green-500/30" : "border-gray-200 dark:border-gray-700 hover:border-[#BB9E7F]/40"
                 }`}>
@@ -771,8 +771,8 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                     <div className="p-8 flex flex-col items-center justify-center text-center gap-3 cursor-pointer">
                       <Icon icon="heroicons:photo" className="w-8 h-8 text-[#BB9E7F]" />
                       <div>
-                        <p className="text-[#0F2843] dark:text-white font-black text-sm">Upload Diagram / Map</p>
-                        <p className="text-gray-400 text-[10px] font-bold mt-1">Illustrations for this group context</p>
+                        <p className="text-black dark:text-white font-black text-sm">Upload Diagram / Map</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-[10px] font-bold mt-1">Illustrations for this group context</p>
                       </div>
                     </div>
                   )}
@@ -784,13 +784,13 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
 
           <div className={`grid grid-cols-1 ${hasPaperTypes ? 'sm:grid-cols-2 md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
             <div className="space-y-3">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Number</label>
+              <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Question Number</label>
               <input 
                 type="number"
                 required
                 value={questionNumber}
                 onChange={(e) => setQuestionNumber(e.target.value)}
-                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-inner"
+                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-inner"
               />
             </div>
 
@@ -800,10 +800,10 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 <select 
                   value={paperType || (availablePaperTypes[0] || "")}
                   onChange={(e) => setPaperType(e.target.value)}
-                  className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-[#BB9E7F]/30 focus:border-[#BB9E7F] rounded-2xl font-black text-[#0F2843] dark:text-white outline-none appearance-none"
+                  className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-[#BB9E7F]/30 focus:border-[#BB9E7F] rounded-2xl font-black text-black dark:text-white outline-none appearance-none"
                 >
                   {availablePaperTypes.map((pt, pIdx) => (
-                    <option key={pIdx} value={pt} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                    <option key={pIdx} value={pt} className="bg-white dark:bg-gray-800 text-black dark:text-white">
                       {pt}
                     </option>
                   ))}
@@ -812,31 +812,31 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             )}
 
             <div className="space-y-3">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Format</label>
+              <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Format</label>
               <select 
                 value={questionType}
                 onChange={(e) => setQuestionType(e.target.value)}
-                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none appearance-none"
+                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-black dark:text-white outline-none appearance-none"
               >
-                <option value="multiple_choice" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Multiple Choice</option>
-                <option value="true_false" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">True / False</option>
+                <option value="multiple_choice" className="bg-white dark:bg-gray-800 text-black dark:text-white">Multiple Choice</option>
+                <option value="true_false" className="bg-white dark:bg-gray-800 text-black dark:text-white">True / False</option>
               </select>
             </div>
             <div className="space-y-3">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Marks</label>
+              <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Marks</label>
               <input 
                 type="number"
                 value={marks}
                 onChange={(e) => setMarks(e.target.value)}
-                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-[#0F2843] dark:text-white outline-none shadow-inner"
+                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-black text-black dark:text-white outline-none shadow-inner"
               />
             </div>
           </div>
 
           <div className="space-y-3">
-            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Question Text</label>
+            <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Question Text</label>
             <div 
-              className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-[#0F2843] dark:text-white"
+              className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-3xl border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-inner text-black dark:text-white"
               onPaste={async (e) => {
                 const clipboardData = e.clipboardData;
                 if (!clipboardData || !clipboardData.files || clipboardData.files.length === 0) return;
@@ -858,7 +858,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 onChange={(val) => setQuestionText(stripImagesFromHtml(val))}
                 modules={quillModules}
                 formats={quillFormats}
-                className="[&_.ql-editor]:min-h-[300px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white" 
+                className="[&_.ql-editor]:min-h-[300px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-black dark:[&_.ql-editor]:!text-white" 
               />
             </div>
           </div>
@@ -867,7 +867,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
           <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-gray-800">
             <div className="flex items-center gap-3 px-1">
               <PaperClipIcon className="w-5 h-5 text-[#BB9E7F]" />
-              <label className="text-[11px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Question Attachments</label>
+              <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest">Question Attachments</label>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -897,7 +897,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                         <DocumentTextIcon className="w-6 h-6" />
                       </div>
                       <div className="overflow-hidden">
-                        <p className="text-xs font-black text-[#0F2843] dark:text-white truncate uppercase tracking-tight">{ef.original_name}</p>
+                        <p className="text-xs font-black text-black dark:text-white truncate uppercase tracking-tight">{ef.original_name}</p>
                         <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-wider mt-0.5">Saved on Server</p>
                       </div>
                     </div>
@@ -909,7 +909,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                     value={ef.caption}
                     onChange={(e) => updateExistingCaption(ef.id, e.target.value)}
                     placeholder="Update caption for this attachment..."
-                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-xl text-[11px] font-bold text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-xl text-[11px] font-bold text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none"
                   />
                 </div>
               ))}
@@ -940,8 +940,8 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                         <DocumentTextIcon className="w-6 h-6" />
                       </div>
                       <div className="overflow-hidden">
-                        <p className="text-xs font-black text-[#0F2843] dark:text-white truncate uppercase tracking-tight">{file.name}</p>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">{(file.size / 1024).toFixed(0)} KB</p>
+                        <p className="text-xs font-black text-black dark:text-white truncate uppercase tracking-tight">{file.name}</p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase">{(file.size / 1024).toFixed(0)} KB</p>
                       </div>
                     </div>
                   )}
@@ -952,7 +952,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                     value={newCaptions[fIdx]}
                     onChange={(e) => updateNewCaption(fIdx, e.target.value)}
                     placeholder="Add a caption for this file..."
-                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-xl text-[11px] font-bold text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-xl text-[11px] font-bold text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none"
                   />
                 </div>
               ))}
@@ -962,8 +962,8 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                 <div className="w-12 h-12 bg-[#BB9E7F]/5 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                   <PhotoIcon className="w-6 h-6 text-[#BB9E7F]" />
                 </div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Add Image / Attachment</p>
-                <p className="text-[9px] text-gray-300 dark:text-gray-500 font-bold mt-1">Diagrams, charts, or supporting files</p>
+                <p className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest">Add Image / Attachment</p>
+                <p className="text-[9px] text-gray-500 dark:text-gray-400 font-bold mt-1">Diagrams, charts, or supporting files</p>
                 <input type="file" multiple accept="image/*,.pdf,.doc,.docx" onChange={handleNewFilesChange} className="absolute inset-0 opacity-0 cursor-pointer" />
               </div>
             </div>
@@ -974,7 +974,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             <div className="flex justify-between items-center px-1">
               <div className="flex items-center gap-3">
                 <ListBulletIcon className="w-5 h-5 text-[#BB9E7F]" />
-                <label className="text-[11px] font-black text-[#0F2843] dark:text-white uppercase tracking-widest">Options</label>
+                <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest">Options</label>
               </div>
               <button 
                 type="button" 
@@ -996,7 +996,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                         type="text"
                         value={opt.label}
                         onChange={(e) => handleOptionChange(idx, "label", e.target.value)}
-                        className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center font-black text-[#0F2843] dark:text-white shrink-0 text-center outline-none focus:ring-2 focus:ring-[#BB9E7F]/30"
+                        className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center font-black text-black dark:text-white shrink-0 text-center outline-none focus:ring-2 focus:ring-[#BB9E7F]/30"
                       />
                       <div className="flex-1 relative group/input">
                         <input 
@@ -1009,7 +1009,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                             handleOptionChange(idx, "option_text", combined);
                           }}
                           placeholder={optionImageUrl ? `Option ${opt.label} text (diagram attached)...` : `Option ${opt.label} text...`}
-                          className="w-full px-6 py-4 pr-24 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-sm"
+                          className="w-full px-6 py-4 pr-24 bg-white dark:bg-gray-900 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-sm"
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                           {/* Option Diagram Upload Button */}
@@ -1059,7 +1059,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                           className={`px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${
                             opt.is_correct 
                               ? "bg-green-500 text-white shadow-lg" 
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-300 dark:hover:bg-gray-700"
+                              : "bg-gray-100 dark:bg-gray-800 text-black dark:text-white dark:hover:bg-gray-700"
                           }`}
                         >
                           <CheckCircleIcon className="w-4 h-4" />
@@ -1068,7 +1068,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                         <button 
                           type="button" 
                           onClick={() => removeOption(idx)}
-                          className="p-3 text-gray-300 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                          className="p-3 text-gray-400 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                         >
                           <TrashIcon className="w-5 h-5" />
                         </button>
@@ -1087,7 +1087,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                           <span className="text-[10px] font-bold text-[#BB9E7F] uppercase tracking-wider">
                             Diagram Attached
                           </span>
-                          <span className="text-[9px] text-gray-400 font-medium truncate max-w-[160px]">
+                          <span className="text-[9px] text-gray-500 dark:text-gray-400 font-medium truncate max-w-[160px]">
                             Option {opt.label} image
                           </span>
                         </div>
@@ -1182,7 +1182,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
               )}
 
               {/* BOTTOM: Text Editor inside the box */}
-              <div className="quill-wrapper rounded-2xl overflow-hidden text-[#0F2843] dark:text-white">
+              <div className="quill-wrapper rounded-2xl overflow-hidden text-black dark:text-white">
                 <ReactQuill 
                   theme="snow" 
                   value={explanationText} 
@@ -1190,7 +1190,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
                   modules={quillModulesExplanation}
                   formats={quillFormats}
                   placeholder="Explain why the answer is correct (text is displayed above the diagram)..."
-                  className="[&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white" 
+                  className="[&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-base [&_.ql-editor]:leading-relaxed [&_.ql-editor]:!text-black dark:[&_.ql-editor]:!text-white" 
                 />
               </div>
             </div>
@@ -1214,7 +1214,7 @@ export default function QuestionEditModal({ isOpen, onClose, question, onSuccess
             <button 
               type="button"
               onClick={onClose}
-              className="px-8 py-4 text-gray-400 dark:text-gray-400 font-black text-[10px] uppercase tracking-widest hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              className="px-8 py-4 text-black dark:text-white font-black text-[10px] uppercase tracking-widest hover:opacity-80 transition-opacity"
             >
               Discard
             </button>

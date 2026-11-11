@@ -90,13 +90,13 @@ export default function FeedbackModal({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-[#121212] border border-[#2a2a2a] w-full max-w-lg rounded-2xl shadow-2xl p-6 relative flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-[#121212] border border-gray-200 dark:border-[#2a2a2a] w-full max-w-lg rounded-2xl shadow-2xl p-6 relative flex flex-col max-h-[90vh]">
         
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Leave Feedback</h2>
-            <p className="text-[#a0a0a0] text-sm mt-1">
+            <h2 className="text-2xl font-bold text-black dark:text-white tracking-tight">Leave Feedback</h2>
+            <p className="text-gray-600 dark:text-[#a0a0a0] text-sm mt-1">
               {prefilledType === "class"
                 ? `How easy was it to connect and join: ${prefilledTitle}?`
                 : prefilledTitle 
@@ -106,7 +106,7 @@ export default function FeedbackModal({
           </div>
           <button 
             onClick={onClose}
-            className="text-[#808080] hover:text-white transition-colors bg-[#2a2a2a] hover:bg-[#3a3a3a] rounded-full p-2"
+            className="text-gray-500 hover:text-black dark:text-[#808080] dark:hover:text-white transition-colors bg-gray-100 hover:bg-gray-200 dark:bg-[#2a2a2a] dark:hover:bg-[#3a3a3a] rounded-full p-2"
           >
             <Icon icon="mdi:close" className="w-5 h-5" />
           </button>
@@ -115,15 +115,15 @@ export default function FeedbackModal({
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
           
           {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg text-sm flex items-center gap-2">
+            <div className="bg-red-500/10 border border-red-500/50 text-red-500 dark:text-red-400 p-3 rounded-lg text-sm flex items-center gap-2">
               <Icon icon="mdi:alert-circle" className="w-5 h-5 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Star Rating */}
-          <div className="flex flex-col items-center justify-center py-4 bg-[#1a1a1a] rounded-xl border border-[#2a2a2a]">
-            <p className="text-white text-sm font-semibold mb-3">Rate your experience</p>
+          <div className="flex flex-col items-center justify-center py-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-[#2a2a2a]">
+            <p className="text-black dark:text-white text-sm font-semibold mb-3">Rate your experience</p>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -136,7 +136,7 @@ export default function FeedbackModal({
                 >
                   <Icon 
                     icon={(hoverRating || rating) >= star ? "mdi:star" : "mdi:star-outline"} 
-                    className={`w-10 h-10 transition-colors duration-200 ${(hoverRating || rating) >= star ? "text-[#BB9E7F]" : "text-[#404040]"}`}
+                    className={`w-10 h-10 transition-colors duration-200 ${(hoverRating || rating) >= star ? "text-[#BB9E7F]" : "text-gray-300 dark:text-[#404040]"}`}
                   />
                 </button>
               ))}
@@ -145,7 +145,7 @@ export default function FeedbackModal({
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-semibold text-[#c0c0c0] mb-2">
+            <label className="block text-sm font-semibold text-black dark:text-white mb-2">
               {prefilledType === "class" ? "Headline (e.g. Connection was smooth)" : "Headline"}
             </label>
             <input
@@ -153,13 +153,13 @@ export default function FeedbackModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="E.g., Great class!"
-              className="w-full bg-[#1a1a1a] border border-[#333] text-white text-sm rounded-xl focus:ring-2 focus:ring-[#BB9E7F] focus:border-[#BB9E7F] block p-3 transition-colors"
+              className="w-full bg-gray-50 dark:bg-[#1a1a1a] border border-gray-300 dark:border-[#333] text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm rounded-xl focus:ring-2 focus:ring-[#BB9E7F] focus:border-[#BB9E7F] block p-3 transition-colors"
             />
           </div>
 
           {/* Comment */}
           <div>
-            <label className="block text-sm font-semibold text-[#c0c0c0] mb-2">
+            <label className="block text-sm font-semibold text-black dark:text-white mb-2">
               Detailed Feedback <span className="text-gray-500 font-normal">(Optional)</span>
             </label>
             <textarea
@@ -167,14 +167,14 @@ export default function FeedbackModal({
               onChange={(e) => setComment(e.target.value)}
               rows="4"
               placeholder={prefilledType === "class" ? "Did you experience any issues joining or during the class?" : "What did you like? What could be improved?"}
-              className="w-full bg-[#1a1a1a] border border-[#333] text-white text-sm rounded-xl focus:ring-2 focus:ring-[#BB9E7F] focus:border-[#BB9E7F] block p-3 transition-colors resize-none"
+              className="w-full bg-gray-50 dark:bg-[#1a1a1a] border border-gray-300 dark:border-[#333] text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm rounded-xl focus:ring-2 focus:ring-[#BB9E7F] focus:border-[#BB9E7F] block p-3 transition-colors resize-none"
             />
           </div>
 
           {/* Toggles */}
-          <div className="flex flex-col gap-3 bg-[#1a1a1a] p-4 rounded-xl border border-[#2a2a2a]">
+          <div className="flex flex-col gap-3 bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-xl border border-gray-200 dark:border-[#2a2a2a]">
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-sm text-white">I would recommend this</span>
+              <span className="text-sm font-medium text-black dark:text-white">I would recommend this</span>
               <div className="relative">
                 <input 
                   type="checkbox" 
@@ -182,14 +182,14 @@ export default function FeedbackModal({
                   checked={wouldRecommend}
                   onChange={(e) => setWouldRecommend(e.target.checked)}
                 />
-                <div className="w-11 h-6 bg-[#333] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#BB9E7F]"></div>
+                <div className="w-11 h-6 bg-gray-300 dark:bg-[#333] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#BB9E7F]"></div>
               </div>
             </label>
             
-            <hr className="border-[#333]" />
+            <hr className="border-gray-200 dark:border-[#333]" />
 
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-sm text-white">Submit anonymously</span>
+              <span className="text-sm font-medium text-black dark:text-white">Submit anonymously</span>
               <div className="relative">
                 <input 
                   type="checkbox" 
@@ -197,18 +197,18 @@ export default function FeedbackModal({
                   checked={isAnonymous}
                   onChange={(e) => setIsAnonymous(e.target.checked)}
                 />
-                <div className="w-11 h-6 bg-[#333] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#BB9E7F]"></div>
+                <div className="w-11 h-6 bg-gray-300 dark:bg-[#333] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#BB9E7F]"></div>
               </div>
             </label>
           </div>
         </form>
 
         {/* Footer Actions */}
-        <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-[#2a2a2a]">
+        <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-[#2a2a2a]">
           <button
             onClick={onClose}
             type="button"
-            className="px-5 py-2.5 text-sm font-semibold text-white bg-[#2a2a2a] hover:bg-[#3a3a3a] rounded-xl transition-colors"
+            className="px-5 py-2.5 text-sm font-semibold text-black dark:text-white bg-gray-100 hover:bg-gray-200 dark:bg-[#2a2a2a] dark:hover:bg-[#3a3a3a] rounded-xl transition-colors"
           >
             Skip
           </button>
@@ -216,7 +216,7 @@ export default function FeedbackModal({
             onClick={handleSubmit}
             disabled={loading}
             type="button"
-            className="px-6 py-2.5 text-sm font-semibold text-[#121212] bg-[#BB9E7F] hover:bg-[#a68a6d] rounded-xl transition-colors flex items-center justify-center gap-2 min-w-[120px]"
+            className="px-6 py-2.5 text-sm font-semibold text-white dark:text-[#121212] bg-[#0F2843] hover:bg-[#1a3a5f] dark:bg-[#BB9E7F] dark:hover:bg-[#a68a6d] rounded-xl transition-colors flex items-center justify-center gap-2 min-w-[120px]"
           >
             {loading ? (
               <Icon icon="mdi:loading" className="w-5 h-5 animate-spin" />

@@ -68,7 +68,7 @@ export default function SubjectDetailModal({ isOpen, subject, course, onClose, o
                 <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.25em]">Syllabus Overview</h3>
               </div>
               <div 
-                className="text-lg text-[#0F2843] dark:text-gray-300 leading-relaxed font-medium quill-content break-words"
+                className="text-lg text-black dark:text-white leading-relaxed font-medium quill-content break-words"
                 dangerouslySetInnerHTML={{ 
                   __html: subject.description || "This subject module provides in-depth comprehensive learning materials and interactive sessions designed to help students master the complexities of the topic and prepare for excellence." 
                 }}
@@ -79,16 +79,16 @@ export default function SubjectDetailModal({ isOpen, subject, course, onClose, o
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-[32px] border border-gray-100 dark:border-gray-700">
                   <BookOpenIcon className="w-8 h-8 text-[#BB9E7F] mb-4" />
-                  <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Parent Curriculum</h4>
-                  <p className="text-lg font-black text-[#0F2843] dark:text-white tracking-tight uppercase leading-tight">
+                  <h4 className="text-[9px] font-black text-black dark:text-white opacity-80 uppercase tracking-[0.2em] mb-1">Parent Curriculum</h4>
+                  <p className="text-lg font-black text-black dark:text-white tracking-tight uppercase leading-tight">
                     {course?.title || "Standalone Subject"}
                   </p>
                </div>
 
                <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-[32px] border border-gray-100 dark:border-gray-700">
                   <AcademicCapIcon className="w-8 h-8 text-[#76D287] mb-4" />
-                  <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Academic Departments</h4>
-                  <p className="text-lg font-black text-[#0F2843] dark:text-white tracking-tight uppercase leading-tight">
+                  <h4 className="text-[9px] font-black text-black dark:text-white opacity-80 uppercase tracking-[0.2em] mb-1">Academic Departments</h4>
+                  <p className="text-lg font-black text-black dark:text-white tracking-tight uppercase leading-tight">
                     {formatDepartments(subject.departments, "All Tracks")}
                   </p>
                </div>

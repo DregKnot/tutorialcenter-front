@@ -71,7 +71,7 @@ export default function CourseDetailModal({ isOpen, course, subjects, onClose, o
                   Course Description
                 </h3>
                 <div 
-                  className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed font-medium quill-content break-words"
+                  className="text-lg text-black dark:text-white leading-relaxed font-medium quill-content break-words"
                   dangerouslySetInnerHTML={{ 
                     __html: course.description || "In this course, students will receive comprehensive tutoring and preparation tailored to exceed world-class educational standards." 
                   }}
@@ -79,7 +79,7 @@ export default function CourseDetailModal({ isOpen, course, subjects, onClose, o
               </div>
 
               <div className="space-y-6">
-                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                 <h3 className="text-xs font-black text-black dark:text-white opacity-80 uppercase tracking-[0.2em] flex items-center gap-2">
                    <div className="w-1.5 h-4 bg-[#0F2843] rounded-full"></div>
                    Curriculum Subjects ({courseSubjects.length})
                  </h3>
@@ -89,11 +89,11 @@ export default function CourseDetailModal({ isOpen, course, subjects, onClose, o
                        <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                          <AcademicCapIcon className="w-5 h-5 text-[#BB9E7F]" />
                        </div>
-                       <span className="font-bold text-[#0F2843] dark:text-white">{sub.name}</span>
+                       <span className="font-bold text-black dark:text-white">{sub.name}</span>
                      </div>
                    )) : (
                      <div className="col-span-full py-10 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-[32px]">
-                       <p className="text-gray-400 font-bold text-sm">No subjects attached to this course yet.</p>
+                       <p className="text-black dark:text-white opacity-60 font-bold text-sm">No subjects attached to this course yet.</p>
                      </div>
                    )}
                  </div>
@@ -119,7 +119,7 @@ export default function CourseDetailModal({ isOpen, course, subjects, onClose, o
               <div className="flex flex-col gap-4">
                 <button 
                   onClick={() => onEdit(course)}
-                  className="w-full py-5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-[#0F2843] dark:text-white font-black rounded-3xl hover:border-[#BB9E7F]/30 hover:shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95"
+                  className="w-full py-5 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-black dark:text-white font-black rounded-3xl hover:border-[#BB9E7F]/30 hover:shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95"
                 >
                   <PencilSquareIcon className="w-5 h-5 text-[#BB9E7F]" />
                   Modify Details

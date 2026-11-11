@@ -464,24 +464,24 @@ export default function AdminSessionActionModal({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="font-extrabold text-[#09314F] dark:text-blue-300 truncate">
+                <span className="font-extrabold text-black dark:text-white truncate">
                   {session.subject_name}
                 </span>
                 <span className="text-gray-400">•</span>
-                <span className="text-gray-500 dark:text-gray-400 font-semibold truncate">
+                <span className="text-black dark:text-white opacity-80 font-semibold truncate">
                   {session.tutor?.name}
                 </span>
               </div>
-              <p className="font-bold text-gray-800 dark:text-gray-200 truncate">{session.topic}</p>
+              <p className="font-bold text-black dark:text-white truncate">{session.topic}</p>
             </div>
           </div>
 
           <div className="text-right shrink-0">
-            <div className="flex items-center gap-1 text-gray-600 dark:text-gray-300 font-bold">
+            <div className="flex items-center gap-1 text-black dark:text-white font-bold">
               <CalendarDaysIcon className="w-3.5 h-3.5 text-gray-400" />
               <span>{session.session_date}</span>
             </div>
-            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 font-medium mt-0.5 justify-end">
+            <div className="flex items-center gap-1 text-black dark:text-white opacity-80 font-medium mt-0.5 justify-end">
               <ClockIcon className="w-3.5 h-3.5 text-gray-400" />
               <span>{formatTimeDisplay(session.starts_at)} - {formatTimeDisplay(session.ends_at)}</span>
             </div>
@@ -497,7 +497,7 @@ export default function AdminSessionActionModal({
         )}
 
         {/* ── MODAL BODY ACCORDING TO MODE & STEP ─────────────────────────── */}
-        <div className="p-6 overflow-y-auto space-y-5 text-sm text-gray-700 dark:text-gray-200 flex-1">
+        <div className="p-6 overflow-y-auto space-y-5 text-sm text-black dark:text-white flex-1">
           
           {/* ═════════════════════════════════════════════════════════════════ */}
           {/* FLOW A: CANCEL SESSION                                            */}
@@ -550,13 +550,13 @@ export default function AdminSessionActionModal({
                   )}
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                       Reason for Cancellation <span className="text-rose-500">*</span>
                     </label>
                     <select
                       value={cancelReasonPreset}
                       onChange={(e) => setCancelReasonPreset(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer"
                     >
                       {CANCELLATION_REASONS.map((reason) => (
                         <option key={reason} value={reason}>
@@ -567,7 +567,7 @@ export default function AdminSessionActionModal({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                       Additional Notes / Custom Details (Optional)
                     </label>
                     <textarea
@@ -575,7 +575,7 @@ export default function AdminSessionActionModal({
                       value={customReason}
                       onChange={(e) => setCustomReason(e.target.value)}
                       placeholder="Add specific context for internal audit logs or student notification..."
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 placeholder-gray-400"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 placeholder-gray-400"
                     />
                   </div>
                 </>
@@ -622,7 +622,7 @@ export default function AdminSessionActionModal({
 
               {/* 1. Date Picker */}
               <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                   New Date (New Day) <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -632,7 +632,7 @@ export default function AdminSessionActionModal({
                     min={todayYMD}
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
                 <p className="text-[11px] text-gray-400 mt-1">
@@ -643,7 +643,7 @@ export default function AdminSessionActionModal({
               {/* 2. Time Pickers */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                     Start Time <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
@@ -657,13 +657,13 @@ export default function AdminSessionActionModal({
                         // Automatically shift end time to keep 90 min window
                         setNewEndTime(addMinutesToTime(val, 90));
                       }}
-                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                     End Time <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
@@ -672,7 +672,7 @@ export default function AdminSessionActionModal({
                       type="time"
                       value={newEndTime}
                       onChange={(e) => setNewEndTime(e.target.value)}
-                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
                 </div>
@@ -680,7 +680,7 @@ export default function AdminSessionActionModal({
 
               {/* Quick Time Presets */}
               <div>
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
+                <span className="text-[11px] font-bold text-black dark:text-white uppercase tracking-wider block mb-2 opacity-80">
                   Quick Time Presets (WAT / Lagos Time)
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -701,7 +701,7 @@ export default function AdminSessionActionModal({
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
                         newStartTime === preset.start && newEndTime === preset.end
                           ? "bg-[#09314F] text-white border-[#09314F] dark:bg-blue-600 dark:border-blue-500 shadow-sm"
-                          : "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100"
+                          : "bg-gray-50 dark:bg-gray-800 text-black dark:text-white border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
                       }`}
                     >
                       {preset.label}
@@ -712,7 +712,7 @@ export default function AdminSessionActionModal({
 
               {/* 3. Reason / Notes */}
               <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                   Reschedule Reason (Optional note for students)
                 </label>
                 <input
@@ -720,7 +720,7 @@ export default function AdminSessionActionModal({
                   value={rescheduleReason}
                   onChange={(e) => setRescheduleReason(e.target.value)}
                   placeholder="e.g., Moved to Thursday due to tutor seminar"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder-gray-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder-gray-400"
                 />
               </div>
             </div>
@@ -747,7 +747,7 @@ export default function AdminSessionActionModal({
                   Session Being Moved:
                 </span>
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-gray-800 dark:text-gray-200">{session.topic}</span>
+                  <span className="font-bold text-black dark:text-white">{session.topic}</span>
                   <span className="font-semibold text-primary dark:text-blue-400">
                     {session.subject_name} • {session.tutor?.name}
                   </span>
@@ -771,16 +771,16 @@ export default function AdminSessionActionModal({
                         <span className="px-2 py-0.5 rounded-full bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-200 font-extrabold text-[10px] uppercase">
                           Clash
                         </span>
-                        <span className="font-bold text-gray-800 dark:text-gray-200">
+                        <span className="font-bold text-black dark:text-white">
                           {clash.subject_name}
                         </span>
                         <span className="text-gray-400">•</span>
-                        <span className="text-gray-600 dark:text-gray-400 font-medium">
+                        <span className="text-black dark:text-white opacity-80 font-medium">
                           Tutor: {clash.tutor?.name || clash.tutor_name || "Assigned Tutor"}
                         </span>
                       </div>
-                      <p className="font-bold text-sm text-[#09314F] dark:text-white">{clash.topic}</p>
-                      <p className="text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-3">
+                      <p className="font-bold text-sm text-black dark:text-white">{clash.topic}</p>
+                      <p className="text-black dark:text-white opacity-80 mt-1 flex items-center gap-3">
                         <span>📅 {clash.session_date}</span>
                         <span>⏰ {formatTimeDisplay(clash.starts_at)} - {formatTimeDisplay(clash.ends_at)}</span>
                       </p>
@@ -804,7 +804,7 @@ export default function AdminSessionActionModal({
                 ))}
               </div>
 
-              <div className="p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl text-[11px] text-gray-500 dark:text-gray-400">
+              <div className="p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl text-[11px] text-black dark:text-white opacity-80">
                 <strong>What does replacing do?</strong> The clashing session will be marked as cancelled for that specific day, and your session will take its place. Students in both cohorts will be updated.
               </div>
             </div>
@@ -824,7 +824,7 @@ export default function AdminSessionActionModal({
                 setStep("pick_time");
                 setErrorMessage("");
               }}
-              className="px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold hover:bg-gray-100 transition-all flex items-center gap-1.5"
+              className="px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-black dark:text-white text-xs font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition-all flex items-center gap-1.5"
             >
               <span>&larr; Pick Another Time</span>
             </button>
@@ -833,7 +833,7 @@ export default function AdminSessionActionModal({
               type="button"
               disabled={submitting}
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 transition-colors"
+              className="px-4 py-2 text-xs font-semibold text-black dark:text-white opacity-80 hover:opacity-100 transition-colors"
             >
               Cancel
             </button>
