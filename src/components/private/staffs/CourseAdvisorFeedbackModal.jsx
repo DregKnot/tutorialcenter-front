@@ -470,7 +470,7 @@ export default function CourseAdvisorFeedbackModal({
               }
             }
           }}
-          className="flex flex-col flex-1 min-h-0 overflow-hidden text-slate-800 dark:text-slate-200"
+          className="flex flex-col flex-1 min-h-0 overflow-hidden text-black dark:text-white"
         >
           {/* SCROLLABLE STEP QUESTIONS CONTAINER */}
           <div 
@@ -483,7 +483,7 @@ export default function CourseAdvisorFeedbackModal({
                 {/* QUESTION 1 */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between select-none">
-                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                    <label className="text-sm font-black text-black dark:text-white flex items-center gap-2 cursor-default">
                       <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">1</span>
                       <span>How would you rate the tutor’s overall performance?</span>
                     </label>
@@ -499,7 +499,7 @@ export default function CourseAdvisorFeedbackModal({
                         className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer select-none ${
                           formData.tutorPerformance === opt
                             ? "bg-[#09314F] text-white border-[#09314F] shadow-sm scale-100"
-                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
+                            : "bg-white dark:bg-slate-800 text-black dark:text-white border-gray-200 dark:border-gray-700 hover:border-slate-400"
                         }`}
                       >
                         <span className="pointer-events-none select-none">{opt}</span>
@@ -508,7 +508,7 @@ export default function CourseAdvisorFeedbackModal({
                   </div>
 
                   <div className="pt-2">
-                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                    <label className="text-xs font-bold text-black dark:text-white block mb-1 select-none cursor-default">
                       Comments:
                     </label>
                     <textarea
@@ -516,7 +516,7 @@ export default function CourseAdvisorFeedbackModal({
                       value={formData.tutorPerformanceComments}
                       onChange={(e) => handleFieldChange("tutorPerformanceComments", e.target.value)}
                       placeholder="Provide specific feedback or commendations regarding the tutor's delivery, punctuality, and methodology..."
-                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                     />
                   </div>
                 </div>
@@ -524,7 +524,7 @@ export default function CourseAdvisorFeedbackModal({
                 {/* QUESTION 2 */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between select-none">
-                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                    <label className="text-sm font-black text-black dark:text-white flex items-center gap-2 cursor-default">
                       <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">2</span>
                       <span>How was student attendance?</span>
                     </label>
@@ -542,8 +542,8 @@ export default function CourseAdvisorFeedbackModal({
                         key={opt}
                         className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-bold cursor-pointer select-none transition-all ${
                           formData.attendanceRating === opt
-                            ? "bg-amber-500/10 border-[#C5A97A] text-[#09314F] dark:text-white"
-                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+                            ? "bg-amber-500/10 border-[#C5A97A] text-black dark:text-white"
+                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-black dark:text-white hover:border-slate-300"
                         }`}
                       >
                         <input
@@ -560,7 +560,7 @@ export default function CourseAdvisorFeedbackModal({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div>
-                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                      <label className="text-xs font-bold text-black dark:text-white block mb-1 select-none cursor-default">
                         Number Present:
                       </label>
                       <input
@@ -568,12 +568,12 @@ export default function CourseAdvisorFeedbackModal({
                         min={0}
                         value={formData.numberPresent}
                         onChange={(e) => handleFieldChange("numberPresent", e.target.value)}
-                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                       />
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                      <label className="text-xs font-bold text-black dark:text-white block mb-1 select-none cursor-default">
                         Number Absent:
                       </label>
                       <input
@@ -581,13 +581,13 @@ export default function CourseAdvisorFeedbackModal({
                         min={0}
                         value={formData.numberAbsent}
                         onChange={(e) => handleFieldChange("numberAbsent", e.target.value)}
-                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs font-bold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                       />
                     </div>
                   </div>
 
                   <div className="pt-2">
-                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                    <label className="text-xs font-bold text-black dark:text-white block mb-1 select-none cursor-default">
                       Names/Details of notable absences or late arrivals:
                     </label>
                     <textarea
@@ -595,7 +595,7 @@ export default function CourseAdvisorFeedbackModal({
                       value={formData.attendanceDetails}
                       onChange={(e) => handleFieldChange("attendanceDetails", e.target.value)}
                       placeholder="Specify names of students who arrived significantly late or were unexcused..."
-                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                     />
                   </div>
                 </div>
@@ -608,7 +608,7 @@ export default function CourseAdvisorFeedbackModal({
                 {/* QUESTION 3 */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between select-none">
-                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                    <label className="text-sm font-black text-black dark:text-white flex items-center gap-2 cursor-default">
                       <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">3</span>
                       <span>How would you rate students’ participation and engagement?</span>
                     </label>
@@ -624,7 +624,7 @@ export default function CourseAdvisorFeedbackModal({
                         className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer select-none ${
                           formData.participationRating === opt
                             ? "bg-[#09314F] text-white border-[#09314F] shadow-sm"
-                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
+                            : "bg-white dark:bg-slate-800 text-black dark:text-white border-gray-200 dark:border-gray-700 hover:border-slate-400"
                         }`}
                       >
                         <span className="pointer-events-none select-none">{opt}</span>
@@ -633,7 +633,7 @@ export default function CourseAdvisorFeedbackModal({
                   </div>
 
                   <div className="pt-2">
-                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                    <label className="text-xs font-bold text-black dark:text-white block mb-1 select-none cursor-default">
                       Comments:
                     </label>
                     <textarea
@@ -641,7 +641,7 @@ export default function CourseAdvisorFeedbackModal({
                       value={formData.participationComments}
                       onChange={(e) => handleFieldChange("participationComments", e.target.value)}
                       placeholder="Observations regarding student questions, chat responses, voice participation, and attentiveness..."
-                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                     />
                   </div>
                 </div>
@@ -649,7 +649,7 @@ export default function CourseAdvisorFeedbackModal({
                 {/* QUESTION 4 */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between select-none">
-                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                    <label className="text-sm font-black text-black dark:text-white flex items-center gap-2 cursor-default">
                       <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">4</span>
                       <span>How well did students appear to understand the lesson?</span>
                     </label>
@@ -665,7 +665,7 @@ export default function CourseAdvisorFeedbackModal({
                         className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer select-none ${
                           formData.understandingRating === opt
                             ? "bg-[#09314F] text-white border-[#09314F] shadow-sm"
-                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
+                            : "bg-white dark:bg-slate-800 text-black dark:text-white border-gray-200 dark:border-gray-700 hover:border-slate-400"
                         }`}
                       >
                         <span className="pointer-events-none select-none">{opt}</span>
@@ -674,7 +674,7 @@ export default function CourseAdvisorFeedbackModal({
                   </div>
 
                   <div className="pt-2">
-                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                    <label className="text-xs font-bold text-black dark:text-white block mb-1 select-none cursor-default">
                       What did students struggle with or understand particularly well?
                     </label>
                     <textarea
@@ -682,7 +682,7 @@ export default function CourseAdvisorFeedbackModal({
                       value={formData.understandingDetails}
                       onChange={(e) => handleFieldChange("understandingDetails", e.target.value)}
                       placeholder="Specific concepts mastered or topics requiring revision during subsequent tutorial sessions..."
-                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                     />
                   </div>
                 </div>
@@ -695,7 +695,7 @@ export default function CourseAdvisorFeedbackModal({
                 {/* QUESTION 5 */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between select-none">
-                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                    <label className="text-sm font-black text-black dark:text-white flex items-center gap-2 cursor-default">
                       <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">5</span>
                       <span>Were the lesson materials/resources properly used and accessible?</span>
                     </label>
@@ -711,7 +711,7 @@ export default function CourseAdvisorFeedbackModal({
                         className={`py-2.5 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer select-none ${
                           formData.materialsRating === opt
                             ? "bg-[#09314F] text-white border-[#09314F] shadow-sm"
-                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-gray-700 hover:border-slate-400"
+                            : "bg-white dark:bg-slate-800 text-black dark:text-white border-gray-200 dark:border-gray-700 hover:border-slate-400"
                         }`}
                       >
                         <span className="pointer-events-none select-none">{opt}</span>
@@ -720,7 +720,7 @@ export default function CourseAdvisorFeedbackModal({
                   </div>
 
                   <div className="pt-2">
-                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                    <label className="text-xs font-bold text-black dark:text-white block mb-1 select-none cursor-default">
                       Comments:
                     </label>
                     <textarea
@@ -728,7 +728,7 @@ export default function CourseAdvisorFeedbackModal({
                       value={formData.materialsComments}
                       onChange={(e) => handleFieldChange("materialsComments", e.target.value)}
                       placeholder="Slides clarity, screen sharing, past question availability, syllabus alignment..."
-                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                     />
                   </div>
                 </div>
@@ -736,7 +736,7 @@ export default function CourseAdvisorFeedbackModal({
                 {/* QUESTION 6 */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between select-none">
-                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                    <label className="text-sm font-black text-black dark:text-white flex items-center gap-2 cursor-default">
                       <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">6</span>
                       <span>Were there any challenges, incidents, or issues during the class?</span>
                     </label>
@@ -756,8 +756,8 @@ export default function CourseAdvisorFeedbackModal({
                         key={opt}
                         className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-bold cursor-pointer select-none transition-all ${
                           formData.challengeCategory === opt
-                            ? "bg-amber-500/10 border-[#C5A97A] text-[#09314F] dark:text-white"
-                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+                            ? "bg-amber-500/10 border-[#C5A97A] text-black dark:text-white"
+                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-black dark:text-white hover:border-slate-300"
                         }`}
                       >
                         <input
@@ -773,7 +773,7 @@ export default function CourseAdvisorFeedbackModal({
                   </div>
 
                   <div className="pt-2">
-                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                    <label className="text-xs font-bold text-black dark:text-white block mb-1 select-none cursor-default">
                       Please provide details:
                     </label>
                     <textarea
@@ -781,7 +781,7 @@ export default function CourseAdvisorFeedbackModal({
                       value={formData.challengeDetails}
                       onChange={(e) => handleFieldChange("challengeDetails", e.target.value)}
                       placeholder="Describe specific disruptions, connectivity breaks, or behavioral matters..."
-                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                     />
                   </div>
                 </div>
@@ -789,7 +789,7 @@ export default function CourseAdvisorFeedbackModal({
                 {/* QUESTION 7 */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between select-none">
-                    <label className="text-sm font-black text-[#09314F] dark:text-white flex items-center gap-2 cursor-default">
+                    <label className="text-sm font-black text-black dark:text-white flex items-center gap-2 cursor-default">
                       <span className="w-6 h-6 rounded-full bg-[#09314F] text-white flex items-center justify-center text-xs">7</span>
                       <span>What follow-up action or support is required before the next class?</span>
                     </label>
@@ -810,8 +810,8 @@ export default function CourseAdvisorFeedbackModal({
                         key={opt}
                         className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-bold cursor-pointer select-none transition-all ${
                           formData.followUpCategory === opt
-                            ? "bg-amber-500/10 border-[#C5A97A] text-[#09314F] dark:text-white"
-                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-slate-700 dark:text-slate-300 hover:border-slate-300"
+                            ? "bg-amber-500/10 border-[#C5A97A] text-black dark:text-white"
+                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-black dark:text-white hover:border-slate-300"
                         }`}
                       >
                         <input
@@ -827,7 +827,7 @@ export default function CourseAdvisorFeedbackModal({
                   </div>
 
                   <div className="pt-2">
-                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1 select-none cursor-default">
+                    <label className="text-xs font-bold text-black dark:text-white block mb-1 select-none cursor-default">
                       Please specify the action required:
                     </label>
                     <textarea
@@ -835,7 +835,7 @@ export default function CourseAdvisorFeedbackModal({
                       value={formData.followUpDetails}
                       onChange={(e) => handleFieldChange("followUpDetails", e.target.value)}
                       placeholder="Actionable steps for academic support, student counseling, or IT assistance..."
-                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-slate-800 dark:text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
+                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#C5A97A] cursor-text"
                     />
                   </div>
                 </div>
@@ -852,7 +852,7 @@ export default function CourseAdvisorFeedbackModal({
                   setError(null);
                   setCurrentStep((p) => p - 1);
                 }}
-                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-gray-100 dark:hover:bg-slate-800 transition-all active:scale-95 cursor-pointer select-none"
+                className="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-black dark:text-white font-bold text-xs hover:bg-gray-100 dark:hover:bg-slate-800 transition-all active:scale-95 cursor-pointer select-none"
               >
                 Previous Section
               </button>
@@ -860,7 +860,7 @@ export default function CourseAdvisorFeedbackModal({
               <button
                 type="button"
                 onClick={handleDismissWithoutFreezing}
-                className="px-4 py-2.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold text-xs transition-all cursor-pointer select-none"
+                className="px-4 py-2.5 rounded-xl text-slate-500 hover:text-black dark:text-slate-400 dark:hover:text-white font-bold text-xs transition-all cursor-pointer select-none"
               >
                 Close / Later
               </button>

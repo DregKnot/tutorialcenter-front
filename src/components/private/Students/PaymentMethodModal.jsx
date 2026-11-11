@@ -123,10 +123,10 @@ export default function PaymentMethodModal({
     return (
       <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handlePendingDone} />
-        <div className="relative bg-white text-[#09314F] rounded-[40px] p-6 sm:p-8 md:p-10 w-full max-w-lg max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 border border-gray-100 text-center">
+        <div className="relative bg-white dark:bg-gray-900 text-black dark:text-white rounded-[40px] p-6 sm:p-8 md:p-10 w-full max-w-lg max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 text-center">
           <button 
             onClick={handlePendingDone} 
-            className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors font-bold text-gray-400"
+            className="absolute top-6 right-6 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors font-bold text-gray-400"
             title="Close"
           >
             ✕
@@ -137,30 +137,30 @@ export default function PaymentMethodModal({
             <Icon icon="lucide:clock" className="w-8 h-8 text-amber-500 animate-pulse" />
           </div>
 
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 text-[11px] font-black uppercase tracking-wider mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[11px] font-black uppercase tracking-wider mb-2">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
             Pending Admin Approval
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-black text-[#09314F] uppercase tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-black dark:text-white uppercase tracking-tight">
             Transfer Submitted
           </h2>
-          <p className="text-gray-500 text-xs mt-1.5 leading-relaxed max-w-sm mx-auto">
+          <p className="text-black dark:text-white opacity-70 text-xs mt-1.5 leading-relaxed max-w-sm mx-auto">
             Your transfer claim has been received by the system. An administrator is currently reviewing your payment. Your courses will activate automatically upon confirmation.
           </p>
 
           {/* Transfer Summary Card */}
-          <div className="mt-6 bg-[#F8F9FA] border border-gray-100 rounded-2xl p-4 text-left space-y-3 shadow-xs">
-            <div className="flex justify-between items-center pb-2 border-b border-gray-200/60">
-              <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Total Amount</span>
-              <span className="text-base font-black text-[#09314F]">
+          <div className="mt-6 bg-[#F8F9FA] dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 text-left space-y-3 shadow-xs">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-200/60 dark:border-gray-700">
+              <span className="text-[10px] font-black uppercase tracking-wider text-black dark:text-white opacity-60">Total Amount</span>
+              <span className="text-base font-black text-black dark:text-white">
                 ₦{Number(pendingDetails.totalAmount || amount || 0).toLocaleString()}
               </span>
             </div>
 
             {/* References */}
             <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-gray-400 block mb-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-black dark:text-white opacity-60 block mb-1.5">
                 Payment References
               </span>
               <div className="space-y-1.5">
@@ -170,13 +170,13 @@ export default function PaymentMethodModal({
                   return (
                     <div 
                       key={idx} 
-                      className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-gray-200/70 text-xs shadow-xs"
+                      className="flex items-center justify-between bg-white dark:bg-gray-700 px-3 py-2 rounded-xl border border-gray-200/70 dark:border-gray-600 text-xs shadow-xs"
                     >
-                      <span className="font-semibold text-gray-700 truncate max-w-[180px]">
+                      <span className="font-semibold text-black dark:text-white truncate max-w-[180px]">
                         {row.courseName || `Course #${row.id}`}
                       </span>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="font-mono font-bold text-[#09314F]">
+                        <span className="font-mono font-bold text-black dark:text-white">
                           {refCode}
                         </span>
                         <button
@@ -184,8 +184,8 @@ export default function PaymentMethodModal({
                           onClick={() => handleCopyReference(refCode)}
                           className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
                             isCopied
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-gray-100 text-[#09314F] hover:bg-gray-200"
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                              : "bg-gray-100 dark:bg-gray-800 text-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
                           }`}
                         >
                           {isCopied ? "Copied!" : "Copy"}
@@ -198,9 +198,9 @@ export default function PaymentMethodModal({
             </div>
 
             {/* Bank details recap */}
-            <div className="pt-2 text-xs text-gray-500 border-t border-gray-200/60 flex justify-between items-center">
+            <div className="pt-2 text-xs text-black dark:text-white opacity-80 border-t border-gray-200/60 dark:border-gray-700 flex justify-between items-center">
               <span>Zenith Bank • 1312411265</span>
-              <span className="font-semibold text-amber-600">⏳ Awaiting Approval</span>
+              <span className="font-semibold text-amber-600 dark:text-amber-400">⏳ Awaiting Approval</span>
             </div>
           </div>
 
@@ -215,7 +215,7 @@ export default function PaymentMethodModal({
               <Icon icon="ic:baseline-whatsapp" className="w-5 h-5" />
               <span>Share Receipt on WhatsApp</span>
             </a>
-            <p className="text-[11px] text-gray-400 leading-normal">
+            <p className="text-[11px] text-black dark:text-white opacity-60 leading-normal">
               Send your payment screenshot to our admin on WhatsApp for faster verification.
             </p>
 
@@ -236,25 +236,25 @@ export default function PaymentMethodModal({
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white text-[#09314F] rounded-[40px] p-6 sm:p-8 md:p-10 w-full max-w-lg max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
+      <div className="relative bg-white dark:bg-gray-900 text-black dark:text-white rounded-[40px] p-6 sm:p-8 md:p-10 w-full max-w-lg max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800">
         <button 
           onClick={onClose} 
-          className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors font-bold text-gray-400"
+          className="absolute top-6 right-6 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors font-bold text-gray-400"
           title="Close"
         >
           ✕
         </button>
-        <h2 className="text-2xl font-black text-[#09314F] mb-1.5 text-center uppercase tracking-tight">Payment Method</h2>
-        <p className="text-gray-400 text-xs font-bold text-center uppercase tracking-wider mb-6">Choose your preferred gateway</p>
+        <h2 className="text-2xl font-black text-black dark:text-white mb-1.5 text-center uppercase tracking-tight">Payment Method</h2>
+        <p className="text-black dark:text-white opacity-60 text-xs font-bold text-center uppercase tracking-wider mb-6">Choose your preferred gateway</p>
         
-        <div className="bg-[#F8F9FA] border border-gray-100 rounded-3xl p-5 mb-6 flex justify-between items-center shadow-xs">
+        <div className="bg-[#F8F9FA] dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-3xl p-5 mb-6 flex justify-between items-center shadow-xs">
           <div className="flex flex-col">
-             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Selected Plan</span>
-             <span className="text-sm font-black text-[#09314F] uppercase tracking-wide">{selectedDuration || "Termwise"}</span>
+             <span className="text-[10px] font-black text-black dark:text-white opacity-60 uppercase tracking-widest">Selected Plan</span>
+             <span className="text-sm font-black text-black dark:text-white uppercase tracking-wide">{selectedDuration || "Termwise"}</span>
           </div>
           <div className="text-right">
-             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Amount</span>
-             <span className="text-xl font-black text-[#09314F]">₦{amount.toLocaleString()}</span>
+             <span className="text-[10px] font-black text-black dark:text-white opacity-60 uppercase tracking-widest block">Amount</span>
+             <span className="text-xl font-black text-black dark:text-white">₦{amount.toLocaleString()}</span>
           </div>
         </div>
 
@@ -268,17 +268,17 @@ export default function PaymentMethodModal({
                 onClick={() => setSelectedMethod(item)}
                 className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${
                   isSelected
-                    ? "border-[#09314F] bg-blue-50/70 shadow-xs"
-                    : "border-gray-200 hover:border-[#09314F]/40 bg-white hover:bg-gray-50/60"
+                    ? "border-[#09314F] dark:border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 shadow-xs"
+                    : "border-gray-200 dark:border-gray-700 hover:border-[#09314F]/40 dark:hover:border-blue-500/40 bg-white dark:bg-gray-800 hover:bg-gray-50/60 dark:hover:bg-gray-700/60"
                 }`}
               >
                 <span className={`font-bold text-sm md:text-base ${
-                  isSelected ? "text-[#09314F]" : "text-gray-600"
+                  isSelected ? "text-black dark:text-white" : "text-black dark:text-white opacity-80"
                 }`}>
                   {item === "Paystack" ? "Pay with Card / Paystack" : "Direct Bank Transfer"}
                 </span>
                 <span className={`font-bold text-lg ${
-                  isSelected ? "text-[#09314F]" : "text-gray-300"
+                  isSelected ? "text-black dark:text-white" : "text-gray-400"
                 }`}>
                   {isSelected ? "✓" : "›"}
                 </span>

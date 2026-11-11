@@ -78,8 +78,8 @@ export default function AdminSessionActionModal({
   }, []);
 
   const [newDate, setNewDate] = useState("");
-  const [newStartTime, setNewStartTime] = useState("10:00");
-  const [newEndTime, setNewEndTime] = useState("11:30");
+  const [newStartTime, setNewStartTime] = useState("17:00");
+  const [newEndTime, setNewEndTime] = useState("19:00");
   const [rescheduleReason, setRescheduleReason] = useState("");
 
   // Clashing sessions list
@@ -111,16 +111,34 @@ export default function AdminSessionActionModal({
         ? session.session_date 
         : todayYMD;
       setNewDate(initialDate);
-      setNewStartTime(session.starts_at || "10:00");
-      setNewEndTime(session.ends_at || addMinutesToTime(session.starts_at || "10:00", 90));
+
+      // All classes start at 5:00 PM (17:00) everyday:
+      // If the session's previous time was already 5:00 PM or later, preserve it; otherwise start from 17:00
+      const rawStart = session.starts_at ? session.starts_at.slice(0, 5) : "17:00";
+      const start = (rawStart && rawStart >= "17:00") ? rawStart : "17:00";
+
+      let end = "19:00";
+      if (session.starts_at && session.ends_at) {
+        const [sH, sM] = session.starts_at.slice(0, 5).split(":").map(Number);
+        const [eH, eM] = session.ends_at.slice(0, 5).split(":").map(Number);
+        const duration = (eH * 60 + eM) - (sH * 60 + sM);
+        end = duration > 0 ? addMinutesToTime(start, duration) : addMinutesToTime(start, 120);
+      } else {
+        end = addMinutesToTime(start, 120);
+      }
+
+      setNewStartTime(start);
+      setNewEndTime(end);
       setRescheduleReason(pastSession ? "Rescheduled from past missed session" : "");
     }
   }, [session, mode, todayYMD]);
 
   if (!isOpen || !session) return null;
 
-  // Check if session is live right now
-  const isLive = isSessionLiveNow ? isSessionLiveNow(session) : false;
+  // Check if session is actively live right now (past classes CAN be rescheduled!)
+  const isLive = (isSessionLiveNow ? isSessionLiveNow(session) : false) ||
+    ["started", "live", "in_progress"].includes(session?.status?.toLowerCase()) ||
+    (Boolean(session?.started_at) && !session?.ended_at && !["cancelled", "rescheduled", "completed"].includes(session?.status?.toLowerCase()));
 
   // Helper: Client-side clash detection against all loaded sessions
   const findLocalClashes = (targetDate, targetStart, targetEnd) => {
@@ -150,8 +168,8 @@ export default function AdminSessionActionModal({
 
   // ── 1. CANCEL SUBMISSION ───────────────────────────────────────────────────
   const handleConfirmCancel = async () => {
-    if (isLive) {
-      setErrorMessage("Live classes cannot be cancelled by Admin. Only the Course Advisor can conclude an active session.");
+    if (isLive || ["started", "live", "in_progress"].includes(session?.status?.toLowerCase())) {
+      setErrorMessage("Live or ongoing classes cannot be cancelled by Admin. Only the Course Advisor can conclude an active session.");
       return;
     }
 
@@ -173,25 +191,24 @@ export default function AdminSessionActionModal({
       try {
         await axios.patch(
           `${API_BASE_URL}/api/admin/sessions/${session.id}/cancel`,
-          { reason: finalReason },
+          { session_id: session.id, reason: finalReason },
           { headers: authHeaders }
         );
       } catch (primaryErr) {
-        // Fallback endpoint variations if backend routes differ
+        // Fallback endpoint variations if backend routes differ (always pass session.id, never class.id)
         try {
           await axios.post(
             `${API_BASE_URL}/api/admin/classes/sessions/${session.id}/cancel`,
-            { reason: finalReason },
+            { session_id: session.id, reason: finalReason },
             { headers: authHeaders }
           );
         } catch (secondaryErr) {
-          // Additional fallback for classes schedule update
-          await axios.patch(
-            `${API_BASE_URL}/api/admin/classes/${session.class_id || session.id}/cancel`,
+          // Additional fallback for direct session route
+          await axios.post(
+            `${API_BASE_URL}/api/admin/sessions/${session.id}/cancel`,
             { session_id: session.id, reason: finalReason },
             { headers: authHeaders }
           ).catch(() => {
-            // If backend mock/endpoint is not yet wired, we still accept optimistic UI
             console.warn("Backend cancel route fallback activated");
           });
         }
@@ -223,6 +240,12 @@ export default function AdminSessionActionModal({
   // ── 2. RESCHEDULE CHECK / PROCEED ─────────────────────────────────────────
   const handleCheckReschedule = async () => {
     setErrorMessage("");
+
+    // Rule: Currently live / ongoing classes cannot be rescheduled while in session
+    if (isLive) {
+      setErrorMessage("This class session is currently live and ongoing and cannot be rescheduled while in progress.");
+      return;
+    }
 
     // Validation
     if (!newDate) {
@@ -260,6 +283,7 @@ export default function AdminSessionActionModal({
         const res = await axios.post(
           `${API_BASE_URL}/api/admin/sessions/${session.id}/check-clash`,
           {
+            session_id: session.id,
             new_date: newDate,
             new_start_time: newStartTime,
             new_end_time: newEndTime,
@@ -305,6 +329,8 @@ export default function AdminSessionActionModal({
     setErrorMessage("");
 
     const payload = {
+      session_id: session.id,
+      class_id: session.class_id,
       new_date: newDate,
       new_start_time: newStartTime,
       new_end_time: newEndTime,
@@ -327,7 +353,7 @@ export default function AdminSessionActionModal({
           { headers: authHeaders }
         );
       } catch (err) {
-        // Fallback route variations
+        // Fallback route variations (always with session.id, never class.id)
         try {
           await axios.post(
             `${API_BASE_URL}/api/admin/classes/sessions/${session.id}/reschedule`,
@@ -335,9 +361,9 @@ export default function AdminSessionActionModal({
             { headers: authHeaders }
           );
         } catch (secondaryErr) {
-          await axios.patch(
-            `${API_BASE_URL}/api/admin/classes/${session.class_id || session.id}/reschedule`,
-            { session_id: session.id, ...payload },
+          await axios.post(
+            `${API_BASE_URL}/api/admin/sessions/${session.id}/reschedule`,
+            payload,
             { headers: authHeaders }
           ).catch(() => {
             console.warn("Backend reschedule fallback activated");
@@ -438,24 +464,24 @@ export default function AdminSessionActionModal({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="font-extrabold text-[#09314F] dark:text-blue-300 truncate">
+                <span className="font-extrabold text-black dark:text-white truncate">
                   {session.subject_name}
                 </span>
                 <span className="text-gray-400">•</span>
-                <span className="text-gray-500 dark:text-gray-400 font-semibold truncate">
+                <span className="text-black dark:text-white opacity-80 font-semibold truncate">
                   {session.tutor?.name}
                 </span>
               </div>
-              <p className="font-bold text-gray-800 dark:text-gray-200 truncate">{session.topic}</p>
+              <p className="font-bold text-black dark:text-white truncate">{session.topic}</p>
             </div>
           </div>
 
           <div className="text-right shrink-0">
-            <div className="flex items-center gap-1 text-gray-600 dark:text-gray-300 font-bold">
+            <div className="flex items-center gap-1 text-black dark:text-white font-bold">
               <CalendarDaysIcon className="w-3.5 h-3.5 text-gray-400" />
               <span>{session.session_date}</span>
             </div>
-            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 font-medium mt-0.5 justify-end">
+            <div className="flex items-center gap-1 text-black dark:text-white opacity-80 font-medium mt-0.5 justify-end">
               <ClockIcon className="w-3.5 h-3.5 text-gray-400" />
               <span>{formatTimeDisplay(session.starts_at)} - {formatTimeDisplay(session.ends_at)}</span>
             </div>
@@ -471,7 +497,7 @@ export default function AdminSessionActionModal({
         )}
 
         {/* ── MODAL BODY ACCORDING TO MODE & STEP ─────────────────────────── */}
-        <div className="p-6 overflow-y-auto space-y-5 text-sm text-gray-700 dark:text-gray-200 flex-1">
+        <div className="p-6 overflow-y-auto space-y-5 text-sm text-black dark:text-white flex-1">
           
           {/* ═════════════════════════════════════════════════════════════════ */}
           {/* FLOW A: CANCEL SESSION                                            */}
@@ -524,13 +550,13 @@ export default function AdminSessionActionModal({
                   )}
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                       Reason for Cancellation <span className="text-rose-500">*</span>
                     </label>
                     <select
                       value={cancelReasonPreset}
                       onChange={(e) => setCancelReasonPreset(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer"
                     >
                       {CANCELLATION_REASONS.map((reason) => (
                         <option key={reason} value={reason}>
@@ -541,7 +567,7 @@ export default function AdminSessionActionModal({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                       Additional Notes / Custom Details (Optional)
                     </label>
                     <textarea
@@ -549,7 +575,7 @@ export default function AdminSessionActionModal({
                       value={customReason}
                       onChange={(e) => setCustomReason(e.target.value)}
                       placeholder="Add specific context for internal audit logs or student notification..."
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 placeholder-gray-400"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 placeholder-gray-400"
                     />
                   </div>
                 </>
@@ -562,19 +588,41 @@ export default function AdminSessionActionModal({
           {/* ═════════════════════════════════════════════════════════════════ */}
           {mode === "reschedule" && step === "pick_time" && (
             <div className="space-y-5">
-              <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 flex items-start gap-3">
-                <InformationCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                <div className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
-                  <p className="font-bold">Select New Day & Time Slot</p>
-                  <p className="mt-0.5 text-blue-800/80 dark:text-blue-300/80">
-                    Pick a new date and desired time. The system will automatically verify whether another class is already occupying that slot before confirming.
-                  </p>
+              {isLive ? (
+                <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-900 flex items-start gap-3">
+                  <ExclamationTriangleIcon className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-rose-900 dark:text-rose-200 leading-relaxed">
+                    <p className="font-extrabold text-sm">Cannot Reschedule: Class Is Currently Live</p>
+                    <p className="mt-0.5">
+                      According to academy policy, a class session that is actively live and in progress cannot be rescheduled.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : isPast ? (
+                <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-start gap-3">
+                  <ClockIcon className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                    <p className="font-bold">Rescheduling Past / Missed Session</p>
+                    <p className="mt-0.5 text-amber-800/80 dark:text-amber-300/80">
+                      This session was scheduled in the past. Select a new date (today or in the future) and time to reschedule it.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 flex items-start gap-3">
+                  <InformationCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+                    <p className="font-bold">Select New Day & Time Slot</p>
+                    <p className="mt-0.5 text-blue-800/80 dark:text-blue-300/80">
+                      Pick a new date and desired time. The system will automatically verify whether another class is already occupying that slot before confirming.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* 1. Date Picker */}
               <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                   New Date (New Day) <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -584,7 +632,7 @@ export default function AdminSessionActionModal({
                     min={todayYMD}
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
                 <p className="text-[11px] text-gray-400 mt-1">
@@ -595,7 +643,7 @@ export default function AdminSessionActionModal({
               {/* 2. Time Pickers */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                     Start Time <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
@@ -609,13 +657,13 @@ export default function AdminSessionActionModal({
                         // Automatically shift end time to keep 90 min window
                         setNewEndTime(addMinutesToTime(val, 90));
                       }}
-                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                     End Time <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
@@ -624,7 +672,7 @@ export default function AdminSessionActionModal({
                       type="time"
                       value={newEndTime}
                       onChange={(e) => setNewEndTime(e.target.value)}
-                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-semibold text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
                 </div>
@@ -632,27 +680,28 @@ export default function AdminSessionActionModal({
 
               {/* Quick Time Presets */}
               <div>
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
+                <span className="text-[11px] font-bold text-black dark:text-white uppercase tracking-wider block mb-2 opacity-80">
                   Quick Time Presets (WAT / Lagos Time)
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { label: "10:00 AM - 11:30 AM", start: "10:00", end: "11:30" },
-                    { label: "12:00 PM - 1:30 PM", start: "12:00", end: "13:30" },
-                    { label: "2:00 PM - 3:30 PM", start: "14:00", end: "15:30" },
-                    { label: "4:00 PM - 5:30 PM", start: "16:00", end: "17:30" },
+                    { label: "5:00 PM - 6:30 PM", start: "17:00", end: "18:30" },
+                    { label: "5:00 PM - 7:00 PM", start: "17:00", end: "19:00" },
+                    { label: "6:30 PM - 8:00 PM", start: "18:30", end: "20:00" },
+                    { label: "7:00 PM - 8:30 PM", start: "19:00", end: "20:30" },
+                    { label: "7:00 PM - 9:00 PM", start: "19:00", end: "21:00" },
                   ].map((preset) => (
                     <button
-                      key={preset.start}
+                      key={`${preset.start}-${preset.end}`}
                       type="button"
                       onClick={() => {
                         setNewStartTime(preset.start);
                         setNewEndTime(preset.end);
                       }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                        newStartTime === preset.start
+                        newStartTime === preset.start && newEndTime === preset.end
                           ? "bg-[#09314F] text-white border-[#09314F] dark:bg-blue-600 dark:border-blue-500 shadow-sm"
-                          : "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100"
+                          : "bg-gray-50 dark:bg-gray-800 text-black dark:text-white border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
                       }`}
                     >
                       {preset.label}
@@ -663,7 +712,7 @@ export default function AdminSessionActionModal({
 
               {/* 3. Reason / Notes */}
               <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider mb-2">
                   Reschedule Reason (Optional note for students)
                 </label>
                 <input
@@ -671,7 +720,7 @@ export default function AdminSessionActionModal({
                   value={rescheduleReason}
                   onChange={(e) => setRescheduleReason(e.target.value)}
                   placeholder="e.g., Moved to Thursday due to tutor seminar"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder-gray-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder-gray-400"
                 />
               </div>
             </div>
@@ -698,7 +747,7 @@ export default function AdminSessionActionModal({
                   Session Being Moved:
                 </span>
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-gray-800 dark:text-gray-200">{session.topic}</span>
+                  <span className="font-bold text-black dark:text-white">{session.topic}</span>
                   <span className="font-semibold text-primary dark:text-blue-400">
                     {session.subject_name} • {session.tutor?.name}
                   </span>
@@ -722,16 +771,16 @@ export default function AdminSessionActionModal({
                         <span className="px-2 py-0.5 rounded-full bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-200 font-extrabold text-[10px] uppercase">
                           Clash
                         </span>
-                        <span className="font-bold text-gray-800 dark:text-gray-200">
+                        <span className="font-bold text-black dark:text-white">
                           {clash.subject_name}
                         </span>
                         <span className="text-gray-400">•</span>
-                        <span className="text-gray-600 dark:text-gray-400 font-medium">
+                        <span className="text-black dark:text-white opacity-80 font-medium">
                           Tutor: {clash.tutor?.name || clash.tutor_name || "Assigned Tutor"}
                         </span>
                       </div>
-                      <p className="font-bold text-sm text-[#09314F] dark:text-white">{clash.topic}</p>
-                      <p className="text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-3">
+                      <p className="font-bold text-sm text-black dark:text-white">{clash.topic}</p>
+                      <p className="text-black dark:text-white opacity-80 mt-1 flex items-center gap-3">
                         <span>📅 {clash.session_date}</span>
                         <span>⏰ {formatTimeDisplay(clash.starts_at)} - {formatTimeDisplay(clash.ends_at)}</span>
                       </p>
@@ -755,7 +804,7 @@ export default function AdminSessionActionModal({
                 ))}
               </div>
 
-              <div className="p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl text-[11px] text-gray-500 dark:text-gray-400">
+              <div className="p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl text-[11px] text-black dark:text-white opacity-80">
                 <strong>What does replacing do?</strong> The clashing session will be marked as cancelled for that specific day, and your session will take its place. Students in both cohorts will be updated.
               </div>
             </div>
@@ -775,7 +824,7 @@ export default function AdminSessionActionModal({
                 setStep("pick_time");
                 setErrorMessage("");
               }}
-              className="px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold hover:bg-gray-100 transition-all flex items-center gap-1.5"
+              className="px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-black dark:text-white text-xs font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition-all flex items-center gap-1.5"
             >
               <span>&larr; Pick Another Time</span>
             </button>
@@ -784,7 +833,7 @@ export default function AdminSessionActionModal({
               type="button"
               disabled={submitting}
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 transition-colors"
+              className="px-4 py-2 text-xs font-semibold text-black dark:text-white opacity-80 hover:opacity-100 transition-colors"
             >
               Cancel
             </button>
@@ -814,9 +863,10 @@ export default function AdminSessionActionModal({
             ) : step === "pick_time" ? (
               <button
                 type="button"
-                disabled={submitting}
+                disabled={submitting || isLive}
                 onClick={handleCheckReschedule}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-95 text-white font-extrabold text-xs shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#09314F] to-[#E83831] hover:opacity-95 text-white font-extrabold text-xs shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={isLive ? "Live classes cannot be rescheduled while in progress" : "Check clash and reschedule"}
               >
                 {submitting ? (
                   <>

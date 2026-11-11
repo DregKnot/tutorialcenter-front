@@ -6,19 +6,19 @@ const JoinMethodModal = ({ isOpen, onClose, onJoinWeb, onJoinApp }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200"
+        className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200"
       >
         <div className="p-6">
-          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-blue-100 rounded-full mb-4">
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-blue-100 dark:bg-blue-900/40 rounded-full mb-4">
+            <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
           </div>
           
-          <h3 className="text-xl font-bold text-center text-gray-900 mb-2">
+          <h3 className="text-xl font-bold text-center text-black dark:text-white mb-2">
             Choose Join Method
           </h3>
-          <p className="text-sm text-center text-gray-500 mb-6">
+          <p className="text-sm text-center text-gray-600 dark:text-gray-300 mb-6">
             How would you like to join this meeting?
           </p>
 
@@ -35,9 +35,9 @@ const JoinMethodModal = ({ isOpen, onClose, onJoinWeb, onJoinApp }) => {
             
             <button
               onClick={onJoinWeb}
-              className="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-xl transition-colors"
+              className="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-black dark:text-white font-medium py-3 px-4 rounded-xl transition-colors"
             >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
               </svg>
               <span>Join on Web</span>
@@ -45,10 +45,10 @@ const JoinMethodModal = ({ isOpen, onClose, onJoinWeb, onJoinApp }) => {
           </div>
         </div>
         
-        <div className="bg-gray-50 px-6 py-4 flex justify-end">
+        <div className="bg-gray-50 dark:bg-gray-800/60 px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-sm font-medium text-black dark:text-white hover:opacity-80 transition-colors"
           >
             Cancel
           </button>

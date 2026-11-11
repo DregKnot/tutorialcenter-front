@@ -31,10 +31,10 @@ export function ContactInputModal({ isOpen, onClose, type, onSubmit, loading }) 
 
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose}>
-      <h2 className="text-xl font-bold text-[#09314F] dark:text-white mb-2">
+      <h2 className="text-xl font-bold text-black dark:text-white mb-2">
         Change {type === "email" ? "Email" : "Phone Number"}
       </h2>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-black/70 dark:text-white/70 mb-6">
         Please enter your new {type === "email" ? "email address" : "phone number"}.
       </p>
       
@@ -43,13 +43,13 @@ export function ContactInputModal({ isOpen, onClose, type, onSubmit, loading }) 
         placeholder={type === "email" ? "Enter new email" : "Enter new phone"}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#09314F] transition-all mb-6"
+        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white outline-none focus:ring-2 focus:ring-[#09314F] transition-all mb-6"
       />
 
       <div className="flex gap-3">
         <button
           onClick={onClose}
-          className="flex-1 py-3 rounded-xl font-bold text-[#09314F] dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200"
+          className="flex-1 py-3 rounded-xl font-bold text-black dark:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200"
         >
           Cancel
         </button>
@@ -149,10 +149,10 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
 
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose}>
-      <h2 className="text-xl font-bold text-[#09314F] dark:text-white mb-2">
+      <h2 className="text-xl font-bold text-black dark:text-white mb-2">
         OTP Verification
       </h2>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+      <p className="text-sm text-black/70 dark:text-white/70 mb-6">
         We have sent you a verification code to your {contactType}, input OTP below.
       </p>
 
@@ -168,12 +168,12 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
             onChange={(e) => handleChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyDown(index, e)}
             onPaste={(e) => handlePaste(e, index)}
-            className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold bg-[#F4F5F7] dark:bg-gray-700 text-[#09314F] dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-[#09314F] border border-transparent focus:border-[#09314F] transition-all"
+            className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold bg-[#F4F5F7] dark:bg-gray-700 text-black dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-[#09314F] border border-transparent focus:border-[#09314F] transition-all"
           />
         ))}
       </div>
 
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-8 flex flex-wrap items-center gap-1.5">
+      <div className="text-sm text-black/70 dark:text-white/70 mb-8 flex flex-wrap items-center gap-1.5">
         <span>Request new code in</span>
         {timeLeft > 0 ? (
           <span className="text-[#C1A58A] font-bold">{timeLeft}s</span>
@@ -202,7 +202,7 @@ export function OTPModal({ isOpen, onClose, contactType, onVerify, loading, onRe
         </button>
         <button
           onClick={onClose}
-          className="w-full py-4 rounded-xl font-bold text-[#09314F] dark:text-gray-300 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 transition-all border border-[#09314F] dark:border-gray-600"
+          className="w-full py-4 rounded-xl font-bold text-black dark:text-white bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700 transition-all border border-[#09314F] dark:border-gray-600"
         >
           Cancel
         </button>
@@ -233,10 +233,10 @@ export function PasswordChangeModal({ isOpen, onClose, onSave, loading }) {
 
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose}>
-      <h2 className="text-xl font-bold text-[#09314F] dark:text-white mb-2">
+      <h2 className="text-xl font-bold text-black dark:text-white mb-2">
         Create New Password
       </h2>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-black/70 dark:text-white/70 mb-6">
         Your new password must be at least 8 characters long.
       </p>
 
@@ -247,7 +247,7 @@ export function PasswordChangeModal({ isOpen, onClose, onSave, loading }) {
              placeholder="New Password"
              value={password}
              onChange={(e) => setPassword(e.target.value)}
-             className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#09314F] transition-all"
+             className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white outline-none focus:ring-2 focus:ring-[#09314F] transition-all"
            />
            <button
              type="button"
@@ -267,7 +267,7 @@ export function PasswordChangeModal({ isOpen, onClose, onSave, loading }) {
              placeholder="Confirm New Password"
              value={confirmPassword}
              onChange={(e) => setConfirmPassword(e.target.value)}
-             className={`w-full pl-4 pr-10 py-3 rounded-xl border bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none transition-all ${
+             className={`w-full pl-4 pr-10 py-3 rounded-xl border bg-gray-50 dark:bg-gray-900 text-black dark:text-white outline-none transition-all ${
                confirmPassword && !isMatch ? "border-red-500 focus:ring-red-500" : "border-gray-200 dark:border-gray-700 focus:ring-[#09314F]"
              }`}
            />
@@ -291,7 +291,7 @@ export function PasswordChangeModal({ isOpen, onClose, onSave, loading }) {
       <div className="flex gap-3">
         <button
           onClick={onClose}
-          className="flex-1 py-3 rounded-xl font-bold text-[#09314F] dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200"
+          className="flex-1 py-3 rounded-xl font-bold text-black dark:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200"
         >
           Cancel
         </button>
@@ -317,7 +317,7 @@ export function SuccessModal({ isOpen, onClose, title, message }) {
 
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose}>
-      <h2 className="text-xl font-bold text-[#09314F] dark:text-white mb-2">
+      <h2 className="text-xl font-bold text-black dark:text-white mb-2">
         {title}
       </h2>
       <p className="text-[#34C759] text-sm font-medium mb-8">
@@ -348,10 +348,10 @@ export function ForgotInputModal({ isOpen, onClose, onSubmit, loading }) {
 
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose}>
-      <h2 className="text-xl font-bold text-[#09314F] dark:text-white mb-2">
+      <h2 className="text-xl font-bold text-black dark:text-white mb-2">
         Reset Password
       </h2>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-black/70 dark:text-white/70 mb-6">
         Please enter the email address or phone number associated with your account to receive a reset code.
       </p>
       
@@ -360,13 +360,13 @@ export function ForgotInputModal({ isOpen, onClose, onSubmit, loading }) {
         placeholder="Email or Phone Number"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#09314F] transition-all mb-6"
+        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-black dark:text-white outline-none focus:ring-2 focus:ring-[#09314F] transition-all mb-6"
       />
 
       <div className="flex gap-3">
         <button
           onClick={onClose}
-          className="flex-1 py-3 rounded-xl font-bold text-[#09314F] dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200"
+          className="flex-1 py-3 rounded-xl font-bold text-black dark:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200"
         >
           Cancel
         </button>

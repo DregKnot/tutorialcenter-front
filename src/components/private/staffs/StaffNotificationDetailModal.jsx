@@ -47,13 +47,13 @@ export default function StaffNotificationDetailModal({ notification, onClose, on
 
         {/* Content Area */}
         <div className="p-10">
-          <p className="text-gray-600 dark:text-gray-300 text-sm font-medium leading-relaxed mb-8">
+          <p className="text-black dark:text-white text-sm font-medium leading-relaxed mb-8">
             {notification.data?.message || "No content available."}
           </p>
           
           <div className="flex items-center justify-between py-6 border-t border-gray-50 dark:border-[#1a4a75]">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Received On</span>
-            <span className="text-xs font-bold text-[#09314F] dark:text-gray-200">
+            <span className="text-[10px] font-black text-black dark:text-white opacity-80 uppercase tracking-widest">Received On</span>
+            <span className="text-xs font-bold text-black dark:text-white">
               {new Date(notification.created_at).toLocaleDateString(undefined, { 
                 day: '2-digit', month: 'short', year: 'numeric',
                 hour: '2-digit', minute: '2-digit'
@@ -66,7 +66,7 @@ export default function StaffNotificationDetailModal({ notification, onClose, on
         <div className="p-8 bg-gray-50/50 dark:bg-[#06243A]/50 flex items-center gap-4">
           <button 
             onClick={onClose}
-            className="flex-1 py-4 bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] text-[#09314F] dark:text-white font-black rounded-2xl text-[11px] uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-[#1a4a75] transition-all active:scale-95 shadow-sm"
+            className="flex-1 py-4 bg-white dark:bg-[#09314F] border border-gray-200 dark:border-[#1a4a75] text-black dark:text-white font-black rounded-2xl text-[11px] uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-[#1a4a75] transition-all active:scale-95 shadow-sm"
           >
             Close
           </button>

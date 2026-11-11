@@ -198,23 +198,23 @@ export default function VerificationModal() {
           {success ? (
             <div className="py-6 animate-in fade-in slide-in-from-bottom-4">
               <CheckCircleIcon className="w-20 h-20 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase">Verified!</h2>
-              <p className="text-gray-500 dark:text-gray-400 font-bold mt-2">
+              <h2 className="text-2xl font-black text-black dark:text-white uppercase">Verified!</h2>
+              <p className="text-black dark:text-white opacity-80 font-bold mt-2">
                 Your {verificationType} has been successfully verified.
               </p>
             </div>
           ) : (
             <>
-              <h2 className="text-2xl font-black text-[#09314F] dark:text-white uppercase tracking-tighter mb-2">
+              <h2 className="text-2xl font-black text-black dark:text-white uppercase tracking-tighter mb-2">
                 Verify your {verificationType}
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 font-bold text-sm mb-8">
+              <p className="text-black dark:text-white opacity-80 font-bold text-sm mb-8">
                 {sendingCode ? (
                   <span className="text-blue-500 animate-pulse font-bold">Sending verification code to...</span>
                 ) : (
                   <>We've sent a 6-digit code to</>
                 )} <br/>
-                <span className="text-[#09314F] dark:text-blue-300">
+                <span className="text-black dark:text-white font-black underline">
                   {verificationType === "email" ? student?.email : student?.tel}
                 </span>
               </p>
@@ -231,7 +231,7 @@ export default function VerificationModal() {
                       onChange={(e) => handleChange(e, name)}
                       onKeyDown={(e) => handleKeyDown(e, name)}
                       onPaste={handlePaste}
-                      className="w-full h-12 md:h-14 text-xl font-black text-center rounded-xl border-2 transition-all outline-none bg-gray-50 dark:bg-[#09314F]/50 border-transparent focus:border-[#BB9E7F] dark:text-white"
+                      className="w-full h-12 md:h-14 text-xl font-black text-center rounded-xl border-2 transition-all outline-none bg-gray-50 dark:bg-[#09314F]/50 border-gray-200 dark:border-white/10 focus:border-[#BB9E7F] text-black dark:text-white"
                       placeholder="-"
                     />
                   ))}
@@ -257,7 +257,7 @@ export default function VerificationModal() {
                     {loading ? "Verifying..." : "Confirm Verification"}
                   </button>
 
-                  <div className="text-xs font-bold text-gray-400">
+                  <div className="text-xs font-bold text-black dark:text-white opacity-80">
                     Didn't get the code?{" "}
                     {resendCooldown > 0 ? (
                       <span className="text-[#BB9E7F] font-black">{resendCooldown}s</span>
@@ -265,7 +265,7 @@ export default function VerificationModal() {
                       <button
                         type="button"
                         onClick={handleResend}
-                        className="text-[#09314F] dark:text-blue-400 hover:underline disabled:opacity-50"
+                        className="text-black dark:text-white underline font-bold hover:opacity-80 disabled:opacity-50"
                         disabled={loading || sendingCode}
                       >
                         {sendingCode ? "Sending..." : "Resend Code"}

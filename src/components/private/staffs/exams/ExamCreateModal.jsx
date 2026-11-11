@@ -202,7 +202,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
               {/* Exam Body Selection */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center px-1">
-                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Exam Body</label>
+                  <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest">Exam Body</label>
                   <button 
                     type="button" 
                     onClick={() => setIsExamBodyModalOpen(true)}
@@ -216,11 +216,11 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                     value={examBodyId}
                     onChange={(e) => setExamBodyId(e.target.value)}
                     required
-                    className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-sm"
+                    className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-black dark:text-white outline-none appearance-none shadow-sm"
                   >
-                    <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select Exam Body</option>
+                    <option value="" className="bg-white dark:bg-gray-800 text-black dark:text-white">Select Exam Body</option>
                     {examBodies.map(body => (
-                      <option key={body.id} value={body.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{body.name}</option>
+                      <option key={body.id} value={body.id} className="bg-white dark:bg-gray-800 text-black dark:text-white">{body.name}</option>
                     ))}
                   </select>
                 </div>
@@ -228,18 +228,18 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
 
               {/* Subject Selection */}
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Subject Module</label>
+                <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Subject Module</label>
                 <div className="relative">
                   <select 
                     value={subjectId}
                     onChange={(e) => handleSubjectChange(e.target.value)}
                     required
                     disabled={!courseId}
-                    className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-sm disabled:opacity-50"
+                    className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-black dark:text-white outline-none appearance-none shadow-sm disabled:opacity-50"
                   >
-                    <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{courseId ? "Select Subject" : "Select a course first"}</option>
+                    <option value="" className="bg-white dark:bg-gray-800 text-black dark:text-white">{courseId ? "Select Subject" : "Select a course first"}</option>
                     {subjects.map(subject => (
-                      <option key={subject.id} value={subject.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{subject.name}</option>
+                      <option key={subject.id} value={subject.id} className="bg-white dark:bg-gray-800 text-black dark:text-white">{subject.name}</option>
                     ))}
                   </select>
                 </div>
@@ -248,7 +248,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
               {/* Exam Year Selection */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center px-1">
-                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Exam Year</label>
+                  <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest">Exam Year</label>
                   <button 
                     type="button" 
                     onClick={() => setIsExamYearModalOpen(true)}
@@ -263,9 +263,9 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                     value={examYearId}
                     onChange={(e) => setExamYearId(e.target.value)}
                     required
-                    className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-sm"
+                    className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-black dark:text-white outline-none appearance-none shadow-sm"
                   >
-                    <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select Exam Year</option>
+                    <option value="" className="bg-white dark:bg-gray-800 text-black dark:text-white">Select Exam Year</option>
                     {(() => {
                       const filtered = examYears.filter(y => {
                         const matchBody = !examBodyId || String(y.exam_body_id) === String(examBodyId);
@@ -274,7 +274,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                       });
                       console.log("Filtering exam years for body:", examBodyId, "subject:", subjectId, "Result length:", filtered.length, "Original length:", examYears.length);
                       return filtered.map(year => (
-                        <option key={year.id} value={year.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{year.year} - {year.exam_body?.name || "Exam Body"}</option>
+                        <option key={year.id} value={year.id} className="bg-white dark:bg-gray-800 text-black dark:text-white">{year.year} - {year.exam_body?.name || "Exam Body"}</option>
                       ));
                     })()}
                   </select>
@@ -283,19 +283,19 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
 
               {/* Exam Group Category Selection */}
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Exam Group Category</label>
+                <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Exam Group Category</label>
                 <div className="relative">
                   <select 
                     value={groupType}
                     onChange={(e) => setGroupType(e.target.value)}
                     required
-                    className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none appearance-none shadow-sm"
+                    className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-black dark:text-white outline-none appearance-none shadow-sm"
                   >
-                    <option value="none" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">None (Single Question)</option>
-                    <option value="comprehension" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Comprehension</option>
-                    <option value="instruction" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Instruction</option>
-                    <option value="diagram" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Diagram</option>
-                    <option value="case_study" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Case Study</option>
+                    <option value="none" className="bg-white dark:bg-gray-800 text-black dark:text-white">None (Single Question)</option>
+                    <option value="comprehension" className="bg-white dark:bg-gray-800 text-black dark:text-white">Comprehension</option>
+                    <option value="instruction" className="bg-white dark:bg-gray-800 text-black dark:text-white">Instruction</option>
+                    <option value="diagram" className="bg-white dark:bg-gray-800 text-black dark:text-white">Diagram</option>
+                    <option value="case_study" className="bg-white dark:bg-gray-800 text-black dark:text-white">Case Study</option>
                   </select>
                 </div>
               </div>
@@ -311,40 +311,40 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                     <RectangleGroupIcon className="w-6 h-6 text-[#BB9E7F]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-black text-[#0F2843] dark:text-white uppercase">Group Assets</h3>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Provide shared context for multiple questions</p>
+                    <h3 className="text-lg font-black text-black dark:text-white uppercase">Group Assets</h3>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest">Provide shared context for multiple questions</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Group Title */}
                   <div className="space-y-3">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Title</label>
+                    <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Group Title</label>
                     <input 
                       type="text"
                       value={groupTitle}
                       onChange={(e) => setGroupTitle(e.target.value)}
                       placeholder="e.g. Passage A: The Industrial Revolution"
-                      className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-sm"
+                      className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none shadow-sm"
                     />
                   </div>
 
                   {/* Sort Order */}
                   <div className="space-y-3">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Sort Order</label>
+                    <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Sort Order</label>
                     <input 
                       type="number"
                       value={sortOrder}
                       onChange={(e) => setSortOrder(e.target.value)}
-                      className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-[#0F2843] dark:text-white outline-none shadow-sm"
+                      className="w-full px-6 py-5 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-3xl font-black text-black dark:text-white outline-none shadow-sm"
                     />
                   </div>
                 </div>
 
                 {/* Group Content (WYSIWYG) */}
                 <div className="space-y-3">
-                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Content / Narrative</label>
-                  <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-[32px] border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-sm [&_.ql-editor]:min-h-[200px] [&_.ql-editor]:!text-[#0F2843] dark:[&_.ql-editor]:!text-white">
+                  <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Group Content / Narrative</label>
+                  <div className="quill-wrapper bg-gray-50 dark:bg-gray-800 rounded-[32px] border-2 border-transparent focus-within:border-[#BB9E7F]/30 overflow-hidden shadow-sm [&_.ql-editor]:min-h-[200px] [&_.ql-editor]:!text-black dark:[&_.ql-editor]:!text-white">
                     <ReactQuill
                       theme="snow"
                       value={groupContent}
@@ -365,7 +365,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
 
                 {/* Group Image Upload */}
                 <div className="space-y-3">
-                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1">Group Visual Aid (Optional)</label>
+                  <label className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest px-1">Group Visual Aid (Optional)</label>
                   <div className={`relative group border-2 border-dashed rounded-[32px] overflow-hidden bg-gray-50 dark:bg-gray-800/50 transition-all ${
                     groupImagePreview ? "border-[#76D287]/30" : "border-gray-200 dark:border-gray-700 hover:border-[#BB9E7F]/40"
                   }`}>
@@ -382,8 +382,8 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                           <BookOpenIcon className="w-10 h-10 text-[#BB9E7F]" />
                         </div>
                         <div>
-                          <p className="text-[#0F2843] dark:text-white font-black text-lg">Upload Group Image</p>
-                          <p className="text-gray-400 text-sm font-bold mt-1">Illustrations or diagrams for the group</p>
+                          <p className="text-black dark:text-white font-black text-lg">Upload Group Image</p>
+                          <p className="text-gray-500 dark:text-gray-400 text-sm font-bold mt-1">Illustrations or diagrams for the group</p>
                         </div>
                       </div>
                     )}
@@ -399,7 +399,7 @@ export default function ExamCreateModal({ isOpen, onClose, onSuccess }) {
                <button 
                  type="button" 
                  onClick={onClose}
-                 className="flex-1 py-5 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-300 font-black rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all uppercase tracking-widest text-xs"
+                 className="flex-1 py-5 bg-gray-50 dark:bg-gray-800 text-black dark:text-white font-black rounded-3xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all uppercase tracking-widest text-xs"
                >
                  Cancel
                </button>

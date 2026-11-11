@@ -28,8 +28,8 @@ describe("AdminSessionActionModal Component", () => {
     subject_name: "Physics",
     topic: "Thermodynamics & Heat Transfer",
     session_date: "2099-10-15",
-    starts_at: "10:00",
-    ends_at: "11:30",
+    starts_at: "17:00",
+    ends_at: "19:00",
     class_tier: "JAMB / O-Levels",
     tutor: { id: 5, name: "Engr. Adebayo", initials: "EA" },
   };
@@ -39,8 +39,8 @@ describe("AdminSessionActionModal Component", () => {
     subject_name: "Chemistry",
     topic: "Organic Hydrocarbons",
     session_date: "2099-10-16",
-    starts_at: "10:00",
-    ends_at: "11:30",
+    starts_at: "17:00",
+    ends_at: "19:00",
     class_tier: "JAMB / O-Levels",
     tutor: { id: 8, name: "Dr. Dele Okafor", initials: "DO" },
   };
@@ -201,6 +201,57 @@ describe("AdminSessionActionModal Component", () => {
       // Should return to step 1
       expect(await screen.findByText("Reschedule Master Class")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /verify & reschedule/i })).toBeInTheDocument();
+    });
+
+    test("prevents rescheduling when class is currently live or in progress", () => {
+      const startedSession = {
+        ...mockActiveSession,
+        started_at: "2026-11-10 10:05:00",
+        status: "started",
+      };
+
+      render(
+        <AdminSessionActionModal
+          isOpen={true}
+          mode="reschedule"
+          session={startedSession}
+          allSessions={[startedSession]}
+          onClose={mockOnClose}
+          onSuccess={mockOnSuccess}
+          API_BASE_URL="http://test.api"
+          token="test-token"
+        />
+      );
+
+      expect(screen.getByText(/Cannot Reschedule: Class Is Currently Live/i)).toBeInTheDocument();
+      const verifyBtn = screen.getByRole("button", { name: /verify & reschedule/i });
+      expect(verifyBtn).toBeDisabled();
+    });
+
+    test("allows rescheduling for a past missed session", () => {
+      const pastSession = {
+        ...mockActiveSession,
+        session_date: "2020-01-01",
+        status: "scheduled",
+      };
+
+      render(
+        <AdminSessionActionModal
+          isOpen={true}
+          mode="reschedule"
+          session={pastSession}
+          allSessions={[pastSession]}
+          onClose={mockOnClose}
+          onSuccess={mockOnSuccess}
+          API_BASE_URL="http://test.api"
+          token="test-token"
+        />
+      );
+
+      expect(screen.queryByText(/Cannot Reschedule/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/Rescheduling Past \/ Missed Session/i)).toBeInTheDocument();
+      const verifyBtn = screen.getByRole("button", { name: /verify & reschedule/i });
+      expect(verifyBtn).not.toBeDisabled();
     });
   });
 });

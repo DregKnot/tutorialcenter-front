@@ -132,21 +132,21 @@ export default function TutorPublishModal({
 
           {/* Assessment Summary Box */}
           <div className="p-4 rounded-2xl bg-[#0F2843]/5 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 space-y-2">
-            <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
+            <div className="flex items-center justify-between text-xs text-black dark:text-white">
               <span className="font-semibold">Subject / Class:</span>
               <span className="font-bold text-[#0F2843] dark:text-[#C5A97A]">
                 {assessment.class?.title || assessment.class?.subject?.name || "Masterclass"}
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
+            <div className="flex items-center justify-between text-xs text-black dark:text-white">
               <span className="font-semibold">Total Questions / Marks:</span>
-              <span className="font-bold text-[#0F2843] dark:text-white">
+              <span className="font-bold text-black dark:text-white">
                 {assessment.questions?.length || 0} Questions ({assessment.total_marks || 0} Marks)
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
+            <div className="flex items-center justify-between text-xs text-black dark:text-white">
               <span className="font-semibold">Passing Standard:</span>
-              <span className="font-bold text-[#0F2843] dark:text-white">
+              <span className="font-bold text-black dark:text-white">
                 {assessment.pass_mark || 50}%
               </span>
             </div>
@@ -157,11 +157,11 @@ export default function TutorPublishModal({
             {/* Quick Duration in Days & Hours */}
             <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
+                <label className="text-xs font-bold text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                   <ClockIcon className="w-4 h-4 text-[#0F2843] dark:text-[#C5A97A]" />
                   <span>Due Duration (Days & Hours)</span>
                 </label>
-                <span className="text-[11px] text-gray-400 font-medium">Quick Presets</span>
+                <span className="text-[11px] text-black/70 dark:text-white/70 font-medium">Quick Presets</span>
               </div>
 
               {/* Quick Presets */}
@@ -182,7 +182,7 @@ export default function TutorPublishModal({
                       d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
                       setDueAt(d.toISOString().slice(0, 16));
                     }}
-                    className="px-3 py-1 rounded-xl text-xs font-bold bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:border-[#0F2843] dark:hover:border-[#C5A97A] hover:text-[#0F2843] dark:hover:text-[#C5A97A] transition"
+                    className="px-3 py-1 rounded-xl text-xs font-bold bg-white dark:bg-white/10 text-black dark:text-white border border-gray-200 dark:border-white/10 hover:border-[#0F2843] dark:hover:border-[#C5A97A] hover:text-[#0F2843] dark:hover:text-[#C5A97A] transition"
                   >
                     {preset.label}
                   </button>
@@ -191,7 +191,7 @@ export default function TutorPublishModal({
 
               {/* Calculated Deadline Display */}
               {dueAt && (
-                <div className="p-2.5 rounded-xl bg-[#0F2843]/5 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 text-xs font-semibold text-[#0F2843] dark:text-[#C5A97A] flex items-center gap-2">
+                <div className="p-2.5 rounded-xl bg-[#0F2843]/5 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 text-xs font-semibold text-black dark:text-white flex items-center gap-2">
                   <CalendarDaysIcon className="w-4 h-4 flex-shrink-0" />
                   <span>
                     Deadline:{" "}
@@ -211,7 +211,7 @@ export default function TutorPublishModal({
             {/* Exact Datetime Input */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-bold text-black dark:text-white mb-1.5 flex items-center gap-1.5">
                   <CalendarDaysIcon className="w-3.5 h-3.5 text-gray-400" />
                   <span>Opens At (Start Window)</span>
                 </label>
@@ -219,12 +219,12 @@ export default function TutorPublishModal({
                   type="datetime-local"
                   value={opensAt}
                   onChange={(e) => setOpensAt(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition"
+                  className="w-full px-3.5 py-2.5 text-xs bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-bold text-black dark:text-white mb-1.5 flex items-center gap-1.5">
                   <ClockIcon className="w-3.5 h-3.5 text-red-500" />
                   <span>Due At (Exact Cutoff) <span className="text-red-500">*</span></span>
                 </label>
@@ -233,7 +233,7 @@ export default function TutorPublishModal({
                   value={dueAt}
                   onChange={(e) => setDueAt(e.target.value)}
                   required
-                  className="w-full px-3.5 py-2.5 text-xs bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition"
+                  className="w-full px-3.5 py-2.5 text-xs bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition"
                 />
               </div>
             </div>
@@ -253,7 +253,7 @@ export default function TutorPublishModal({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-5 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded-2xl transition"
+              className="px-5 py-2.5 text-xs font-bold text-black dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-2xl transition"
             >
               Cancel
             </button>

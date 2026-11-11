@@ -83,7 +83,7 @@ export default function SubjectChangeNotificationModal({ change, onClose, onAckn
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/75 backdrop-blur-md px-4 p-4 animate-in fade-in duration-200">
-      <div className="bg-[#0B1E32] dark:bg-[#0B1E32] border border-blue-900/40 w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl relative text-white space-y-6">
+      <div className="bg-white dark:bg-[#0B1E32] border border-gray-200 dark:border-blue-900/40 w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl relative text-black dark:text-white space-y-6">
         
         {/* Header Icon + Title */}
         <div className="flex items-start gap-4">
@@ -96,10 +96,10 @@ export default function SubjectChangeNotificationModal({ change, onClose, onAckn
                 {header.badgeText}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight mt-1">
+            <h2 className="text-xl sm:text-2xl font-black text-black dark:text-white uppercase tracking-tight mt-1">
               {header.title}
             </h2>
-            <p className="text-xs text-gray-400 font-medium mt-0.5">
+            <p className="text-xs text-black/70 dark:text-white/70 font-medium mt-0.5">
               {header.subtitle}
             </p>
           </div>
@@ -107,44 +107,44 @@ export default function SubjectChangeNotificationModal({ change, onClose, onAckn
 
         {/* Action Content Box */}
         {actionType === "swap" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-[#071524] rounded-2xl border border-gray-800">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-gray-50 dark:bg-[#071524] rounded-2xl border border-gray-200 dark:border-gray-800">
             {/* Old Subject (Removed) */}
-            <div className="p-3.5 bg-rose-950/30 border border-rose-900/40 rounded-xl space-y-1">
-              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-400">
+            <div className="p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-xl space-y-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400">
                 <Icon icon="heroicons:minus-circle-solid" className="w-3.5 h-3.5" />
                 <span>Subject Removed</span>
               </div>
-              <p className="text-sm font-extrabold text-gray-300 line-through decoration-rose-500 decoration-2">
+              <p className="text-sm font-extrabold text-black dark:text-white line-through decoration-rose-500 decoration-2">
                 {oldSubjectName}
               </p>
-              <p className="text-[10px] text-gray-400">Disenrolled from past sessions</p>
+              <p className="text-[10px] text-black/70 dark:text-white/70">Disenrolled from past sessions</p>
             </div>
 
             {/* New Subject (Added) */}
-            <div className="p-3.5 bg-emerald-950/30 border border-emerald-900/40 rounded-xl space-y-1">
-              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-400">
+            <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 rounded-xl space-y-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 <Icon icon="heroicons:check-circle-solid" className="w-3.5 h-3.5" />
                 <span>Subject Added</span>
               </div>
-              <p className="text-sm font-extrabold text-emerald-300">
+              <p className="text-sm font-extrabold text-emerald-700 dark:text-emerald-300">
                 {newSubjectName}
               </p>
-              <p className="text-[10px] text-gray-400">Classes & schedule active now</p>
+              <p className="text-[10px] text-black/70 dark:text-white/70">Classes & schedule active now</p>
             </div>
           </div>
         )}
 
         {actionType === "add" && (
-          <div className="p-4 bg-[#071524] rounded-2xl border border-gray-800">
-            <div className="p-3.5 bg-emerald-950/30 border border-emerald-900/40 rounded-xl space-y-1">
-              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-400">
+          <div className="p-4 bg-gray-50 dark:bg-[#071524] rounded-2xl border border-gray-200 dark:border-gray-800">
+            <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 rounded-xl space-y-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 <Icon icon="heroicons:check-circle-solid" className="w-3.5 h-3.5" />
                 <span>Newly Enrolled Subject</span>
               </div>
-              <p className="text-base font-extrabold text-emerald-300">
+              <p className="text-base font-extrabold text-emerald-700 dark:text-emerald-300">
                 {newSubjectName}
               </p>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-black/70 dark:text-white/70">
                 Live sessions, timetable, and study materials are active immediately.
               </p>
             </div>
@@ -152,16 +152,16 @@ export default function SubjectChangeNotificationModal({ change, onClose, onAckn
         )}
 
         {actionType === "remove" && (
-          <div className="p-4 bg-[#071524] rounded-2xl border border-gray-800">
-            <div className="p-3.5 bg-rose-950/30 border border-rose-900/40 rounded-xl space-y-1">
-              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-400">
+          <div className="p-4 bg-gray-50 dark:bg-[#071524] rounded-2xl border border-gray-200 dark:border-gray-800">
+            <div className="p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-xl space-y-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400">
                 <Icon icon="heroicons:minus-circle-solid" className="w-3.5 h-3.5" />
                 <span>Subject Disenrolled</span>
               </div>
-              <p className="text-base font-extrabold text-gray-300 line-through decoration-rose-500 decoration-2">
+              <p className="text-base font-extrabold text-black dark:text-white line-through decoration-rose-500 decoration-2">
                 {oldSubjectName}
               </p>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-black/70 dark:text-white/70">
                 You have been disenrolled from upcoming sessions and unsubmitted assessments for this subject. Completed assessments and past grades remain on your permanent record.
               </p>
             </div>
@@ -169,26 +169,26 @@ export default function SubjectChangeNotificationModal({ change, onClose, onAckn
         )}
 
         {/* Administration Reason Box */}
-        <div className="p-4 bg-[#071524] rounded-2xl border border-gray-800 space-y-2">
-          <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-amber-400">
+        <div className="p-4 bg-gray-50 dark:bg-[#071524] rounded-2xl border border-gray-200 dark:border-gray-800 space-y-2">
+          <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
             <Icon icon="heroicons:chat-bubble-bottom-center-text-solid" className="w-4 h-4" />
             <span>Reason from Administration</span>
             {adminName && (
-              <span className="text-gray-400 font-normal lowercase tracking-normal">
+              <span className="text-black/60 dark:text-white/60 font-normal lowercase tracking-normal">
                 (by {adminName})
               </span>
             )}
           </div>
           <div className="pl-3 border-l-2 border-amber-500/50 py-1">
-            <p className="text-xs sm:text-sm text-gray-200 leading-relaxed italic">
+            <p className="text-xs sm:text-sm text-black dark:text-white leading-relaxed italic">
               "{change.reason || "Change requested by student."}"
             </p>
           </div>
         </div>
 
         {/* Notice Info */}
-        <p className="text-[11px] text-gray-400 leading-normal">
-          <span className="font-bold text-gray-300">Note:</span> Your class schedules, calendar, and learning modules have been automatically synchronized with this change.
+        <p className="text-[11px] text-black/70 dark:text-white/70 leading-normal">
+          <span className="font-bold text-black dark:text-white">Note:</span> Your class schedules, calendar, and learning modules have been automatically synchronized with this change.
         </p>
 
         {/* Action Button */}
@@ -197,7 +197,7 @@ export default function SubjectChangeNotificationModal({ change, onClose, onAckn
             type="button"
             onClick={handleAcknowledge}
             disabled={loading}
-            className={`w-full py-3.5 px-6 bg-gradient-to-r ${header.btnClass} text-[#071524] font-black text-sm uppercase tracking-wider rounded-xl shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50`}
+            className={`w-full py-3.5 px-6 bg-gradient-to-r ${header.btnClass} text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50`}
           >
             <Icon icon="heroicons:check-badge-solid" className="w-5 h-5" />
             {loading ? "Confirming..." : "I Understand & Acknowledge"}

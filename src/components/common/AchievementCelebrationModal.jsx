@@ -135,11 +135,11 @@ export default function AchievementCelebrationModal({
 
         {/* Requirement / Condition Card */}
         <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-left space-y-1.5">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider flex items-center gap-1">
+          <p className="text-[10px] font-black text-white/70 uppercase tracking-wider flex items-center gap-1">
             <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
             Requirement Completed:
           </p>
-          <p className="text-xs text-gray-200 font-semibold leading-relaxed">
+          <p className="text-xs text-white font-semibold leading-relaxed">
             {condition}
           </p>
         </div>

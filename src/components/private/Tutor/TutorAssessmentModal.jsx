@@ -522,7 +522,7 @@ export default function TutorAssessmentModal({
           
           {/* SECTION 1: METADATA & CONFIGURATION */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-xs font-black text-[#0F2843] dark:text-[#C5A97A] uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-xs font-black text-black dark:text-white uppercase tracking-wider">
               <DocumentTextIcon className="w-4 h-4" />
               <span>Assessment Details</span>
             </div>
@@ -530,7 +530,7 @@ export default function TutorAssessmentModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Class Selector */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5">
+                <label className="block text-xs font-bold text-black dark:text-white mb-1.5">
                   Target Masterclass <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -538,13 +538,13 @@ export default function TutorAssessmentModal({
                   onChange={(e) => setClassId(e.target.value)}
                   required
                   disabled={isEditMode || loadingClasses}
-                  className="w-full px-4 py-3 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition disabled:opacity-60"
+                  className="w-full px-4 py-3 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition disabled:opacity-60"
                 >
                   <option value="" disabled>
                     {loadingClasses ? "Loading classes..." : "Select Masterclass"}
                   </option>
                   {classesList.map((cls) => (
-                    <option key={cls.id} value={cls.id} className="text-gray-900">
+                    <option key={cls.id} value={cls.id} className="text-black dark:text-white">
                       {cls.title} ({cls.subject_name})
                     </option>
                   ))}
@@ -553,7 +553,7 @@ export default function TutorAssessmentModal({
 
               {/* Assessment Title */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5">
+                <label className="block text-xs font-bold text-black dark:text-white mb-1.5">
                   Assessment Title <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -562,7 +562,7 @@ export default function TutorAssessmentModal({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  className="w-full px-4 py-3 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition"
+                  className="w-full px-4 py-3 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition"
                 />
               </div>
             </div>
@@ -570,7 +570,7 @@ export default function TutorAssessmentModal({
             {/* Description & Instructions */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5">
+                <label className="block text-xs font-bold text-black dark:text-white mb-1.5">
                   Description / Topic Overview
                 </label>
                 <textarea
@@ -578,12 +578,12 @@ export default function TutorAssessmentModal({
                   placeholder="Brief note on topics tested..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition resize-none"
+                  className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5">
+                <label className="block text-xs font-bold text-black dark:text-white mb-1.5">
                   Instructions for Students
                 </label>
                 <textarea
@@ -591,7 +591,7 @@ export default function TutorAssessmentModal({
                   placeholder="e.g. MCQs are auto-marked. Essays are graded by your tutor."
                   value={instructions}
                   onChange={(e) => setInstructions(e.target.value)}
-                  className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition resize-none"
+                  className="w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition resize-none"
                 />
               </div>
             </div>
@@ -601,7 +601,7 @@ export default function TutorAssessmentModal({
               
               {/* Pass Mark */}
               <div className="lg:col-span-4 space-y-1.5">
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-black dark:text-white uppercase tracking-wider">
                   Pass Mark Standard (%) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -612,7 +612,7 @@ export default function TutorAssessmentModal({
                     value={passMark}
                     onChange={(e) => setPassMark(e.target.value)}
                     required
-                    className="w-full px-4 py-3 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition font-bold"
+                    className="w-full px-4 py-3 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition font-bold"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">
                     %
@@ -626,11 +626,11 @@ export default function TutorAssessmentModal({
               {/* Interactive Assessment Time Limit Dial (Hours / Minutes / Seconds) */}
               <div className="lg:col-span-8 p-4 rounded-3xl bg-gray-50/90 dark:bg-white/5 border border-gray-200/80 dark:border-white/10 space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-black text-[#0F2843] dark:text-[#C5A97A] uppercase tracking-wider flex items-center gap-1.5">
+                  <label className="text-xs font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                     <ClockIcon className="w-4 h-4" />
                     <span>Assessment Time Limit (Exam Duration)</span>
                   </label>
-                  <span className="text-[11px] text-gray-400 font-medium">Test Timer</span>
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Test Timer</span>
                 </div>
 
                 {/* 3-Column Dial Controls */}
@@ -641,79 +641,79 @@ export default function TutorAssessmentModal({
                     <button
                       type="button"
                       onClick={() => setDialHours((prev) => Math.min(24, prev + 1))}
-                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
+                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-black dark:text-white hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
                     >
                       <ChevronUpIcon className="w-4 h-4" />
                     </button>
                     <div className="w-16 sm:w-20 h-14 rounded-2xl bg-white dark:bg-black/40 border-2 border-gray-200 dark:border-white/20 flex flex-col items-center justify-center shadow-inner">
-                      <span className="text-xl sm:text-2xl font-black text-[#0F2843] dark:text-white tracking-tight">
+                      <span className="text-xl sm:text-2xl font-black text-black dark:text-white tracking-tight">
                         {String(dialHours).padStart(2, "0")}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setDialHours((prev) => Math.max(0, prev - 1))}
-                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
+                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-black dark:text-white hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
                     >
                       <ChevronDownIcon className="w-4 h-4" />
                     </button>
-                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">
+                    <span className="text-[10px] font-black uppercase text-black dark:text-white tracking-wider">
                       HOURS
                     </span>
                   </div>
 
-                  <span className="text-2xl font-black text-gray-300 dark:text-white/30 pb-5">:</span>
+                  <span className="text-2xl font-black text-black dark:text-white pb-5">:</span>
 
                   {/* Minutes Dial */}
                   <div className="flex flex-col items-center space-y-1">
                     <button
                       type="button"
                       onClick={() => setDialMinutes((prev) => (prev >= 59 ? 0 : prev + 1))}
-                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
+                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-black dark:text-white hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
                     >
                       <ChevronUpIcon className="w-4 h-4" />
                     </button>
                     <div className="w-16 sm:w-20 h-14 rounded-2xl bg-white dark:bg-black/40 border-2 border-gray-200 dark:border-white/20 flex flex-col items-center justify-center shadow-inner">
-                      <span className="text-xl sm:text-2xl font-black text-[#0F2843] dark:text-white tracking-tight">
+                      <span className="text-xl sm:text-2xl font-black text-black dark:text-white tracking-tight">
                         {String(dialMinutes).padStart(2, "0")}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setDialMinutes((prev) => (prev <= 0 ? 59 : prev - 1))}
-                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
+                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-black dark:text-white hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
                     >
                       <ChevronDownIcon className="w-4 h-4" />
                     </button>
-                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">
+                    <span className="text-[10px] font-black uppercase text-black dark:text-white tracking-wider">
                       MINUTES
                     </span>
                   </div>
 
-                  <span className="text-2xl font-black text-gray-300 dark:text-white/30 pb-5">:</span>
+                  <span className="text-2xl font-black text-black dark:text-white pb-5">:</span>
 
                   {/* Seconds Dial */}
                   <div className="flex flex-col items-center space-y-1">
                     <button
                       type="button"
                       onClick={() => setDialSeconds((prev) => (prev >= 59 ? 0 : prev + 1))}
-                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
+                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-black dark:text-white hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
                     >
                       <ChevronUpIcon className="w-4 h-4" />
                     </button>
                     <div className="w-16 sm:w-20 h-14 rounded-2xl bg-white dark:bg-black/40 border-2 border-gray-200 dark:border-white/20 flex flex-col items-center justify-center shadow-inner">
-                      <span className="text-xl sm:text-2xl font-black text-[#0F2843] dark:text-white tracking-tight">
+                      <span className="text-xl sm:text-2xl font-black text-black dark:text-white tracking-tight">
                         {String(dialSeconds).padStart(2, "0")}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setDialSeconds((prev) => (prev <= 0 ? 59 : prev - 1))}
-                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-200 hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
+                      className="p-1 rounded-lg bg-gray-200 dark:bg-white/10 text-black dark:text-white hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition"
                     >
                       <ChevronDownIcon className="w-4 h-4" />
                     </button>
-                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">
+                    <span className="text-[10px] font-black uppercase text-black dark:text-white tracking-wider">
                       SECONDS
                     </span>
                   </div>
@@ -748,11 +748,11 @@ export default function TutorAssessmentModal({
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base font-black text-[#0F2843] dark:text-white flex items-center gap-2">
+                <h3 className="text-base font-black text-black dark:text-white flex items-center gap-2">
                   <QuestionMarkCircleIcon className="w-5 h-5 text-[#C5A97A]" />
                   <span>Questions Studio ({questions.length})</span>
                 </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-300">
+                <p className="text-xs text-black dark:text-white opacity-80">
                   Build auto-scored Multiple Choice questions or written Essay questions.
                 </p>
               </div>
@@ -762,7 +762,7 @@ export default function TutorAssessmentModal({
                 <button
                   type="button"
                   onClick={() => handleAddQuestion("mcq")}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#0F2843]/10 dark:bg-white/10 text-[#0F2843] dark:text-white hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition flex items-center gap-1.5"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#0F2843]/10 dark:bg-white/10 text-black dark:text-white hover:bg-[#0F2843] hover:text-white dark:hover:bg-[#C5A97A] dark:hover:text-[#0F2843] transition flex items-center gap-1.5"
                 >
                   <PlusIcon className="w-4 h-4" />
                   <span>Add MCQ</span>
@@ -770,7 +770,7 @@ export default function TutorAssessmentModal({
                 <button
                   type="button"
                   onClick={() => handleAddQuestion("essay")}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#C5A97A]/20 text-[#0F2843] dark:text-[#C5A97A] hover:bg-[#C5A97A] hover:text-[#0F2843] transition flex items-center gap-1.5"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#C5A97A]/20 text-black dark:text-white hover:bg-[#C5A97A] hover:text-[#0F2843] transition flex items-center gap-1.5"
                 >
                   <PlusIcon className="w-4 h-4" />
                   <span>Add Essay</span>
@@ -810,7 +810,7 @@ export default function TutorAssessmentModal({
                         type="button"
                         onClick={() => handleMoveQuestion(qIndex, -1)}
                         disabled={qIndex === 0}
-                        className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white disabled:opacity-30 rounded-lg"
+                        className="p-1.5 text-gray-400 hover:text-black dark:hover:text-white disabled:opacity-30 rounded-lg"
                       >
                         <ChevronUpIcon className="w-4 h-4" />
                       </button>
@@ -818,7 +818,7 @@ export default function TutorAssessmentModal({
                         type="button"
                         onClick={() => handleMoveQuestion(qIndex, 1)}
                         disabled={qIndex === questions.length - 1}
-                        className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white disabled:opacity-30 rounded-lg"
+                        className="p-1.5 text-gray-400 hover:text-black dark:hover:text-white disabled:opacity-30 rounded-lg"
                       >
                         <ChevronDownIcon className="w-4 h-4" />
                       </button>
@@ -838,7 +838,7 @@ export default function TutorAssessmentModal({
                   {/* Question Text & Marks */}
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div className="sm:col-span-3">
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1">
+                      <label className="block text-xs font-bold text-black dark:text-white mb-1">
                         Question Prompt <span className="text-red-500">*</span>
                       </label>
                       <textarea
@@ -851,12 +851,12 @@ export default function TutorAssessmentModal({
                         value={q.question}
                         onChange={(e) => handleUpdateQuestion(qIndex, "question", e.target.value)}
                         required
-                        className="w-full px-4 py-2.5 text-sm bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition"
+                        className="w-full px-4 py-2.5 text-sm bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition"
                       />
 
                       {/* Live LaTeX Math Preview for Question */}
                       {q.question && (
-                        <div className="mt-2 p-2.5 rounded-xl bg-blue-50/60 dark:bg-white/5 border border-blue-100 dark:border-white/10 text-xs text-gray-800 dark:text-gray-200 flex items-start gap-2">
+                        <div className="mt-2 p-2.5 rounded-xl bg-blue-50/60 dark:bg-white/5 border border-blue-100 dark:border-white/10 text-xs text-black dark:text-white flex items-start gap-2">
                           <span className="font-bold text-blue-600 dark:text-[#C5A97A] text-[10px] uppercase tracking-wider mt-0.5">
                             Live Math Preview:
                           </span>
@@ -868,7 +868,7 @@ export default function TutorAssessmentModal({
                     </div>
 
                     <div className="sm:col-span-1">
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1">
+                      <label className="block text-xs font-bold text-black dark:text-white mb-1">
                         Marks <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -878,7 +878,7 @@ export default function TutorAssessmentModal({
                         value={q.marks}
                         onChange={(e) => handleUpdateQuestion(qIndex, "marks", e.target.value)}
                         required
-                        className="w-full px-4 py-2.5 text-sm bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition font-black"
+                        className="w-full px-4 py-2.5 text-sm bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition font-black"
                       />
                     </div>
                   </div>
@@ -886,9 +886,9 @@ export default function TutorAssessmentModal({
                   {/* MCQ OPTIONS BUILDER */}
                   {q.type === "mcq" && (
                     <div className="space-y-3 pt-2">
-                      <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 flex items-center justify-between">
+                      <label className="block text-xs font-bold text-black dark:text-white flex items-center justify-between">
                         <span>{"Answer Choices (Supports LaTeX e.g. \\(1.0 \\times 10^1 \\text{ m/s}\\)):"}</span>
-                        <span className="text-[11px] text-gray-400 font-normal">Min 2 options</span>
+                        <span className="text-[11px] text-black/70 dark:text-white/70 font-normal">Min 2 options</span>
                       </label>
 
                       <div className="space-y-2.5">
@@ -908,7 +908,7 @@ export default function TutorAssessmentModal({
                                   className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center flex-shrink-0 transition ${
                                     opt.is_correct
                                       ? "bg-emerald-600 text-white"
-                                      : "bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300"
+                                      : "bg-gray-100 dark:bg-white/10 text-black dark:text-white"
                                   }`}
                                 >
                                   {String.fromCharCode(65 + optIndex)}
@@ -923,7 +923,7 @@ export default function TutorAssessmentModal({
                                     handleUpdateOption(qIndex, optIndex, "option_text", e.target.value)
                                   }
                                   required
-                                  className="flex-1 px-3 py-2 text-sm bg-transparent text-gray-900 dark:text-white outline-none border-b border-transparent focus:border-gray-300"
+                                  className="flex-1 px-3 py-2 text-sm bg-transparent text-black dark:text-white outline-none border-b border-transparent focus:border-gray-300"
                                 />
                               </div>
 
@@ -941,7 +941,7 @@ export default function TutorAssessmentModal({
                                   <button
                                     type="button"
                                     onClick={() => handleSetCorrectOption(qIndex, optIndex)}
-                                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-gray-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-400 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-300 transition flex items-center gap-1.5 flex-shrink-0"
+                                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-black dark:text-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-400 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-300 transition flex items-center gap-1.5 flex-shrink-0"
                                     title="Click to set as the single correct option"
                                   >
                                     <span>Mark as Correct</span>
@@ -963,11 +963,11 @@ export default function TutorAssessmentModal({
 
                             {/* Live Option Math Preview */}
                             {opt.option_text && (
-                              <div className="pl-10 text-xs text-gray-700 dark:text-gray-300 flex items-center gap-2 pt-1 border-t border-gray-200/40 dark:border-white/5">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                              <div className="pl-10 text-xs text-black dark:text-white flex items-center gap-2 pt-1 border-t border-gray-200/40 dark:border-white/5">
+                                <span className="text-[10px] font-bold text-black/60 dark:text-white/60 uppercase tracking-wider">
                                   Option {String.fromCharCode(65 + optIndex)} Render:
                                 </span>
-                                <div className="font-semibold text-gray-900 dark:text-white">
+                                <div className="font-semibold text-black dark:text-white">
                                   <MathRenderer text={opt.option_text} />
                                 </div>
                               </div>
@@ -980,7 +980,7 @@ export default function TutorAssessmentModal({
                       <button
                         type="button"
                         onClick={() => handleAddOption(qIndex)}
-                        className="text-xs font-bold text-[#0F2843] dark:text-[#C5A97A] hover:underline flex items-center gap-1 pt-1"
+                        className="text-xs font-bold text-black dark:text-white hover:underline flex items-center gap-1 pt-1"
                       >
                         <PlusIcon className="w-3.5 h-3.5" />
                         <span>Add Another Choice</span>
@@ -991,7 +991,7 @@ export default function TutorAssessmentModal({
                   {/* ESSAY MODEL ANSWER / EXPLANATION */}
                   {q.type === "essay" && (
                     <div className="space-y-1.5 pt-2">
-                      <label className="block text-xs font-bold text-gray-600 dark:text-gray-300">
+                      <label className="block text-xs font-bold text-black dark:text-white">
                         Model Answer / Grading Criteria (For Tutor Reference when grading):
                       </label>
                       <textarea
@@ -999,7 +999,7 @@ export default function TutorAssessmentModal({
                         placeholder="Key points required for full marks (e.g. Must mention energy conservation, 1 mark per valid example)..."
                         value={q.explanation}
                         onChange={(e) => handleUpdateQuestion(qIndex, "explanation", e.target.value)}
-                        className="w-full px-4 py-2.5 text-sm bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition resize-none"
+                        className="w-full px-4 py-2.5 text-sm bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-black dark:text-white focus:ring-2 focus:ring-[#0F2843] dark:focus:ring-[#C5A97A] outline-none transition resize-none"
                       />
                     </div>
                   )}
@@ -1010,7 +1010,7 @@ export default function TutorAssessmentModal({
 
           {/* BOTTOM ACTIONS */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-100 dark:border-white/10 flex-shrink-0">
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-300">
+            <div className="text-xs font-medium text-black dark:text-white opacity-80">
               {assessment?.status === "published"
                 ? "This assessment is published and actively accessible to enrolled students."
                 : "You can save as draft or publish immediately to make it live for enrolled students right away."}
@@ -1021,7 +1021,7 @@ export default function TutorAssessmentModal({
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-5 py-3 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded-2xl transition"
+                className="px-5 py-3 text-xs font-bold text-black dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-2xl transition"
               >
                 Cancel
               </button>
@@ -1051,7 +1051,7 @@ export default function TutorAssessmentModal({
                     type="button"
                     onClick={(e) => handleSubmit(e, false)}
                     disabled={loading}
-                    className="px-5 py-3 text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 rounded-2xl transition flex items-center justify-center gap-2"
+                    className="px-5 py-3 text-xs font-bold text-black dark:text-white bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 rounded-2xl transition flex items-center justify-center gap-2"
                   >
                     <CheckCircleIcon className="w-4 h-4 text-amber-500" />
                     <span>Save as Draft</span>

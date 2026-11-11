@@ -300,7 +300,7 @@ export default function MasterClassDetailModal({
               
               {/* Assigned Instructor */}
               <div>
-                <h4 className="text-[11px] font-black text-gray-400 dark:text-gray-400 uppercase tracking-widest mb-2">
+                <h4 className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest mb-2 opacity-80">
                   Assigned Instructor
                 </h4>
                 <div className="flex items-center gap-3">
@@ -308,17 +308,17 @@ export default function MasterClassDetailModal({
                     {getStaffName(classData)[0]}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-base font-bold text-gray-900 dark:text-white truncate">
+                    <p className="text-base font-bold text-black dark:text-white truncate">
                       {getStaffName(classData)}
                     </p>
-                    <span className="text-[11px] text-gray-400 font-medium">Lead Faculty Tutor</span>
+                    <span className="text-[11px] text-black dark:text-white opacity-70 font-medium">Lead Faculty Tutor</span>
                   </div>
                 </div>
               </div>
 
               {/* Class Condition & Status Tag Section */}
               <div className="bg-gray-50/70 dark:bg-gray-700/30 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/60 space-y-2">
-                <h4 className="text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                <h4 className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest opacity-80">
                   Class Condition
                 </h4>
 
@@ -352,21 +352,21 @@ export default function MasterClassDetailModal({
 
               {/* Created On */}
               <div>
-                <h4 className="text-[11px] font-black text-gray-400 dark:text-gray-400 uppercase tracking-widest mb-2">
+                <h4 className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest mb-2 opacity-80">
                   Created On
                 </h4>
-                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                  <Icon icon="mdi:calendar-clock" className="w-4 h-4 text-gray-400 shrink-0" />
+                <div className="flex items-center gap-2 text-black dark:text-white">
+                  <Icon icon="mdi:calendar-clock" className="w-4 h-4 text-[#BB9E7F] shrink-0" />
                   <p className="text-sm font-semibold">{formatDate(classData.created_at)}</p>
                 </div>
               </div>
 
               {/* Description */}
               <div>
-                <h4 className="text-[11px] font-black text-gray-400 dark:text-gray-400 uppercase tracking-widest mb-2">
+                <h4 className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest mb-2 opacity-80">
                   Description
                 </h4>
-                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+                <p className="text-black dark:text-white text-sm leading-relaxed whitespace-pre-line">
                   {classData.description || "No description provided for this master class."}
                 </p>
               </div>
@@ -378,7 +378,7 @@ export default function MasterClassDetailModal({
               
               {/* Duration & Schedule Card */}
               <div>
-                <h4 className="text-[11px] font-black text-gray-400 dark:text-gray-400 uppercase tracking-widest mb-2">
+                <h4 className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest mb-2 opacity-80">
                   Duration & Schedule
                 </h4>
                 <div className={`rounded-2xl p-5 space-y-3 border transition-all ${
@@ -389,24 +389,24 @@ export default function MasterClassDetailModal({
                     : "bg-gray-50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700/60"
                 }`}>
                   <div className="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-600">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Start Date</span>
-                    <span className="text-xs font-bold text-gray-900 dark:text-white">
+                    <span className="text-xs font-semibold text-black dark:text-white opacity-80">Start Date</span>
+                    <span className="text-xs font-bold text-black dark:text-white">
                       {formatDate(startDate)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-600">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">End Date</span>
-                    <span className="text-xs font-bold text-gray-900 dark:text-white">
+                    <span className="text-xs font-semibold text-black dark:text-white opacity-80">End Date</span>
+                    <span className="text-xs font-bold text-black dark:text-white">
                       {formatDate(endDate)}
                     </span>
                   </div>
 
                   <div className="pt-1">
-                    <span className="text-[11px] font-bold text-gray-400 uppercase block mb-2">Weekly Days:</span>
+                    <span className="text-[11px] font-bold text-black dark:text-white opacity-80 uppercase block mb-2">Weekly Days:</span>
                     {classData.schedules && classData.schedules.length > 0 ? (
                       classData.schedules.map((s, idx) => (
                         <div key={idx} className="flex justify-between items-center py-1 text-xs">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300 capitalize">
+                          <span className="font-semibold text-black dark:text-white capitalize">
                             {s.day_of_week}s
                           </span>
                           <span className={`font-bold ${
@@ -421,7 +421,7 @@ export default function MasterClassDetailModal({
                         </div>
                       ))
                     ) : (
-                      <span className="text-xs text-gray-400 italic">No weekly schedule set</span>
+                      <span className="text-xs text-black dark:text-white opacity-60 italic">No weekly schedule set</span>
                     )}
                   </div>
                 </div>
@@ -429,7 +429,7 @@ export default function MasterClassDetailModal({
 
               {/* Class Link */}
               <div>
-                <h4 className="text-[11px] font-black text-gray-400 dark:text-gray-400 uppercase tracking-widest mb-2">
+                <h4 className="text-[11px] font-black text-black dark:text-white uppercase tracking-widest mb-2 opacity-80">
                   Class Link
                 </h4>
                 {isCancelled ? (
@@ -453,7 +453,7 @@ export default function MasterClassDetailModal({
                     <Icon icon="mdi:arrow-right" className="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform shrink-0" />
                   </a>
                 ) : (
-                  <p className="text-xs text-gray-400 italic">No meeting link provided</p>
+                  <p className="text-xs text-black dark:text-white opacity-60 italic">No meeting link provided</p>
                 )}
               </div>
 
@@ -487,7 +487,7 @@ export default function MasterClassDetailModal({
           <button 
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95 shadow-sm"
+            className="px-6 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-black dark:text-white font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95 shadow-sm"
           >
             Close
           </button>

@@ -210,7 +210,7 @@ export default function ExamYearCreateModal({
         </div>
       )}
 
-      <div className="exam-scope bg-white dark:bg-gray-900 text-gray-900 dark:text-white w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
+      <div className="exam-scope bg-white dark:bg-gray-900 text-black dark:text-white w-full max-w-lg rounded-[32px] shadow-2xl relative overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-300 border border-transparent dark:border-gray-800">
         
         <div className="p-6 bg-[#0F2843] text-white flex justify-between items-center shrink-0">
           <div className="flex items-center gap-4">
@@ -238,22 +238,22 @@ export default function ExamYearCreateModal({
         <div className="p-8 overflow-y-auto custom-scrollbar">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Exam Body</label>
+              <label className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest ml-1">Exam Body</label>
               <select 
                 value={examBodyId}
                 onChange={(e) => setExamBodyId(e.target.value)}
                 required
-                className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
+                className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-black dark:text-white outline-none transition-all appearance-none"
               >
-                <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Select Exam Body</option>
+                <option value="" className="bg-white dark:bg-gray-800 text-black dark:text-white">Select Exam Body</option>
                 {examBodies.map(body => (
-                  <option key={body.id} value={body.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{body.name}</option>
+                  <option key={body.id} value={body.id} className="bg-white dark:bg-gray-800 text-black dark:text-white">{body.name}</option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Subject</label>
+              <label className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest ml-1">Subject</label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <AcademicCapIcon className="w-5 h-5" />
@@ -263,11 +263,11 @@ export default function ExamYearCreateModal({
                   onChange={(e) => setSubjectId(e.target.value)}
                   required
                   disabled={fetchingSubjects}
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none disabled:opacity-50"
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-black dark:text-white outline-none transition-all appearance-none disabled:opacity-50"
                 >
-                  <option value="" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{fetchingSubjects ? "Fetching subjects..." : "Select a subject"}</option>
+                  <option value="" className="bg-white dark:bg-gray-800 text-black dark:text-white">{fetchingSubjects ? "Fetching subjects..." : "Select a subject"}</option>
                   {subjects.map(subject => (
-                    <option key={subject.id} value={subject.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{subject.name}</option>
+                    <option key={subject.id} value={subject.id} className="bg-white dark:bg-gray-800 text-black dark:text-white">{subject.name}</option>
                   ))}
                 </select>
               </div>
@@ -275,7 +275,7 @@ export default function ExamYearCreateModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Year</label>
+                <label className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest ml-1">Year</label>
                 <div className="relative">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                     <CalendarIcon className="w-5 h-5" />
@@ -284,24 +284,24 @@ export default function ExamYearCreateModal({
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
                     required
-                    className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
+                    className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-black dark:text-white outline-none transition-all appearance-none"
                   >
                     {years.map(y => (
-                      <option key={y} value={y} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{y}</option>
+                      <option key={y} value={y} className="bg-white dark:bg-gray-800 text-black dark:text-white">{y}</option>
                     ))}
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Status</label>
+                <label className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest ml-1">Status</label>
                 <select 
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-[#0F2843] dark:text-white outline-none transition-all appearance-none"
+                  className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-2 border-transparent focus:border-[#BB9E7F]/30 rounded-2xl font-bold text-sm text-black dark:text-white outline-none transition-all appearance-none"
                 >
-                  <option value="active" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Active</option>
-                  <option value="inactive" className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">Inactive</option>
+                  <option value="active" className="bg-white dark:bg-gray-800 text-black dark:text-white">Active</option>
+                  <option value="inactive" className="bg-white dark:bg-gray-800 text-black dark:text-white">Inactive</option>
                 </select>
               </div>
             </div>
@@ -312,11 +312,11 @@ export default function ExamYearCreateModal({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <DocumentDuplicateIcon className="w-4 h-4 text-[#BB9E7F]" />
-                    <span className="text-xs font-black uppercase tracking-wider text-[#0F2843] dark:text-white">
+                    <span className="text-xs font-black uppercase tracking-wider text-black dark:text-white">
                       Paper / Question Types
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                  <p className="text-[10px] text-gray-600 dark:text-gray-300">
                     Does this exam year have question paper variants (e.g. Type A, B, C, D)?
                   </p>
                 </div>
@@ -339,14 +339,14 @@ export default function ExamYearCreateModal({
               {hasPaperTypes && (
                 <div className="p-4 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-[#BB9E7F]/20 space-y-4 animate-in fade-in duration-200">
                   <div className="space-y-2">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Quick Presets</span>
+                    <span className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest">Quick Presets</span>
                     <div className="flex flex-wrap gap-2">
                       {PRESET_TYPES.map((preset, idx) => (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => setPaperTypes(preset.values)}
-                          className="px-3 py-1.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-[#0F2843] dark:text-white hover:border-[#BB9E7F] hover:bg-[#BB9E7F]/10 transition-all"
+                          className="px-3 py-1.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px] font-bold text-black dark:text-white hover:border-[#BB9E7F] hover:bg-[#BB9E7F]/10 transition-all"
                         >
                           {preset.label}
                         </button>
@@ -355,7 +355,7 @@ export default function ExamYearCreateModal({
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Paper Types</span>
+                    <span className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest">Active Paper Types</span>
                     <div className="flex flex-wrap gap-2 min-h-[36px] p-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                       {paperTypes.length === 0 ? (
                         <span className="text-xs text-red-400 italic py-1">No paper types added. Please add at least one.</span>
@@ -393,7 +393,7 @@ export default function ExamYearCreateModal({
                         }
                       }}
                       placeholder="Add custom type (e.g. Type E, Yellow)..."
-                      className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-[#0F2843] dark:text-white outline-none focus:border-[#BB9E7F]"
+                      className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-black dark:text-white outline-none focus:border-[#BB9E7F]"
                     />
                     <button
                       type="button"
@@ -412,7 +412,7 @@ export default function ExamYearCreateModal({
               <button 
                 type="button" 
                 onClick={handleClose}
-                className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all text-xs uppercase tracking-widest border border-transparent dark:border-gray-700"
+                className="flex-1 py-4 bg-gray-50 dark:bg-gray-800 text-black dark:text-white font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all text-xs uppercase tracking-widest border border-transparent dark:border-gray-700"
               >
                 Cancel
               </button>
