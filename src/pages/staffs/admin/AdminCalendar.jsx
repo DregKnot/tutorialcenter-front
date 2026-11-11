@@ -551,100 +551,100 @@ export default function AdminCalendar() {
           <p className="font-bold text-sm">{toast.message}</p>
         </div>
       )}
-      <div className="p-4 sm:p-6 lg:p-8 max-w-[1650px] mx-auto min-h-screen">
+      <div className="w-full max-w-full overflow-x-hidden p-3.5 sm:p-6 lg:p-8 max-w-[1650px] mx-auto min-h-screen">
         
         {/* TOP HEADER & ACTION BAR */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-800">
           <div>
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-[#09314F] to-[#1a4a6e] text-white rounded-2xl shadow-md">
-                <CalendarDaysIcon className="w-7 h-7 text-white" />
+              <div className="p-2.5 sm:p-3 bg-gradient-to-br from-[#09314F] to-[#1a4a6e] text-white rounded-2xl shadow-md shrink-0">
+                <CalendarDaysIcon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#09314F] dark:text-white tracking-tight">
+              <div className="min-w-0">
+                <div className="flex items-center flex-wrap gap-2">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#09314F] dark:text-white tracking-tight">
                     Master Class Calendar
                   </h1>
-                  <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-primary/10 text-primary border border-primary/20">
+                  <span className="px-2.5 py-0.5 text-[10px] sm:text-[11px] font-bold rounded-full bg-primary/10 dark:bg-white/10 text-primary dark:text-white border border-primary/20 dark:border-white/20 shrink-0">
                     {userRole === "coo" ? "COO Oversight" : "Admin Oversight"}
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
                   Track live masterclasses, tutor assignments, student sessions, and recorded video archives.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
             <button
               onClick={() => navigate('/staffs/recorded-classes')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-800/60 hover:border-amber-400 text-[#09314F] dark:text-white font-bold rounded-xl shadow-sm hover:shadow transition-all text-sm active:scale-95 group"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-800/60 hover:border-amber-400 text-[#09314F] dark:text-white font-bold rounded-xl shadow-sm hover:shadow transition-all text-xs sm:text-sm active:scale-95 group w-full sm:w-auto"
               title="Click to view all recorded classes, views, and watch times"
             >
-              <PlayCircleIcon className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" />
-              <span>Video Vault</span>
-              <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 text-xs font-black">
+              <PlayCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="truncate">Video Vault</span>
+              <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 text-[10px] sm:text-xs font-black shrink-0">
                 {totalRecordings}
               </span>
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:opacity-95 transition-all text-sm active:scale-95"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-[#09314F] to-[#E83831] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:opacity-95 transition-all text-xs sm:text-sm active:scale-95 w-full sm:w-auto"
             >
-              <PlusIcon className="w-5 h-5" />
-              <span>Schedule Master Class</span>
+              <PlusIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+              <span className="truncate">Schedule Class</span>
             </button>
           </div>
         </div>
 
         {/* METRICS & QUICK OVERVIEW STRIP */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm flex items-center gap-3.5">
-            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
-              <AcademicCapIcon className="w-5 h-5" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 mb-6">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-3 sm:p-4 shadow-sm flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shrink-0">
+              <AcademicCapIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-400">Total Scheduled</p>
-              <p className="text-xl font-extrabold text-[#09314F] dark:text-white">{sessions.length}</p>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm flex items-center gap-3.5">
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
-              <SignalIcon className="w-5 h-5 animate-pulse" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-400">Live Right Now</p>
-              <p className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{liveCount} Active</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] sm:text-xs font-semibold text-gray-400 truncate">Total Scheduled</p>
+              <p className="text-base sm:text-xl font-extrabold text-[#09314F] dark:text-white truncate">{sessions.length}</p>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm flex items-center gap-3.5">
-            <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400">
-              <UserIcon className="w-5 h-5" />
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-3 sm:p-4 shadow-sm flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 shrink-0">
+              <SignalIcon className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
             </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-400">Active Tutors</p>
-              <p className="text-xl font-extrabold text-[#09314F] dark:text-white">{activeTutorsCount || "8+"}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] sm:text-xs font-semibold text-gray-400 truncate">Live Right Now</p>
+              <p className="text-base sm:text-xl font-extrabold text-emerald-600 dark:text-emerald-400 truncate">{liveCount} Active</p>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-3 sm:p-4 shadow-sm flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 shrink-0">
+              <UserIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] sm:text-xs font-semibold text-gray-400 truncate">Active Tutors</p>
+              <p className="text-base sm:text-xl font-extrabold text-[#09314F] dark:text-white truncate">{activeTutorsCount || "8+"}</p>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/staffs/recorded-classes')}
-            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-amber-400 dark:hover:border-amber-500/60 rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3.5 cursor-pointer transition-all hover:shadow-md group"
+            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-amber-400 dark:hover:border-amber-500/60 rounded-2xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-2 sm:gap-3.5 cursor-pointer transition-all hover:shadow-md group min-w-0 overflow-hidden"
             title="Click to view all recorded classes, views, and watch time analytics"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
-                <PlayCircleIcon className="w-5 h-5" />
+            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+              <div className="p-2.5 sm:p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform shrink-0">
+                <PlayCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-400">Video Recordings</p>
-                <p className="text-xl font-extrabold text-[#09314F] dark:text-white">{totalRecordings} Vault</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-xs font-semibold text-gray-400 truncate">Video Recordings</p>
+                <p className="text-base sm:text-xl font-extrabold text-[#09314F] dark:text-white truncate">{totalRecordings} Vault</p>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
+            <div className="hidden lg:flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0">
               <span>View</span>
               <ChevronRightIcon className="w-4 h-4" />
             </div>
@@ -652,21 +652,21 @@ export default function AdminCalendar() {
         </div>
 
         {/* CONTROLS & FILTER BAR */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-3.5 sm:p-4 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:gap-4">
           
           {/* Left: Date navigation */}
-          <div className="flex items-center justify-between sm:justify-start gap-3 w-full md:w-auto">
+          <div className="flex items-center justify-between sm:justify-start gap-2.5 sm:gap-3 w-full md:w-auto">
             <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700 shadow-inner shrink-0">
               <button
                 onClick={handlePrev}
                 className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-200 transition-all active:scale-95"
                 title="Previous"
               >
-                <ChevronLeftIcon className="w-5 h-5" />
+                <ChevronLeftIcon className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
                 onClick={handleToday}
-                className="px-3.5 py-1 text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-all"
+                className="px-2.5 sm:px-3.5 py-1 text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-all"
               >
                 Today
               </button>
@@ -675,18 +675,18 @@ export default function AdminCalendar() {
                 className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-200 transition-all active:scale-95"
                 title="Next"
               >
-                <ChevronRightIcon className="w-5 h-5" />
+                <ChevronRightIcon className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
 
-            <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-[#09314F] dark:text-white tracking-tight truncate">
+            <h2 className="text-sm sm:text-lg md:text-xl font-extrabold text-[#09314F] dark:text-white tracking-tight truncate">
               {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
             </h2>
           </div>
 
           {/* Center: Search & Filters */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:flex-1 md:max-w-xl">
-            <div className="relative flex-1 min-w-[150px]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full md:flex-1 md:max-w-xl">
+            <div className="relative flex-1 min-w-[140px]">
               <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
@@ -702,7 +702,7 @@ export default function AdminCalendar() {
               <select
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
-                className="w-full sm:w-auto py-2 px-3 text-xs sm:text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none font-medium cursor-pointer"
+                className="w-full sm:w-auto py-2 px-2.5 sm:px-3 text-xs sm:text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none font-medium cursor-pointer"
               >
                 <option value="all">All Subjects</option>
                 {availableSubjects.map(sub => (
@@ -714,7 +714,7 @@ export default function AdminCalendar() {
               <select
                 value={selectedTutor}
                 onChange={(e) => setSelectedTutor(e.target.value)}
-                className="w-full sm:w-auto py-2 px-3 text-xs sm:text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none font-medium cursor-pointer"
+                className="w-full sm:w-auto py-2 px-2.5 sm:px-3 text-xs sm:text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none font-medium cursor-pointer"
               >
                 <option value="all">All Tutors</option>
                 {availableTutors.map(tut => (
@@ -726,7 +726,7 @@ export default function AdminCalendar() {
               <button
                 type="button"
                 onClick={() => setShowCancelled(prev => !prev)}
-                className={`w-full sm:w-auto py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 ${
+                className={`col-span-2 sm:col-span-1 w-full sm:w-auto py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 ${
                   showCancelled
                     ? "bg-rose-50 border-rose-300 text-rose-700 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300 shadow-sm"
                     : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
@@ -745,7 +745,7 @@ export default function AdminCalendar() {
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
+                className={`flex-1 sm:flex-initial px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
                   viewMode === mode
                     ? "bg-white dark:bg-gray-700 text-[#09314F] dark:text-white shadow-md scale-100"
                     : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
