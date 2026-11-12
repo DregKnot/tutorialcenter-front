@@ -122,7 +122,7 @@ export default function DashboardLayout({
       <main
         className={`
           flex-1
-          w-full max-w-full overflow-x-hidden
+          w-full lg:w-auto max-w-full overflow-x-hidden
           pt-16 pb-20 px-3 sm:px-4
           lg:p-6 lg:pt-2
           transition-all duration-300
