@@ -4,7 +4,7 @@ import axios from "axios";
 import StaffDashboardLayout from "../../../components/private/staffs/DashboardLayout.jsx";
 import CourseAdvisorFeedbackModal from "../../../components/private/staffs/CourseAdvisorFeedbackModal";
 import MasterClassDetailModal from "../../../components/private/staffs/MasterClassDetailModal.jsx";
-import { isAdminStaff, isAdvisorStaff } from "../../../utils/roleUtils";
+import { isAdminStaff, isAdvisorStaff, canSeeCancelledClasses } from "../../../utils/roleUtils";
 import { 
   MagnifyingGlassIcon,
   CalendarIcon,
@@ -307,22 +307,35 @@ export default function CourseAdvisorMasterClass() {
     };
   }, [scheduleData]);
 
-  // --- FILTERED DATA ---
+  // --- FILTERED DATA (Latest to Oldest) ---
   const filteredClasses = useMemo(() => {
-    if (!searchQuery.trim()) return scheduleData.classes || [];
-    const q = searchQuery.toLowerCase();
-    return (scheduleData.classes || []).filter(c => 
-      c.title?.toLowerCase().includes(q) ||
-      c.subject?.name?.toLowerCase().includes(q) ||
-      (Array.isArray(c.staffs) && c.staffs.some(st => `${st.firstname} ${st.surname}`.toLowerCase().includes(q))) ||
-      (Array.isArray(c.subject?.courses) && c.subject.courses.some(cr => cr.title?.toLowerCase().includes(q)))
-    );
+    let list = scheduleData.classes || [];
+    if (!canSeeCancelledClasses()) {
+      list = list.filter(c => !isSessionCancelled(c));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(c => 
+        c.title?.toLowerCase().includes(q) ||
+        c.subject?.name?.toLowerCase().includes(q) ||
+        (Array.isArray(c.staffs) && c.staffs.some(st => `${st.firstname} ${st.surname}`.toLowerCase().includes(q))) ||
+        (Array.isArray(c.subject?.courses) && c.subject.courses.some(cr => cr.title?.toLowerCase().includes(q)))
+      );
+    }
+    return [...list].sort((a, b) => {
+      const dateA = new Date(a.created_at || a.start_date || 0).getTime();
+      const dateB = new Date(b.created_at || b.start_date || 0).getTime();
+      if (dateB !== dateA) return dateB - dateA;
+      return (b.id || 0) - (a.id || 0);
+    });
   }, [scheduleData.classes, searchQuery]);
 
   const flattenedSessions = useMemo(() => {
     const map = new Map();
+    const canSeeCancelled = canSeeCancelledClasses();
     const add = (s) => {
       if (!s || !s.id) return;
+      if (!canSeeCancelled && isSessionCancelled(s)) return;
       if (!map.has(s.id)) map.set(s.id, s);
     };
 
@@ -335,7 +348,7 @@ export default function CourseAdvisorMasterClass() {
     return Array.from(map.values()).sort((a, b) => {
       const dateA = new Date(`${a.session_date}T${a.starts_at || '00:00'}`);
       const dateB = new Date(`${b.session_date}T${b.starts_at || '00:00'}`);
-      return dateA - dateB;
+      return dateB - dateA;
     });
   }, [scheduleData]);
 

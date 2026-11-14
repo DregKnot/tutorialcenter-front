@@ -187,8 +187,9 @@ export default function StudentCalendar() {
     
     const addSession = (s, parentClass = null) => {
       if (!s) return;
+      if (isSessionCancelled(s) || (parentClass && isSessionCancelled(parentClass))) return;
       const normalized = normalizeSession(s, parentClass);
-      if (!normalized) return;
+      if (!normalized || isSessionCancelled(normalized)) return;
       const isDuplicate = list.some(item => {
         if (normalized.id && item.id) return item.id === normalized.id;
         return item.title === normalized.title && item.session_date === normalized.session_date && item.starts_at === normalized.starts_at;
@@ -349,6 +350,7 @@ export default function StudentCalendar() {
   const getSessionsForDate = useCallback((date) => {
     const targetYMD = getAfricanDateYMD(date);
     return sessions.filter((s) => {
+      if (isSessionCancelled(s)) return false;
       return getAfricanDateYMD(s.session_date) === targetYMD;
     });
   }, [sessions]);
@@ -356,6 +358,7 @@ export default function StudentCalendar() {
   const getSessionsForDateAndHour = useCallback((date, hour) => {
     const targetYMD = getAfricanDateYMD(date);
     return sessions.filter((s) => {
+      if (isSessionCancelled(s)) return false;
       if (getAfricanDateYMD(s.session_date) !== targetYMD) return false;
       const startHour = parseInt((s.starts_at || "00:00").split(":")[0], 10);
       return startHour === hour;
