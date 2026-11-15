@@ -55,14 +55,29 @@ export default function CampaignEmailVerification() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (value.length > 1) return;
+    const cleanDigits = value.replace(/[^0-9]/g, "");
+
+    if (cleanDigits.length > 1) {
+      const digits = cleanDigits.slice(0, 6).split("");
+      const newFormData = { ...formData };
+      digits.forEach((digit, index) => {
+        newFormData[`num${index + 1}`] = digit;
+      });
+      setFormData(newFormData);
+      const lastIndex = Math.min(digits.length, 6);
+      const lastField = `num${lastIndex}`;
+      if (inputRefs[lastField]?.current) {
+        inputRefs[lastField].current.focus();
+      }
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: cleanDigits,
     }));
 
-    if (value) {
+    if (cleanDigits) {
       const nextInput = {
         num1: "num2",
         num2: "num3",
@@ -95,26 +110,22 @@ export default function CampaignEmailVerification() {
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData("text").trim();
+    const pasteData = e.clipboardData.getData("text");
     if (!pasteData) return;
+    const cleanDigits = pasteData.replace(/[^0-9]/g, "").slice(0, 6);
+    if (!cleanDigits) return;
 
-    // Take the first 6 characters to match our fields
-    const digits = pasteData.slice(0, 6).split("");
-    
+    const digits = cleanDigits.split("");
     const newFormData = { ...formData };
     digits.forEach((digit, index) => {
-      const fieldName = `num${index + 1}`;
-      if (index < 6) {
-        newFormData[fieldName] = digit;
-      }
+      newFormData[`num${index + 1}`] = digit;
     });
 
     setFormData(newFormData);
 
-    // Focus the last filled input or the 6th input if all filled
     const lastIndex = Math.min(digits.length, 6);
     const lastField = `num${lastIndex}`;
-    if (inputRefs[lastField]) {
+    if (inputRefs[lastField]?.current) {
       inputRefs[lastField].current.focus();
     }
   };

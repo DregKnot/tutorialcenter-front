@@ -845,8 +845,8 @@ export default function GuardianAddWard() {
 
   const isValidPhone = (phone) => {
     if (!phone) return false;
-    const phoneRegex = /^(\+234|234|0)(70|80|81|90|91|71)\d{8}$/;
-    return phoneRegex.test(cleanPhone(phone));
+    const cleaned = cleanPhone(phone);
+    return /^(\+?[0-9]{8,15}|0[0-9]{9,11})$/.test(cleaned);
   };
 
   const isValidEmail = (email) => {
@@ -1007,13 +1007,29 @@ export default function GuardianAddWard() {
 
   // ── OTP Handlers ───────────────────────────────────────────────────────────
   const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
+    const cleanDigits = value.replace(/\D/g, "");
+    if (!cleanDigits) {
+      const newOtp = [...otp];
+      newOtp[index] = "";
+      setOtp(newOtp);
+      return;
+    }
+    if (cleanDigits.length > 1) {
+      const newOtp = [...otp];
+      for (let i = 0; i < 6; i++) {
+        if (cleanDigits[i]) newOtp[i] = cleanDigits[i];
+      }
+      setOtp(newOtp);
+      const nextIndex = Math.min(cleanDigits.length, 5);
+      otpInputRefs.current[nextIndex]?.focus();
+      return;
+    }
     const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
+    newOtp[index] = cleanDigits;
     setOtp(newOtp);
 
     // Auto-focus next input
-    if (value && index < 5) {
+    if (cleanDigits && index < 5) {
       otpInputRefs.current[index + 1]?.focus();
     }
   };

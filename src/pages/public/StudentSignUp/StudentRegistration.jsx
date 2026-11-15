@@ -7,6 +7,12 @@ import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { dropdownTheme } from "../../../utils/dropdownTheme";
 import DateOfBirthPicker from "../../../components/common/DateOfBirthPicker";
 import { updateStudentData } from "./studentStorageHelper";
+import {
+  AFRICAN_COUNTRY_CODES,
+  formatPhoneWithCountryCode,
+  parsePhoneAndCountryCode,
+  isValidPhoneNumber
+} from "../../../utils/countryCodes";
 import { 
   EyeIcon, 
   EyeSlashIcon, 
@@ -18,7 +24,6 @@ import {
   CameraIcon,
   UserCircleIcon,
   MapIcon,
-  PhoneIcon,
   TicketIcon,
   LockClosedIcon
 } from "@heroicons/react/24/outline";
@@ -32,6 +37,7 @@ export default function StudentRegistration() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [verifiedVia, setVerifiedVia] = useState("email"); // 'email' or 'phone'
+  const [countryCode, setCountryCode] = useState("+234");
   
   // Biodata UI states
   const [focusedField, setFocusedField] = useState(null);
@@ -93,6 +99,17 @@ export default function StudentRegistration() {
     }));
   };
 
+  const handlePhoneChange = (e) => {
+    const val = e.target.value;
+    if (val.startsWith("+")) {
+      const parsed = parsePhoneAndCountryCode(val);
+      setCountryCode(parsed.countryCode);
+      setFormData((prev) => ({ ...prev, tel: parsed.localNumber }));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, tel: val }));
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -126,6 +143,8 @@ export default function StudentRegistration() {
     if (!formData.email.trim() && !formData.tel.trim()) {
       newErrors.email = "Email or Phone required";
       newErrors.tel = "Email or Phone required";
+    } else if (formData.tel.trim() && !isValidPhoneNumber(countryCode, formData.tel)) {
+      newErrors.tel = "Please enter a valid phone number (7-14 digits)";
     }
 
     if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -179,8 +198,9 @@ export default function StudentRegistration() {
     try {
       // Register Account and Submit Biodata together
       const combinedPayload = new FormData();
+      const fullTel = formData.tel.trim() ? formatPhoneWithCountryCode(countryCode, formData.tel.trim()) : "";
       if (formData.email.trim()) combinedPayload.append('email', formData.email.trim());
-      if (formData.tel.trim()) combinedPayload.append('tel', formData.tel.trim());
+      if (fullTel) combinedPayload.append('tel', fullTel);
       combinedPayload.append('password', formData.password);
       combinedPayload.append('confirmPassword', formData.confirmPassword);
       combinedPayload.append('password_confirmation', formData.confirmPassword);
@@ -207,7 +227,7 @@ export default function StudentRegistration() {
             referral_code: formData.referral_code.trim(),
           });
           localStorage.setItem("studentEmail", formData.email);
-          localStorage.setItem("studentTel", formData.tel);
+          localStorage.setItem("studentTel", fullTel);
         }
         setToast({ type: "success", message: "Registration Successful!" });
         setShowModal(true);
@@ -236,9 +256,10 @@ export default function StudentRegistration() {
   const confirmRegistration = () => {
     setShowModal(false);
     if (verifiedVia === "email") {
-      navigate(`/register/student/email/verify?email=${formData.email}`);
+      navigate(`/register/student/email/verify?email=${encodeURIComponent(formData.email.trim())}`);
     } else {
-      navigate(`/register/student/phone/verify?tel=${formData.tel}`);
+      const fullTel = formatPhoneWithCountryCode(countryCode, formData.tel.trim());
+      navigate(`/register/student/phone/verify?tel=${encodeURIComponent(fullTel)}`);
     }
   };
 
@@ -403,17 +424,30 @@ export default function StudentRegistration() {
                 <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">
                   Phone Number {errors.tel && <span className="text-red-500 font-bold">*</span>}
                 </label>
-                <div className={getInputStyles("tel").container}>
-                  <PhoneIcon className={getInputStyles("tel").icon} />
+                <div className={`${getInputStyles("tel").container} flex items-center pl-2`}>
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className="bg-transparent text-xs font-bold text-gray-700 dark:text-gray-200 outline-none cursor-pointer pr-1 border-r border-gray-200 dark:border-gray-700 py-1"
+                    title="Select African / International Country Code"
+                  >
+                    {AFRICAN_COUNTRY_CODES.map((c) => (
+                      <option key={c.code} value={c.code} className="text-gray-800 bg-white dark:bg-gray-800">
+                        {c.flag} {c.code} ({c.country})
+                      </option>
+                    ))}
+                  </select>
                   <input
                     name="tel"
                     type="tel"
                     value={formData.tel}
-                    onChange={handleChange}
+                    onChange={handlePhoneChange}
                     onFocus={() => setFocusedField("tel")}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="+234..."
-                    className={getInputStyles("tel").input}
+                    placeholder={
+                      AFRICAN_COUNTRY_CODES.find((c) => c.code === countryCode)?.placeholder || "8012345678"
+                    }
+                    className={`${getInputStyles("tel").input} pl-3`}
                     autoComplete="off"
                   />
                 </div>
