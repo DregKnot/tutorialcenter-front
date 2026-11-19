@@ -114,16 +114,46 @@ export default function AddedStudentOTP() {
 
   // Handle OTP input
   const handleChange = (index, e) => {
-    const value = e.target.value;
-    if (value.length > 1) return;
+    const rawVal = e.target.value;
+    const cleanDigits = rawVal.replace(/[^0-9]/g, "");
 
-    const newOtp = { ...otp, [`num${index + 1}`]: value };
+    if (cleanDigits.length > 1) {
+      const digits = cleanDigits.slice(0, 6).split("");
+      const newOtp = { ...otp };
+      digits.forEach((d, i) => {
+        newOtp[`num${i + 1}`] = d;
+      });
+      setOtp(newOtp);
+      const lastIndex = Math.min(digits.length, 5);
+      inputRefs.current[lastIndex]?.focus();
+      return;
+    }
+
+    const newOtp = { ...otp, [`num${index + 1}`]: cleanDigits };
     setOtp(newOtp);
 
     // Auto-focus next input
-    if (value && index < 5) {
+    if (cleanDigits && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
+  };
+
+  // Handle paste
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData("text");
+    if (!pasteData) return;
+    const cleanDigits = pasteData.replace(/[^0-9]/g, "").slice(0, 6);
+    if (!cleanDigits) return;
+
+    const digits = cleanDigits.split("");
+    const newOtp = { ...otp };
+    digits.forEach((d, i) => {
+      newOtp[`num${i + 1}`] = d;
+    });
+    setOtp(newOtp);
+    const lastIndex = Math.min(digits.length, 5);
+    inputRefs.current[lastIndex]?.focus();
   };
 
   // Handle backspace
@@ -290,9 +320,11 @@ export default function AddedStudentOTP() {
                     key={idx}
                     ref={(el) => (inputRefs.current[idx] = el)}
                     type="text"
+                    inputMode="numeric"
                     value={otp[`num${idx + 1}`]}
                     onChange={(e) => handleChange(idx, e)}
                     onKeyDown={(e) => handleKeyDown(idx, e)}
+                    onPaste={handlePaste}
                     maxLength="1"
                     placeholder="0"
                     className="w-12 h-12 text-center text-lg font-semibold border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"

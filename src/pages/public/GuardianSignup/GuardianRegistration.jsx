@@ -5,6 +5,12 @@ import { location } from "../../../data/locations";
 import TC_logo from "../../../assets/images/tutorial_logo.webp";
 import signup_img from "../../../assets/images/Student_sign_up.webp";
 import { dropdownTheme } from "../../../utils/dropdownTheme";
+import {
+  AFRICAN_COUNTRY_CODES,
+  formatPhoneWithCountryCode,
+  parsePhoneAndCountryCode,
+  isValidPhoneNumber,
+} from "../../../utils/countryCodes";
 import { 
   EyeIcon, 
   EyeSlashIcon, 
@@ -16,7 +22,6 @@ import {
   CameraIcon,
   UserCircleIcon,
   MapIcon,
-  PhoneIcon,
   LockClosedIcon,
   CheckIcon,
   TicketIcon,
@@ -34,6 +39,19 @@ export const GuardianRegistration = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [verifiedVia, setVerifiedVia] = useState("email"); // 'email' or 'phone'
+  const [countryCode, setCountryCode] = useState("+234");
+
+  const handlePhoneChange = (e) => {
+    const rawVal = e.target.value;
+    const parsed = parsePhoneAndCountryCode(rawVal);
+    if (parsed.countryCode !== countryCode) {
+      setCountryCode(parsed.countryCode);
+    }
+    setFormData((prev) => ({
+      ...prev,
+      tel: parsed.localNumber,
+    }));
+  };
 
   // Biodata UI states
   const [focusedField, setFocusedField] = useState(null);
@@ -132,6 +150,10 @@ export const GuardianRegistration = () => {
     if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email address";
     }
+
+    if (formData.tel.trim() && !isValidPhoneNumber(countryCode, formData.tel)) {
+      newErrors.tel = "Invalid phone number for the selected country code";
+    }
     
     // Password validation
     if (!formData.password) {
@@ -171,9 +193,13 @@ export const GuardianRegistration = () => {
     setLoading(true);
 
     try {
+      const formattedTel = formData.tel.trim()
+        ? formatPhoneWithCountryCode(countryCode, formData.tel.trim())
+        : "";
+
       const combinedPayload = new FormData();
       if (formData.email.trim()) combinedPayload.append('email', formData.email.trim());
-      if (formData.tel.trim()) combinedPayload.append('tel', formData.tel.trim());
+      if (formattedTel) combinedPayload.append('tel', formattedTel);
       combinedPayload.append('password', formData.password);
       combinedPayload.append('confirmPassword', formData.confirmPassword);
       combinedPayload.append('password_confirmation', formData.confirmPassword);
@@ -197,9 +223,9 @@ export const GuardianRegistration = () => {
         
         // Save guardian data to localStorage for the next wizard steps
         localStorage.setItem("guardianStudents", JSON.stringify({
-          entry: formData.email.trim() || formData.tel.trim(),
+          entry: formData.email.trim() || formattedTel,
           email: formData.email.trim(),
-          tel: formData.tel.trim(),
+          tel: formattedTel,
           firstname: formData.firstname,
           surname: formData.surname,
           gender: formData.gender,
@@ -234,13 +260,16 @@ export const GuardianRegistration = () => {
 
   const confirmRegistration = () => {
     setShowModal(false);
+    const formattedTel = formData.tel.trim()
+      ? formatPhoneWithCountryCode(countryCode, formData.tel.trim())
+      : "";
     if (verifiedVia === "email") {
       setToast({ type: "success", message: "Check your email for verification instructions." });
       setTimeout(() => {
         navigate(`/register/guardian/email/verify?email=${encodeURIComponent(formData.email.trim())}`);
       }, 1500);
     } else {
-      navigate(`/register/guardian/phone/verify?tel=${encodeURIComponent(formData.tel)}`);
+      navigate(`/register/guardian/phone/verify?tel=${encodeURIComponent(formattedTel)}`);
     }
   };
 
@@ -405,17 +434,30 @@ export const GuardianRegistration = () => {
                 <label className="text-xs font-black text-[#555555] uppercase tracking-widest px-1">
                   Phone Number {errors.tel && <span className="text-red-500 font-bold">*</span>}
                 </label>
-                <div className={getInputStyles("tel").container}>
-                  <PhoneIcon className={getInputStyles("tel").icon} />
+                <div className={`${getInputStyles("tel").container} flex items-center pl-2`}>
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className="bg-transparent text-xs font-bold text-gray-700 dark:text-gray-200 outline-none cursor-pointer pr-1 border-r border-gray-200 dark:border-gray-700 py-1"
+                    title="Select African / International Country Code"
+                  >
+                    {AFRICAN_COUNTRY_CODES.map((c) => (
+                      <option key={c.code} value={c.code} className="text-gray-800 bg-white dark:bg-gray-800">
+                        {c.flag} {c.code} ({c.country})
+                      </option>
+                    ))}
+                  </select>
                   <input
                     name="tel"
                     type="tel"
                     value={formData.tel}
-                    onChange={handleChange}
+                    onChange={handlePhoneChange}
                     onFocus={() => setFocusedField("tel")}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="+234..."
-                    className={getInputStyles("tel").input}
+                    placeholder={
+                      AFRICAN_COUNTRY_CODES.find((c) => c.code === countryCode)?.placeholder || "8012345678"
+                    }
+                    className={`${getInputStyles("tel").input} pl-3`}
                     autoComplete="off"
                   />
                 </div>

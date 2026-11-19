@@ -31,6 +31,12 @@ import {
   BanknotesIcon,
   GiftIcon,
 } from "@heroicons/react/24/outline";
+import {
+  AFRICAN_COUNTRY_CODES,
+  formatPhoneWithCountryCode,
+  parsePhoneAndCountryCode,
+  isValidPhoneNumber,
+} from "../../../utils/countryCodes";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_URL ||
@@ -1793,6 +1799,7 @@ export default function AdminCreateStudent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [verificationModal, setVerificationModal] = useState(null);
   const [autofillSource, setAutofillSource] = useState(null);
+  const [countryCode, setCountryCode] = useState("+234");
 
   const [formData, setFormData] = useState({
     student_id: null,
@@ -2174,6 +2181,19 @@ export default function AdminCreateStudent() {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
   };
 
+  const handlePhoneChange = (e) => {
+    const val = e.target.value;
+    if (val.startsWith("+")) {
+      const parsed = parsePhoneAndCountryCode(val);
+      setCountryCode(parsed.countryCode);
+      setFormData((prev) => ({ ...prev, tel: parsed.localNumber }));
+      if (errors.tel) setErrors((prev) => ({ ...prev, tel: null }));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, tel: val }));
+    if (errors.tel) setErrors((prev) => ({ ...prev, tel: null }));
+  };
+
   const handleSubjectToggle = (subjectId) => {
     const numericId = parseInt(subjectId);
     setFormData((prev) => {
@@ -2231,6 +2251,8 @@ export default function AdminCreateStudent() {
       : "Completing incomplete student registration";
 
     const existingTrack = existingEnrollment?.exam_track || "WAEC";
+    const parsedTel = parsePhoneAndCountryCode(student.tel || "");
+    setCountryCode(parsedTel.countryCode);
 
     setFormData({
       student_id: student.id,
@@ -2238,7 +2260,7 @@ export default function AdminCreateStudent() {
       firstname: student.firstname || "",
       surname: student.surname || "",
       email: student.email || "",
-      tel: student.tel || "",
+      tel: parsedTel.localNumber,
       password: "",
       confirmPassword: "",
       gender: student.gender || "",
@@ -2306,7 +2328,6 @@ export default function AdminCreateStudent() {
 
   const validateCreateForm = () => {
     const errs = {};
-    const phoneRegex = /^(\+234|234|0)(70|80|81|90|91)\d{8}$/;
 
     if (!formData.firstname.trim()) errs.firstname = "First name is required";
     if (!formData.surname.trim()) errs.surname = "Surname is required";
@@ -2316,8 +2337,8 @@ export default function AdminCreateStudent() {
       errs.email = "Email or phone is required";
       errs.tel = "Email or phone is required";
     }
-    if (formData.tel.trim() && !phoneRegex.test(formData.tel.trim())) {
-      errs.tel = "Invalid Nigerian phone number format";
+    if (formData.tel.trim() && !isValidPhoneNumber(countryCode, formData.tel.trim())) {
+      errs.tel = "Invalid phone number format (must be 7-14 digits)";
     }
 
     // Payment fields validation
@@ -2398,7 +2419,7 @@ export default function AdminCreateStudent() {
         firstname: formData.firstname.trim(),
         surname: formData.surname.trim(),
         email: formData.email.trim() || undefined,
-        tel: formData.tel.trim() || undefined,
+        tel: formData.tel.trim() ? formatPhoneWithCountryCode(countryCode, formData.tel.trim()) : undefined,
         password: formData.password || undefined,
         confirmPassword: formData.confirmPassword || undefined,
         gender: formData.gender,
@@ -2439,11 +2460,12 @@ export default function AdminCreateStudent() {
         firstname: formData.firstname,
         surname: formData.surname,
         email: formData.email,
-        tel: formData.tel,
+        tel: payload.tel || formData.tel,
       });
 
       // Reset form
       setAutofillSource(null);
+      setCountryCode("+234");
       setFormData({
         student_id: null,
         payment_id: null,
@@ -4001,17 +4023,30 @@ export default function AdminCreateStudent() {
                         <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-widest">
                           Phone Number
                         </label>
-                        <div className="relative">
-                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#C5A97A] border-r border-gray-200 dark:border-gray-700 pr-3">
-                            +234
+                        <div className="relative flex items-center">
+                          <div className="absolute left-2.5 top-1/2 -translate-y-1/2 z-10">
+                            <select
+                              value={countryCode}
+                              onChange={(e) => setCountryCode(e.target.value)}
+                              className="bg-transparent text-xs font-bold text-gray-700 dark:text-gray-200 outline-none cursor-pointer pr-1 border-r border-gray-200 dark:border-gray-700 py-1"
+                              title="Select Country Calling Code"
+                            >
+                              {AFRICAN_COUNTRY_CODES.map((c) => (
+                                <option key={c.code} value={c.code} className="text-gray-800 bg-white dark:bg-gray-800">
+                                  {c.flag} {c.code} ({c.country})
+                                </option>
+                              ))}
+                            </select>
                           </div>
                           <input
                             type="tel"
                             name="tel"
                             value={formData.tel}
-                            onChange={handleChange}
-                            placeholder="8012345678"
-                            className={`w-full rounded-2xl border bg-gray-50 dark:bg-[#06243A] py-3.5 pl-16 pr-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all ${
+                            onChange={handlePhoneChange}
+                            placeholder={
+                              AFRICAN_COUNTRY_CODES.find((c) => c.code === countryCode)?.placeholder || "8012345678"
+                            }
+                            className={`w-full rounded-2xl border bg-gray-50 dark:bg-[#06243A] py-3.5 pl-32 pr-4 text-sm font-medium text-gray-700 dark:text-white placeholder-gray-400 focus:outline-none focus:border-[#C5A97A] focus:ring-1 focus:ring-[#C5A97A]/30 transition-all ${
                               errors.tel
                                 ? "border-red-500"
                                 : "border-gray-200 dark:border-gray-700"

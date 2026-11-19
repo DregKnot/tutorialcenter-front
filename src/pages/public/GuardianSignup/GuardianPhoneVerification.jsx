@@ -61,14 +61,30 @@ export default function GuardianPhoneVerification() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (value.length > 1) return;
+    const clean = value.replace(/[^0-9]/g, "");
+
+    // Handle mobile keyboard autofill or paste
+    if (clean.length > 1) {
+      const digits = clean.slice(0, 6).split("");
+      const newFormData = { ...formData };
+      digits.forEach((digit, index) => {
+        newFormData[`num${index + 1}`] = digit;
+      });
+      setFormData(newFormData);
+      const lastIndex = Math.min(digits.length, 6);
+      const lastField = `num${lastIndex}`;
+      if (inputRefs[lastField]?.current) {
+        inputRefs[lastField].current.focus();
+      }
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: clean,
     }));
 
-    if (value) {
+    if (clean) {
       const nextInput = {
         num1: "num2",
         num2: "num3",
@@ -77,7 +93,7 @@ export default function GuardianPhoneVerification() {
         num5: "num6",
       }[name];
 
-      if (nextInput && inputRefs[nextInput]) {
+      if (nextInput && inputRefs[nextInput]?.current) {
         inputRefs[nextInput].current.focus();
       }
     }
@@ -93,9 +109,31 @@ export default function GuardianPhoneVerification() {
         num6: "num5",
       }[name];
 
-      if (prevInput && inputRefs[prevInput]) {
+      if (prevInput && inputRefs[prevInput]?.current) {
         inputRefs[prevInput].current.focus();
       }
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData("text");
+    if (!pasteData) return;
+    const cleanDigits = pasteData.replace(/[^0-9]/g, "").slice(0, 6);
+    if (!cleanDigits) return;
+
+    const digits = cleanDigits.split("");
+    const newFormData = { ...formData };
+    digits.forEach((digit, index) => {
+      newFormData[`num${index + 1}`] = digit;
+    });
+
+    setFormData(newFormData);
+
+    const lastIndex = Math.min(digits.length, 6);
+    const lastField = `num${lastIndex}`;
+    if (inputRefs[lastField]?.current) {
+      inputRefs[lastField].current.focus();
     }
   };
 
@@ -213,6 +251,7 @@ export default function GuardianPhoneVerification() {
                   inputMode="numeric"
                   value={formData[field]}
                   onChange={handleChange}
+                  onPaste={handlePaste}
                   onKeyDown={(e) => handleKeyDown(e, field)}
                   maxLength="1"
                   placeholder="0"

@@ -76,7 +76,21 @@ export default function StaffEmailVerification() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     const clean = value.replace(/[^0-9]/g, "");
-    if (clean.length > 1) return;
+
+    if (clean.length > 1) {
+      const digits = clean.slice(0, 6).split("");
+      const newFormData = { ...formData };
+      digits.forEach((digit, index) => {
+        newFormData[`num${index + 1}`] = digit;
+      });
+      setFormData(newFormData);
+      const lastIndex = Math.min(digits.length, 6);
+      const lastField = `num${lastIndex}`;
+      if (inputRefs[lastField]?.current) {
+        inputRefs[lastField].current.focus();
+      }
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,

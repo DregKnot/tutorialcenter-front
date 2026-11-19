@@ -32,8 +32,8 @@ export default function GuardianAddStudents() {
   };
 
   const isValidPhone = (phone) => {
-    const phoneRegex = /^(\+234|234|0)(70|80|81|90|91)\d{8}$/;
-    return phoneRegex.test(cleanInput(phone));
+    const cleaned = cleanInput(phone);
+    return /^(\+?[0-9]{8,15}|0[0-9]{9,11})$/.test(cleaned);
   };
 
   const isValidEmail = (email) => {
@@ -85,7 +85,7 @@ export default function GuardianAddStudents() {
         if (input.includes("@")) {
           if (!isValidEmail(input)) newErrors[`student_${i}_email`] = "Invalid email format";
         } else {
-          if (!isValidPhone(input)) newErrors[`student_${i}_email`] = "Invalid phone format (use 08012345678)";
+          if (!isValidPhone(input)) newErrors[`student_${i}_email`] = "Invalid phone format (e.g. +234..., +237..., or 080...)";
         }
       }
     });

@@ -203,7 +203,7 @@ const tutorNavSections = [
     icon: AcademicCapIcon,
     items: [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/tutor/master-class" },
-      { label: "Model Creation", icon: AcademicCapIcon, destination: "/staffs/model-creation" },
+      { label: "Model Creation", icon: AcademicCapIcon, badge: "Soon" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/tutor/calendar" },
     ],
   },
@@ -526,17 +526,25 @@ export default function StaffSidebar({ collapsed, setCollapsed, isOpen, onClose 
                             : "space-y-1"
                         }
                       >
-                        {section.items.map(({ label, icon: Icon, destination }) => {
+                        {section.items.map(({ label, icon: Icon, destination, badge }) => {
                           if (!destination) {
                             return (
                               <div
                                 key={label}
-                                className={`w-full flex items-center rounded-lg text-xs md:text-sm font-medium text-gray-400 dark:text-gray-700 cursor-not-allowed ${
+                                title={badge ? `${label} (${badge})` : label}
+                                className={`w-full flex items-center justify-between rounded-lg text-xs md:text-sm font-medium text-gray-400 dark:text-gray-500 cursor-not-allowed select-none ${
                                   collapsed ? "justify-center py-2.5" : "gap-3 px-2.5 py-1.5 md:py-2"
                                 }`}
                               >
-                                <Icon className="w-5 h-5 flex-shrink-0" />
-                                {!collapsed && <span>{label}</span>}
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <Icon className="w-5 h-5 flex-shrink-0" />
+                                  {!collapsed && <span className="truncate">{label}</span>}
+                                </div>
+                                {!collapsed && badge && (
+                                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-200/70 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                    {badge}
+                                  </span>
+                                )}
                               </div>
                             );
                           }

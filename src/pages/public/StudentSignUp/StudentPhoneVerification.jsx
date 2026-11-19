@@ -61,16 +61,31 @@ export default function StudentPhoneVerification() {
   // Handle input changes and auto-focus to next field
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const clean = value.replace(/[^0-9]/g, "");
 
-    if (value.length > 1) return; // prevent more than 1 character
+    // Handle mobile keyboard autofill or paste where full OTP is dumped in single input
+    if (clean.length > 1) {
+      const digits = clean.slice(0, 6).split("");
+      const newFormData = { ...formData };
+      digits.forEach((digit, index) => {
+        newFormData[`num${index + 1}`] = digit;
+      });
+      setFormData(newFormData);
+      const lastIndex = Math.min(digits.length, 6);
+      const lastField = `num${lastIndex}`;
+      if (inputRefs[lastField]?.current) {
+        inputRefs[lastField].current.focus();
+      }
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: clean,
     }));
 
     // Move to next input
-    if (value) {
+    if (clean) {
       const nextInput = {
         num1: "num2",
         num2: "num3",
@@ -79,9 +94,32 @@ export default function StudentPhoneVerification() {
         num5: "num6",
       }[name];
 
-      if (nextInput && inputRefs[nextInput]) {
+      if (nextInput && inputRefs[nextInput]?.current) {
         inputRefs[nextInput].current.focus();
       }
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData("text");
+    if (!pasteData) return;
+    const cleanDigits = pasteData.replace(/[^0-9]/g, "").slice(0, 6);
+    if (!cleanDigits) return;
+
+    const digits = cleanDigits.split("");
+    const newFormData = { ...formData };
+    digits.forEach((digit, index) => {
+      newFormData[`num${index + 1}`] = digit;
+    });
+
+    setFormData(newFormData);
+
+    // Focus last filled digit or 6th input
+    const lastIndex = Math.min(digits.length, 6);
+    const lastField = `num${lastIndex}`;
+    if (inputRefs[lastField]?.current) {
+      inputRefs[lastField].current.focus();
     }
   };
 
@@ -260,6 +298,7 @@ export default function StudentPhoneVerification() {
                   value={formData[field]}
                   onChange={handleChange}
                   onKeyDown={(e) => handleKeyDown(e, field)}
+                  onPaste={handlePaste}
                   maxLength="1"
                   placeholder="0"
                   className={`w-full h-14 md:h-16 text-2xl font-black text-center rounded-2xl border-2 transition-all outline-none 
