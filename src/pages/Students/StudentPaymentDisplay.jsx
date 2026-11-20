@@ -172,6 +172,14 @@ export default function StudentPaymentDisplay() {
       (selectedPayment?.source === 'active_courses' ? selectedPayment?.id : null)
     );
 
+    const existingSubjectIds = (
+      selectedPayment?.subjects?.map((s) => (typeof s === "object" && s !== null ? (s.subject_id || s.id) : s)) ||
+      selectedPayment?.enrollment?.subjects?.map((s) => (typeof s === "object" && s !== null ? (s.subject_id || s.id) : s)) ||
+      []
+    )
+      .filter((id) => Number(id) > 0)
+      .map(Number);
+
     setRenewLoading(true);
     try {
       const res = await axios.post(
@@ -181,6 +189,7 @@ export default function StudentPaymentDisplay() {
           course_id: courseId,
           billing_cycle: selectedDuration,
           is_renewal: true,
+          subjects: existingSubjectIds.length > 0 ? existingSubjectIds : undefined,
         },
         {
           headers: {
@@ -201,6 +210,7 @@ export default function StudentPaymentDisplay() {
           amount: Number(calculatedPrice),
           billingCycle: selectedDuration,
           isRenewal: true,
+          subjects: existingSubjectIds.length > 0 ? existingSubjectIds : undefined,
         },
       ]);
       setShowDurationModal(false);
@@ -216,6 +226,7 @@ export default function StudentPaymentDisplay() {
           amount: Number(calculatedPrice),
           billingCycle: selectedDuration,
           isRenewal: true,
+          subjects: existingSubjectIds.length > 0 ? existingSubjectIds : undefined,
         },
       ]);
       setShowDurationModal(false);

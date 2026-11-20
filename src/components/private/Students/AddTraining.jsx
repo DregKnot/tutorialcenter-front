@@ -221,10 +221,12 @@ export default function AddTraining({ onBack, onSuccess, onRenewCourse }) {
             enrollmentId: enrollment.course_enrollment_id,
             courseName: course.title || `Course #${course.id}`,
             amount: enrollment.cost,
+            billingCycle: selectedDurations[course.id] || "monthly",
+            subjects: subjectIdsFor(course.id),
           };
         })
         .filter(Boolean),
-    [selectedCourses, enrollments]
+    [selectedCourses, enrollments, selectedDurations, subjectIdsFor]
   );
 
   const handlePaymentSuccess = async (response) => {
