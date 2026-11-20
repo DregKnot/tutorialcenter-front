@@ -80,14 +80,31 @@ export const StudentSubjectSelection = () => {
           try {
             // For O-Level courses (ID 2: WAEC, 3: NECO, 4: GCE/O-Levels), always fetch subjects from Course ID 4
             const queryCourseId = [2, 3, 4].includes(Number(course.id)) ? 4 : course.id;
-            const res = await axios.get(
-              `${API_BASE_URL}/api/courses/${queryCourseId}/subjects/${department}`
-            );
-            const subjects = res?.data?.subjects || res?.data?.data || [];
+            let subjects = [];
+
+            try {
+              const res = await axios.get(
+                `${API_BASE_URL}/api/courses/${queryCourseId}/subjects/${encodeURIComponent(department)}`
+              );
+              subjects = res?.data?.subjects || res?.data?.data || [];
+            } catch (deptErr) {
+              console.warn(`[SubjectSelection] Department fetch error:`, deptErr);
+            }
+
+            // Fallback: If department query returned 0 subjects, fetch all subjects for this course
+            if (!Array.isArray(subjects) || subjects.length === 0) {
+              try {
+                const fallbackRes = await axios.get(`${API_BASE_URL}/api/courses/${queryCourseId}/subjects`);
+                subjects = fallbackRes?.data?.subjects || fallbackRes?.data?.data || [];
+              } catch (fallbackErr) {
+                console.warn(`[SubjectSelection] Fallback subjects fetch error:`, fallbackErr);
+              }
+            }
+
             subjectMap[course.id] = subjects;
 
             // Restore previous subject selection if valid, else empty array
-            selectionMap[course.id] = previouslySavedSubjects[course.id] || [];
+            selectionMap[course.id] = previouslySavedSubjects[course.id] || previouslySavedSubjects[String(course.id)] || [];
           } catch (err) {
             console.warn(`[SubjectSelection] Could not load subjects for ${course.title} under ${department}:`, err);
             subjectMap[course.id] = [];
@@ -146,12 +163,10 @@ export const StudentSubjectSelection = () => {
 
   /* ================= VALIDATE & PROCEED ================= */
   const handleContinue = () => {
-    // Check if courses with available subjects have at least one chosen
+    // Every selected course MUST have at least 1 subject chosen
     const incompleteCourse = selectedCourses.find((course) => {
-      const available = subjectsByCourse[course.id] || [];
-      const selected = selectedSubjects[course.id] || [];
-      // If the course offers subject choices, student must pick at least 1
-      return available.length > 0 && selected.length === 0;
+      const selected = selectedSubjects[course.id] || selectedSubjects[String(course.id)] || [];
+      return !Array.isArray(selected) || selected.length === 0;
     });
 
     if (incompleteCourse) {

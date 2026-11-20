@@ -93,6 +93,18 @@ export const StudentTrainingDuration = () => {
           throw new Error("Some selected courses are unavailable. Go back and review your course selection.");
         }
 
+        // Strictly verify that subjects were selected for each active course before allowing duration choice
+        const savedSubjects = studentData?.selectedSubjects || {};
+        const missingSubjects = activeCourses.some((c) => {
+          const subs = savedSubjects[c.id] || savedSubjects[String(c.id)];
+          return !Array.isArray(subs) || subs.length === 0;
+        });
+
+        if (missingSubjects) {
+          navigate("/register/student/subject/selection", { replace: true });
+          return;
+        }
+
         setCourses(activeCourses);
 
         // Pre-populate with previous selections or default to quarterly (most popular)
@@ -171,6 +183,19 @@ export const StudentTrainingDuration = () => {
       return;
     }
 
+    const savedSubjects = studentData?.selectedSubjects || {};
+    const missingSubjects = courses.some((c) => {
+      const subs = savedSubjects[c.id] || savedSubjects[String(c.id)];
+      return !Array.isArray(subs) || subs.length === 0;
+    });
+
+    if (missingSubjects) {
+      setError("Please select subjects for all your chosen examination courses.");
+      setToast({ type: "error", message: "Please select your subjects first." });
+      navigate("/register/student/subject/selection");
+      return;
+    }
+
     submitting.current = true;
     setError("");
     setLoading(true);
@@ -185,7 +210,7 @@ export const StudentTrainingDuration = () => {
       for (const course of courses) {
         currentCourseTitle = course.title || `Course #${course.id}`;
         const duration = durations[course.id];
-        const courseSubjects = studentData?.selectedSubjects?.[course.id] || [];
+        const courseSubjects = studentData?.selectedSubjects?.[course.id] || studentData?.selectedSubjects?.[String(course.id)] || [];
         const isOlevel = [2, 3, 4].includes(Number(course.id));
         const examTrack = isOlevel
           ? (studentData?.selectedExamTrack || "WAEC")
