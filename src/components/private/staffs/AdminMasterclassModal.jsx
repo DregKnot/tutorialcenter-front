@@ -368,9 +368,19 @@ export default function CreateMasterClassModal({ onClose, onSuccess, editClass =
         })));
       }
 
-      const isPriv = Boolean(editClass.is_private);
+      const isPriv = Boolean(
+        editClass.is_private === true ||
+        editClass.is_private === 1 ||
+        editClass.is_private === "1" ||
+        editClass.private_student_id ||
+        editClass.private_student ||
+        editClass.privateStudent ||
+        editClass.private_enrollment ||
+        editClass.privateEnrollment ||
+        (editClass.title && /private|1-on-1|1 on 1/i.test(editClass.title))
+      );
       setIsPrivate(isPriv);
-      const privStudent = editClass.private_student || editClass.privateStudent || null;
+      const privStudent = editClass.private_student || editClass.privateStudent || editClass.private_enrollment?.student || editClass.privateEnrollment?.student || null;
       if (privStudent) {
         setSelectedStudent(privStudent);
         setStudentSearch(`${privStudent.firstname || ""} ${privStudent.surname || ""}`.trim());
