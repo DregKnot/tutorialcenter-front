@@ -396,7 +396,7 @@ function RecoveryModal({ payment, onClose, onConfirm, loading }) {
             <div>
               <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">Method</span>
               <span className="text-xs font-black capitalize text-purple-600 dark:text-purple-400">
-                {payment?.payment_method?.replace("_", " ") || "Online"}
+                {String(payment?.payment_method || "Online").replace("_", " ")}
               </span>
             </div>
             <div>
@@ -996,31 +996,31 @@ function ExtendAccessModal({ student, enrollment, onClose, onConfirm, loading })
                       required={isPaidExtension}
                     />
                     <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider font-mono ${
-                          referenceCode.startsWith("FREE-GRANT-")
-                            ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800"
-                            : referenceCode.startsWith("FREE-")
-                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800"
-                            : referenceCode.startsWith("TCG-")
-                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
-                            : referenceCode.startsWith("TC-")
-                            ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800"
-                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
-                        }`}
-                      >
-                        {referenceCode.startsWith("FREE-GRANT-")
-                          ? "SCHOLARSHIP (FREE-GRANT-)"
-                          : referenceCode.startsWith("FREE-")
-                          ? "FREE GRANT (FREE-)"
-                          : referenceCode.startsWith("TCG-")
-                          ? "GUARDIAN (TCG-)"
-                          : referenceCode.startsWith("TC-")
-                          ? "STUDENT (TC-)"
-                          : referenceCode
-                          ? "CUSTOM REF"
-                          : "NO REF"}
-                      </span>
+                      {(() => {
+                        const ref = String(referenceCode || "");
+                        let badgeClass = "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700";
+                        let badgeText = "NO REF";
+                        if (ref.startsWith("FREE-GRANT-")) {
+                          badgeClass = "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800";
+                          badgeText = "SCHOLARSHIP (FREE-GRANT-)";
+                        } else if (ref.startsWith("FREE-")) {
+                          badgeClass = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800";
+                          badgeText = "FREE GRANT (FREE-)";
+                        } else if (ref.startsWith("TCG-")) {
+                          badgeClass = "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800";
+                          badgeText = "GUARDIAN (TCG-)";
+                        } else if (ref.startsWith("TC-")) {
+                          badgeClass = "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800";
+                          badgeText = "STUDENT (TC-)";
+                        } else if (ref) {
+                          badgeText = "CUSTOM REF";
+                        }
+                        return (
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider font-mono ${badgeClass}`}>
+                            {badgeText}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -1455,33 +1455,32 @@ function RenewCourseModal({ student, enrollment, onClose, onConfirm, loading }) 
                 required
               />
               <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                <span
-                  className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider font-mono ${
-                    referenceCode.startsWith("FREE-GRANT-")
-                      ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800"
-                      : referenceCode.startsWith("FREE-")
-                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800"
-                      : referenceCode.startsWith("TCG-")
-                      ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
-                      : referenceCode.startsWith("TC-")
-                      ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800"
-                      : referenceCode
-                      ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
-                      : "bg-transparent text-gray-400"
-                  }`}
-                >
-                  {referenceCode.startsWith("FREE-GRANT-")
-                    ? "SCHOLARSHIP (FREE-GRANT-)"
-                    : referenceCode.startsWith("FREE-")
-                    ? "FREE GRANT (FREE-)"
-                    : referenceCode.startsWith("TCG-")
-                    ? "GUARDIAN (TCG-)"
-                    : referenceCode.startsWith("TC-")
-                    ? "STUDENT (TC-)"
-                    : referenceCode
-                    ? "CUSTOM REF"
-                    : ""}
-                </span>
+                {(() => {
+                  const ref = String(referenceCode || "");
+                  let badgeClass = "bg-transparent text-gray-400";
+                  let badgeText = "";
+                  if (ref.startsWith("FREE-GRANT-")) {
+                    badgeClass = "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800";
+                    badgeText = "SCHOLARSHIP (FREE-GRANT-)";
+                  } else if (ref.startsWith("FREE-")) {
+                    badgeClass = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800";
+                    badgeText = "FREE GRANT (FREE-)";
+                  } else if (ref.startsWith("TCG-")) {
+                    badgeClass = "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800";
+                    badgeText = "GUARDIAN (TCG-)";
+                  } else if (ref.startsWith("TC-")) {
+                    badgeClass = "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800";
+                    badgeText = "STUDENT (TC-)";
+                  } else if (ref) {
+                    badgeClass = "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700";
+                    badgeText = "CUSTOM REF";
+                  }
+                  return (
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider font-mono ${badgeClass}`}>
+                      {badgeText}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
             <p className="text-[10px] text-gray-400 mt-1.5 font-medium">
@@ -1931,7 +1930,7 @@ export default function AdminCreateStudent() {
         amount: parseFloat(amount),
         reference_code: reference_code.trim(),
         payment_method: payment_method || "bank_transfer",
-        payer_type: payer_type || (reference_code.startsWith("TCG-") ? "guardian" : "student"),
+        payer_type: payer_type || (String(reference_code || "").startsWith("TCG-") ? "guardian" : "student"),
         reason: reason.trim(),
       };
       const res = await axios.post(endpoint, payload, config);
@@ -2000,8 +1999,14 @@ export default function AdminCreateStudent() {
           res.data?.data ||
           (Array.isArray(res.data) ? res.data : []);
 
-        console.log(`[AdminCreateStudent] Formatted ${fetchedSubjects.length} subjects:`, fetchedSubjects);
-        setSubjects(fetchedSubjects);
+        if (fetchedSubjects.length > 0) {
+          setSubjects(fetchedSubjects);
+        } else {
+          // If no subjects specifically linked to course, fallback to all active subjects
+          const allRes = await axios.get(`${API_BASE_URL}/api/admin/subjects/all`, config);
+          const all = allRes.data?.subjects || allRes.data?.data || [];
+          setSubjects(all);
+        }
       } catch (err) {
         console.error("[AdminCreateStudent] Fetch Subjects Error via /api/courses/{id}/subjects, attempting fallback:", err.response?.data || err);
 
@@ -2010,16 +2015,7 @@ export default function AdminCreateStudent() {
           console.log(`[AdminCreateStudent] [GET] Fallback -> ${fallbackEndpoint}`);
           const fallbackRes = await axios.get(fallbackEndpoint, config);
           const allSubjects = fallbackRes.data?.subjects || fallbackRes.data?.data || [];
-          const filtered = allSubjects.filter((s) => {
-            return (
-              s.courses?.some((c) => c.id === parseInt(courseId) || c.id === courseId) ||
-              s.course_id === parseInt(courseId) ||
-              s.course_id === courseId
-            );
-          });
-
-          console.log(`[AdminCreateStudent] Fallback filtered ${filtered.length} subjects:`, filtered);
-          setSubjects(filtered);
+          setSubjects(allSubjects);
         } catch (fallbackErr) {
           console.error("[AdminCreateStudent] Fallback Fetch Subjects Error:", fallbackErr.response?.data || fallbackErr);
           setSubjects([]);
@@ -2031,26 +2027,10 @@ export default function AdminCreateStudent() {
     [config]
   );
 
-  // In-memory filtered subjects by department and search query
+  // In-memory filtered subjects by search query (no restrictive department filtering per user specification)
   const filteredSubjects = useMemo(() => {
     if (!subjects || subjects.length === 0) return [];
     let list = subjects;
-
-    // Fuzzy department filtering (matches "art" with "arts", "science", "commercial")
-    if (formData.department) {
-      const targetDept = formData.department.toLowerCase().trim();
-      list = list.filter((s) => {
-        if (!s.departments || !Array.isArray(s.departments) || s.departments.length === 0) return true;
-        return s.departments.some((d) => {
-          const dNorm = (d || "").toLowerCase().trim();
-          if (dNorm === targetDept) return true;
-          if (targetDept.startsWith("art") && dNorm.startsWith("art")) return true;
-          if (targetDept.startsWith("sci") && dNorm.startsWith("sci")) return true;
-          if (targetDept.startsWith("com") && dNorm.startsWith("com")) return true;
-          return false;
-        });
-      });
-    }
 
     // Search query filtering
     if (subjectSearch.trim()) {
@@ -2062,7 +2042,7 @@ export default function AdminCreateStudent() {
     }
 
     return list;
-  }, [subjects, formData.department, subjectSearch]);
+  }, [subjects, subjectSearch]);
 
   const selectedCourse = useMemo(() => {
     if (!formData.course_id) return null;
@@ -2102,13 +2082,13 @@ export default function AdminCreateStudent() {
 
   // Auto-fill amount_paid with standard course fee when standard fee becomes available or changes
   useEffect(() => {
-    if (formData.payment_type === "paid" && standardCourseFee > 0) {
+    if (formData.payment_type === "paid" && formData.payment_method !== "free_grant" && standardCourseFee > 0) {
       if (!formData.amount_paid || formData.amount_paid === "0") {
         setFormData((prev) => ({ ...prev, amount_paid: standardCourseFee.toString() }));
         if (errors.amount_paid) setErrors((prev) => ({ ...prev, amount_paid: null }));
       }
     }
-  }, [formData.payment_type, standardCourseFee]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [formData.payment_type, formData.payment_method, standardCourseFee]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -2168,7 +2148,7 @@ export default function AdminCreateStudent() {
         ...prev,
         course_id: value,
         exam_track: autoTrack,
-        subject_ids: [],
+        subject_ids: prev.course_id === value ? prev.subject_ids : [],
         amount_paid: updatedAmount,
       }));
       setSubjectSearch("");
@@ -2257,6 +2237,10 @@ export default function AdminCreateStudent() {
     setFormData({
       student_id: student.id,
       payment_id: payment?.id || null,
+      payment_type: "paid",
+      amount_paid: payment?.amount ? String(payment.amount) : "",
+      reference_code: payment?.gateway_reference || "",
+      payment_method: payment?.payment_method || "bank_transfer",
       firstname: student.firstname || "",
       surname: student.surname || "",
       email: student.email || "",
@@ -3658,33 +3642,32 @@ export default function AdminCreateStudent() {
                                 }`}
                               />
                               <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                                <span
-                                  className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider font-mono ${
-                                    formData.reference_code.startsWith("FREE-GRANT-")
-                                      ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800"
-                                      : formData.reference_code.startsWith("FREE-")
-                                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800"
-                                      : formData.reference_code.startsWith("TCG-")
-                                      ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800"
-                                      : formData.reference_code.startsWith("TC-")
-                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800"
-                                      : formData.reference_code
-                                      ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
-                                      : "bg-transparent text-gray-400"
-                                  }`}
-                                >
-                                  {formData.reference_code.startsWith("FREE-GRANT-")
-                                    ? "SCHOLARSHIP (FREE-GRANT-)"
-                                    : formData.reference_code.startsWith("FREE-")
-                                    ? "FREE GRANT (FREE-)"
-                                    : formData.reference_code.startsWith("TCG-")
-                                    ? "GUARDIAN (TCG-)"
-                                    : formData.reference_code.startsWith("TC-")
-                                    ? "STUDENT (TC-)"
-                                    : formData.reference_code
-                                    ? "CUSTOM REF"
-                                    : ""}
-                                </span>
+                                {(() => {
+                                  const ref = String(formData.reference_code || "");
+                                  let badgeClass = "bg-transparent text-gray-400";
+                                  let badgeText = "";
+                                  if (ref.startsWith("FREE-GRANT-")) {
+                                    badgeClass = "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200 border border-purple-300 dark:border-purple-800";
+                                    badgeText = "SCHOLARSHIP (FREE-GRANT-)";
+                                  } else if (ref.startsWith("FREE-")) {
+                                    badgeClass = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800";
+                                    badgeText = "FREE GRANT (FREE-)";
+                                  } else if (ref.startsWith("TCG-")) {
+                                    badgeClass = "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-800";
+                                    badgeText = "GUARDIAN (TCG-)";
+                                  } else if (ref.startsWith("TC-")) {
+                                    badgeClass = "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border border-blue-300 dark:border-blue-800";
+                                    badgeText = "STUDENT (TC-)";
+                                  } else if (ref) {
+                                    badgeClass = "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700";
+                                    badgeText = "CUSTOM REF";
+                                  }
+                                  return (
+                                    <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider font-mono ${badgeClass}`}>
+                                      {badgeText}
+                                    </span>
+                                  );
+                                })()}
                               </div>
                             </div>
                             {errors.reference_code ? (
@@ -3706,7 +3689,7 @@ export default function AdminCreateStudent() {
                             <div className="relative">
                               <select
                                 name="payment_method"
-                                value={formData.payment_method}
+                                value={formData.payment_method || "bank_transfer"}
                                 onChange={(e) => {
                                   handleChange(e);
                                   if (e.target.value === "free_grant") {
@@ -3778,17 +3761,10 @@ export default function AdminCreateStudent() {
                       ) : filteredSubjects.length === 0 ? (
                         <div className="text-center py-4 space-y-2">
                           <p className="text-xs text-gray-400 font-medium">
-                            No subjects found matching {formData.department ? `department "${formData.department}"` : "the current filters"}.
+                            {subjectSearch.trim()
+                              ? `No subjects found matching "${subjectSearch.trim()}".`
+                              : "No subjects available for this course."}
                           </p>
-                          {formData.department && (
-                            <button
-                              type="button"
-                              onClick={() => setFormData((p) => ({ ...p, department: "" }))}
-                              className="text-xs font-bold text-[#C5A97A] hover:underline"
-                            >
-                              Show all course subjects
-                            </button>
-                          )}
                         </div>
                       ) : (
                         <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
