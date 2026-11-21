@@ -480,6 +480,7 @@ export default function GuardianPayments() {
           billingCycle: billingCycle,
           isRenewal: true,
           guardianId: guardian?.id,
+          subjects: sanitizedRenewalSubjects,
         }
       ],
       studentId: selectedWardId,
@@ -575,6 +576,7 @@ export default function GuardianPayments() {
           billingCycle: configuredDuration,
           isRenewal: false,
           guardianId: guardian?.id,
+          subjects: sanitizedEnrolledSubjects,
         }
       ] : [],
       studentId: selectedWardId,

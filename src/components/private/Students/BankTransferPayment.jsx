@@ -189,6 +189,14 @@ export default function BankTransferPayment({
             localStorage.getItem("token") ||
             localStorage.getItem("access_token");
 
+          const rawSubjects = item.subjects || item.subject_ids;
+          const sanitizedSubjects = Array.isArray(rawSubjects) && rawSubjects.length > 0
+            ? rawSubjects
+                .map((s) => (typeof s === "object" && s !== null ? (s.subject_id || s.id) : s))
+                .filter((id) => Number(id) > 0)
+                .map(Number)
+            : undefined;
+
           const response = await axios.post(
             `${API_BASE_URL}/api/payments/bank-transfer`,
             { 
@@ -197,6 +205,8 @@ export default function BankTransferPayment({
               billing_cycle: item.billingCycle || undefined,
               is_renewal: Boolean(item.isRenewal),
               guardian_id: item.guardianId || undefined,
+              subjects: sanitizedSubjects,
+              exam_track: item.examTrack || item.exam_track || undefined,
             },
             {
               headers: { 

@@ -183,7 +183,7 @@ export const StudentTrainingPayment = () => {
             // Starting again recovers the server-issued reference/token pair.
           }
         }
-        const courseSubjects = studentData.selectedSubjects?.[id] || [];
+        const courseSubjects = studentData?.selectedSubjects?.[id] || studentData?.selectedSubjects?.[String(id)] || [];
         const examTrack = studentData.selectedExamTrack || null;
         const response = await axios.post(`${API_BASE_URL}/api/payments/bank-transfer`, {
           student_id: Number(studentData.id),
