@@ -379,7 +379,9 @@ export default function ExamQuestionList() {
                   <BookOpenIcon className="w-10 h-10 text-gray-200" />
                 </div>
                 <h3 className="text-xl font-black text-[#0F2843] dark:text-white uppercase">No Questions Found</h3>
-                <p className="text-gray-400 text-xs font-bold mt-2 uppercase tracking-widest">Start by adding a question to this year</p>
+                <p className="text-gray-400 text-xs font-bold mt-2 uppercase tracking-widest">
+                  {canManage ? "Start by adding a question to this year" : "No past questions are currently uploaded for this year"}
+                </p>
                 {canManage && (
                   <button 
                     onClick={() => navigate(`${examBasePath}/question`)}

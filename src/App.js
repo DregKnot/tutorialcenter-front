@@ -270,6 +270,10 @@ function App() {
               <Route path="/staffs/tutor/master-class" element={<TutorMasterClass />} />
               <Route path="/staffs/tutor/calendar" element={<TutorCalendar />} />
               <Route path="/staffs/tutor/assessments" element={<TutorAssessments />} />
+              <Route path="/staffs/tutor/exams" element={<ExamManagement />} />
+              <Route path="/staffs/tutor/exams/:bodyId/subjects" element={<ExamSubjectList />} />
+              <Route path="/staffs/tutor/exams/:bodyId/subjects/:subjectId/years" element={<ExamYearList />} />
+              <Route path="/staffs/tutor/exams/:bodyId/subjects/:subjectId/years/:yearId/questions" element={<ExamQuestionList />} />
             </Route>
 
             {/* Course Advisor Routes (Advisors & Admin Staff) */}

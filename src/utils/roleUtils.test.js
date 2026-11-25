@@ -57,12 +57,21 @@ describe("roleUtils - Role and Permission Testing", () => {
       expect(canManageExams()).toBe(true);
     });
 
-    test("blocks advisor from managing exams", () => {
+    test("blocks advisor and tutor from managing exams", () => {
       localStorage.setItem("staff_role", "advisor");
       expect(canManageExams()).toBe(false);
 
       localStorage.setItem("staff_role", "course advisor");
       expect(canManageExams()).toBe(false);
+
+      localStorage.setItem("staff_role", "tutor");
+      expect(canManageExams()).toBe(false);
+    });
+
+    test("routes tutor to admin exam endpoints for browsing with dedicated base path", () => {
+      localStorage.setItem("staff_role", "tutor");
+      expect(getExamApiBase()).toBe("/api/admin");
+      expect(getExamBasePath()).toBe("/staffs/tutor/exams");
     });
 
     test("blocks COO and CSA from managing exams (enforces read-only browsing)", () => {

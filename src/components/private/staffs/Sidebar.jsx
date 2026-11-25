@@ -214,7 +214,7 @@ const tutorNavSections = [
     items: [
       { label: "Student Leaderboard", icon: TrophyIcon, destination: "/staffs/leaderboard" },
       { label: "Assessment", icon: ClipboardDocumentListIcon, destination: "/staffs/tutor/assessments" },
-      { label: "Exams", icon: ClipboardDocumentCheckIcon },
+      { label: "Past Questions", icon: ClipboardDocumentCheckIcon, destination: "/staffs/tutor/exams" },
       { label: "Settings", icon: Cog6ToothIcon },
     ],
   },

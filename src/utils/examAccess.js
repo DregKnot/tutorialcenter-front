@@ -1,4 +1,4 @@
-import { isReadOnlyStaff } from "./roleUtils";
+import { isReadOnlyStaff, isTutorStaff } from "./roleUtils";
 
 const ADVISOR_ROLES = ["advisor", "course advisor", "course_advisor", "course-advisor"];
 
@@ -7,12 +7,17 @@ export const getStaffRole = () =>
 
 export const isAdvisor = () => ADVISOR_ROLES.includes(getStaffRole());
 
-export const canManageExams = () => !isAdvisor() && !isReadOnlyStaff();
+export const isTutor = () => isTutorStaff(getStaffRole());
+
+export const canManageExams = () => !isAdvisor() && !isTutor() && !isReadOnlyStaff();
 
 export const getExamApiBase = () => "/api/admin";
 
-export const getExamBasePath = () =>
-  isAdvisor() ? "/staffs/course-advisor/exams" : "/staffs/manage-exams";
+export const getExamBasePath = () => {
+  if (isAdvisor()) return "/staffs/course-advisor/exams";
+  if (isTutor()) return "/staffs/tutor/exams";
+  return "/staffs/manage-exams";
+};
 
 export { canEditExamYear } from "./roleUtils";
 

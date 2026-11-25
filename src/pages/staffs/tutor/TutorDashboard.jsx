@@ -989,7 +989,7 @@ export default function TutorDashboard() {
         {/* ========================================================================= */}
         {/* 6. TUTOR QUICK TOOLKIT SHORTCUTS                                         */}
         {/* ========================================================================= */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <button
             onClick={() => navigate('/staffs/tutor/master-class')}
             className="p-4 rounded-2xl bg-white dark:bg-[#09314F] border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-left group"
@@ -1015,6 +1015,15 @@ export default function TutorDashboard() {
             <ClipboardDocumentCheckIcon className="w-5 h-5 text-amber-500 mb-2 group-hover:scale-110 transition-transform" />
             <h4 className="text-xs font-black text-[#09314F] dark:text-white">Grading & Tests</h4>
             <p className="text-[10px] text-slate-400 font-medium mt-0.5">Grade student tests</p>
+          </button>
+
+          <button
+            onClick={() => navigate('/staffs/tutor/exams')}
+            className="p-4 rounded-2xl bg-white dark:bg-[#09314F] border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-left group"
+          >
+            <DocumentTextIcon className="w-5 h-5 text-[#BB9E7F] mb-2 group-hover:scale-110 transition-transform" />
+            <h4 className="text-xs font-black text-[#09314F] dark:text-white">Past Questions</h4>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Browse exam archives</p>
           </button>
 
           <button
