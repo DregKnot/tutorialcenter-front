@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, lazy, Suspense } from 'react';
 import axios from 'axios';
 import { CelebrationActivityContext } from './CelebrationActivityContext';
-import AchievementCelebrationModal from '../components/common/AchievementCelebrationModal';
 import { Sparkles, X } from 'lucide-react';
+
+const AchievementCelebrationModal = lazy(() => import('../components/common/AchievementCelebrationModal'));
 
 const AchievementContext = createContext(null);
 
@@ -100,10 +101,12 @@ export const AchievementProvider = ({ children }) => {
 
       {/* Global Celebration Modal */}
       {activeModal && (
-        <AchievementCelebrationModal
-          achievement={activeModal}
-          onClose={handleCloseModal}
-        />
+        <Suspense fallback={null}>
+          <AchievementCelebrationModal
+            achievement={activeModal}
+            onClose={handleCloseModal}
+          />
+        </Suspense>
       )}
 
       {/* Global Non-blocking Achievement Toasts (Bottom Right) */}

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { X, Sparkles, CheckCircle, ArrowRight } from 'lucide-react';
 import AchievementVisualRenderer, { getAchievementCondition } from './badges/AchievementVisualRenderer';
-import CosmicStreakCelebrationModal from './badges/streakmedals/CosmicStreakCelebrationModal';
-import ExamPerformanceCelebrationModal from './badges/examperformance/ExamPerformanceCelebrationModal';
+
+const CosmicStreakCelebrationModal = lazy(() => import('./badges/streakmedals/CosmicStreakCelebrationModal'));
+const ExamPerformanceCelebrationModal = lazy(() => import('./badges/examperformance/ExamPerformanceCelebrationModal'));
 
 export default function AchievementCelebrationModal({
   achievement,
@@ -28,20 +29,24 @@ export default function AchievementCelebrationModal({
   // If this is a streak achievement, launch the full-screen cinematic fly-in & crash celebration
   if (isStreak) {
     return (
-      <CosmicStreakCelebrationModal
-        achievement={achievement}
-        onClose={onClose}
-      />
+      <Suspense fallback={null}>
+        <CosmicStreakCelebrationModal
+          achievement={achievement}
+          onClose={onClose}
+        />
+      </Suspense>
     );
   }
 
   // If this is an exam performance achievement, launch the royal academic celebration
   if (isExamPerformance) {
     return (
-      <ExamPerformanceCelebrationModal
-        achievement={achievement}
-        onClose={onClose}
-      />
+      <Suspense fallback={null}>
+        <ExamPerformanceCelebrationModal
+          achievement={achievement}
+          onClose={onClose}
+        />
+      </Suspense>
     );
   }
 

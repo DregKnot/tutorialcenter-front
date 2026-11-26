@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FINISHES, createMedalScene } from "./medalScene";
 import { rotationAt, choosePixelRatio } from "./medalMotion";
-import bronze from "./renders/bronze.png";
-import silver from "./renders/silver.png";
-import gold from "./renders/gold.png";
-import platinum from "./renders/platinum.png";
-import diamond from "./renders/diamond.png";
-import diamondPulse from "./renders/diamond-pulse.png";
+import bronze from "./renders/bronze.webp";
+import silver from "./renders/silver.webp";
+import gold from "./renders/gold.webp";
+import platinum from "./renders/platinum.webp";
+import diamond from "./renders/diamond.webp";
+import diamondPulse from "./renders/diamond-pulse.webp";
 import "./examCelebration.css";
 
 const RENDERS = { bronze, silver, gold, platinum, diamond };

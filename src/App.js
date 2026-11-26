@@ -112,7 +112,10 @@ const CooDashboard = lazy(() => import("./pages/staffs/coo/CooDashboard.jsx"));
 const BlogManagement = lazy(() => import("./pages/staffs/admin/BlogManagement.jsx"));
 const AuditLog = lazy(() => import("./pages/staffs/admin/AuditLog.jsx"));
 const AdminCalendar = lazy(() => import("./pages/staffs/admin/AdminCalendar.jsx"));
-const BadgeDemo = lazy(() => import("./pages/public/BadgeDemo.jsx"));
+const BadgeDemo =
+  process.env.NODE_ENV === "development"
+    ? lazy(() => import("./pages/public/BadgeDemo.jsx"))
+    : null;
 const StudentCourses = lazy(() => import("./pages/Students/courses/StudentCourses.jsx"));
 const SubjectCurriculum = lazy(() => import("./pages/Students/courses/SubjectCurriculum.jsx"));
 const LessonPlayer = lazy(() => import("./pages/Students/courses/LessonPlayer.jsx"));
@@ -163,7 +166,7 @@ function App() {
             <Route path="/cognitive-test" element={<CognitiveTest />} />
             <Route path="/guardian/login" element={<GuardianLogin />} />
             <Route path="/login" element={<LoginSelection />} />
-            <Route path="/badge-demo" element={<BadgeDemo />} />
+            {BadgeDemo && <Route path="/badge-demo" element={<BadgeDemo />} />}
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/career" element={<Career />} />
