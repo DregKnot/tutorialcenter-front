@@ -44,7 +44,8 @@
     "exclude": [
       "/staff*",
       "/unauthorized",
-      "/register/guardian*"
+      "/register/guardian*",
+      "/bootcamp*"
     ]
   },
   "eslintConfig": {

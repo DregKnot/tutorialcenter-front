@@ -36,6 +36,7 @@ import ClassSessionStatusBadge, {
   SubjectBadge,
 } from "../../../components/common/ClassSessionStatusBadge.jsx";
 import AdminSessionActionModal from "../../../components/private/staffs/AdminSessionActionModal.jsx";
+import { extractClassStaffInfo } from "../../../utils/classStaffUtils.js";
 
 // Official Tutorial Center African Time Zone (West Africa Time / UTC+1)
 const AFRICAN_TIMEZONE = "Africa/Lagos";
@@ -65,80 +66,6 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 
 
-// Helper to extract detailed tutor info without emojis
-const extractTutorInfo = (rawItem) => {
-  if (Array.isArray(rawItem.staffs) && rawItem.staffs.length > 0) {
-    const leadStaff = rawItem.staffs.find(s => s.role === "lead") || rawItem.staffs[0];
-    const s = leadStaff.staff || leadStaff;
-    const firstName = s.firstname || s.first_name || "";
-    const lastName = s.surname || s.last_name || "";
-    const fullName = (firstName && lastName) ? `${firstName} ${lastName}` : s.name || "Assigned Tutor";
-    return {
-      id: s.id || leadStaff.staff_id,
-      name: fullName,
-      email: s.email || "tutor@tutorialcenter.africa",
-      phone: s.phone || s.phone_number || "Not provided",
-      role: leadStaff.role ? `${leadStaff.role.charAt(0).toUpperCase() + leadStaff.role.slice(1)} Tutor` : "Lead Tutor",
-      avatar: s.profile_picture || s.avatar || null,
-      initials: (firstName ? firstName[0] : (fullName[0] || "T")).toUpperCase() + (lastName ? lastName[0] : "").toUpperCase(),
-    };
-  }
-
-  if (Array.isArray(rawItem.tutors) && rawItem.tutors.length > 0) {
-    const t = rawItem.tutors[0];
-    const firstName = t.firstname || t.first_name || "";
-    const lastName = t.surname || t.last_name || "";
-    const fullName = (firstName && lastName) ? `${firstName} ${lastName}` : t.name || "Assigned Tutor";
-    return {
-      id: t.id,
-      name: fullName,
-      email: t.email || "tutor@tutorialcenter.africa",
-      phone: t.phone || t.phone_number || "Not provided",
-      role: "Master Class Tutor",
-      avatar: t.profile_picture || t.avatar || null,
-      initials: (firstName ? firstName[0] : (fullName[0] || "T")).toUpperCase() + (lastName ? lastName[0] : "").toUpperCase(),
-    };
-  }
-
-  if (rawItem.tutor && typeof rawItem.tutor === "object") {
-    const t = rawItem.tutor;
-    const firstName = t.firstname || t.first_name || "";
-    const lastName = t.surname || t.last_name || "";
-    const fullName = (firstName && lastName) ? `${firstName} ${lastName}` : t.name || "Assigned Tutor";
-    return {
-      id: t.id,
-      name: fullName,
-      email: t.email || "tutor@tutorialcenter.africa",
-      phone: t.phone || t.phone_number || "Not provided",
-      role: "Lead Tutor",
-      avatar: t.profile_picture || t.avatar || null,
-      initials: (firstName ? firstName[0] : (fullName[0] || "T")).toUpperCase() + (lastName ? lastName[0] : "").toUpperCase(),
-    };
-  }
-
-  if (rawItem.tutor_name && typeof rawItem.tutor_name === "string") {
-    return {
-      id: rawItem.tutor_id || null,
-      name: rawItem.tutor_name,
-      email: rawItem.tutor_email || "tutor@tutorialcenter.africa",
-      phone: "Not provided",
-      role: "Tutor",
-      avatar: null,
-      initials: rawItem.tutor_name.slice(0, 2).toUpperCase(),
-    };
-  }
-
-  return {
-    id: null,
-    name: "Tutorial Center Tutor",
-    email: "support@tutorialcenter.africa",
-    phone: "Not provided",
-    role: "Faculty Tutor",
-    avatar: null,
-    initials: "TC",
-  };
-};
-
 // Helper to extract flattened sessions from any backend response format
 const extractFlatSessions = (data) => {
   const list = [];
@@ -148,7 +75,7 @@ const extractFlatSessions = (data) => {
     if (list.some(s => s.id === session.id)) return;
 
     const source = parentClass || session.class || session;
-    const tutor = extractTutorInfo(source);
+    const { tutor, advisors } = extractClassStaffInfo(session, source);
     const subject = source.subject_name || source.subject?.name || source.course?.name || "General Studies";
     
     let link = session.class_link || source.class_link || source.zoom_join_url || source.zoom_start_url;
@@ -177,6 +104,7 @@ const extractFlatSessions = (data) => {
       subject: source.subject || session.subject,
       tutor,
       tutor_name: tutor.name,
+      advisors,
       class_link: link,
       recording_link: recording,
       class_tier: session.class_tier || source.class_tier || "JAMB / O-Levels",
@@ -1576,6 +1504,23 @@ export default function AdminCalendar() {
                         View History
                       </button>
                     </div>
+
+                    {/* Advisor Spotlight (when assigned) */}
+                    {Array.isArray(selectedSession.advisors) && selectedSession.advisors.length > 0 && (
+                      <div className="px-4 py-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-800 dark:text-amber-300 flex items-center justify-center font-extrabold text-xs">
+                            {selectedSession.advisors[0].initials}
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80 font-bold uppercase tracking-wider">Assigned Course Advisor</p>
+                            <p className="text-sm font-extrabold text-[#09314F] dark:text-white">
+                              {selectedSession.advisors.map((a) => a.name).join(", ")}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Description */}
                     <div>

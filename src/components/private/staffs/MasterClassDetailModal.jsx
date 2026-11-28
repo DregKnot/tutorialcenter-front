@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Icon } from "@iconify/react";
+import { getLeadTutorName } from "../../../utils/classStaffUtils.js";
 
 // Helper date/time formatters
 const formatDate = (dateStr) => {
@@ -30,14 +31,7 @@ const calculateEndTime = (startTimeStr, durationMinutes) => {
   return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
 };
 
-const getStaffName = (cls) => {
-  if (!cls) return "Unassigned";
-  const staff = cls.staffs?.[0];
-  if (!staff) return "Unassigned";
-  const s = staff.staff || staff;
-  if (s.firstname && s.surname) return `${s.firstname} ${s.surname}`;
-  return s.name || "Unassigned";
-};
+const getStaffName = (cls) => getLeadTutorName(cls, "Unassigned");
 
 /**
  * MasterClassDetailModal

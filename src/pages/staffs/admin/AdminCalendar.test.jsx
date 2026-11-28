@@ -113,4 +113,54 @@ describe("AdminCalendar Video Vault Navigation", () => {
     expect(await screen.findByText(/Cancel Class Session/i)).toBeInTheDocument();
     expect(screen.getByText(/Reason for Cancellation/i)).toBeInTheDocument();
   });
+
+  test("displays the lead tutor rather than assistant/COO staff listed first in staffs", async () => {
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Africa/Lagos",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+
+    axios.get.mockResolvedValueOnce({
+      data: {
+        classes: [
+          {
+            id: 10,
+            title: "JAMB - Mathematics",
+            subject: { id: 2, name: "Mathematics" },
+            staffs: [
+              { id: 1, firstname: "Olugbenga", surname: "Raymond", role: "coo", pivot: { role: "assistant" } },
+              { id: 14, firstname: "Samuel", surname: "Olawale", role: "tutor", pivot: { role: "lead" } },
+            ],
+            schedules: [
+              {
+                id: 30,
+                sessions: [
+                  {
+                    id: 77,
+                    topic: "Quadratic Equations",
+                    session_date: today,
+                    starts_at: "17:00",
+                    ends_at: "19:00",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    render(<AdminCalendar />);
+
+    const sessionChip = await screen.findByText("Quadratic Equations");
+    expect(screen.getAllByText(/Samuel Olawale/).length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText(/Olugbenga Raymond/)).not.toBeInTheDocument();
+
+    fireEvent.click(sessionChip);
+    expect(await screen.findByText("Assigned Tutor")).toBeInTheDocument();
+    expect(screen.getByText("Assigned Course Advisor")).toBeInTheDocument();
+    expect(screen.getByText("Olugbenga Raymond")).toBeInTheDocument();
+  });
 });

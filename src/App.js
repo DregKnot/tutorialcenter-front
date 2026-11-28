@@ -128,6 +128,8 @@ const StudentSurvey = lazy(() => import("./pages/Students/StudentSurvey.jsx"));
 const AdminSurveyAnalytics = lazy(() => import("./pages/staffs/admin/AdminSurveyAnalytics.jsx"));
 const AdminSubjectModules = lazy(() => import("./pages/staffs/admin/AdminSubjectModules.jsx"));
 const ModelCreation = lazy(() => import("./pages/staffs/admin/ModelCreation.jsx"));
+const BootcampManagement = lazy(() => import("./pages/staffs/admin/BootcampManagement.jsx"));
+const BootcampCbt = lazy(() => import("./pages/public/BootcampCbt.jsx"));
 
 function App() {
   const { isSplashing: isUserSplashing } = useAuth();
@@ -164,6 +166,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/cognitive-test" element={<CognitiveTest />} />
+            <Route path="/bootcamp/cbt/:token" element={<BootcampCbt />} />
             <Route path="/guardian/login" element={<GuardianLogin />} />
             <Route path="/login" element={<LoginSelection />} />
             {BadgeDemo && <Route path="/badge-demo" element={<BadgeDemo />} />}
@@ -316,6 +319,7 @@ function App() {
               <Route path="/staffs/master-class" element={<StaffMasterClassList />} />
               <Route path="/staffs/student-schedule" element={<StaffStudentSchedule />} />
               <Route path="/staffs/calendar" element={<AdminCalendar />} />
+              <Route path="/staffs/bootcamp" element={<BootcampManagement />} />
               <Route path="/staffs/manage-courses" element={<CoursesManagement />} />
               <Route path="/staffs/subject-modules" element={<AdminSubjectModules />} />
               <Route path="/staffs/lessons" element={<AdminSubjectModules />} />

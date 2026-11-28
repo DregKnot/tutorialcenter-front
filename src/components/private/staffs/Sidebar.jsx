@@ -53,6 +53,7 @@ const adminNavSections = [
     icon: AcademicCapIcon,
     items: [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
+      { label: "Bootcamp", icon: AcademicCapIcon, destination: "/staffs/bootcamp" },
       { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
       { label: "Video Vault", icon: PlayCircleIcon, destination: "/staffs/recorded-classes" },
@@ -107,6 +108,7 @@ const cooNavSections = [
     icon: AcademicCapIcon,
     items: [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
+      { label: "Bootcamp", icon: AcademicCapIcon, destination: "/staffs/bootcamp" },
       { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
       { label: "Video Vault", icon: PlayCircleIcon, destination: "/staffs/recorded-classes" },
@@ -161,6 +163,7 @@ const csaNavSections = [
     icon: AcademicCapIcon,
     items: [
       { label: "Master Class", icon: AcademicCapIcon, destination: "/staffs/master-class" },
+      { label: "Bootcamp", icon: AcademicCapIcon, destination: "/staffs/bootcamp" },
       { label: "Student Schedule", icon: CalendarDaysIcon, destination: "/staffs/student-schedule" },
       { label: "Calendar", icon: CalendarDaysIcon, destination: "/staffs/calendar" },
       { label: "Video Vault", icon: PlayCircleIcon, destination: "/staffs/recorded-classes" },

@@ -14,6 +14,7 @@ import {
   VideoCameraIcon
 } from "@heroicons/react/24/outline";
 import { Icon } from "@iconify/react";
+import { getLeadTutorName } from "../../../utils/classStaffUtils.js";
 
 // --- HELPERS ---
 const formatDate = (dateStr) => {
@@ -43,13 +44,7 @@ const calculateEndTime = (timeStr, durationMinutes = 90) => {
   return formatTime(`${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`);
 };
 
-const getStaffName = (cls) => {
-  const staff = cls.staffs?.[0];
-  if (!staff) return "Unassigned";
-  const s = staff.staff || staff;
-  if (s.firstname && s.surname) return `${s.firstname} ${s.surname}`;
-  return s.name || "Unassigned";
-};
+const getStaffName = (cls) => getLeadTutorName(cls, "Unassigned");
 
 // --- STANDALONE CLASS ROW COMPONENT ---
 function ClassRow({ cls, copiedLink, onCopyLink, onSelectDetail, onEdit, canEdit = true }) {
