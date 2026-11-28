@@ -221,6 +221,7 @@ export default function AchievementVisualRenderer({
   earnedCount = null,
   showLabel = false,
   animated = false,
+  interactive = false,
   onClick = null,
   className = "",
 }) {
@@ -313,7 +314,7 @@ export default function AchievementVisualRenderer({
           ) : code === "onboarding.first_step" ? (
             <FirstStepBadge size={size} earned={true} />
           ) : category === "exam_performance" ? (
-            <ExamPerformanceMedal tier={medalTier} size={size} earned={true} animated={shouldAnimate} />
+            <ExamPerformanceMedal tier={medalTier} size={size} earned={true} animated={shouldAnimate} interactive={interactive} />
           ) : isMedal ? (
             <TCMedal
               animated={shouldAnimate}

@@ -437,6 +437,7 @@ export default function StudentAchievements() {
                 earned={Boolean(inspectingItem.earned)}
                 earnedCount={Number(inspectingItem.earned_count ?? inspectingItem.awards?.length ?? 1)}
                 animated={true}
+                interactive={Boolean(inspectingItem.earned)}
               />
             </div>
 

@@ -31,3 +31,12 @@ test("only the recessed seams and adjacent metal pulse; disabling motion restore
   update(TROPHY_PULSE_SECONDS,true);expect(seam.emissiveIntensity).toBeCloseTo(quiet);
   update(TROPHY_PULSE_SECONDS/2,false);expect(seam.emissiveIntensity).toBe(quiet);
 });
+
+test("lowPower option keeps all diamond facets while lowering triangle count", () => {
+  const high = createDiamondTrophy(THREE, new THREE.Group(), new THREE.MeshStandardMaterial({ metalness: 1 }));
+  const low = createDiamondTrophy(THREE, new THREE.Group(), new THREE.MeshStandardMaterial({ metalness: 1 }), { lowPower: true });
+  const highVertices = high.group.getObjectByName("silver-trophy-bowl").geometry.attributes.position.count;
+  const lowVertices = low.group.getObjectByName("silver-trophy-bowl").geometry.attributes.position.count;
+  expect(low.group.children.filter(mesh => mesh.name === "integrated-metallic-diamond-facet")).toHaveLength(8);
+  expect(lowVertices).toBeLessThan(highVertices);
+});

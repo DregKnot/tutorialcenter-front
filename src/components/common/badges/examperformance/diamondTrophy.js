@@ -3,13 +3,13 @@
 export const TROPHY_PULSE_SECONDS = 3.2;
 export const trophySurfaceZ = x => 0.29 + 0.12 * Math.max(0, 1 - (x / 0.44) ** 2);
 
-export function createDiamondTrophy(THREE, medal, silver) {
+export function createDiamondTrophy(THREE, medal, silver, { lowPower = false } = {}) {
   const group = new THREE.Group(); group.name = "diamond-trophy"; medal.add(group);
   const add = (geometry, material, x = 0, y = 0, z = 0) => {
     const mesh = new THREE.Mesh(geometry, material); mesh.position.set(x, y, z); group.add(mesh); return mesh;
   };
   const tube = (points, radius, material = silver) => add(new THREE.TubeGeometry(
-    new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p))), 24, radius, 8, false
+    new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p))), lowPower ? 16 : 24, radius, lowPower ? 6 : 8, false
   ), material);
 
   // The bowl's front curves outward; its diamond-shaped cavity is cut through the cap.
@@ -23,7 +23,7 @@ export function createDiamondTrophy(THREE, medal, silver) {
   const hole = new THREE.Path();
   outline.forEach(([x,y],i)=>i ? hole.lineTo(x,y) : hole.moveTo(x,y));
   hole.closePath(); bowl.holes.push(hole);
-  const body = new THREE.ExtrudeGeometry(bowl, { depth:0.07, bevelEnabled:false, curveSegments:24 });
+  const body = new THREE.ExtrudeGeometry(bowl, { depth:0.07, bevelEnabled:false, curveSegments: lowPower ? 12 : 24 });
   // Subdivide the curved cap before bending it, so the bowl stays smoothly rounded.
   const source=body.attributes.position, vertices=[], frontVertices=[];
   const subdivide=(a,b,c,level,front)=>{
@@ -38,10 +38,11 @@ export function createDiamondTrophy(THREE, medal, silver) {
       });
     }
   };
+  const capLevels = lowPower ? 2 : 3;
   for(let i=0;i<source.count;i+=3){
     const triangle=[0,1,2].map(n=>[source.getX(i+n),source.getY(i+n),source.getZ(i+n)]);
     const front=triangle.every(p=>p[2]>0.035);
-    subdivide(...triangle,front?3:0,front);
+    subdivide(...triangle,front?capLevels:0,front);
   }
   const curvedBody=new THREE.BufferGeometry();
   curvedBody.setAttribute("position",new THREE.Float32BufferAttribute(vertices,3));
@@ -96,7 +97,7 @@ export function createDiamondTrophy(THREE, medal, silver) {
     const mount=add(new THREE.TorusGeometry(.065,.018,8,24),silver,side*.41,.47,.32); mount.scale.y=1.18;
   });
   tube([[-.42,.55,.29],[-.23,.565,.38],[0,.57,.418],[.23,.565,.38],[.42,.55,.29]],.022);
-  const stem = add(new THREE.CylinderGeometry(.045,.065,.18,24),silver,0,-.095,.29);
+  const stem = add(new THREE.CylinderGeometry(.045,.065,.18,lowPower ? 16 : 24),silver,0,-.095,.29);
   stem.name="trophy-stem";
   add(new THREE.BoxGeometry(.35,.045,.16),silver,0,-.22,.29);
   add(new THREE.BoxGeometry(.43,.055,.20),silver,0,-.27,.29);

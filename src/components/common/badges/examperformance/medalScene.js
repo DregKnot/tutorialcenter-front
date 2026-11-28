@@ -10,7 +10,10 @@ export const FINISHES = {
 
 
 // Shared by the interactive medal and the checked-in image generator.
-export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
+export function createMedalScene(THREE, RoomEnvironment, renderer, finish, { lowPower = false, logoSource = null } = {}) {
+  const radialSegments = lowPower ? 48 : 96;
+  const ringTubeSegments = lowPower ? 10 : 12;
+  const ribCount = lowPower ? 48 : 72;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 30);
   camera.position.set(0, 0.12, 6.2);
@@ -32,7 +35,9 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
   scene.add(medal);
   const metal = new THREE.MeshStandardMaterial({ color: finish.metal, metalness: 1, roughness: 0.23 });
   const satin = new THREE.MeshStandardMaterial({ color: finish.metal, metalness: 0.86, roughness: 0.4 });
-  const enamel = new THREE.MeshPhysicalMaterial({ color: finish.enamel, metalness: 0.2, roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.12 });
+  const enamel = lowPower
+    ? new THREE.MeshStandardMaterial({ color: finish.enamel, metalness: 0.25, roughness: 0.18 })
+    : new THREE.MeshPhysicalMaterial({ color: finish.enamel, metalness: 0.2, roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.12 });
   const add = (geometry, material, x = 0, y = 0, z = 0) => {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
@@ -40,11 +45,11 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
     return mesh;
   };
   const disc = (radius, depth, material, z) => {
-    const mesh = add(new THREE.CylinderGeometry(radius, radius, depth, 96), material, 0, 0, z);
+    const mesh = add(new THREE.CylinderGeometry(radius, radius, depth, radialSegments), material, 0, 0, z);
     mesh.rotation.x = Math.PI / 2;
     return mesh;
   };
-  const ring = (radius, tube, z, material = metal) => add(new THREE.TorusGeometry(radius, tube, 12, 96), material, 0, 0, z);
+  const ring = (radius, tube, z, material = metal) => add(new THREE.TorusGeometry(radius, tube, ringTubeSegments, radialSegments), material, 0, 0, z);
   // Solid struck-metal body and independently raised concentric rims.
   disc(1.25, 0.30, metal, -0.05);
   ring(1.22, 0.045, 0.105);
@@ -55,16 +60,16 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
   disc(0.78, 0.025, satin, 0.165);
   ring(0.79, 0.016, 0.18);
   // Machined radial fluting: actual geometry catches the studio lights.
-  const ribs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.017, 0.15, 0.035), metal, 72);
+  const ribs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.017, 0.15, 0.035), metal, ribCount);
   const ribTransform = new THREE.Object3D();
-  for (let i = 0; i < 72; i += 1) {
-    const angle = i / 72 * Math.PI * 2;
+  for (let i = 0; i < ribCount; i += 1) {
+    const angle = i / ribCount * Math.PI * 2;
     ribTransform.position.set(Math.sin(angle) * 1.095, Math.cos(angle) * 1.095, 0.15);
     ribTransform.rotation.z = -angle; ribTransform.updateMatrix();
     ribs.setMatrixAt(i, ribTransform.matrix);
   }
   medal.add(ribs);
-  const diamondTrophy = finish.engraved ? createDiamondTrophy(THREE, medal, metal) : null;
+  const diamondTrophy = finish.engraved ? createDiamondTrophy(THREE, medal, metal, { lowPower }) : null;
   // Raised victory cup, with extruded handles, stem and pedestal.
   if (!finish.engraved) {
   const cup = new THREE.Shape();
@@ -74,9 +79,9 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
   cup.lineTo(0.22, -0.23); cup.lineTo(-0.22, -0.23);
   cup.lineTo(-0.22, -0.17); cup.lineTo(-0.055, -0.13);
   cup.lineTo(-0.055, 0.01); cup.bezierCurveTo(-0.12, 0.02, -0.32, 0.08, -0.34, 0.46);
-  add(new THREE.ExtrudeGeometry(cup, { depth: 0.075, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.018, bevelThickness: 0.018 }), metal, 0, 0.04, 0.20);
+  add(new THREE.ExtrudeGeometry(cup, { depth: 0.075, bevelEnabled: true, bevelSegments: lowPower ? 2 : 3, steps: 1, curveSegments: lowPower ? 8 : 12, bevelSize: 0.018, bevelThickness: 0.018 }), metal, 0, 0.04, 0.20);
   [-1, 1].forEach(side => {
-    add(new THREE.TorusGeometry(0.15, 0.035, 12, 32), metal, side * 0.32, 0.32, 0.23);
+    add(new THREE.TorusGeometry(0.15, 0.035, ringTubeSegments, lowPower ? 20 : 32), metal, side * 0.32, 0.32, 0.23);
   });
   }
   // Printed score is backed by a raised metallic cartouche.
@@ -87,10 +92,11 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
   ctx.fillStyle = finish.enamel; ctx.font = "bold 105px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillText(`${finish.score}%`, 256, 85);
   const texture = new THREE.CanvasTexture(label); texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = renderer.capabilities?.getMaxAnisotropy?.() || 1;
   const lettering = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
   add(new THREE.PlaneGeometry(0.70, 0.22), lettering, 0, -0.49, plaque.position.z + 0.025);
   // Ribbon eyelet and folded fabric sit behind the minted body.
-  add(new THREE.TorusGeometry(0.14, 0.038, 12, 48), metal, 0, 1.31, -0.02);
+  add(new THREE.TorusGeometry(0.14, 0.038, ringTubeSegments, lowPower ? 28 : 48), metal, 0, 1.31, -0.02);
   const ribbon = new THREE.MeshStandardMaterial({ color: finish.enamel, roughness: 0.85, metalness: 0 });
   [-1, 1].forEach(side => {
     const fold = add(new THREE.BoxGeometry(0.23, 0.5, 0.035), ribbon, side * 0.11, 1.59, -0.09);
@@ -101,15 +107,26 @@ export function createMedalScene(THREE, RoomEnvironment, renderer, finish) {
   ring(1.20, 0.035, -0.21);
   ring(0.95, 0.014, -0.212);
   const reverseLabel = document.createElement("canvas");
-  reverseLabel.width = 512; reverseLabel.height = 512;
+  reverseLabel.width = 768; reverseLabel.height = 768;
   const reverseCtx = reverseLabel.getContext("2d");
-  reverseCtx.fillStyle = finish.enamel;
-  reverseCtx.textAlign = "center";
-  reverseCtx.font = "bold 120px Georgia"; reverseCtx.fillText("TC", 256, 245);
-  reverseCtx.font = "24px sans-serif"; reverseCtx.fillText("ACADEMIC EXCELLENCE", 256, 300);
-  reverseCtx.font = "18px sans-serif"; reverseCtx.fillText("TUTORIAL CENTER AFRICA", 256, 342);
+  if (logoSource) {
+    const srcW = logoSource.naturalWidth || logoSource.width || 768;
+    const srcH = logoSource.naturalHeight || logoSource.height || 768;
+    const maxBox = 580;
+    const scale = Math.min(maxBox / srcW, maxBox / srcH);
+    const drawW = srcW * scale;
+    const drawH = srcH * scale;
+    reverseCtx.drawImage(logoSource, (768 - drawW) / 2, (768 - drawH) / 2, drawW, drawH);
+  } else {
+    reverseCtx.fillStyle = finish.enamel;
+    reverseCtx.textAlign = "center";
+    reverseCtx.font = "bold 186px Georgia"; reverseCtx.fillText("TC", 384, 365);
+    reverseCtx.font = "700 40px sans-serif"; reverseCtx.fillText("ACADEMIC EXCELLENCE", 384, 452);
+    reverseCtx.font = "600 30px sans-serif"; reverseCtx.fillText("TUTORIAL CENTER AFRICA", 384, 514);
+  }
   const reverseTexture = new THREE.CanvasTexture(reverseLabel);
   reverseTexture.colorSpace = THREE.SRGBColorSpace;
+  reverseTexture.anisotropy = renderer.capabilities?.getMaxAnisotropy?.() || 1;
   const reverseSeal = add(new THREE.PlaneGeometry(1.6, 1.6), new THREE.MeshBasicMaterial({ map: reverseTexture, transparent: true }), 0, 0, -0.215);
   reverseSeal.rotation.y = Math.PI;
 

@@ -37,8 +37,6 @@
 .exam-ceremony__footer { flex-shrink:0; padding:16px 20px 22px; text-align:center; font-size:9px; text-transform:uppercase; letter-spacing:.2em; color:#657084; }
 .exam-ceremony__footer span { margin:0 12px; color:var(--award-accent); }
 @keyframes exam-award-burst { 0% { transform:scale(.6); opacity:0; } 18% { opacity:.65; } 100% { transform:scale(1.9); opacity:0; } }
-.exam-medal__fallback--spin { animation:exam-medal-turn 5s linear infinite; transform-style:preserve-3d; }
-@keyframes exam-medal-turn { from { transform:perspective(900px) rotateY(0deg); } to { transform:perspective(900px) rotateY(360deg); } }
 .exam-medal__glint { position:absolute; width:17px; height:17px; color:#fff8d9; opacity:0; animation:exam-medal-glint 4.8s ease-in-out infinite; filter:drop-shadow(0 0 5px #fff5c4); pointer-events:none; }
 .exam-medal__glint::before,.exam-medal__glint::after { content:""; position:absolute; background:currentColor; border-radius:50%; }
 .exam-medal__glint::before { left:45%; top:0; width:10%; height:100%; }
@@ -46,7 +44,7 @@
 @keyframes exam-medal-glint { 0%,45%,85%,100% { opacity:0; transform:scale(.3) rotate(0); } 63% { opacity:1; transform:scale(1) rotate(18deg); } }
 @media(max-width:600px) { .exam-ceremony__header { padding:16px 16px 0; } .exam-ceremony__eyebrow { font-size:8px; letter-spacing:.08em; } .exam-ceremony__stage { height:330px; } .exam-ceremony__medal { zoom:.82; } .exam-ceremony__actions { flex-direction:column; gap:8px; margin-top:20px; } .exam-ceremony__actions button { width:100%; } .exam-ceremony__copy { max-width:340px; } .exam-ceremony__footer { font-size:8px; letter-spacing:.1em; } }
 @media(max-height:760px) and (min-width:601px) { .exam-ceremony__stage { height:310px; } .exam-ceremony__medal { zoom:.8; } .exam-ceremony__copy h2 { font-size:42px; } .exam-ceremony__actions { margin-top:18px; } }
-@media(prefers-reduced-motion:reduce) { .exam-ceremony *, .exam-medal__fallback--spin, .exam-medal__glint { animation:none!important; transition:none!important; } .exam-medal__glint { display:none; } }
+@media(prefers-reduced-motion:reduce) { .exam-ceremony *, .exam-medal__glint { animation:none!important; transition:none!important; } .exam-medal__glint { display:none; } }
 
 .exam-medal--static { transition:transform .2s ease-out; }
 @media(hover:hover) { .exam-medal--static:hover { transform:perspective(800px) rotateY(-9deg); } }

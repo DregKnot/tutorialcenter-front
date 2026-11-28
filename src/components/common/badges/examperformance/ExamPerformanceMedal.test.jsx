@@ -5,6 +5,13 @@ import ExamPerformanceMedal from "./ExamPerformanceMedal";
 // A browser without GPU support must still show the new medal, not the old wings.
 jest.mock("../TCMedal", () => () => { throw new Error("Old medal must not be used as the exam fallback"); });
 
+beforeEach(() => {
+  jest.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+});
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe("exam medals without WebGL", () => {
   test.each([
     ["bronze", "Bronze", "60"], ["silver", "Silver", "70"],
@@ -22,5 +29,9 @@ describe("exam medals without WebGL", () => {
     const medal = screen.getByRole("img", { name: /Gold.*locked/ });
     expect(medal.querySelector("img")).toBeInTheDocument();
     expect(medal).toHaveStyle({ opacity: "0.4" });
+  });
+  test("interactive gold medal keeps accessible artwork before turntable finishes decoding", () => {
+    render(<ExamPerformanceMedal tier="gold" interactive spin />);
+    expect(screen.getByRole("img", { name: /Gold exam performance medal, 80% mastery/ })).toBeInTheDocument();
   });
 });
